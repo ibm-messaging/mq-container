@@ -43,7 +43,15 @@ resources:
   requests:
     cpu: 500m
     memory: 512Mi
-queuemanager:
+# queueManager section specifies settings for the MQ Queue Manager
+queueManager:
+  # name allows you to specify the name to use for the queue manager.  Defaults to the Helm release name.
   name:
+  # dev section specifies settings for the MQ developer defaults available in the MQ Advanced for Developers image.
+  dev:
+    # adminPassword sets the password of the admin user
+    adminPassword:
+    # appPassword sets the password of the app user
+    appPassword:
 # nameOverride can be set to partially override the name of the resources created by this chart
 nameOverride:

@@ -25,9 +25,6 @@ This command accepts the [IBM MQ Advanced license](LICENSE) and deploys an MQ Ad
 
 > **Tip**: See all the resources deployed by the chart using `kubectl get all -l release=foo`
 
-## Verifying the Chart
-See NOTES.txt associated with this chart for verification instructions
-
 ## Uninstalling the Chart
 
 To uninstall/delete the `foo` release:
@@ -57,7 +54,7 @@ The following table lists the configurable parameters of the `mq-advancedserver`
 | `data.persistence.size`         | Size of data volume                             | `2Gi`                                                      |
 | `service.name`                  | Name of the Kubernetes service to create        | `qmgr`                                                     |
 | `service.type`                  | Kubernetes service type exposing ports, e.g. `NodePort`       | `ClusterIP`                                  |
-| `queuemanager.name`                  | MQ Queue Manager name       | Helm release name                                  |
+| `queueManager.name`                  | MQ Queue Manager name       | Helm release name                                  |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
@@ -68,6 +65,16 @@ Alternatively, a YAML file that specifies the values for the parameters can be p
 ## Persistence
 
 The chart mounts a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/).
+
+
+# Configuring MQ objects
+You have two major options for configuring the MQ queue manager itself:
+
+1. Use existing tools, such as `runmqsc`, MQ Explorer or the MQ Command Server to configure your queue manager directly.
+2. Create a new image with your configuration baked-in 
+
+## Configuring MQ objects with a new image
+You can create a new container image layer, on top of the IBM MQ Advanced base image.  You can add MQSC files to define MQ objects such as queues and topics, and place these files into `/etc/mqm` in your image.  When the MQ container starts, it will run any MQSC files found in this directory (in sorted order).
 
 # Copyright
 

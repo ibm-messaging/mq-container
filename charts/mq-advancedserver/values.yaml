@@ -43,7 +43,9 @@ resources:
   requests:
     cpu: 1
     memory: 1Gi
-queuemanager:
+# queueManager section specifies settings for the MQ Queue Manager
+queueManager:
+  # name allows you to specify the name to use for the queue manager.  Defaults to the Helm release name.
   name:
 # nameOverride can be set to partially override the name of the resources created by this chart
 nameOverride:
