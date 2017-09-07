@@ -1,0 +1,1173 @@
+BÝLDÝRÝM
+
+Bu belge, birden çok Program için geçerli olan ve aþaðýda yer alan Lisans Bilgileri belgelerini içerir. Her bir Lisans Bilgileri belgesi geçerli olduðu Program(lar)ý tanýmlar. Yalnýzca, Lisans Alan Tarafýn kendilerine iliþkin yetkilerini satýn almýþ olduðu Program(lar)la ilgili Lisans Bilgileri belgeleri geçerlidir.
+
+
+==============================================
+
+
+ÖNEMLÝ: DÝKKATLE OKUYUN
+
+Aþaðýda iki lisans sözleþmesi sunulmuþtur.
+
+1. Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi
+2. IBM Uluslararasý Program Lisans Sözleþmesi
+
+Lisans Alan Taraf, bu Programý (deðerlendirme, deneme, gösterimini yapma amaçlarý veya "dene veya satýn al" kampanyasý dýþýnda) üretim amacýyla kullanmak üzere satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak IBM Uluslararasý Program Lisans Sözleþmesi'ni hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Lisans Alan Taraf bu Programý, deðerlendirme, deneme, gösterimini yapma amaçlarýyla veya "dene veya satýn al" kampanyasý kapsamýnda kullanmak üzere (topluca "Deðerlendirme" olarak belirlenen amaçla) satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak (i) Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi'ni ("Deðerlendirme Lisansý") hiçbir deðiþiklik olmaksýzýn ve (ii) IBM Uluslararasý Program Lisans Sözleþmesi'ni ("UPLS") hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Deðerlendirme Lisansý, Lisans Alan Tarafýn Deðerlendirme süresi boyunca geçerli olacaktýr.
+
+Deðerlendirme süresi sonunda, Lisans Alan taraf, bir tedarik sözleþmesi (örneðin, IBM Uluslararasý Passport Advantage veya IBM Passport Express Advantage sözleþmeleri gibi) imzalayarak bu Programý edinmeyi (veya Deðerlendirme sürecinden sonra kullanmak üzere bu Programýn ek kopyalarýný edinmeyi) seçtiyse, Uluslararasý Program Lisans Sözleþmesi (UPLS) otomatik olarak geçerli olacaktýr.
+
+Deðerlendirme Lisansý ve UPLS ayný anda yürürlükte olamayacaðý gibi, bu Sözleþmelerden birinin koþullarý diðerinin koþullarýný deðiþtirmez. Deðerlendirme Lisansý ile UPLS birbirlerinden baðýmsýz sözleþmelerdir.
+
+Bu iki lisans sözleþmesinin tam metni aþaðýdadýr.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Programlarýn Deðerlendirilmesi Ýçin Uluslararasý Lisans Sözleþmesi (Z125-5543-05) geçerli olur.
+
+Program Adý (Program Numarasý):
+IBM MQ V9.0.3 (Evaluation)
+IBM MQ Idle Standby V9.0.3 (Evaluation)
+
+Aþaðýdaki standart koþullar, Lisans Alan Tarafýn Programý kullanýmý için geçerlidir.
+
+Deðerlendirme Süresi
+
+Deðerlendirme süresi, Lisans Alan Tarafýn bu Sözleþmenin koþullarýný kabul ettiði tarihte baþlar ve 90 gün sonra sona erer.
+
+Destekleyici Programlar
+
+Bu Program birden çok ürünün bulunduðu bir paket olarak lisanslanýr ve aþaðýda belirtilen Destekleyici Programlarý içerir. Lisans Alan Tarafa, bu tür Destekleyici Programlarý, Lisans Alan Tarafýn Asýl Programý (Principal Program) (iþbu Lisans Bilgileri Belgesinin baþka herhangi bir yerinde daha geniþ yetkiler saðlanmadýðý sürece) yalnýzca bu Sözleþme kapsamýnda ve bu Programa iliþkin Yetki Belgesinin (POE) sýnýrlarý içinde kullanýmýný desteklemek üzere kurmasý ve kullanmasý için yetki verilir. "Lisans Alan Tarafýn .....kullanýmýný desteklemek üzere" ifadesi, Asýl Programýn veya diðer bir Destekleyici Programýn lisanslý kullanýmý için gerekli olan veya Asýl Programýn veya diðer bir Destekleyici Programýn lisanslý kullanýmýyla baþka bir þekilde doðrudan iliþkili olan bu tür kullanýmlarý içerir. Destekleyici Programlar, baþka hiçbir amaçla kullanýlamaz. Lisans Alan Tarafýn, Destekleyici Programlarý Asýl Programdan ayrý olarak devretme ya da yeniden pazarlama yetkisi yoktur. Bir Destekleyici Programla birlikte lisans koþullarý ve eðer varsa, Lisans Alan Tarafýn bu Destekleyici Programý kullanýmý için geçerli olan koþullar da gönderilebilir. Asýl Programýn koþullarýyla Destekleyici Programýn koþularý arasýnda bir çeliþki olmasý durumundan iþbu Lisans Bilgileri belgesinin koþullarý, Destekleyici Programýn koþullarýný hükümsüz kýlarak onlarýn yerine geçer. Lisans Alan Tarafýn bu Programý kullaným hakký sona erdiðinde ya da sonlandýrýldýðýnda, Destekleyici Programlarýn tüm kopyalarýný kullanmaya son vermesi, bunlarý yok etmesi veya derhal Programý edindiði üçüncü kiþiye iade etmesi gerekir. Lisans Alan Taraf, Destekleyici Programlarý yüklediyse, bu Programý edindiði tarafla baðlantýya geçmelidir. Lisans Alan Taraf, Destekleyici Programlarý, yukarýda belirtilen sýnýrlarý aþacak þekilde kullanmak amacýyla lisanslamak isterse, uygun lisansý edinmek için IBM Satýþ Temsilcisiyle veya bunlarý edindiði tarafla görüþmelidir.
+
+Bu Programlarla birlikte lisanslanan Destekleyici Programlar aþaðýda belirtilmiþtir:
+IBM WebSphere Application Server Liberty V17.0
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Uluslararasý Program Lisans Sözleþmesi (Z125-3301-14) geçerli olur.
+
+Program Adý (Program Numarasý):
+IBM MQ V9.0.3 (5724-H72)
+IBM MQ Idle Standby V9.0.3 (5724-H72)
+
+Aþaðýdaki standart koþullar, Lisans Alan Tarafýn Programý kullanýmý için geçerlidir.
+
+Sýnýrlý kullaným hakký
+
+Uluslararasý Program Lisans Sözleþmesi'nde ("UPLS") ve bu Lisans Bilgileri belgesinde açýklandýðý þekilde IBM, Lisans Alan Tarafa bu Programý kullanmasý için sýnýrlý bir hak verir. Bu hak, Yetki Belgesinde kanýtlandýðý þekilde, Lisans Alan Tarafça ödemesi yapýlmýþ olan Ýþlemci Deðer Birimi ("PVU"), Kaynak Deðer Birimi ("RVU"), Deðer Birimi ("VU") ya da belirlenmiþ diðer bir kullaným seviyesi gibi bir Yetkili Kullaným seviyesiyle sýnýrlanmýþtýr. Ayrýca, Lisans Alan Tarafýn kullanýmý, ayrýca belirli bir makineyle ya da yalnýzca bir Destekleyici Programla ya da baþka kýsýtlamalara tabi olarak sýnýrlanabilir. Lisans Alan Taraf bu Programýn ekonomik deðerinin tümünü ödemediðinde, ek ücretler ödenmedikçe Programýn baþka hiçbir þekilde kullanýlmasýna izin verilmez. Ayrýca, Lisans Alan Tarafýn bu Programý kullanmak üzere edindiði yetkilerin tabi olduðu geçerli sözleþmelerde açýkça belirtilmediði sürece, Lisans Alan Tarafa bu Programý herhangi bir üçüncü kiþiye ticari BT hizmetleri saðlamak, ticari barýndýrma ya da zaman paylaþýmý sunmak ya da alt lisans vermek, kiralamak ya da finansal olarak kiralamak üzere kullanma yetkisi de verilmez. Ek ücretlerin ödenmesine baðlý olarak ya da farklý veya tamamlayýcý koþullar kapsamýnda Lisans Alan Tarafa ek haklar saðlanabilir. IBM, Lisans Alan Tarafa bu tür ek haklarý saðlayýp saðlamamaya iliþkin karar verme hakkýný saklý tutar.
+
+Belirtimler
+
+Programýn belirtimleri, Programýn Duyuru Mektuplarýndaki toplu Tanýtým ve Teknik Bilgiler (Description and Technical Information) baþlýklý bölümlerde bulunabilir.
+
+Destekleyici Programlar
+
+Bu Program birden çok ürünün bulunduðu bir paket olarak lisanslanýr ve aþaðýda belirtilen Destekleyici Programlarý içerir. Lisans Alan Tarafa, bu tür Destekleyici Programlarý, Lisans Alan Tarafýn Asýl Programý (Principal Program) (iþbu Lisans Bilgileri Belgesinin baþka herhangi bir yerinde daha geniþ yetkiler saðlanmadýðý sürece) yalnýzca bu Sözleþme kapsamýnda ve bu Programa iliþkin Yetki Belgesinin (POE) sýnýrlarý içinde kullanýmýný desteklemek üzere kurmasý ve kullanmasý için yetki verilir. "Lisans Alan Tarafýn .....kullanýmýný desteklemek üzere" ifadesi, Asýl Programýn veya diðer bir Destekleyici Programýn lisanslý kullanýmý için gerekli olan veya Asýl Programýn veya diðer bir Destekleyici Programýn lisanslý kullanýmýyla baþka bir þekilde doðrudan iliþkili olan bu tür kullanýmlarý içerir. Destekleyici Programlar, baþka hiçbir amaçla kullanýlamaz. Lisans Alan Tarafýn, Destekleyici Programlarý Asýl Programdan ayrý olarak devretme ya da yeniden pazarlama yetkisi yoktur. Bir Destekleyici Programla birlikte lisans koþullarý ve eðer varsa, Lisans Alan Tarafýn bu Destekleyici Programý kullanýmý için geçerli olan koþullar da gönderilebilir. Asýl Programýn koþullarýyla Destekleyici Programýn koþularý arasýnda bir çeliþki olmasý durumundan iþbu Lisans Bilgileri belgesinin koþullarý, Destekleyici Programýn koþullarýný hükümsüz kýlarak onlarýn yerine geçer. Lisans Alan Tarafýn bu Programý kullaným hakký sona erdiðinde ya da sonlandýrýldýðýnda, Destekleyici Programlarýn tüm kopyalarýný kullanmaya son vermesi, bunlarý yok etmesi veya derhal Programý edindiði üçüncü kiþiye iade etmesi gerekir. Lisans Alan Taraf, Destekleyici Programlarý yüklediyse, bu Programý edindiði tarafla baðlantýya geçmelidir. Lisans Alan Taraf, Destekleyici Programlarý, yukarýda belirtilen sýnýrlarý aþacak þekilde kullanmak amacýyla lisanslamak isterse, uygun lisansý edinmek için IBM Satýþ Temsilcisiyle veya bunlarý edindiði tarafla görüþmelidir.
+
+Bu Programlarla birlikte lisanslanan Destekleyici Programlar aþaðýda belirtilmiþtir:
+IBM WebSphere Application Server Liberty V17.0
+
+Gerekli Yetkilerin Oluþturulmasý için Kullanýlmayan Bileþenler
+
+Lisans Alan Tarafýn bu Programý kurmasý ya da kullanmasý için gereken yetki sayýsý belirlenirken, aþaðýda belirtilen Program bileþenlerinin kurulumu ve kullanýmý dikkate alýnmaz. Baþka bir deyiþle, Lisans Alan Taraf aþaðýdaki Program bileþenlerini lisans koþullarý kapsamýnda kurabilir ve kullanabilir, ancak bu bileþenler bu Program için gereken yetki sayýsýnýn belirlenmesinde kullanýlmaz.
+IBM MQ Client 9.0.3
+IBM WebSphere Application Server Liberty 17.0
+
+Yeniden Daðýtýlabilenler
+
+Bu Program, Yeniden Daðýtýlabilenler olarak adlandýrýlan bileþenleri içeriyorsa bunlar, bu Programla birlikte gönderilen REDIST adlý dosyada tanýmlanýr. Bu Sözleþmede saðlanan lisans haklarýna ek olarak Lisans Alan Taraf Yeniden Daðýtýlabilenleri aþaðýdaki koþullara uygun olarak daðýtabilir:
+1) Yeniden Daðýtým iþlemi, yalnýzca nesne kodu biçiminde ve bu Programla birlikte gönderilen REDIST adlý dosyada veya diðer belgelerde yer alan yönergelere ve belirtimlere uygun olarak gerçekleþtirilebilir;
+2) Bu Programla birlikte gönderilen belgelerde Lisans Alan Tarafa, Yeniden Daðýtýlabilenleri deðiþtirme izni açýkça veriliyorsa, Lisans Alan Tarafýn yapacaðý deðiþikliklerin ilgili belgelerdeki yönergelerin ve belirtimlerin tümüne uygun olmasý gerekir; eðer varsa, bu tür deðiþiklikler, Yeniden Daðýtýlabilenler olarak deðerlendirilmelidir;
+3) Yeniden Daðýtýlabilenler, yalnýzca bu Program kullanýlarak geliþtirilen Lisans Alan Tarafýn Uygulamasýnýn ("Lisans Alan Tarafýn Uygulamasý") bir parçasý olarak ve yalnýzca Lisans Alan Tarafýn müþterilerini, ilgili Uygulamayý kullanmalarýyla baðlantýlý olarak desteklemek amacýyla daðýtýlabilir. Lisans Alan Tarafýn Uygulamasýnýn son kullanýcýlara, Lisans Alan Tarafýn yazýlým ürününün son kullanýcýlar tarafýndan edinilmesinde bu Yeniden Daðýtýlabilenlerin temel motivasyon olmayacaðý þekilde, önemli bir katma deðer saðlamasý gerekir;
+4) Yeniden Daðýtýlabilenlerin Java Çalýþtýrma Zamaný Ortamý (Java Runtime Environment) içermesi durumunda, Uygulama, yalnýzca genel bilgisayar aygýtlarýnda (örneðin: dizüstü bilgisayarlar, masaüstü bilgisayarlar ve sunucular) çalýþtýrýlmak üzere tasarlandýysa ve elde taþýnabilen veya yaygýn olarak kullanýlan diðer aygýtlarda (örneðin: bir mikroiþlemci içeren ancak bilgiiþlem, birincil çalýþma amaçlarý olarak belirlenmiþ olmayan aygýtlar) çalýþtýrýlmak üzere tasarlanmadýysa, Lisans Alan Tarafýn kendi Uygulamasýyla birlikte diðer Java-dýþý Yeniden Daðýtýlabilenleri de içermesi gerekir;
+5) Lisans Alan Taraf, Yeniden Daðýtýlabilenlerde yer alan herhangi bir telif hakký bildirimini veya bildirim dosyasýný kaldýramaz;
+6) Lisans Alan Taraf, Lisans Alan Tarafýn Uygulamasýnýn kullanýlmasý veya daðýtýlmasýndan dolayý yöneltilen iddialara karþý IBM'i, IBM'in saðlayýcýlarýný ve distribütörlerini tazmin etmekle yükümlüdür;
+7) Lisans Alan Taraf, orijinal Yeniden Daðýtýlabilen dosyalar/modüller ile ayný yol adýný kullanamaz;
+8) Lisans Alan Taraf, IBM'in, saðlayýcýlarýnýn veya distribütörlerinin önceden yazýlý izni olmadan, IBM'in, saðlayýcýlarýnýn veya distribütörlerinin adlarýný veya ticari markalarýný, Lisans Alan Tarafýn Uygulamasýnýn pazarlanmasýyla baðlantýlý olarak kullanamaz;
+9) IBM, saðlayýcýlarý veya distribütörleri, Yeniden Daðýtýlabilenleri ve iliþkili belgeleri herhangi bir destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALEYE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR;
+10) Lisans Alan Tarafýn Uygulamasýnda ve Yeniden Daðýtýlabilenlerde yaptýðý deðiþikliklere iliþkin tüm teknik desteðin saðlanmasýndan tamamen Lisans Alan Taraf sorumludur; ve
+11) Lisans Alan Taraf, Uygulamasýnýn son kullanýcýsý ile gerçekleþtireceði lisans sözleþmesinde, bu Yeniden Daðýtýlabilenlerin veya bunlardaki deðiþikliklerin, i) Uygulamasýnýn geçerli kýlýnmasý dýþýnda bir amaçla kullanýlamayacaðý, ii) kopyalanamayacaðý (yedekleme amacý dýþýnda), iii) Lisans Alan Tarafýn Uygulamasýndan ayrý olarak baþkalarýna daðýtýlamayacaðý veya devredilemeyeceði ya da iv) geçerli yasalarýn sözleþme ile deðiþtirilmesine olanak tanýmayarak açýkça izin verdiði durumlar dýþýnda, ters çevrilemeyeceði, ters derlenemeyeceði veya baþka bir yolla çevrilemeyeceði konusunda son kullanýcýyý önceden bilgilendirecektir. Ayrýca, Lisans Alan Tarafýn lisans sözleþmesindeki koþullarýn, IBM açýsýndan, en az bu Sözleþmede yer alan koþullar kadar koruyucu olmasý gereklidir.
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+Lisans Alan Taraf, bir Programýn REDIST dosyasýnda listelenen Kaynak Bileþenlerin ve Örnek Malzemelerin deðiþtirilmiþ sürümlerini, bu lisansta ve REDIST dosyasýnda yer alan koþullara uygun olarak yeniden daðýtabilir.
+
+Aþaðýdaki ölçü birimleri, Lisans Alan Tarafýn Programý kullanýmý için geçerli olabilir.
+
+Ýþlemci Deðer Birimi (PVU)
+
+Ýþlemci Deðer Birimi (PVU), bu Programýn lisanslandýðý ölçüm birimidir. Gereken Ýþlemci Deðer Birimi (PVU) yetkilerinin sayýsý için iþlemci teknolojisi (Ýþlemci Satýcý Firmasý, Marka, Tip ve Model Numarasý esasýna göre þu adresteki PVU Tablosunda tanýmlanmýþtýr: http://www.ibm.com/software/lotus/passportadvantage/pvu_licensing_for_customers.html) ve bu Program tarafýndan kullanýlan iþlemcilerin sayýsý esas alýnýr. IBM, PVU esasýna göre lisanslamanýn amacý açýsýndan bir çip üzerinde yer alan her iþlemci çekirdeði için bir iþlemci tanýmlamaya devam eder. Örneðin, bir çift çekirdekli iþlemci çipinde iki adet iþlemci çekirdeði bulunur.
+
+Lisans Alan Taraf, bu Programý, Passport Advantage Alt Kapasite Lisanslama Koþullarý'na (aþaðýda belirtilen Web sayfasýna bakýn) göre Tam Kapasite lisanslama veya Sanallaþtýrma Kapasitesi (Alt Kapasite) lisanslama esasýný kullanarak etkinleþtirebilir. Tam Kapasite lisanslamasý kullanýlýyorsa, Lisans Alan Tarafýn, bu Programýn sürekli olarak kaldýrýldýðý sunucular hariç olmak üzere, bu Program tarafýndan kullanýlan veya yönetilen fiziksel donaným ortamýnda yer alan etkinleþtirilmiþ tüm iþlemci çekirdeklerini* kapsamaya yetecek sayýda Ýþlemci Deðer Birimi (PVU) yetkisi edinmesi gerekir. Sanallaþtýrma Kapasitesi lisanslamasý kullanýlýyorsa, Lisans Alan Tarafýn, Sanallaþtýrma Kapasitesi Lisansý Sayým Kurallarý'na (Virtualization Capacity License Counting Rules) göre tanýmlanan ve bu Program tarafýndan kullanýlan veya yönetilen tüm etkin iþlemci çekirdeklerini kapsamaya yetecek sayýda yetkiyi edinmesi gerekir. Söz konusu kurallarla ilgili bilgi edinmek için aþaðýda yer alan adrese bakýn: http://www.ibm.com/software/lotus/passportadvantage/Counting_Software_licenses_using_specific_virtualization_technologies.html.
+
+* Etkinleþtirilmiþ iþlemci çekirdeði, iþlemci çekirdeklerinin kapasitesinin, sanallaþtýrma teknolojileri, iþletim sistemi komutlarý, BIOS ayarlarý veya benzeri sýnýrlamalarla sýnýrlandýrýlabilmesinden veya sýnýrlý olmasýndan baðýmsýz olarak herhangi bir fiziksel veya sanal sunucuda kullanýlabilir.
+
+Sanal Ýþlemci Çekirdeði
+
+Sanal Ýþlemci Çekirdeði, bu Programýn lisanslanabileceði bir ölçü birimidir. Fiziksel Sunucu, bir veya daha fazla kullanýcý ve istemci aygýtýnda istenen yordamlarý, komutlarý veya uygulamalarý yürüten ve iþlemci birimleri, bellek ve girdi/çýktý kapasitesine sahip fiziksel bir bilgisayardýr. Raflarýn, blade kasalarýnýn veya diðer benzer ekipmanýn kullanýlmasý durumunda, gerekli bileþenlere sahip her bir ayrýlabilir fiziksel aygýt (örneðin, bir blade aygýtý veya raf düzenekli bir aygýt) kendi baþýna ayrý bir Fiziksel Sunucu olarak deðerlendirilir. Sanal Sunucu, bir Fiziksel Sunucuda veya bölümlenmemiþ bir Fiziksel Sunucuda kullanýlmak üzere saðlanan kaynaklarýn bölümlenmesiyle oluþturulan bir sanal bilgisayar anlamýna gelir. Ýþlemci Çekirdeði (genellikle bir iþlemci veya CPU olarak adlandýrýlýr) bir bilgi iþlem aygýtý içinde yer alan ve yönergeleri yorumlayan ve yürüten iþlevsel birim anlamýna gelir. Bir Ýþlemci Çekirdeði, en az bir yönerge denetim birimi ve bir veya daha fazla aritmetik veya mantýksal birimi içerir. Sanal Ýþlemci Çekirdeði, bölümlenmemiþ bir Fiziksel Sunucudaki bir Ýþlemci Çekirdeði veya bir Sanal Sunucuya atanan bir sanal çekirdektir. Lisans Alan Tarafýn, bu Program tarafýndan kullanýlan her bir Sanal Ýþlemci Çekirdeði için yetki edinmesi gerekir.
+
+Her bir Fiziksel Sunucu için, Lisans Alan Tarafýn, hangisi daha azsa, 1) Program için saðlanan tüm Sanal Sunucular üzerindeki kullanýlabilir tüm Sanal Ýþlemci Çekirdeklerinin toplamý veya 2) Fiziksel Sunucu üzerindeki kullanýlabilir tüm Ýþlemci Çekirdekleri için yeterli sayýda yetkiye sahip olmasý gerekir.
+
+Yukarýdakilere ek olarak, aþaðýdaki koþullar Lisans Alan Tarafýn bu Programý kullanýmý için geçerlidir.
+
+Boþta Duran Yedekleme Konfigürasyonlarý
+
+Bu bölümün amaçlarý açýsýndan bir "Boþta Duran Yedekleme" konfigürasyonu için bu Programýn bir kopyasý, yüksek düzeyde kullanýlabilirlik çözümünün parçasýný oluþturan bir sunucunun üzerine kurulmuþtur ve etkin sunucu üzerindeki Program kopyasý kullanýlamaz duruma geldiðinde Program yedek sistem olarak iþlev gören bu sunucuya geçer. Bir sunucu, yalnýzca bir yedek sisteme geçiþ iþlemi gerçekleþinceye kadar, özel olarak yedek sisteme geçiþ senaryolarýna destek veren yönetim iþlemleri için kullanýldýðýnda, "boþta duran" olarak deðerlendirilir. 
+
+Bu Program, uygun þekilde lisanslandýðý durumlar dýþýnda, bir Boþta Duran Yedekleme sunucusuna kurulamaz.
+
+Bu Program bir Boþta Duran Yedekleme konfigürasyonunda Multi-Instance Queue Manager (Birden Çok Eþgörünümlü Kuyruk Yöneticisi) özelliðiyle birlikte kullanýlýyorsa, bu Programýn bir kopyasý yedekleme amaçlarýyla bir Boþta Duran Yedekleme sunucusunda bulundurulabilir ve çalýþtýrýlabilir,  ancak "boþta duran" özelliðini kaybetmemesi ve etkin sunucu yedek sisteme geçmek üzere Boþta Duran Yedekleme Sunucusuna geçmediði sürece hiçbir tür üretim amaçlý iþte kullanýlmamasý gerekir. Etkin sunucu yedek sisteme geçmek üzere Boþta Duran Yedekleme Sunucusuna geçtiðinde, Programýn Boþta Duran Yedekleme kopyasý hata süresi boyunca üretim amaçlý iþ görmek üzere kullanýlabilir.
+
+Bu Program bir Boþta Duran Yedekleme konfigürasyonunda Yüksek Düzeyde Kullanýlabilirlik sistemleriyle birlikte kullanýlýyorsa, bu Programýn bir kopyasý yedekleme amaçlarýyla Boþta Duran Yedekleme sunucusunda bulundurulabilir, ancak çalýþtýrýlamaz (ve bu nedenle hiçbir tür üretim amaçlý iþte kullanýlamaz). Ancak, etkin sunucunun bir hata nedeniyle çalýþmamasý durumunda Yüksek Düzeyde Kullanýlabilirlik bileþenleri tarafýndan otomatik olarak çalýþtýrýlýr ve bu durumda Programýn Boþta Duran Yedekleme sunucusunda bulunan kopyasý hata süresi boyunca üretim amaçlý iþ görmek üzere kullanýlabilir.
+
+L/N:  L-APIG-AKHJ8V
+D/N:  L-APIG-AKHJ8V
+P/N:  L-APIG-AKHJ8V
+
+
+
+==============================================
+
+
+ÖNEMLÝ: DÝKKATLE OKUYUN
+
+Aþaðýda iki lisans sözleþmesi sunulmuþtur.
+
+1. Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi
+2. IBM Uluslararasý Program Lisans Sözleþmesi
+
+Lisans Alan Taraf, bu Programý (deðerlendirme, deneme, gösterimini yapma amaçlarý veya "dene veya satýn al" kampanyasý dýþýnda) üretim amacýyla kullanmak üzere satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak IBM Uluslararasý Program Lisans Sözleþmesi'ni hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Lisans Alan Taraf bu Programý, deðerlendirme, deneme, gösterimini yapma amaçlarýyla veya "dene veya satýn al" kampanyasý kapsamýnda kullanmak üzere (topluca "Deðerlendirme" olarak belirlenen amaçla) satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak (i) Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi'ni ("Deðerlendirme Lisansý") hiçbir deðiþiklik olmaksýzýn ve (ii) IBM Uluslararasý Program Lisans Sözleþmesi'ni ("UPLS") hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Deðerlendirme Lisansý, Lisans Alan Tarafýn Deðerlendirme süresi boyunca geçerli olacaktýr.
+
+Deðerlendirme süresi sonunda, Lisans Alan taraf, bir tedarik sözleþmesi (örneðin, IBM Uluslararasý Passport Advantage veya IBM Passport Express Advantage sözleþmeleri gibi) imzalayarak bu Programý edinmeyi (veya Deðerlendirme sürecinden sonra kullanmak üzere bu Programýn ek kopyalarýný edinmeyi) seçtiyse, Uluslararasý Program Lisans Sözleþmesi (UPLS) otomatik olarak geçerli olacaktýr.
+
+Deðerlendirme Lisansý ve UPLS ayný anda yürürlükte olamayacaðý gibi, bu Sözleþmelerden birinin koþullarý diðerinin koþullarýný deðiþtirmez. Deðerlendirme Lisansý ile UPLS birbirlerinden baðýmsýz sözleþmelerdir.
+
+Bu iki lisans sözleþmesinin tam metni aþaðýdadýr.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Programlarýn Deðerlendirilmesi Ýçin Uluslararasý Lisans Sözleþmesi (Z125-5543-05) geçerli olur.
+
+Program Adý (Program Numarasý):
+IBM MQ Advanced V9.0.3 (Evaluation)
+
+Aþaðýdaki standart koþullar, Lisans Alan Tarafýn Programý kullanýmý için geçerlidir.
+
+Deðerlendirme Süresi
+
+Deðerlendirme süresi, Lisans Alan Tarafýn bu Sözleþmenin koþullarýný kabul ettiði tarihte baþlar ve 90 gün sonra sona erer.
+
+Paketlenmiþ Programlar
+
+Bu Program, aþaðýda belirtilen Paketlenmiþ Programlardan oluþan, birden çok ürünün bulunduðu bir paket olarak lisanslanýr. Lisans Alan Tarafa, bu tür Paketlenmiþ Programlarý, Programa iliþkin Yetki Belgelerinin sýnýrlarý dahilinde ve Lisans Bilgileri belgesinde belirtildiði þekilde kurmasý ve kullanmasý için yetki verilir. Lisans Alan Tarafýn, Paketlenmiþ Programlarý birden çok ürünün yer aldýðý paketten ayrý olarak devretme ya da yeniden pazarlama yetkisi yoktur. Bir Paketlenmiþ Programla birlikte lisans koþullarý ve eðer varsa, Lisans Alan Tarafýn bu Paketlenmiþ Programý kullanýmý için geçerli olan koþullar da gönderilebilir. Herhangi bir çeliþki durumunda, bu Lisans Bilgileri belgesinde yer alan koþullar Paketlenmiþ Programýn koþullarýný hükümsüz kýlarak onlarýn yerine geçer. Lisans Alan Tarafýn, bu Programý kullaným hakký sona erdiðinde ya da sona erdirildiðinde, Paketlenmiþ Programlarýn tüm kopyalarýný kullanmaya son vermesi, bunlarý yok etmesi veya Programý edindiði üçüncü kiþiye derhal iade etmesi gerekir. Lisans Alan Taraf, Paketlenmiþ Programlarý karþýdan yüklediyse, bu Programý edindiði tarafla baðlantýya geçmelidir. Lisans Alan Taraf, Paketlenmiþ Programlarý, yukarýda belirtilen sýnýrlarý aþacak þekilde kullanmak amacýyla lisanslamak isterse, uygun lisansý edinmek için IBM Satýþ Temsilcisiyle veya Programý edindiði tarafla görüþmelidir.
+
+Bu Programlarla birlikte lisanslanan Paketlenmiþ Programlar aþaðýda belirtilmiþtir:
+IBM MQ V9.0.3
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Uluslararasý Program Lisans Sözleþmesi (Z125-3301-14) geçerli olur.
+
+Program Adý (Program Numarasý):
+IBM MQ Advanced V9.0.3 (5724-H72)
+
+Aþaðýdaki standart koþullar, Lisans Alan Tarafýn Programý kullanýmý için geçerlidir.
+
+Sýnýrlý kullaným hakký
+
+Uluslararasý Program Lisans Sözleþmesi'nde ("UPLS") ve bu Lisans Bilgileri belgesinde açýklandýðý þekilde IBM, Lisans Alan Tarafa bu Programý kullanmasý için sýnýrlý bir hak verir. Bu hak, Yetki Belgesinde kanýtlandýðý þekilde, Lisans Alan Tarafça ödemesi yapýlmýþ olan Ýþlemci Deðer Birimi ("PVU"), Kaynak Deðer Birimi ("RVU"), Deðer Birimi ("VU") ya da belirlenmiþ diðer bir kullaným seviyesi gibi bir Yetkili Kullaným seviyesiyle sýnýrlanmýþtýr. Ayrýca, Lisans Alan Tarafýn kullanýmý, ayrýca belirli bir makineyle ya da yalnýzca bir Destekleyici Programla ya da baþka kýsýtlamalara tabi olarak sýnýrlanabilir. Lisans Alan Taraf bu Programýn ekonomik deðerinin tümünü ödemediðinde, ek ücretler ödenmedikçe Programýn baþka hiçbir þekilde kullanýlmasýna izin verilmez. Ayrýca, Lisans Alan Tarafýn bu Programý kullanmak üzere edindiði yetkilerin tabi olduðu geçerli sözleþmelerde açýkça belirtilmediði sürece, Lisans Alan Tarafa bu Programý herhangi bir üçüncü kiþiye ticari BT hizmetleri saðlamak, ticari barýndýrma ya da zaman paylaþýmý sunmak ya da alt lisans vermek, kiralamak ya da finansal olarak kiralamak üzere kullanma yetkisi de verilmez. Ek ücretlerin ödenmesine baðlý olarak ya da farklý veya tamamlayýcý koþullar kapsamýnda Lisans Alan Tarafa ek haklar saðlanabilir. IBM, Lisans Alan Tarafa bu tür ek haklarý saðlayýp saðlamamaya iliþkin karar verme hakkýný saklý tutar.
+
+Belirtimler
+
+Programýn belirtimleri, Programýn Duyuru Mektuplarýndaki toplu Tanýtým ve Teknik Bilgiler (Description and Technical Information) baþlýklý bölümlerde bulunabilir.
+
+Paketlenmiþ Programlar
+
+Bu Program, aþaðýda belirtilen Paketlenmiþ Programlardan oluþan, birden çok ürünün bulunduðu bir paket olarak lisanslanýr. Lisans Alan Tarafa, bu tür Paketlenmiþ Programlarý, Programa iliþkin Yetki Belgelerinin sýnýrlarý dahilinde ve Lisans Bilgileri belgesinde belirtildiði þekilde kurmasý ve kullanmasý için yetki verilir. Lisans Alan Tarafýn, Paketlenmiþ Programlarý birden çok ürünün yer aldýðý paketten ayrý olarak devretme ya da yeniden pazarlama yetkisi yoktur. Bir Paketlenmiþ Programla birlikte lisans koþullarý ve eðer varsa, Lisans Alan Tarafýn bu Paketlenmiþ Programý kullanýmý için geçerli olan koþullar da gönderilebilir. Herhangi bir çeliþki durumunda, bu Lisans Bilgileri belgesinde yer alan koþullar Paketlenmiþ Programýn koþullarýný hükümsüz kýlarak onlarýn yerine geçer. Lisans Alan Tarafýn, bu Programý kullaným hakký sona erdiðinde ya da sona erdirildiðinde, Paketlenmiþ Programlarýn tüm kopyalarýný kullanmaya son vermesi, bunlarý yok etmesi veya Programý edindiði üçüncü kiþiye derhal iade etmesi gerekir. Lisans Alan Taraf, Paketlenmiþ Programlarý karþýdan yüklediyse, bu Programý edindiði tarafla baðlantýya geçmelidir. Lisans Alan Taraf, Paketlenmiþ Programlarý, yukarýda belirtilen sýnýrlarý aþacak þekilde kullanmak amacýyla lisanslamak isterse, uygun lisansý edinmek için IBM Satýþ Temsilcisiyle veya Programý edindiði tarafla görüþmelidir.
+
+Bu Programlarla birlikte lisanslanan Paketlenmiþ Programlar aþaðýda belirtilmiþtir:
+IBM MQ V9.0.3
+
+Gerekli Yetkilerin Oluþturulmasý için Kullanýlmayan Bileþenler
+
+Lisans Alan Tarafýn bu Programý kurmasý ya da kullanmasý için gereken yetki sayýsý belirlenirken, aþaðýda belirtilen Program bileþenlerinin kurulumu ve kullanýmý dikkate alýnmaz. Baþka bir deyiþle, Lisans Alan Taraf aþaðýdaki Program bileþenlerini lisans koþullarý kapsamýnda kurabilir ve kullanabilir, ancak bu bileþenler bu Program için gereken yetki sayýsýnýn belirlenmesinde kullanýlmaz.
+IBM MQ Managed File Transfer Agent V9.0.1
+IBM MQ Telemetry V9.0.1
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+Aþaðýdaki ölçü birimleri, Lisans Alan Tarafýn Programý kullanýmý için geçerli olabilir.
+
+Ýþlemci Deðer Birimi (PVU)
+
+Ýþlemci Deðer Birimi (PVU), bu Programýn lisanslandýðý ölçüm birimidir. Gereken Ýþlemci Deðer Birimi (PVU) yetkilerinin sayýsý için iþlemci teknolojisi (Ýþlemci Satýcý Firmasý, Marka, Tip ve Model Numarasý esasýna göre þu adresteki PVU Tablosunda tanýmlanmýþtýr: http://www.ibm.com/software/lotus/passportadvantage/pvu_licensing_for_customers.html) ve bu Program tarafýndan kullanýlan iþlemcilerin sayýsý esas alýnýr. IBM, PVU esasýna göre lisanslamanýn amacý açýsýndan bir çip üzerinde yer alan her iþlemci çekirdeði için bir iþlemci tanýmlamaya devam eder. Örneðin, bir çift çekirdekli iþlemci çipinde iki adet iþlemci çekirdeði bulunur.
+
+Lisans Alan Taraf, bu Programý, Passport Advantage Alt Kapasite Lisanslama Koþullarý'na (aþaðýda belirtilen Web sayfasýna bakýn) göre Tam Kapasite lisanslama veya Sanallaþtýrma Kapasitesi (Alt Kapasite) lisanslama esasýný kullanarak etkinleþtirebilir. Tam Kapasite lisanslamasý kullanýlýyorsa, Lisans Alan Tarafýn, bu Programýn sürekli olarak kaldýrýldýðý sunucular hariç olmak üzere, bu Program tarafýndan kullanýlan veya yönetilen fiziksel donaným ortamýnda yer alan etkinleþtirilmiþ tüm iþlemci çekirdeklerini* kapsamaya yetecek sayýda Ýþlemci Deðer Birimi (PVU) yetkisi edinmesi gerekir. Sanallaþtýrma Kapasitesi lisanslamasý kullanýlýyorsa, Lisans Alan Tarafýn, Sanallaþtýrma Kapasitesi Lisansý Sayým Kurallarý'na (Virtualization Capacity License Counting Rules) göre tanýmlanan ve bu Program tarafýndan kullanýlan veya yönetilen tüm etkin iþlemci çekirdeklerini kapsamaya yetecek sayýda yetkiyi edinmesi gerekir. Söz konusu kurallarla ilgili bilgi edinmek için aþaðýda yer alan adrese bakýn: http://www.ibm.com/software/lotus/passportadvantage/Counting_Software_licenses_using_specific_virtualization_technologies.html.
+
+* Etkinleþtirilmiþ iþlemci çekirdeði, iþlemci çekirdeklerinin kapasitesinin, sanallaþtýrma teknolojileri, iþletim sistemi komutlarý, BIOS ayarlarý veya benzeri sýnýrlamalarla sýnýrlandýrýlabilmesinden veya sýnýrlý olmasýndan baðýmsýz olarak herhangi bir fiziksel veya sanal sunucuda kullanýlabilir.
+
+Sanal Ýþlemci Çekirdeði
+
+Sanal Ýþlemci Çekirdeði, bu Programýn lisanslanabileceði bir ölçü birimidir. Fiziksel Sunucu, bir veya daha fazla kullanýcý ve istemci aygýtýnda istenen yordamlarý, komutlarý veya uygulamalarý yürüten ve iþlemci birimleri, bellek ve girdi/çýktý kapasitesine sahip fiziksel bir bilgisayardýr. Raflarýn, blade kasalarýnýn veya diðer benzer ekipmanýn kullanýlmasý durumunda, gerekli bileþenlere sahip her bir ayrýlabilir fiziksel aygýt (örneðin, bir blade aygýtý veya raf düzenekli bir aygýt) kendi baþýna ayrý bir Fiziksel Sunucu olarak deðerlendirilir. Sanal Sunucu, bir Fiziksel Sunucuda veya bölümlenmemiþ bir Fiziksel Sunucuda kullanýlmak üzere saðlanan kaynaklarýn bölümlenmesiyle oluþturulan bir sanal bilgisayar anlamýna gelir. Ýþlemci Çekirdeði (genellikle bir iþlemci veya CPU olarak adlandýrýlýr) bir bilgi iþlem aygýtý içinde yer alan ve yönergeleri yorumlayan ve yürüten iþlevsel birim anlamýna gelir. Bir Ýþlemci Çekirdeði, en az bir yönerge denetim birimi ve bir veya daha fazla aritmetik veya mantýksal birimi içerir. Sanal Ýþlemci Çekirdeði, bölümlenmemiþ bir Fiziksel Sunucudaki bir Ýþlemci Çekirdeði veya bir Sanal Sunucuya atanan bir sanal çekirdektir. Lisans Alan Tarafýn, bu Program tarafýndan kullanýlan her bir Sanal Ýþlemci Çekirdeði için yetki edinmesi gerekir.
+
+Her bir Fiziksel Sunucu için, Lisans Alan Tarafýn, hangisi daha azsa, 1) Program için saðlanan tüm Sanal Sunucular üzerindeki kullanýlabilir tüm Sanal Ýþlemci Çekirdeklerinin toplamý veya 2) Fiziksel Sunucu üzerindeki kullanýlabilir tüm Ýþlemci Çekirdekleri için yeterli sayýda yetkiye sahip olmasý gerekir.
+
+L/N:  L-APIG-AKHJJP
+D/N:  L-APIG-AKHJJP
+P/N:  L-APIG-AKHJJP
+
+
+
+==============================================
+
+
+ÖNEMLÝ: DÝKKATLE OKUYUN
+
+Aþaðýda iki lisans sözleþmesi sunulmuþtur.
+
+1. Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi
+2. IBM Uluslararasý Program Lisans Sözleþmesi
+
+Lisans Alan Taraf, bu Programý (deðerlendirme, deneme, gösterimini yapma amaçlarý veya "dene veya satýn al" kampanyasý dýþýnda) üretim amacýyla kullanmak üzere satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak IBM Uluslararasý Program Lisans Sözleþmesi'ni hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Lisans Alan Taraf bu Programý, deðerlendirme, deneme, gösterimini yapma amaçlarýyla veya "dene veya satýn al" kampanyasý kapsamýnda kullanmak üzere (topluca "Deðerlendirme" olarak belirlenen amaçla) satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak (i) Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi'ni ("Deðerlendirme Lisansý") hiçbir deðiþiklik olmaksýzýn ve (ii) IBM Uluslararasý Program Lisans Sözleþmesi'ni ("UPLS") hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Deðerlendirme Lisansý, Lisans Alan Tarafýn Deðerlendirme süresi boyunca geçerli olacaktýr.
+
+Deðerlendirme süresi sonunda, Lisans Alan taraf, bir tedarik sözleþmesi (örneðin, IBM Uluslararasý Passport Advantage veya IBM Passport Express Advantage sözleþmeleri gibi) imzalayarak bu Programý edinmeyi (veya Deðerlendirme sürecinden sonra kullanmak üzere bu Programýn ek kopyalarýný edinmeyi) seçtiyse, Uluslararasý Program Lisans Sözleþmesi (UPLS) otomatik olarak geçerli olacaktýr.
+
+Deðerlendirme Lisansý ve UPLS ayný anda yürürlükte olamayacaðý gibi, bu Sözleþmelerden birinin koþullarý diðerinin koþullarýný deðiþtirmez. Deðerlendirme Lisansý ile UPLS birbirlerinden baðýmsýz sözleþmelerdir.
+
+Bu iki lisans sözleþmesinin tam metni aþaðýdadýr.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Programlarýn Deðerlendirilmesi Ýçin Uluslararasý Lisans Sözleþmesi (Z125-5543-05) geçerli olur.
+
+Program Adý (Program Numarasý):
+IBM MQ Advanced Idle Standby V9.0.3 (Evaluation)
+
+Aþaðýdaki standart koþullar, Lisans Alan Tarafýn Programý kullanýmý için geçerlidir.
+
+Deðerlendirme Süresi
+
+Deðerlendirme süresi, Lisans Alan Tarafýn bu Sözleþmenin koþullarýný kabul ettiði tarihte baþlar ve 90 gün sonra sona erer.
+
+Paketlenmiþ Programlar
+
+Bu Program, aþaðýda belirtilen Paketlenmiþ Programlardan oluþan, birden çok ürünün bulunduðu bir paket olarak lisanslanýr. Lisans Alan Tarafa, bu tür Paketlenmiþ Programlarý, Programa iliþkin Yetki Belgelerinin sýnýrlarý dahilinde ve Lisans Bilgileri belgesinde belirtildiði þekilde kurmasý ve kullanmasý için yetki verilir. Lisans Alan Tarafýn, Paketlenmiþ Programlarý birden çok ürünün yer aldýðý paketten ayrý olarak devretme ya da yeniden pazarlama yetkisi yoktur. Bir Paketlenmiþ Programla birlikte lisans koþullarý ve eðer varsa, Lisans Alan Tarafýn bu Paketlenmiþ Programý kullanýmý için geçerli olan koþullar da gönderilebilir. Herhangi bir çeliþki durumunda, bu Lisans Bilgileri belgesinde yer alan koþullar Paketlenmiþ Programýn koþullarýný hükümsüz kýlarak onlarýn yerine geçer. Lisans Alan Tarafýn, bu Programý kullaným hakký sona erdiðinde ya da sona erdirildiðinde, Paketlenmiþ Programlarýn tüm kopyalarýný kullanmaya son vermesi, bunlarý yok etmesi veya Programý edindiði üçüncü kiþiye derhal iade etmesi gerekir. Lisans Alan Taraf, Paketlenmiþ Programlarý karþýdan yüklediyse, bu Programý edindiði tarafla baðlantýya geçmelidir. Lisans Alan Taraf, Paketlenmiþ Programlarý, yukarýda belirtilen sýnýrlarý aþacak þekilde kullanmak amacýyla lisanslamak isterse, uygun lisansý edinmek için IBM Satýþ Temsilcisiyle veya Programý edindiði tarafla görüþmelidir.
+
+Bu Programlarla birlikte lisanslanan Paketlenmiþ Programlar aþaðýda belirtilmiþtir:
+IBM MQ Idle Standby V9.0.3
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Uluslararasý Program Lisans Sözleþmesi (Z125-3301-14) geçerli olur.
+
+Program Adý (Program Numarasý):
+IBM MQ Advanced Idle Standby V9.0.3 (5724-H72)
+
+Aþaðýdaki standart koþullar, Lisans Alan Tarafýn Programý kullanýmý için geçerlidir.
+
+Sýnýrlý kullaným hakký
+
+Uluslararasý Program Lisans Sözleþmesi'nde ("UPLS") ve bu Lisans Bilgileri belgesinde açýklandýðý þekilde IBM, Lisans Alan Tarafa bu Programý kullanmasý için sýnýrlý bir hak verir. Bu hak, Yetki Belgesinde kanýtlandýðý þekilde, Lisans Alan Tarafça ödemesi yapýlmýþ olan Ýþlemci Deðer Birimi ("PVU"), Kaynak Deðer Birimi ("RVU"), Deðer Birimi ("VU") ya da belirlenmiþ diðer bir kullaným seviyesi gibi bir Yetkili Kullaným seviyesiyle sýnýrlanmýþtýr. Ayrýca, Lisans Alan Tarafýn kullanýmý, ayrýca belirli bir makineyle ya da yalnýzca bir Destekleyici Programla ya da baþka kýsýtlamalara tabi olarak sýnýrlanabilir. Lisans Alan Taraf bu Programýn ekonomik deðerinin tümünü ödemediðinde, ek ücretler ödenmedikçe Programýn baþka hiçbir þekilde kullanýlmasýna izin verilmez. Ayrýca, Lisans Alan Tarafýn bu Programý kullanmak üzere edindiði yetkilerin tabi olduðu geçerli sözleþmelerde açýkça belirtilmediði sürece, Lisans Alan Tarafa bu Programý herhangi bir üçüncü kiþiye ticari BT hizmetleri saðlamak, ticari barýndýrma ya da zaman paylaþýmý sunmak ya da alt lisans vermek, kiralamak ya da finansal olarak kiralamak üzere kullanma yetkisi de verilmez. Ek ücretlerin ödenmesine baðlý olarak ya da farklý veya tamamlayýcý koþullar kapsamýnda Lisans Alan Tarafa ek haklar saðlanabilir. IBM, Lisans Alan Tarafa bu tür ek haklarý saðlayýp saðlamamaya iliþkin karar verme hakkýný saklý tutar.
+
+Belirtimler
+
+Programýn belirtimleri, Programýn Duyuru Mektuplarýndaki toplu Tanýtým ve Teknik Bilgiler (Description and Technical Information) baþlýklý bölümlerde bulunabilir.
+
+Paketlenmiþ Programlar
+
+Bu Program, aþaðýda belirtilen Paketlenmiþ Programlardan oluþan, birden çok ürünün bulunduðu bir paket olarak lisanslanýr. Lisans Alan Tarafa, bu tür Paketlenmiþ Programlarý, Programa iliþkin Yetki Belgelerinin sýnýrlarý dahilinde ve Lisans Bilgileri belgesinde belirtildiði þekilde kurmasý ve kullanmasý için yetki verilir. Lisans Alan Tarafýn, Paketlenmiþ Programlarý birden çok ürünün yer aldýðý paketten ayrý olarak devretme ya da yeniden pazarlama yetkisi yoktur. Bir Paketlenmiþ Programla birlikte lisans koþullarý ve eðer varsa, Lisans Alan Tarafýn bu Paketlenmiþ Programý kullanýmý için geçerli olan koþullar da gönderilebilir. Herhangi bir çeliþki durumunda, bu Lisans Bilgileri belgesinde yer alan koþullar Paketlenmiþ Programýn koþullarýný hükümsüz kýlarak onlarýn yerine geçer. Lisans Alan Tarafýn, bu Programý kullaným hakký sona erdiðinde ya da sona erdirildiðinde, Paketlenmiþ Programlarýn tüm kopyalarýný kullanmaya son vermesi, bunlarý yok etmesi veya Programý edindiði üçüncü kiþiye derhal iade etmesi gerekir. Lisans Alan Taraf, Paketlenmiþ Programlarý karþýdan yüklediyse, bu Programý edindiði tarafla baðlantýya geçmelidir. Lisans Alan Taraf, Paketlenmiþ Programlarý, yukarýda belirtilen sýnýrlarý aþacak þekilde kullanmak amacýyla lisanslamak isterse, uygun lisansý edinmek için IBM Satýþ Temsilcisiyle veya Programý edindiði tarafla görüþmelidir.
+
+Bu Programlarla birlikte lisanslanan Paketlenmiþ Programlar aþaðýda belirtilmiþtir:
+IBM MQ Idle Standby V9.0.3
+
+Gerekli Yetkilerin Oluþturulmasý için Kullanýlmayan Bileþenler
+
+Lisans Alan Tarafýn bu Programý kurmasý ya da kullanmasý için gereken yetki sayýsý belirlenirken, aþaðýda belirtilen Program bileþenlerinin kurulumu ve kullanýmý dikkate alýnmaz. Baþka bir deyiþle, Lisans Alan Taraf aþaðýdaki Program bileþenlerini lisans koþullarý kapsamýnda kurabilir ve kullanabilir, ancak bu bileþenler bu Program için gereken yetki sayýsýnýn belirlenmesinde kullanýlmaz.
+IBM MQ Managed File Transfer Agent V9.0.1
+IBM MQ Telemetry V9.0.1
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+Aþaðýdaki ölçü birimleri, Lisans Alan Tarafýn Programý kullanýmý için geçerli olabilir.
+
+Ýþlemci Deðer Birimi (PVU)
+
+Ýþlemci Deðer Birimi (PVU), bu Programýn lisanslandýðý ölçüm birimidir. Gereken Ýþlemci Deðer Birimi (PVU) yetkilerinin sayýsý için iþlemci teknolojisi (Ýþlemci Satýcý Firmasý, Marka, Tip ve Model Numarasý esasýna göre þu adresteki PVU Tablosunda tanýmlanmýþtýr: http://www.ibm.com/software/lotus/passportadvantage/pvu_licensing_for_customers.html) ve bu Program tarafýndan kullanýlan iþlemcilerin sayýsý esas alýnýr. IBM, PVU esasýna göre lisanslamanýn amacý açýsýndan bir çip üzerinde yer alan her iþlemci çekirdeði için bir iþlemci tanýmlamaya devam eder. Örneðin, bir çift çekirdekli iþlemci çipinde iki adet iþlemci çekirdeði bulunur.
+
+Lisans Alan Taraf, bu Programý, Passport Advantage Alt Kapasite Lisanslama Koþullarý'na (aþaðýda belirtilen Web sayfasýna bakýn) göre Tam Kapasite lisanslama veya Sanallaþtýrma Kapasitesi (Alt Kapasite) lisanslama esasýný kullanarak etkinleþtirebilir. Tam Kapasite lisanslamasý kullanýlýyorsa, Lisans Alan Tarafýn, bu Programýn sürekli olarak kaldýrýldýðý sunucular hariç olmak üzere, bu Program tarafýndan kullanýlan veya yönetilen fiziksel donaným ortamýnda yer alan etkinleþtirilmiþ tüm iþlemci çekirdeklerini* kapsamaya yetecek sayýda Ýþlemci Deðer Birimi (PVU) yetkisi edinmesi gerekir. Sanallaþtýrma Kapasitesi lisanslamasý kullanýlýyorsa, Lisans Alan Tarafýn, Sanallaþtýrma Kapasitesi Lisansý Sayým Kurallarý'na (Virtualization Capacity License Counting Rules) göre tanýmlanan ve bu Program tarafýndan kullanýlan veya yönetilen tüm etkin iþlemci çekirdeklerini kapsamaya yetecek sayýda yetkiyi edinmesi gerekir. Söz konusu kurallarla ilgili bilgi edinmek için aþaðýda yer alan adrese bakýn: http://www.ibm.com/software/lotus/passportadvantage/Counting_Software_licenses_using_specific_virtualization_technologies.html.
+
+* Etkinleþtirilmiþ iþlemci çekirdeði, iþlemci çekirdeklerinin kapasitesinin, sanallaþtýrma teknolojileri, iþletim sistemi komutlarý, BIOS ayarlarý veya benzeri sýnýrlamalarla sýnýrlandýrýlabilmesinden veya sýnýrlý olmasýndan baðýmsýz olarak herhangi bir fiziksel veya sanal sunucuda kullanýlabilir.
+
+Yukarýdakilere ek olarak, aþaðýdaki koþullar Lisans Alan Tarafýn bu Programý kullanýmý için geçerlidir.
+
+Boþta Duran Yedekleme Konfigürasyonlarý
+
+Bu bölümün amaçlarý açýsýndan bir "Boþta Duran Yedekleme" konfigürasyonu için bu Programýn bir kopyasý, yüksek düzeyde kullanýlabilirlik çözümünün parçasýný oluþturan bir sunucunun üzerine kurulmuþtur ve etkin sunucu üzerindeki Program kopyasý kullanýlamaz duruma geldiðinde Program yedek sistem olarak iþlev gören bu sunucuya geçer. Bir sunucu, yalnýzca bir yedek sisteme geçiþ iþlemi gerçekleþinceye kadar, özel olarak yedek sisteme geçiþ senaryolarýna destek veren yönetim iþlemleri için kullanýldýðýnda, "boþta duran" olarak deðerlendirilir. 
+
+Bu Program, uygun þekilde lisanslandýðý durumlar dýþýnda, bir Boþta Duran Yedekleme sunucusuna kurulamaz.
+
+Bu Program bir Boþta Duran Yedekleme konfigürasyonunda Multi-Instance Queue Manager (Birden Çok Eþgörünümlü Kuyruk Yöneticisi) özelliðiyle birlikte kullanýlýyorsa, bu Programýn bir kopyasý yedekleme amaçlarýyla bir Boþta Duran Yedekleme sunucusunda bulundurulabilir ve çalýþtýrýlabilir,  ancak "boþta duran" özelliðini kaybetmemesi ve etkin sunucu yedek sisteme geçmek üzere Boþta Duran Yedekleme Sunucusuna geçmediði sürece hiçbir tür üretim amaçlý iþte kullanýlmamasý gerekir. Etkin sunucu yedek sisteme geçmek üzere Boþta Duran Yedekleme Sunucusuna geçtiðinde, Programýn Boþta Duran Yedekleme kopyasý hata süresi boyunca üretim amaçlý iþ görmek üzere kullanýlabilir.
+
+Bu Program bir Boþta Duran Yedekleme konfigürasyonunda Yüksek Düzeyde Kullanýlabilirlik sistemleriyle birlikte kullanýlýyorsa, bu Programýn bir kopyasý yedekleme amaçlarýyla Boþta Duran Yedekleme sunucusunda bulundurulabilir, ancak çalýþtýrýlamaz (ve bu nedenle hiçbir tür üretim amaçlý iþte kullanýlamaz). Ancak, etkin sunucunun bir hata nedeniyle çalýþmamasý durumunda Yüksek Düzeyde Kullanýlabilirlik bileþenleri tarafýndan otomatik olarak çalýþtýrýlýr ve bu durumda Programýn Boþta Duran Yedekleme sunucusunda bulunan kopyasý hata süresi boyunca üretim amaçlý iþ görmek üzere kullanýlabilir.
+
+L/N:  L-APIG-AKHJKX
+D/N:  L-APIG-AKHJKX
+P/N:  L-APIG-AKHJKX
+
+
+
+==============================================
+
+
+ÖNEMLÝ: DÝKKATLE OKUYUN
+
+Aþaðýda iki lisans sözleþmesi sunulmuþtur.
+
+1. Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi
+2. IBM Uluslararasý Program Lisans Sözleþmesi
+
+Lisans Alan Taraf, bu Programý (deðerlendirme, deneme, gösterimini yapma amaçlarý veya "dene veya satýn al" kampanyasý dýþýnda) üretim amacýyla kullanmak üzere satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak IBM Uluslararasý Program Lisans Sözleþmesi'ni hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Lisans Alan Taraf bu Programý, deðerlendirme, deneme, gösterimini yapma amaçlarýyla veya "dene veya satýn al" kampanyasý kapsamýnda kullanmak üzere (topluca "Deðerlendirme" olarak belirlenen amaçla) satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak (i) Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi'ni ("Deðerlendirme Lisansý") hiçbir deðiþiklik olmaksýzýn ve (ii) IBM Uluslararasý Program Lisans Sözleþmesi'ni ("UPLS") hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Deðerlendirme Lisansý, Lisans Alan Tarafýn Deðerlendirme süresi boyunca geçerli olacaktýr.
+
+Deðerlendirme süresi sonunda, Lisans Alan taraf, bir tedarik sözleþmesi (örneðin, IBM Uluslararasý Passport Advantage veya IBM Passport Express Advantage sözleþmeleri gibi) imzalayarak bu Programý edinmeyi (veya Deðerlendirme sürecinden sonra kullanmak üzere bu Programýn ek kopyalarýný edinmeyi) seçtiyse, Uluslararasý Program Lisans Sözleþmesi (UPLS) otomatik olarak geçerli olacaktýr.
+
+Deðerlendirme Lisansý ve UPLS ayný anda yürürlükte olamayacaðý gibi, bu Sözleþmelerden birinin koþullarý diðerinin koþullarýný deðiþtirmez. Deðerlendirme Lisansý ile UPLS birbirlerinden baðýmsýz sözleþmelerdir.
+
+Bu iki lisans sözleþmesinin tam metni aþaðýdadýr.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Programlarýn Deðerlendirilmesi Ýçin Uluslararasý Lisans Sözleþmesi (Z125-5543-05) geçerli olur.
+
+Program Adý (Program Numarasý):
+IBM MQ Advanced for Developers V9.0.3 (Evaluation)
+
+Aþaðýdaki standart koþullar, Lisans Alan Tarafýn Programý kullanýmý için geçerlidir.
+
+Deðerlendirme Süresi
+
+Deðerlendirme süresi, Lisans Alan Tarafýn bu Sözleþmenin koþullarýný kabul ettiði tarihte baþlar ve 90 gün sonra sona erer.
+
+Paketlenmiþ Programlar
+
+Bu Program, aþaðýda belirtilen Paketlenmiþ Programlardan oluþan, birden çok ürünün bulunduðu bir paket olarak lisanslanýr. Lisans Alan Tarafa, bu tür Paketlenmiþ Programlarý, Programa iliþkin Yetki Belgelerinin sýnýrlarý dahilinde ve Lisans Bilgileri belgesinde belirtildiði þekilde kurmasý ve kullanmasý için yetki verilir. Lisans Alan Tarafýn, Paketlenmiþ Programlarý birden çok ürünün yer aldýðý paketten ayrý olarak devretme ya da yeniden pazarlama yetkisi yoktur. Bir Paketlenmiþ Programla birlikte lisans koþullarý ve eðer varsa, Lisans Alan Tarafýn bu Paketlenmiþ Programý kullanýmý için geçerli olan koþullar da gönderilebilir. Herhangi bir çeliþki durumunda, bu Lisans Bilgileri belgesinde yer alan koþullar Paketlenmiþ Programýn koþullarýný hükümsüz kýlarak onlarýn yerine geçer. Lisans Alan Tarafýn, bu Programý kullaným hakký sona erdiðinde ya da sona erdirildiðinde, Paketlenmiþ Programlarýn tüm kopyalarýný kullanmaya son vermesi, bunlarý yok etmesi veya Programý edindiði üçüncü kiþiye derhal iade etmesi gerekir. Lisans Alan Taraf, Paketlenmiþ Programlarý karþýdan yüklediyse, bu Programý edindiði tarafla baðlantýya geçmelidir. Lisans Alan Taraf, Paketlenmiþ Programlarý, yukarýda belirtilen sýnýrlarý aþacak þekilde kullanmak amacýyla lisanslamak isterse, uygun lisansý edinmek için IBM Satýþ Temsilcisiyle veya Programý edindiði tarafla görüþmelidir.
+
+Bu Programlarla birlikte lisanslanan Paketlenmiþ Programlar aþaðýda belirtilmiþtir:
+IBM MQ V9.0.3
+
+Geliþtirici Sýnýrlamasý
+
+Bu Program, "Geliþtiriciler" için belirlendiyse, yalnýzca bir geliþtirici makinesinde Lisans Alan Tarafýn dahili geliþtirme ve birim denemesi amaçlarýyla devreye alýnabilir. Geliþtirici makinesi, her ikisi de eriþilebilir olan ve yalnýzca tek bir belirli geliþtirici tarafýndan kullanýlan birincil iþletim sistemini ve bu Programý çalýþtýran fiziksel ya da sanal bir masaüstü ortamýdýr. Lisans Alan Taraf bu Programý üretim iþyüklerinin iþlenmesi, üretimde ortaya çýkan iþyüklerinin benzerlerinin yaratýlmasý ya da herhangi bir kod, uygulama ya da sistemin ölçeklenebilirliðinin denenmesi için kullanamaz. Uygun ürün yetkilerini almadýðý sürece, Lisans Alan Tarafa, bu Programýn hiçbir bölümünü baþka herhangi bir amaçla kullanmasý için yetki verilmez.
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Uluslararasý Program Lisans Sözleþmesi (Z125-3301-14) geçerli olur.
+
+Program Adý (Program Numarasý):
+IBM MQ Advanced for Developers V9.0.3 (5724-H72)
+
+Aþaðýdaki standart koþullar, Lisans Alan Tarafýn Programý kullanýmý için geçerlidir.
+
+Sýnýrlý kullaným hakký
+
+Uluslararasý Program Lisans Sözleþmesi'nde ("UPLS") ve bu Lisans Bilgileri belgesinde açýklandýðý þekilde IBM, Lisans Alan Tarafa bu Programý kullanmasý için sýnýrlý bir hak verir. Bu hak, Yetki Belgesinde kanýtlandýðý þekilde, Lisans Alan Tarafça ödemesi yapýlmýþ olan Ýþlemci Deðer Birimi ("PVU"), Kaynak Deðer Birimi ("RVU"), Deðer Birimi ("VU") ya da belirlenmiþ diðer bir kullaným seviyesi gibi bir Yetkili Kullaným seviyesiyle sýnýrlanmýþtýr. Ayrýca, Lisans Alan Tarafýn kullanýmý, ayrýca belirli bir makineyle ya da yalnýzca bir Destekleyici Programla ya da baþka kýsýtlamalara tabi olarak sýnýrlanabilir. Lisans Alan Taraf bu Programýn ekonomik deðerinin tümünü ödemediðinde, ek ücretler ödenmedikçe Programýn baþka hiçbir þekilde kullanýlmasýna izin verilmez. Ayrýca, Lisans Alan Tarafýn bu Programý kullanmak üzere edindiði yetkilerin tabi olduðu geçerli sözleþmelerde açýkça belirtilmediði sürece, Lisans Alan Tarafa bu Programý herhangi bir üçüncü kiþiye ticari BT hizmetleri saðlamak, ticari barýndýrma ya da zaman paylaþýmý sunmak ya da alt lisans vermek, kiralamak ya da finansal olarak kiralamak üzere kullanma yetkisi de verilmez. Ek ücretlerin ödenmesine baðlý olarak ya da farklý veya tamamlayýcý koþullar kapsamýnda Lisans Alan Tarafa ek haklar saðlanabilir. IBM, Lisans Alan Tarafa bu tür ek haklarý saðlayýp saðlamamaya iliþkin karar verme hakkýný saklý tutar.
+
+Belirtimler
+
+Programýn belirtimleri, Programýn Duyuru Mektuplarýndaki toplu Tanýtým ve Teknik Bilgiler (Description and Technical Information) baþlýklý bölümlerde bulunabilir.
+
+Paketlenmiþ Programlar
+
+Bu Program, aþaðýda belirtilen Paketlenmiþ Programlardan oluþan, birden çok ürünün bulunduðu bir paket olarak lisanslanýr. Lisans Alan Tarafa, bu tür Paketlenmiþ Programlarý, Programa iliþkin Yetki Belgelerinin sýnýrlarý dahilinde ve Lisans Bilgileri belgesinde belirtildiði þekilde kurmasý ve kullanmasý için yetki verilir. Lisans Alan Tarafýn, Paketlenmiþ Programlarý birden çok ürünün yer aldýðý paketten ayrý olarak devretme ya da yeniden pazarlama yetkisi yoktur. Bir Paketlenmiþ Programla birlikte lisans koþullarý ve eðer varsa, Lisans Alan Tarafýn bu Paketlenmiþ Programý kullanýmý için geçerli olan koþullar da gönderilebilir. Herhangi bir çeliþki durumunda, bu Lisans Bilgileri belgesinde yer alan koþullar Paketlenmiþ Programýn koþullarýný hükümsüz kýlarak onlarýn yerine geçer. Lisans Alan Tarafýn, bu Programý kullaným hakký sona erdiðinde ya da sona erdirildiðinde, Paketlenmiþ Programlarýn tüm kopyalarýný kullanmaya son vermesi, bunlarý yok etmesi veya Programý edindiði üçüncü kiþiye derhal iade etmesi gerekir. Lisans Alan Taraf, Paketlenmiþ Programlarý karþýdan yüklediyse, bu Programý edindiði tarafla baðlantýya geçmelidir. Lisans Alan Taraf, Paketlenmiþ Programlarý, yukarýda belirtilen sýnýrlarý aþacak þekilde kullanmak amacýyla lisanslamak isterse, uygun lisansý edinmek için IBM Satýþ Temsilcisiyle veya Programý edindiði tarafla görüþmelidir.
+
+Bu Programlarla birlikte lisanslanan Paketlenmiþ Programlar aþaðýda belirtilmiþtir:
+IBM MQ V9.0.3
+
+Geliþtirici Sýnýrlamasý
+
+Bu Program, "Geliþtiriciler" için belirlendiyse, yalnýzca bir geliþtirici makinesinde Lisans Alan Tarafýn dahili geliþtirme ve birim denemesi amaçlarýyla devreye alýnabilir. Geliþtirici makinesi, her ikisi de eriþilebilir olan ve yalnýzca tek bir belirli geliþtirici tarafýndan kullanýlan birincil iþletim sistemini ve bu Programý çalýþtýran fiziksel ya da sanal bir masaüstü ortamýdýr. Lisans Alan Taraf bu Programý üretim iþyüklerinin iþlenmesi, üretimde ortaya çýkan iþyüklerinin benzerlerinin yaratýlmasý ya da herhangi bir kod, uygulama ya da sistemin ölçeklenebilirliðinin denenmesi için kullanamaz. Uygun ürün yetkilerini almadýðý sürece, Lisans Alan Tarafa, bu Programýn hiçbir bölümünü baþka herhangi bir amaçla kullanmasý için yetki verilmez.
+
+Gerekli Yetkilerin Oluþturulmasý için Kullanýlmayan Bileþenler
+
+Lisans Alan Tarafýn bu Programý kurmasý ya da kullanmasý için gereken yetki sayýsý belirlenirken, aþaðýda belirtilen Program bileþenlerinin kurulumu ve kullanýmý dikkate alýnmaz. Baþka bir deyiþle, Lisans Alan Taraf aþaðýdaki Program bileþenlerini lisans koþullarý kapsamýnda kurabilir ve kullanabilir, ancak bu bileþenler bu Program için gereken yetki sayýsýnýn belirlenmesinde kullanýlmaz.
+IBM MQ Managed File Transfer Agent V9.0.1
+IBM MQ Telemetry V9.0.1
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+Aþaðýdaki ölçü birimleri, Lisans Alan Tarafýn Programý kullanýmý için geçerli olabilir.
+
+Kurulum
+
+Kurulum, bu Programýn lisanslandýðý ölçüm birimidir. Kurulum, Programýn bir bilgisayarda çalýþtýrýlmak üzere saðlanan fiziksel veya sanal bir diske kurulan kopyasýdýr. Lisans Alan Tarafýn, bu Programýn her Kurulumu için bir yetki edinmesi gerekir.
+
+L/N:  L-APIG-AKHJMD
+D/N:  L-APIG-AKHJMD
+P/N:  L-APIG-AKHJMD
+
+
+
+==============================================
+
+
+ÖNEMLÝ: DÝKKATLE OKUYUN
+
+Aþaðýda iki lisans sözleþmesi sunulmuþtur.
+
+1. Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi
+2. IBM Uluslararasý Program Lisans Sözleþmesi
+
+Lisans Alan Taraf, bu Programý (deðerlendirme, deneme, gösterimini yapma amaçlarý veya "dene veya satýn al" kampanyasý dýþýnda) üretim amacýyla kullanmak üzere satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak IBM Uluslararasý Program Lisans Sözleþmesi'ni hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Lisans Alan Taraf bu Programý, deðerlendirme, deneme, gösterimini yapma amaçlarýyla veya "dene veya satýn al" kampanyasý kapsamýnda kullanmak üzere (topluca "Deðerlendirme" olarak belirlenen amaçla) satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak (i) Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi'ni ("Deðerlendirme Lisansý") hiçbir deðiþiklik olmaksýzýn ve (ii) IBM Uluslararasý Program Lisans Sözleþmesi'ni ("UPLS") hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Deðerlendirme Lisansý, Lisans Alan Tarafýn Deðerlendirme süresi boyunca geçerli olacaktýr.
+
+Deðerlendirme süresi sonunda, Lisans Alan taraf, bir tedarik sözleþmesi (örneðin, IBM Uluslararasý Passport Advantage veya IBM Passport Express Advantage sözleþmeleri gibi) imzalayarak bu Programý edinmeyi (veya Deðerlendirme sürecinden sonra kullanmak üzere bu Programýn ek kopyalarýný edinmeyi) seçtiyse, Uluslararasý Program Lisans Sözleþmesi (UPLS) otomatik olarak geçerli olacaktýr.
+
+Deðerlendirme Lisansý ve UPLS ayný anda yürürlükte olamayacaðý gibi, bu Sözleþmelerden birinin koþullarý diðerinin koþullarýný deðiþtirmez. Deðerlendirme Lisansý ile UPLS birbirlerinden baðýmsýz sözleþmelerdir.
+
+Bu iki lisans sözleþmesinin tam metni aþaðýdadýr.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Programlarýn Deðerlendirilmesi Ýçin Uluslararasý Lisans Sözleþmesi (Z125-5543-05) geçerli olur.
+
+Program Adý: IBM MQ Managed File Transfer Service V9.0.1
+Program Numarasý: Evaluation
+
+Program Adý: IBM MQ Managed File Transfer Service Idle Standby V9.0.1
+Program Numarasý: Evaluation
+
+Program Adý: IBM MQ Managed File Transfer Agent V9.0.1
+Program Numarasý: Evaluation
+
+Deðerlendirme Süresi
+
+Deðerlendirme süresi, Lisans Alan Tarafýn bu Sözleþmenin koþullarýný kabul ettiði tarihte baþlar ve 90 gün sonra sona erer.
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Uluslararasý Program Lisans Sözleþmesi (Z125-3301-14) geçerli olur.
+
+Program Adý: IBM MQ Managed File Transfer Service V9.0.1
+Program Numarasý: 5724-H72
+
+Program Adý: IBM MQ Managed File Transfer Service Idle Standby V9.0.1
+Program Numarasý: 5724-H72
+
+Program Adý: IBM MQ Managed File Transfer Agent V9.0.1
+Program Numarasý: 5724-H72
+
+Uluslararasý Program Lisans Sözleþmesi'nde ("UPLS") ve bu Lisans Bilgileri belgesinde açýklandýðý þekilde IBM, Lisans Alan Tarafa bu Programý kullanmasý için sýnýrlý bir hak verir. Bu hak, Yetki Belgesinde kanýtlandýðý þekilde, Lisans Alan Tarafça ödemesi yapýlmýþ olan Ýþlemci Deðer Birimi ("PVU"), Kaynak Deðer Birimi ("RVU"), Deðer Birimi ("VU") ya da belirlenmiþ diðer bir kullaným seviyesi gibi bir Yetkili Kullaným seviyesiyle sýnýrlanmýþtýr. Ayrýca, Lisans Alan Tarafýn kullanýmý, ayrýca belirli bir makineyle ya da yalnýzca bir Destekleyici Programla ya da baþka kýsýtlamalara tabi olarak sýnýrlanabilir. Lisans Alan Taraf bu Programýn ekonomik deðerinin tümünü ödemediðinde, ek ücretler ödenmedikçe Programýn baþka hiçbir þekilde kullanýlmasýna izin verilmez. Ayrýca, Lisans Alan Tarafýn bu Programý kullanmak üzere edindiði yetkilerin tabi olduðu geçerli sözleþmelerde açýkça belirtilmediði sürece, Lisans Alan Tarafa bu Programý herhangi bir üçüncü kiþiye ticari BT hizmetleri saðlamak, ticari barýndýrma ya da zaman paylaþýmý sunmak ya da alt lisans vermek, kiralamak ya da finansal olarak kiralamak üzere kullanma yetkisi de verilmez. Ek ücretlerin ödenmesine baðlý olarak ya da farklý veya tamamlayýcý koþullar kapsamýnda Lisans Alan Tarafa ek haklar saðlanabilir. IBM, Lisans Alan Tarafa bu tür ek haklarý saðlayýp saðlamamaya iliþkin karar verme hakkýný saklý tutar.
+
+Programýn belirtimleri, Programýn Duyuru Mektuplarýndaki toplu Tanýtým ve Teknik Bilgiler (Description and Technical Information) baþlýklý bölümlerde bulunabilir.
+
+Yeniden Daðýtýlabilenler
+
+Bu Program, Yeniden Daðýtýlabilenler olarak adlandýrýlan bileþenleri içeriyorsa bunlar, bu Programla birlikte gönderilen REDIST adlý dosyada tanýmlanýr. Bu Sözleþmede saðlanan lisans haklarýna ek olarak Lisans Alan Taraf Yeniden Daðýtýlabilenleri aþaðýdaki koþullara uygun olarak daðýtabilir:
+1) Yeniden Daðýtým iþlemi, yalnýzca nesne kodu biçiminde ve bu Programla birlikte gönderilen REDIST adlý dosyada veya diðer belgelerde yer alan yönergelere ve belirtimlere uygun olarak gerçekleþtirilebilir;
+2) Bu Programla birlikte gönderilen belgelerde Lisans Alan Tarafa, Yeniden Daðýtýlabilenleri deðiþtirme izni açýkça veriliyorsa, Lisans Alan Tarafýn yapacaðý deðiþikliklerin ilgili belgelerdeki yönergelerin ve belirtimlerin tümüne uygun olmasý gerekir; eðer varsa, bu tür deðiþiklikler, Yeniden Daðýtýlabilenler olarak deðerlendirilmelidir;
+3) Yeniden Daðýtýlabilenler, yalnýzca bu Program kullanýlarak geliþtirilen Lisans Alan Tarafýn Uygulamasýnýn ("Lisans Alan Tarafýn Uygulamasý") bir parçasý olarak ve yalnýzca Lisans Alan Tarafýn müþterilerini, ilgili Uygulamayý kullanmalarýyla baðlantýlý olarak desteklemek amacýyla daðýtýlabilir. Lisans Alan Tarafýn Uygulamasýnýn son kullanýcýlara, Lisans Alan Tarafýn yazýlým ürününün son kullanýcýlar tarafýndan edinilmesinde bu Yeniden Daðýtýlabilenlerin temel motivasyon olmayacaðý þekilde, önemli bir katma deðer saðlamasý gerekir;
+4) Yeniden Daðýtýlabilenlerin Java Çalýþtýrma Zamaný Ortamý (Java Runtime Environment) içermesi durumunda, Uygulama, yalnýzca genel bilgisayar aygýtlarýnda (örneðin: dizüstü bilgisayarlar, masaüstü bilgisayarlar ve sunucular) çalýþtýrýlmak üzere tasarlandýysa ve elde taþýnabilen veya yaygýn olarak kullanýlan diðer aygýtlarda (örneðin: bir mikroiþlemci içeren ancak bilgiiþlem, birincil çalýþma amaçlarý olarak belirlenmiþ olmayan aygýtlar) çalýþtýrýlmak üzere tasarlanmadýysa, Lisans Alan Tarafýn kendi Uygulamasýyla birlikte diðer Java-dýþý Yeniden Daðýtýlabilenleri de içermesi gerekir;
+5) Lisans Alan Taraf, Yeniden Daðýtýlabilenlerde yer alan herhangi bir telif hakký bildirimini veya bildirim dosyasýný kaldýramaz;
+6) Lisans Alan Taraf, Lisans Alan Tarafýn Uygulamasýnýn kullanýlmasý veya daðýtýlmasýndan dolayý yöneltilen iddialara karþý IBM'i, IBM'in saðlayýcýlarýný ve distribütörlerini tazmin etmekle yükümlüdür;
+7) Lisans Alan Taraf, orijinal Yeniden Daðýtýlabilen dosyalar/modüller ile ayný yol adýný kullanamaz;
+8) Lisans Alan Taraf, IBM'in, saðlayýcýlarýnýn veya distribütörlerinin önceden yazýlý izni olmadan, IBM'in, saðlayýcýlarýnýn veya distribütörlerinin adlarýný veya ticari markalarýný, Lisans Alan Tarafýn Uygulamasýnýn pazarlanmasýyla baðlantýlý olarak kullanamaz;
+9) IBM, saðlayýcýlarý veya distribütörleri, Yeniden Daðýtýlabilenleri ve iliþkili belgeleri herhangi bir destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALEYE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR;
+10) Lisans Alan Tarafýn Uygulamasýnda ve Yeniden Daðýtýlabilenlerde yaptýðý deðiþikliklere iliþkin tüm teknik desteðin saðlanmasýndan tamamen Lisans Alan Taraf sorumludur; ve
+11) Lisans Alan Taraf, Uygulamasýnýn son kullanýcýsý ile gerçekleþtireceði lisans sözleþmesinde, bu Yeniden Daðýtýlabilenlerin veya bunlardaki deðiþikliklerin, i) Uygulamasýnýn geçerli kýlýnmasý dýþýnda bir amaçla kullanýlamayacaðý, ii) kopyalanamayacaðý (yedekleme amacý dýþýnda), iii) Lisans Alan Tarafýn Uygulamasýndan ayrý olarak baþkalarýna daðýtýlamayacaðý veya devredilemeyeceði ya da iv) geçerli yasalarýn sözleþme ile deðiþtirilmesine olanak tanýmayarak açýkça izin verdiði durumlar dýþýnda, ters çevrilemeyeceði, ters derlenemeyeceði veya baþka bir yolla çevrilemeyeceði konusunda son kullanýcýyý önceden bilgilendirecektir. Ayrýca, Lisans Alan Tarafýn lisans sözleþmesindeki koþullarýn, IBM açýsýndan, en az bu Sözleþmede yer alan koþullar kadar koruyucu olmasý gereklidir.
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+Lisans Alan Taraf, bir Programýn REDIST dosyasýnda listelenen Kaynak Bileþenlerin ve Örnek Malzemelerin deðiþtirilmiþ sürümlerini, bu lisansta ve REDIST dosyasýnda yer alan koþullara uygun olarak yeniden daðýtabilir.
+
+Kurulum
+
+Kurulum, bu Programýn lisanslandýðý ölçüm birimidir. Kurulum, Programýn bir bilgisayarda çalýþtýrýlmak üzere saðlanan fiziksel veya sanal bir diske kurulan kopyasýdýr. Lisans Alan Tarafýn, bu Programýn her Kurulumu için bir yetki edinmesi gerekir.
+
+Ýþlemci Deðer Birimi (PVU)
+
+Ýþlemci Deðer Birimi (PVU), bu Programýn lisanslandýðý ölçüm birimidir. Gereken Ýþlemci Deðer Birimi (PVU) yetkilerinin sayýsý için iþlemci teknolojisi (Ýþlemci Satýcý Firmasý, Marka, Tip ve Model Numarasý esasýna göre þu adresteki PVU Tablosunda tanýmlanmýþtýr: http://www.ibm.com/software/lotus/passportadvantage/pvu_licensing_for_customers.html) ve bu Program tarafýndan kullanýlan iþlemcilerin sayýsý esas alýnýr. IBM, PVU esasýna göre lisanslamanýn amacý açýsýndan bir çip üzerinde yer alan her iþlemci çekirdeði için bir iþlemci tanýmlamaya devam eder. Örneðin, bir çift çekirdekli iþlemci çipinde iki adet iþlemci çekirdeði bulunur.
+
+Lisans Alan Taraf, bu Programý, Passport Advantage Alt Kapasite Lisanslama Koþullarý'na (aþaðýda belirtilen Web sayfasýna bakýn) göre Tam Kapasite lisanslama veya Sanallaþtýrma Kapasitesi (Alt Kapasite) lisanslama esasýný kullanarak etkinleþtirebilir. Tam Kapasite lisanslamasý kullanýlýyorsa, Lisans Alan Tarafýn, bu Programýn sürekli olarak kaldýrýldýðý sunucular hariç olmak üzere, bu Program tarafýndan kullanýlan veya yönetilen fiziksel donaným ortamýnda yer alan etkinleþtirilmiþ tüm iþlemci çekirdeklerini* kapsamaya yetecek sayýda Ýþlemci Deðer Birimi (PVU) yetkisi edinmesi gerekir. Sanallaþtýrma Kapasitesi lisanslamasý kullanýlýyorsa, Lisans Alan Tarafýn, Sanallaþtýrma Kapasitesi Lisansý Sayým Kurallarý'na (Virtualization Capacity License Counting Rules) göre tanýmlanan ve bu Program tarafýndan kullanýlan veya yönetilen tüm etkin iþlemci çekirdeklerini kapsamaya yetecek sayýda yetkiyi edinmesi gerekir. Söz konusu kurallarla ilgili bilgi edinmek için aþaðýda yer alan adrese bakýn: http://www.ibm.com/software/lotus/passportadvantage/Counting_Software_licenses_using_specific_virtualization_technologies.html.
+
+* Etkinleþtirilmiþ iþlemci çekirdeði, iþlemci çekirdeklerinin kapasitesinin, sanallaþtýrma teknolojileri, iþletim sistemi komutlarý, BIOS ayarlarý veya benzeri sýnýrlamalarla sýnýrlandýrýlabilmesinden veya sýnýrlý olmasýndan baðýmsýz olarak herhangi bir fiziksel veya sanal sunucuda kullanýlabilir.
+
+Programa Özgü Koþullar
+
+Boþta Duran Yedekleme Konfigürasyonlarý
+
+Bu bölümün amaçlarý açýsýndan bir "Boþta Duran Yedekleme" konfigürasyonu için bu Programýn bir kopyasý, yüksek düzeyde kullanýlabilirlik çözümünün parçasýný oluþturan bir sunucunun üzerine kurulmuþtur ve etkin sunucu üzerindeki Program kopyasý kullanýlamaz duruma geldiðinde Program yedek sistem olarak iþlev gören bu sunucuya geçer. Bir sunucu, yalnýzca bir yedek sisteme geçiþ iþlemi gerçekleþinceye kadar, özel olarak yedek sisteme geçiþ senaryolarýna destek veren yönetim iþlemleri için kullanýldýðýnda, "boþta duran" olarak deðerlendirilir. 
+
+Bu Program, uygun þekilde lisanslandýðý durumlar dýþýnda, bir Boþta Duran Yedekleme sunucusuna kurulamaz.
+
+Bu Program bir Boþta Duran Yedekleme konfigürasyonunda Multi-Instance Queue Manager (Birden Çok Eþgörünümlü Kuyruk Yöneticisi) özelliðiyle birlikte kullanýlýyorsa, bu Programýn bir kopyasý yedekleme amaçlarýyla bir Boþta Duran Yedekleme sunucusunda bulundurulabilir ve çalýþtýrýlabilir,  ancak "boþta duran" özelliðini kaybetmemesi ve etkin sunucu yedek sisteme geçmek üzere Boþta Duran Yedekleme Sunucusuna geçmediði sürece hiçbir tür üretim amaçlý iþte kullanýlmamasý gerekir. Etkin sunucu yedek sisteme geçmek üzere Boþta Duran Yedekleme Sunucusuna geçtiðinde, Programýn Boþta Duran Yedekleme kopyasý hata süresi boyunca üretim amaçlý iþ görmek üzere kullanýlabilir.
+
+Bu Program bir Boþta Duran Yedekleme konfigürasyonunda Yüksek Düzeyde Kullanýlabilirlik sistemleriyle birlikte kullanýlýyorsa, bu Programýn bir kopyasý yedekleme amaçlarýyla Boþta Duran Yedekleme sunucusunda bulundurulabilir, ancak çalýþtýrýlamaz (ve bu nedenle hiçbir tür üretim amaçlý iþte kullanýlamaz). Ancak, etkin sunucunun bir hata nedeniyle çalýþmamasý durumunda Yüksek Düzeyde Kullanýlabilirlik bileþenleri tarafýndan otomatik olarak çalýþtýrýlýr ve bu durumda Programýn Boþta Duran Yedekleme sunucusunda bulunan kopyasý hata süresi boyunca üretim amaçlý iþ görmek üzere kullanýlabilir.
+
+
+L/N:  L-APIG-ABMG8R
+D/N:  L-APIG-ABMG8R
+P/N:  L-APIG-ABMG8R
+
+
+
+==============================================
+
+
+ÖNEMLÝ: DÝKKATLE OKUYUN
+
+Aþaðýda iki lisans sözleþmesi sunulmuþtur.
+
+1. Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi
+2. IBM Uluslararasý Program Lisans Sözleþmesi
+
+Lisans Alan Taraf, bu Programý (deðerlendirme, deneme, gösterimini yapma amaçlarý veya "dene veya satýn al" kampanyasý dýþýnda) üretim amacýyla kullanmak üzere satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak IBM Uluslararasý Program Lisans Sözleþmesi'ni hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Lisans Alan Taraf bu Programý, deðerlendirme, deneme, gösterimini yapma amaçlarýyla veya "dene veya satýn al" kampanyasý kapsamýnda kullanmak üzere (topluca "Deðerlendirme" olarak belirlenen amaçla) satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak (i) Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi'ni ("Deðerlendirme Lisansý") hiçbir deðiþiklik olmaksýzýn ve (ii) IBM Uluslararasý Program Lisans Sözleþmesi'ni ("UPLS") hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Deðerlendirme Lisansý, Lisans Alan Tarafýn Deðerlendirme süresi boyunca geçerli olacaktýr.
+
+Deðerlendirme süresi sonunda, Lisans Alan taraf, bir tedarik sözleþmesi (örneðin, IBM Uluslararasý Passport Advantage veya IBM Passport Express Advantage sözleþmeleri gibi) imzalayarak bu Programý edinmeyi (veya Deðerlendirme sürecinden sonra kullanmak üzere bu Programýn ek kopyalarýný edinmeyi) seçtiyse, Uluslararasý Program Lisans Sözleþmesi (UPLS) otomatik olarak geçerli olacaktýr.
+
+Deðerlendirme Lisansý ve UPLS ayný anda yürürlükte olamayacaðý gibi, bu Sözleþmelerden birinin koþullarý diðerinin koþullarýný deðiþtirmez. Deðerlendirme Lisansý ile UPLS birbirlerinden baðýmsýz sözleþmelerdir.
+
+Bu iki lisans sözleþmesinin tam metni aþaðýdadýr.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Programlarýn Deðerlendirilmesi Ýçin Uluslararasý Lisans Sözleþmesi (Z125-5543-05) geçerli olur.
+
+Program Adý: IBM MQ Advanced Message Security V9.0.1
+Program Numarasý: Evaluation
+
+Program Adý: IBM MQ Advanced Message Security Idle Standby V9.0.1
+Program Numarasý: Evaluation
+
+Program Adý: IBM MQ Telemetry V9.0.1
+Program Numarasý: Evaluation
+
+Deðerlendirme Süresi
+
+Deðerlendirme süresi, Lisans Alan Tarafýn bu Sözleþmenin koþullarýný kabul ettiði tarihte baþlar ve 90 gün sonra sona erer.
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+
+
+LÝSANS BÝLGÝLERÝ
+
+Aþaðýda listelenen programlar, daha önce Müþteri ve IBM tarafýndan kabul edilen Program lisansý koþullarýna ek olarak aþaðýdaki Lisans Bilgilerinin kayýt ve koþullarý kapsamýnda lisanslanýr. Müþteri, Programa iliþkin yürürlükte olan lisans koþullarýný daha önce kabul etmemiþse, Uluslararasý Program Lisans Sözleþmesi (Z125-3301-14) geçerli olur.
+
+Program Adý: IBM MQ Advanced Message Security V9.0.1
+Program Numarasý: 5724-H72
+
+Program Adý: IBM MQ Advanced Message Security Idle Standby V9.0.1
+Program Numarasý: 5724-H72
+
+Program Adý: IBM MQ Telemetry V9.0.1
+Program Numarasý: 5724-H72
+
+Uluslararasý Program Lisans Sözleþmesi'nde ("UPLS") ve bu Lisans Bilgileri belgesinde açýklandýðý þekilde IBM, Lisans Alan Tarafa bu Programý kullanmasý için sýnýrlý bir hak verir. Bu hak, Yetki Belgesinde kanýtlandýðý þekilde, Lisans Alan Tarafça ödemesi yapýlmýþ olan Ýþlemci Deðer Birimi ("PVU"), Kaynak Deðer Birimi ("RVU"), Deðer Birimi ("VU") ya da belirlenmiþ diðer bir kullaným seviyesi gibi bir Yetkili Kullaným seviyesiyle sýnýrlanmýþtýr. Ayrýca, Lisans Alan Tarafýn kullanýmý, ayrýca belirli bir makineyle ya da yalnýzca bir Destekleyici Programla ya da baþka kýsýtlamalara tabi olarak sýnýrlanabilir. Lisans Alan Taraf bu Programýn ekonomik deðerinin tümünü ödemediðinde, ek ücretler ödenmedikçe Programýn baþka hiçbir þekilde kullanýlmasýna izin verilmez. Ayrýca, Lisans Alan Tarafýn bu Programý kullanmak üzere edindiði yetkilerin tabi olduðu geçerli sözleþmelerde açýkça belirtilmediði sürece, Lisans Alan Tarafa bu Programý herhangi bir üçüncü kiþiye ticari BT hizmetleri saðlamak, ticari barýndýrma ya da zaman paylaþýmý sunmak ya da alt lisans vermek, kiralamak ya da finansal olarak kiralamak üzere kullanma yetkisi de verilmez. Ek ücretlerin ödenmesine baðlý olarak ya da farklý veya tamamlayýcý koþullar kapsamýnda Lisans Alan Tarafa ek haklar saðlanabilir. IBM, Lisans Alan Tarafa bu tür ek haklarý saðlayýp saðlamamaya iliþkin karar verme hakkýný saklý tutar.
+
+Programýn belirtimleri, Programýn Duyuru Mektuplarýndaki toplu Tanýtým ve Teknik Bilgiler (Description and Technical Information) baþlýklý bölümlerde bulunabilir.
+
+Kaynak Bileþenler ve Örnek Malzemeler
+
+Bu Program, kaynak kodu biçimindeki bazý bileþenleri ("Kaynak Bileþenler") ve Örnek Malzemeler olarak tanýmlanan diðer malzemeleri içerebilir. Lisans Alan Taraf, Kaynak Bileþenleri ve Örnek Malzemeleri ancak Kaynak Bileþenleri ve Örnek Malzemeleri kullanýmýnýn bu Sözleþme kapsamýndaki lisans haklarý tarafýndan çizilen sýnýrlar içinde kalmasý ve ancak Kaynak Bileþenlerde ya da Örnek Malzemelerde içerilen hiçbir telif hakký bilgisini veya bildirimini deðiþtirmemek veya silmemek koþuluyla dahili olarak kullanmak amacýyla kopyalayabilir ve kullanabilir. IBM, Kaynak Bileþenleri ve Örnek Malzemeleri, destek yükümlülüðü olmaksýzýn ve MÜLKÝYETE, HAK ÝHLALÝ YAPILMAYACAÐINA VEYA MÜDAHALE EDÝLMEYECEÐÝNE DAÝR GARANTÝLER ÝLE TÝCARÝLÝÐE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA DAÝR ZIMNÝ GARANTÝLER VE KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEKSÝZÝN "OLDUÐU GÝBÝ" ESASIYLA SAÐLAR.
+
+Kurulum
+
+Kurulum, bu Programýn lisanslandýðý ölçüm birimidir. Kurulum, Programýn bir bilgisayarda çalýþtýrýlmak üzere saðlanan fiziksel veya sanal bir diske kurulan kopyasýdýr. Lisans Alan Tarafýn, bu Programýn her Kurulumu için bir yetki edinmesi gerekir.
+
+Ýþlemci Deðer Birimi (PVU)
+
+Ýþlemci Deðer Birimi (PVU), bu Programýn lisanslandýðý ölçüm birimidir. Gereken Ýþlemci Deðer Birimi (PVU) yetkilerinin sayýsý için iþlemci teknolojisi (Ýþlemci Satýcý Firmasý, Marka, Tip ve Model Numarasý esasýna göre þu adresteki PVU Tablosunda tanýmlanmýþtýr: http://www.ibm.com/software/lotus/passportadvantage/pvu_licensing_for_customers.html) ve bu Program tarafýndan kullanýlan iþlemcilerin sayýsý esas alýnýr. IBM, PVU esasýna göre lisanslamanýn amacý açýsýndan bir çip üzerinde yer alan her iþlemci çekirdeði için bir iþlemci tanýmlamaya devam eder. Örneðin, bir çift çekirdekli iþlemci çipinde iki adet iþlemci çekirdeði bulunur.
+
+Lisans Alan Taraf, bu Programý, Passport Advantage Alt Kapasite Lisanslama Koþullarý'na (aþaðýda belirtilen Web sayfasýna bakýn) göre Tam Kapasite lisanslama veya Sanallaþtýrma Kapasitesi (Alt Kapasite) lisanslama esasýný kullanarak etkinleþtirebilir. Tam Kapasite lisanslamasý kullanýlýyorsa, Lisans Alan Tarafýn, bu Programýn sürekli olarak kaldýrýldýðý sunucular hariç olmak üzere, bu Program tarafýndan kullanýlan veya yönetilen fiziksel donaným ortamýnda yer alan etkinleþtirilmiþ tüm iþlemci çekirdeklerini* kapsamaya yetecek sayýda Ýþlemci Deðer Birimi (PVU) yetkisi edinmesi gerekir. Sanallaþtýrma Kapasitesi lisanslamasý kullanýlýyorsa, Lisans Alan Tarafýn, Sanallaþtýrma Kapasitesi Lisansý Sayým Kurallarý'na (Virtualization Capacity License Counting Rules) göre tanýmlanan ve bu Program tarafýndan kullanýlan veya yönetilen tüm etkin iþlemci çekirdeklerini kapsamaya yetecek sayýda yetkiyi edinmesi gerekir. Söz konusu kurallarla ilgili bilgi edinmek için aþaðýda yer alan adrese bakýn: http://www.ibm.com/software/lotus/passportadvantage/Counting_Software_licenses_using_specific_virtualization_technologies.html.
+
+* Etkinleþtirilmiþ iþlemci çekirdeði, iþlemci çekirdeklerinin kapasitesinin, sanallaþtýrma teknolojileri, iþletim sistemi komutlarý, BIOS ayarlarý veya benzeri sýnýrlamalarla sýnýrlandýrýlabilmesinden veya sýnýrlý olmasýndan baðýmsýz olarak herhangi bir fiziksel veya sanal sunucuda kullanýlabilir.
+
+Programa Özgü Koþullar
+
+Boþta Duran Yedekleme Konfigürasyonlarý
+
+Bu bölümün amaçlarý açýsýndan bir "Boþta Duran Yedekleme" konfigürasyonu için bu Programýn bir kopyasý, yüksek düzeyde kullanýlabilirlik çözümünün parçasýný oluþturan bir sunucunun üzerine kurulmuþtur ve etkin sunucu üzerindeki Program kopyasý kullanýlamaz duruma geldiðinde Program yedek sistem olarak iþlev gören bu sunucuya geçer. Bir sunucu, yalnýzca bir yedek sisteme geçiþ iþlemi gerçekleþinceye kadar, özel olarak yedek sisteme geçiþ senaryolarýna destek veren yönetim iþlemleri için kullanýldýðýnda, "boþta duran" olarak deðerlendirilir. 
+
+Bu Program, uygun þekilde lisanslandýðý durumlar dýþýnda, bir Boþta Duran Yedekleme sunucusuna kurulamaz.
+
+Bu Program bir Boþta Duran Yedekleme konfigürasyonunda Multi-Instance Queue Manager (Birden Çok Eþgörünümlü Kuyruk Yöneticisi) özelliðiyle birlikte kullanýlýyorsa, bu Programýn bir kopyasý yedekleme amaçlarýyla bir Boþta Duran Yedekleme sunucusunda bulundurulabilir ve çalýþtýrýlabilir,  ancak "boþta duran" özelliðini kaybetmemesi ve etkin sunucu yedek sisteme geçmek üzere Boþta Duran Yedekleme Sunucusuna geçmediði sürece hiçbir tür üretim amaçlý iþte kullanýlmamasý gerekir. Etkin sunucu yedek sisteme geçmek üzere Boþta Duran Yedekleme Sunucusuna geçtiðinde, Programýn Boþta Duran Yedekleme kopyasý hata süresi boyunca üretim amaçlý iþ görmek üzere kullanýlabilir.
+
+Bu Program bir Boþta Duran Yedekleme konfigürasyonunda Yüksek Düzeyde Kullanýlabilirlik sistemleriyle birlikte kullanýlýyorsa, bu Programýn bir kopyasý yedekleme amaçlarýyla Boþta Duran Yedekleme sunucusunda bulundurulabilir, ancak çalýþtýrýlamaz (ve bu nedenle hiçbir tür üretim amaçlý iþte kullanýlamaz). Ancak, etkin sunucunun bir hata nedeniyle çalýþmamasý durumunda Yüksek Düzeyde Kullanýlabilirlik bileþenleri tarafýndan otomatik olarak çalýþtýrýlýr ve bu durumda Programýn Boþta Duran Yedekleme sunucusunda bulunan kopyasý hata süresi boyunca üretim amaçlý iþ görmek üzere kullanýlabilir.
+
+
+L/N:  L-APIG-ACVHBA
+D/N:  L-APIG-ACVHBA
+P/N:  L-APIG-ACVHBA
+
+
+
+
+
+ÖNEMLÝ: DÝKKATLE OKUYUN
+
+Aþaðýda iki lisans sözleþmesi sunulmuþtur.
+
+1. Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi
+2. IBM Uluslararasý Program Lisans Sözleþmesi
+
+Lisans Alan Taraf, bu Programý (deðerlendirme, deneme, gösterimini yapma amaçlarý veya "dene veya satýn al" kampanyasý dýþýnda) üretim amacýyla kullanmak üzere satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak IBM Uluslararasý Program Lisans Sözleþmesi'ni hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Lisans Alan Taraf bu Programý, deðerlendirme, deneme, gösterimini yapma amaçlarýyla veya "dene veya satýn al" kampanyasý kapsamýnda kullanmak üzere (topluca "Deðerlendirme" olarak belirlenen amaçla) satýn alýyorsa, aþaðýda yer alan "Kabul ediyorum" düðmesini týklatarak (i) Programlarýn Deðerlendirilmesi Ýçin IBM Uluslararasý Lisans Sözleþmesi'ni ("Deðerlendirme Lisansý") hiçbir deðiþiklik olmaksýzýn ve (ii) IBM Uluslararasý Program Lisans Sözleþmesi'ni ("UPLS") hiçbir deðiþiklik olmaksýzýn kabul eder.
+
+Deðerlendirme Lisansý, Lisans Alan Tarafýn Deðerlendirme süresi boyunca geçerli olacaktýr.
+
+Deðerlendirme süresi sonunda, Lisans Alan taraf, bir tedarik sözleþmesi (örneðin, IBM Uluslararasý Passport Advantage veya IBM Passport Express Advantage sözleþmeleri gibi) imzalayarak bu Programý edinmeyi (veya Deðerlendirme sürecinden sonra kullanmak üzere bu Programýn ek kopyalarýný edinmeyi) seçtiyse, Uluslararasý Program Lisans Sözleþmesi (UPLS) otomatik olarak geçerli olacaktýr.
+
+Deðerlendirme Lisansý ve UPLS ayný anda yürürlükte olamayacaðý gibi, bu Sözleþmelerden birinin koþullarý diðerinin koþullarýný deðiþtirmez. Deðerlendirme Lisansý ile UPLS birbirlerinden baðýmsýz sözleþmelerdir.
+
+Bu iki lisans sözleþmesinin tam metni aþaðýdadýr.
+
+
+Programlarýn Deðerlendirilmesi Ýçin Uluslararasý Lisans Sözleþmesi
+
+Bölüm 1 - Genel Koþullar
+
+LÝSANS ALAN TARAF, BU PROGRAMI YÜKLEYEREK, KURARAK, KOPYALAYARAK, KULLANARAK "KABUL EDÝYORUM" DÜÐMESÝNÝ TIKLATARAK YA DA BU PROGRAMI HERHANGÝ BÝR BAÞKA ÞEKÝLDE KULLANARAK VEYA BU PROGRAMA ERÝÞÝM SAÐLAYARAK, BU SÖZLEÞMENÝN KOÞULLARINI KABUL ETMÝÞ SAYILIR. BU KOÞULLARI, LÝSANS ALAN TARAF ADINA KABUL EDÝYORSANIZ, LÝSANS ALAN TARAFIN SÖZ KONUSU KOÞULLARA UYACAÐINI TAAHHÜT EDECEK TAM YETKÝYE SAHÝP OLDUÐUNUZU BEYAN VE GARANTÝ EDERSÝNÝZ. BU KOÞULLARI KABUL ETMÝYORSANIZ;
+
+* BU PROGRAMI YÜKLEMEYÝNÝZ, KURMAYINIZ, KOPYALAMAYINIZ, "KABUL EDÝYORUM" DÜÐMESÝNÝ TIKLATMAYINIZ, KULLANMAYINIZ YA DA BU PROGRAMA ERÝÞMEYÝNÝZ; VE
+
+* KULLANILMAMIÞ ORTAMI VE BELGELERÝ PROGRAMI ALDIÐINIZ TARAFA DERHAL ÝADE EDÝNÝZ. PROGRAMI YÜKLEYEREK EDÝNDÝYSENÝZ, PROGRAMIN TÜM KOPYALARINI ÝMHA EDÝNÝZ.
+
+1. Tanýmlar
+
+"Yetkili Kullaným" - Lisans Alan Tarafýn, Programý yürütmeye veya çalýþtýrmaya yetkili olduðu belirtilen seviye. Bu seviye, kullanýcý sayýsý, milyon cinsinden hizmet birimi ("MSU"), Ýþlemci Deðer Birimi ("PVU") veya IBM tarafýndan belirlenen herhangi bir diðer kullaným seviyesi esas alýnarak ölçülebilir.
+
+"IBM" - International Business Machines Corporation veya baðlý kuruluþlarýndan biri.
+
+"Lisans Bilgileri" ("LI") - belirli bir Programa özgü bilgileri ve ek koþullarý içeren belge. Programýn Lisans Bilgileri (LI) belgesi ayný zamanda, bir sistem komutu kullanýlarak eriþilen Program dizininde bulunabilir ya da Programla birlikte bir kitapçýk biçiminde gönderilebilir.
+
+"Program" - orijinalleri ve onun tüm kýsmi veya tam kopyalarý da dahil olmak üzere, aþaðýdakiler anlamýndadýr: 1) makine tarafýndan okunabilir komutlar ve veriler, 2) bileþenler, dosyalar ve modüller, 3) iþitsel-görsel içerik (örneðin, görüntüler, metinler, kayýtlar ya da resimler) ve 4) iliþkili lisanslý malzemeler (örneðin, anahtarlar ve belgeler).
+
+2. Sözleþmenin Yapýsý
+
+Bu Sözleþme, Bölüm 1 - Genel Koþullar, Bölüm 2 - Ülkeye Özgü Koþullar (eðer varsa) adlý bölümleri ve Lisans Bilgileri'ni içerir ve bu Programýn kullanýmýna iliþkin Lisans Alan Tarafla IBM arasýndaki sözleþmenin tamamýný oluþturur. Bu Sözleþme, Lisans Alan Tarafýn Programý kullanmasýyla ilgili olarak IBM ile arasýnda daha önce gerçekleþtirilen her türlü sözlü ve yazýlý iletiþimin yerine geçer. Bölüm 2'de yer alan koþullar Bölüm 1'de yer alan koþullarýn yerine geçebilir veya onlarý deðiþtirebilir. Ýki Bölümün koþullarý arasýnda herhangi bir çeliþki olmasý durumunda, Lisans Bilgileri belgesi her iki Bölümün koþullarýndan daha öncelikli olarak uygulanýr.
+
+3. Lisans Verilmesi
+
+Bu Programýn sahibi IBM ya da bir IBM saðlayýcýsýdýr. Bu Program telif hakkýna tabidir ve lisanslanýr, satýlmaz.
+
+IBM, Lisans Alan Tarafa, aþaðýda belirtilen koþullarla: 1) Programý, deðerlendirme süresi boyunca Lisans Bilgilerinde belirtilen Yetkili Kullaným seviyesinde yalnýzca dahili deðerlendirme, test veya deneme esasýna dayalý olarak gösterimini yapma amaçlarýyla yüklemesi, kurmasý ve kullanmasý; 2) bu tür bir Yetkili Kullanýmý desteklemek için makul sayýda Program kopyasýný çýkarmasý ve kurmasý, ve 3) bir yedekleme kopyasý çýkarmasý için sýnýrlý, münhasýr olmayan, devredilemeyen bir lisans verir, þu þartla ki:
+
+a. Lisans Alan Tarafýn, Programý yasalara uygun olarak edinmiþ olmasý ve bu Sözleþmesinin koþullarýna uygun davranmasý gerekir;
+
+b. Yedekleme kopyasýný, yalnýzca yedeklenen Program çalýþtýrýlamaz olduðunda çalýþtýrmasý gerekir;
+
+c. Lisans Alan Tarafýn, tüm telif hakký bildirimlerini ve mülkiyete iliþkin diðer tüm açýklamalarý Programýn her kopyasýna veya kýsmi kopyasýna kopyalayarak eklemeyi kabul etmesi gerekir;
+
+d. Lisans Alan Taraf, bu Programýn tüm kopyalarýnýn kaydýný tutar ve bu Programý kullanan herkesin (yerel olarak veya uzaktan eriþim ile), 1) bu Programý yalnýzca Lisans Alan Taraf adýna kullanacaðýný ve 2) bu Sözleþmenin koþullarýna uymasýný saðlayacaðýný kabul etmiþ sayýlýr;
+
+e. Lisans Alan Taraf, 1) bu Programý üretime iliþkin amaçlarla kullanamaz veya Programý bu Sözleþmede açýkça izin verilenler dýþýnda baþka bir biçimde kullanamaz, kopyalayamaz, deðiþtiremez ya da daðýtamaz; 2) geçerli yasalarýn sözleþme ile deðiþtirilmesine olanak tanýmayarak açýkça izin verdiði durumlar dýþýnda, Programý ters düzenleyemez, ters derleyemez, baþka yöntemlerle çevirisini yapamaz veya amacý dýþýnda kullanamaz; 3) Programýn hiçbir bileþenini, dosyasýný, modülünü, iþitsel-görsel içeriðini veya ilgili lisanslý malzemeleri programdan ayrý olarak kullanamaz; 4) Programý alt lisanslayamaz, kiralayamaz ya da Program için finansal kiralama yapamaz; ya da 5) Programý ticari olarak uygulama barýndýrma amaçlarýyla kullanamaz; ve
+
+f. Lisans Alan Taraf, Programý Destekleyici Program (Supporting Program) olarak edinirse, bu Programý yalnýzca Asýl Programý (Principal Program) desteklemek üzere ve Asýl Programýn lisansýnda yer alan tüm sýnýrlamalara tabi olarak kullanýr. Lisans Alan Taraf, bu Programý Asýl Program olarak edinirse, tüm Destekleyici Programlarý yalnýzca bu Programý desteklemek üzere ve bu Sözleþmede yer alan tüm sýnýrlamalara tabi olarak kullanýr. Bu "f" maddenin amaçlarý açýsýndan "Destekleyici Program", baþka bir IBM Programýnýn ("Asýl Program") bir bölümüdür ve Asýl Programýn Lisans Bilgileri (LI) belgesinde Destekleyici Program olarak olarak belirtilir. (Bir Destekleyici Programý herhangi bir sýnýrlamaya tabi olmadan kullanmak üzere destekleyici Program için ayrý bir lisans almak amacýyla Lisans Alan Tarafýn, Destekleyici Programý edindiði tarafa baþvurmasý gerekir.)
+
+Bu lisans, Lisans Alan Tarafýn çýkardýðý tüm Program kopyalarý için geçerlidir.
+
+3.1 Güncellemeler, Düzeltmeler ve Yamalar
+
+Programla ilgili olarak bir güncelleme, düzeltme veya yama alan Lisans Alan Taraf, bu tür güncelleme, düzeltme veya yamalarýn Lisans Bilgileri belgelerinde belirtilen ve bu güncelleme, düzeltme veya yamalar için geçerli olan tüm ek veya farklý koþullarý kabul eder.Herhangi bir ek veya farklý koþul saðlanmadýysa, ilgili güncelleme, düzeltme veya yama için yalnýzca bu Sözleþmenin koþullarý geçerli olur. Lisans Alan Tarafýn, elindeki Program Programýn herhangi bir güncellemesi ile deðiþtirildiyse, deðiþtirilen Programý kullanmaya derhal son verecektir.
+
+3.2 Süre ve Sona Erdirme
+
+Deðerlendirme süresi, Lisans Alan Tarafýn bu Sözleþmenin koþullarýný onayladýðý tarihte baþlar ve aþaðýdaki durumlardan birinde (hangisi ilk önce gerçekleþirse) sona erer: 1) deðerlendirme süresinin sonunda veya IBM tarafýndan Lisans Bilgileri belgesinde veya bir iþlem belgesinde belirlenen bitiþ tarihi geldiðinde veya 2) Program kendisini otomatik olarak devre dýþý býraktýðýnda tarihte. Lisans Alan taraf, deðerlendirme süresinin sona ermesinden sonraki on (10) gün içerisinde bu Programý ve Programdan çýkarýlan tüm kopyalarý yok edecektir. IBM, Lisans Bilgileri belgesinde Lisans Alan Tarafýn Programý elinde tutmaya devam edebileceðini belirtmiþ ve Lisans Alan Taraf Programý elinde bulundurmaya devam etmeyi seçmiþse, Program, IBM'in Lisans Alan Tarafa saðlayabileceði farklý bir lisans sözleþmesine tabi olacaktýr. Ayrýca, bu durumda bir ücret ödenmesi de gerekebilir.
+
+Lisans Alan Tarafýn bu Sözleþmenin koþullarýna uygun davranmamasý durumunda IBM, Lisans Alan Tarafýn lisansýný sona erdirebilir. Lisans, taraflardan herhangi biri tarafýndan herhangi bir nedenle sona erdirildiyse, Lisans Alan Taraf derhal programý kullanmaya son verir ve Programýn kendisinde bulunan tüm kopyalarýný imha eder. Nitelikleri gereði Sözleþmenin sona erdirilmesi ile sona ermeyen Sözleþme hükümleri yerine getirilinceye kadar yürürlükte kalýr ve taraflarýn haleflerini ve devralanlarýný baðlar.
+
+BU PROGRAM, DEÐERLENDÝRME SÜRESÝNÝN SONA ERMESÝNDEN SONRA, KULLANILMASINI ÖNLEYECEK OLAN BÝR KULLANIMDAN ÇIKARMA AYGITI ÝÇEREBÝLÝR. LÝSANS ALAN TARAF, BU PROGRAMI VEYA KULLANIMDAN ÇIKARMA AYGITINI KURCALAMAMAYI KABUL EDER. LÝSANS ALAN TARAF, PROGRAMIN ARTIK KULLANILAMAMASI DURUMUNDA, ORTAYA ÇIKABÝLECEK HERHANGÝ BÝR VERÝ KAYBINI ÖNLEMEK ÜZERE GEREKEN ÖNLEMLERÝ ALMALIDIR.
+
+4. Ücretler
+
+Deðerlendirme süresi boyunca bu Programýn kullanýmýyla ilgili herhangi bir ücret alýnmaz.
+
+5. Garanti Verilmez
+
+TABÝ BULUNDUÐU KANUNLARIN GARANTÝ KAPSAMI DIÞINDA TUTULAMAYACAÐINI BELÝRTTÝÐÝ GARANTÝLER DIÞINDA IBM, BU PROGRAMA VEYA VARSA DESTEÐE ÝLÝÞKÝN HAK ÝHLALÝ YAPILMAYACAÐINA DAÝR GARANTÝLER VEYA KOÞULLAR ÝLE TÝCARÝLÝK, YETERLÝ KALÝTE VE BELÝRLÝ BÝR AMACA UYGUNLUK ÝÇÝN ZIMNÝ GARANTÝLER VEYA KOÞULLAR DA DAHÝL OLMAK, ANCAK BUNLARLA SINIRLI OLMAMAK ÜZERE AÇIK VEYA ZIMNÝ HÝÇBÝR GARANTÝ VERMEZ VEYA KOÞUL ÖNE SÜRMEZ.
+
+BAZI ÜLKELER YA DA HUKUK DÜZENLERÝ, AÇIK YA DA ZIMNÎ GARANTÝLERÝN HARÝÇ TUTULMASINA ÝZÝN VERMEZ, BU DURUMDA YUKARIDA HARÝÇ TUTULAN GARANTÝLER LÝSANS ALAN TARAF ÝÇÝN GEÇERLÝ OLMAYABÝLÝR. BÖYLE BÝR DURUMDA, BU TÜR GARANTÝLER YASAL OLARAK GEREKLÝ GÖRÜLEN EN KISA SÜREYLE SINIRLIDIR. BU SÜRE DOLDUKTAN SONRA HÝÇBÝR GARANTÝ GEÇERLÝ DEÐÝLDÝR. BAZI ÜLKELER YA DA HUKUK DÜZENLERÝ, ZIMNÝ GARANTÝNÝN NE KADAR SÜRECEÐÝNE ÝLÝÞKÝN SINIRLAMALARA ÝZÝN VERMEZ, BU DURUMDA YUKARIDAKÝ SINIRLAMALAR LÝSANS ALAN TARAF ÝÇÝN GEÇERLÝ OLMAYABÝLÝR. LÝSANS ALAN TARAF, ÜLKELERE YA DA HUKUK DÜZENLERÝNE GÖRE DEÐÝÞEN DÝÐER HAKLARA DA SAHÝP OLABÝLÝR.
+
+BU 5. BÖLÜMDE YER ALAN RED VE HARÝÇ TUTMA KOÞULLARI, AYRICA IBM'ÝN PROGRAM GELÝÞTÝRÝCÝLERÝ VE SAÐLAYICILARININ TÜMÜ ÝÇÝN DE GEÇERLÝDÝR.
+
+IBM DIÞI PROGRAMLARIN ÜRETÝCÝLERÝ, SAÐLAYICILARI VEYA YAYINCILARI KENDÝ GARANTÝLERÝNÝ VEREBÝLÝRLER.
+
+IBM AKSÝNÝ BELÝRTMEDÝÐÝ SÜRECE, HÝÇBÝR DESTEK SAÐLAMAZ. BU TÜR BÝR DURUMDA, IBM TARAFINDAN SAÐLANAN HER TÜRLÜ DESTEK ÝÞBU 5. BÖLÜMDE YER ALAN RED VE HARÝÇ TUTMA KOÞULLARINA TABÝ OLUR.
+
+6. Lisans Alan Tarafýn Verileri ve Veritabanlarý
+
+IBM, Lisans Alan Tarafa, bu Programla ilgili olarak ortaya çýkan bir sorunun nedenini ayrýþtýrmasýnda yardýmcý olmak için Lisans Alan Taraftan, 1) Lisans Alan Tarafýn sistemine uzaktan eriþmesi amacýyla IBM'e izin vermesini, ya da 2) Lisans Alan Tarafýn bilgilerini veya sistem verilerini IBM'e göndermesini isteyebilir. IBM'in iþbu Sözleþmeyle üstlendiði yükümlülüklerin kapsamý dýþýnda kalan bir desteði Lisans Alan Tarafa saðlamasý için IBM ile Lisans Alan Taraf arasýnda ayrý bir yazýlý sözleþmenin imzalanmasý ve bu sözleþmeyle IBM'in Lisans Alan Tarafa bu tür bir desteði vermeyi kabul etmiþ olmasý gerekir. Aksi durumda IBM Lisans Alan Tarafa bu tür bir desteði saðlamakla yükümlü olmaz. Her durumda, IBM, ürün ve hizmetlerini geliþtirmek amacýyla hata ve sorunlara iliþkin bilgileri kullanýr ve ilgili destek olanaklarýnýn saðlanmasýna yardýmcý olur. IBM, bu amaçla, (Lisans Alan Tarafýn yerleþik olduðu ülke dýþýndaki bir veya birden çok ülkede faaliyet gösterenler de dahil olmak üzere) IBM tüzel kiþiliklerini ve altyüklenicilerini kullanabilir ve Lisans Alan taraf da bu þekilde davranmasý için IBM'e yetki verir.
+
+Lisans Alan Taraf, 1) IBM'e saðladýðý tüm verilerden ve tüm veritabaný içeriklerinden, 2) (kiþisel olarak tanýmlanabilen veriler de dahil olmak üzere) verilere eriþilmesi, verilerin güvenliði, þifrelenmesi, kullanýmý ve aktarýmýyla ilgili prosedürlerin ve denetimlerin seçimi ve uygulanmasýndan ve 3) tüm veritabanlarýnýn ve depolanmýþ olan tüm verilerin yedeklenmesinden ve kurtarýlmasýndan sorumludur. Lisans Alan Taraf, hiçbir veriyi veya herhangi bir diðer biçimdeki kiþisel olarak tanýmlanabilen hiçbir bilgiyi IBM'e göndermeyecek veya saðlamayacaktýr ve IBM'e yanlýþlýkla saðlanan bu tür tüm bilgilerle ya da üçüncü kiþi iddialarýndan kaynaklananlar da dahil olmak üzere, bu türlü bilgilerin IBM tarafýndan kaybedilmesiyle veya açýklanmasýyla iliþkili olarak IBM'in ödemek zorunda kalabileceði tüm makul masraflardan ve diðer tutarlardan Lisans Alan Taraf sorumlu olacaktýr.
+
+7. Sorumluluklarýn Sýnýrý
+
+7 numaralý (Sorumluluklarýn Sýnýrý) bu bölümde yer alan tüm sýnýrlamalar ve hariç tutmalar, geçerli yasalar tarafýndan sözleþmeyle deðiþtirilmesine olanak tanýnmayarak yasaklanmadýðý sürece, tümüyle geçerlidir.
+
+7.1 IBM'in Sorumlu Olabileceði Maddeler
+
+IBM'in bir kusurundan veya sorumluluklarýný yerine getirmemesinden kaynaklanan ve Lisans Alan Tarafýn zararlarýný IBM'den talep etmeye hak kazandýðý durumlar olabilir. Lisans Alan Tarafýn, zararýný IBM'den talep etmesine olanak saðlayan yasal dayanak (esaslý ihlal, ihmal, yanlýþ beyan, diðer akdi veya haksýz fiil iddialarý dahil olmak üzere) her ne olursa olsun, IBM'in her bir Programdan kaynaklanan veya her bir Programla iliþkili veya baþka bir þekilde bu Sözleþmeden kaynaklanan tüm iddialar karþýsýndaki bütün sorumluluðu, 1)ölüm dahil cismani zarar ile taþýnmaz ve taþýnabilir kiþisel mallara verilen zararlar; ve 2) en çok 10.000 ABD Dolarýna (veya yerel para birimiyle eþdeðer bir tutara) kadar olmak koþuluyla, diðer gerçek doðrudan zararlar tutarýný aþmayacaktýr.
+
+Bu sýnýrlama, ayrýca IBM'in Program geliþtiricileri ve saðlayýcýlarý için de geçerlidir. Bu tutar, IBM ve Program geliþtiricilerinin ve saðlayýcýlarýnýn toplu olarak sorumlu olduklarý azami tutardýr.
+
+7.2 IBM'in Sorumlu Olmadýðý Maddeler
+
+OLASILIKLARI ÖNCEDEN BÝLDÝRÝLMÝÞ OLSA BÝLE, IBM, IBM'ÝN PROGRAM GELÝÞTÝRÝCÝLERÝ VEYA SAÐLAYICILARI AÞAÐIDAKÝLERÝN HÝÇBÝRÝNDEN HÝÇBÝR KOÞUL ALTINDA SORUMLU OLMAZLAR:
+
+a. VERÝLERDEKÝ KAYIP VEYA HASARDAN;
+
+b. ÖZEL, ARIZÝ, CEZAÝ VEYA DOLAYLI ZARARLARDAN VEYA BAÐLI EKONOMÝK ZARARLARDAN; VEYA
+
+c. KAR KAYBI, ÝÞ KAYBI, GELÝR KAYBI, ÝTÝBAR KAYBI VEYA BEKLENEN TASARRUFUN KAYBINDAN.
+
+8. Mevzuat Uyumluluðunun Doðrulanmasý
+
+8 numaralý (Mevzuat Uyumluluðunun Doðrulanmasý) bu bölümün amaçlarý açýsýdan, "Deðerlendirme Programý Koþullarý": 1) bu Sözleþme ve IBM tarafýndan saðlanan geçerli deðiþiklik ve iþlem belgeleri, ve 2) yedeklemeyle, alt kapasite fiyatlandýrmasýyla ve geçiþle ilgili ilkeler de dahil olmak, ancak tümü bunlarla sýnýrlý olmamak üzere, IBM Software Policy (IBM Yazýlým Ýlkesi) Web sitesinde (www.ibm.com/softwarepolicies), bulunabilecek IBM yazýlým ilkeleri anlamýna gelir.
+
+8 numaralý bu bölümde belirtilen haklar ve yükümlülükler, Programýn Lisans Alan Tarafa lisanslandýðý dönem boyunca ve bu süreyi takip eden iki (2) yýl boyunca, geçerliliðini sürdürmeye devam eder.
+
+8.1 Doðrulama Süreci
+
+Lisans Alan Taraf, tüm Programlarý kullanýmýnýn, IBM'in yürülükte bulunan tüm lisans ve fiyatlandýrma koþullarý da dahil olmak, ancak tümü bunlarla sýnýrlý olmamak üzere, Deðerlendirme Programý Koþullarýna uygun olup olmadýðýnýn belirlenmesi amacýyla doðru tutulmuþ yazýlý kayýtlarý, sistem araçlarý çýktýlarýný ve diðer sistem bilgilerini yaratmayý, bunlarý saklamayý ve IBM ve ve denetçilerine saðlamayý kabul eder. 1) Yetkili Kullaným sýnýrlarýný aþmadýðýný ve 2) Deðerlendirme Programý Koþullarýna uygun olduðunu kanýtlamak Lisans Alan Tarafýn sorumluluðundadýr.
+
+IBM'in, makul bir süre önceden bildirerek, Lisans Alan Tarafýn, Deðerlendirme Programý Koþullarýna tabi olan Programlarý (herhangi bir amaçla) kullandýðý tüm yerlerde ve tüm ortamlarda, Deðerlendirme Programý Koþullarýna uygun davranýp davranmadýðýný araþtýrabilir. Bu tür bir araþtýrma iþlemi, Lisans Alan Tarafýn iþine en az engel olacak þekilde ve normal iþ saatleri içinde Lisans Alan Tarafýn tesislerinde yapýlacaktýr. IBM'in, bu tür bir denetçiyle yazýlý bir gizlilik sözleþmesi yapmýþ olmasý koþuluyla, IBM bu tür bir araþtýrma iþleminde yardýmcý olacak baðýmsýz bir denetçi kullanabilir.
+
+8.2 Anlaþmazlýklarýn Çözümü
+
+Bu tür bir araþtýrmanýn sonunda, Lisans Alan Tarafýn herhangi bir Programý Yetkili Kullanýmý aþacak þekilde kullandýðýnýn ya da Deðerlendirme Programý Koþullarýna uygun davranmadýðýnýn belirlenmesi durumunda IBM, Lisans Alan Tarafa bu durumu yazýlý olarak bildirecektir. Lisans Alan Taraf, 1) bu tür yetkiyi aþan tüm kullanýmlara, 2) hangisi daha kýsaysa, bu tür yetkiyi aþan kullaným süresi veya iki yýl için verilen desteðe, ve 3) bu tür bir araþtýrmanýn sonucunda belirlenen tüm ek ücretlere ve diðer yükümlülüklere iliþkin IBM tarafýndan düzenlenecek bir faturada belirtilecek tüm ücretleri doðrudan ve derhal IBM'e ödemeyi kabul eder.
+
+9. Üçüncü Kiþi Bildirimleri
+
+Bu Program, Lisans Alan Tarafa bu Sözleþme kapsamýnda üçüncü kiþi tarafýndan deðil IBM tarafýndan lisanslanan üçüncü kiþi kodunu içerebilir. Eðer varsa, üçüncü kiþi koduna iliþkin Bildirimler ("Üçüncü Kiþi Bildirimleri"), Programa yalnýzca Lisans Alan Tarafa bilgi vermek üzere eklenmiþtir. Bu bildirimler, Programýn NOTICES dosyasýnda/dosyalarýnda bulunabilir. Bazý üçüncü kiþi kodlarýna iliþkin kaynak kodunun nasýl edinilebileceðine iliþkin bilgi, Üçüncü Kiþi Bildirimlerinde bulunabilir. IBM, Üçüncü Kiþi Bildirimlerinde üçüncü kiþi kodunu "Deðiþtirilebilir Üçüncü Kiþi Kodu" olarak tanýmlarsa, Lisans Alan Tarafa, 1) Deðiþtirilebilir Üçüncü Kiþi Kodunu deðiþtirme ve 2) yalnýzca, Lisans Alan Tarafýn bu tür bir üçüncü kiþi kodunda yaptýðý deðiþikliklerde hata ayýklama amacýyla olmak koþuluyla, Deðiþtirilebilir Üçüncü Kiþi Koduyla doðrudan arabirim oluþturan Program modülleri üzerinde ters mühendislik iþlemleri yapma yetkisi verir. IBM'in hizmet ve destek yükümlülükleri, eðer varsa, yalnýzca deðiþtirilmemiþ Program için geçerlidir.
+
+10. Genel Koþullar
+
+a. Bu Sözleþmenin hiçbir koþulu, tüketicilerin sözleþmeyle vazgeçilemeyen veya sýnýrlandýrýlamayan yasal haklarýný etkilemez.
+
+b. Bu Sözleþmenin herhangi bir hükmü geçersiz ya da uygulanamaz olduðunda, Sözleþmenin geri kalan hükümleri tam olarak yürürlükte kalmaya ve geçerli olmaya devam eder.
+
+c. Lisans Alan Tarafýn bu Programý ihraç etmesi yasaktýr.
+
+d. Lisans Alan Taraf, International Business Machines Corporation ve baðlý kuruluþlarýna (ve bunlarýn haleflerine ve devralanlarýna, yüklenicilerine ve IBM Çözüm Ortaklarýna), Lisans Alan Tarafýn IBM ürün ve hizmetleriyle ilgili veya IBM ile Lisans Alan Tarafýn iþ iliþkisini geliþtirmek amacýyla, Lisans Alan Tarafýn iletiþim bilgilerini iþ yaptýklarý herhangi bir yerde depolama ve kullanma izni verir.
+
+e. Taraflardan her biri, diðer tarafýn bu Sözleþmeyle ilgili yükümlülüklerini yerine getirmediði iddiasýnda bulunmadan önce, diðer tarafa ilgili yükümlülüðü yerine getirmesi için gereken makul fýrsatý tanýmayý kabul eder. Taraflar, bu Sözleþmeyle ilgili olarak ortaya çýkabilecek tüm ihtilaflarý, anlaþmazlýklarý veya iddialarý iyi niyetle çözmeye çalýþacaklardýr.
+
+f. Geçerli yasalarýn sözleþmeyle deðiþtirilmesine veya sýnýrlandýrýlmasýna olanak tanýmayarak aksini belirttiði durumlar dýþýnda: 1) taraflardan hiçbiri, bu Sözleþmeden kaynaklanan veya bu Sözleþmeyle ilgili olarak yasal iþlem gerektiren bir durumun üzerinden iki yýldan fazla bir süre geçtikten sonra hangi biçimde olursa olsun, yasal bir iþlemde bulunamaz; ve 2) bu sürenin sona ermesiyle birlikte, bu tür tüm iddialar ve bu iddialarla ilgili tüm haklar zamanaþýmýna uðrar.
+
+g. Taraflardan hiçbiri, elinde olmayan nedenlerden ötürü yükümlülüklerini yerine getirememekten sorumlu tutulamaz.
+
+h. Bu Sözleþme herhangi bir üçüncü kiþi için bir dava hakký ya da bir dava nedeni yaratmaz ve ayrýca IBM, yukarýda yer alan 7.1 numaralý (IBM'in Sorumlu Olabileceði Maddeler) baþlýklý bölümde izin verilenler dýþýnda ilgili üçüncü kiþiye karþý yasal olarak sorumlu olduðu (ölüm dahil) cismani zarar veya taþýnmaz ve taþýnabilir kiþisel mallara verilen zarar dýþýnda, üçüncü bir kiþi tarafýndan Lisans Alan tarafa yöneltilen herhangi bir iddiaya karþý sorumluluk üstlenmez.
+
+i. Bu Sözleþmeyi imzalamýþ olmakla, taraflardan hiçbiri: 1) bu Programa iliþkin yukarýdaki 5 numaralý (Garanti Verilmez) baþlýklý bölümde açýkça garanti edilenler dýþýndaki performans veya iþlevler; 2) diðer taraflarýn deneyimleri veya önerileri; veya 3) Lisans Alan Tarafýn elde edebileceði tüm sonuçlar veya tasarruflar da dahil olmak, ancak tümü bunlarla sýnýrlý olmamak üzere bu Sözleþmede belirtilmemiþ olan hiçbir beyana itibar etmeyecektir.
+
+j. IBM, belirli kuruluþlarla ("IBM Çözüm Ortaklarý" olarak adlandýrýlýr) belirli Programlarý tanýtmak, pazarlamak ve desteklemek üzere sözleþmeler imzalamýþtýr. IBM Çözüm Ortaklarý, IBM'den ayrý ve baðýmsýz kuruluþlardýr. IBM, IBM Çözüm Ortaklarýnýn eylemlerinden veya bildirimlerinden ya da Lisans Alan Tarafa karþý yükümlülüklerinden sorumlu deðildir.
+
+k. Lisans Alan Tarafýn IBM ile yaptýðý diðer sözleþmelere (örneðin, IBM Müþteri Sözleþmesi) iliþkin lisans ve fikri mülkiyete iliþkin tazminat koþullarý bu Sözleþme kapsamýnda saðlanan Program lisanslarý için geçerli olmaz.
+
+11. Coðrafi Kapsam ve Geçerli Yasa
+
+11.1 Geçerli Yasa
+
+Taraflar, kanunlar ihtilafý prensibine bakýlmaksýzýn, bu Sözleþmenin konusundan doðan veya bir biçimde bu Sözleþmenin konusu ile ilgili olan haklar, görevler ve yükümlülüklerin, Lisans Alan Tarafýn lisansý edindiði ülkenin yasalarýna tabi olduðunu, yine bunlarýn yorumlanmasý ve uygulanmasýnda bu yasalarýn geçerli bulunduðunu kabul ederler.
+
+Birleþmiþ Milletler'in Uluslararasý Mal Satýþlarýna iliþkin Sözleþme Bildirgesi geçerli deðildir.
+
+11.2 Yetkili Mahkeme
+
+Taraflarýn tüm hak, görev ve yükümlülükleri, Lisans Alan tarafýn Program lisansýný edindiði ülkenin mahkemelerine tabidir.
+
+Bölüm 2 - Ülkeye Özgü Koþullar
+
+Aþaðýda belirtilen ülkelerde verilen lisanslara iliþkin olarak aþaðýda belirtilen koþullar Bölüm 1'de atýfta bulunulan koþullarýn yerine geçer veya onlarý deðiþtirir. Bölüm 1'de yer alan ve bu deðiþiklik eki tarafýndan deðiþtirilmeyen tüm koþullar deðiþmeksizin yürürlükte kalmaya devam eder. Bölüm 2 aþaðýda belirtilen þekilde düzenlenmiþtir:
+
+* Bölüm 1, Madde 11 (Geçerli Yasa ve Yetkili Mahkeme) için Ülkeye özgü deðiþiklikler; ve
+
+* Diðer Sözleþme hükümlerine iliþkin Avrupa, Orta Doðu ve Afrika ülkelerine özgü deðiþiklikler.
+
+Bölüm 1, Madde 11 (Geçerli Yasa ve Yetkili Mahkeme) için ülkeye özgü deðiþiklikler;
+
+11.2 Yetkili Mahkeme
+
+Aþaðýdaki paragraf yetkili mahkeme ile ilgilidir ve Türkiye için geçerli olduðundan Altbölüm 11.2 (Yetkili Mahkeme) içinde yer alan koþullarý deðiþtirir:
+
+Taraflarýn tüm hak, görev ve yükümlülükleri, Lisans Alan tarafýn Program lisansýný edindiði ülkenin mahkemelerine tabidir. Ancak, aþaðýda belirtilen ülkeler için, seri yargýlama usulü de dahil olmak üzere, bu Sözleþmeden doðan veya bu Sözleþmenin yürütülmesiyle ilgili tüm anlaþmazlýklar, aþaðýda belirtilen ve yetkili mahkeme olan mahkemelere tabi olacak ve bu mahkemelerde çözümlenecektir:
+
+Türkiye'de: Türkiye Cumhuriyeti'nin Ýstanbul Merkez Mahkemelerinde ya da Ýcra Dairelerinde çözümlenecektir.
+
+AVRUPA, ORTA DOÐU, AFRÝKA (EMEA) ÜLKELERÝNE ÝLÝÞKÝN DEÐÝÞÝKLÝKLER
+
+AVRUPA BÝRLÝÐÝ (AB) ÜLKELERÝ
+
+5. Garanti Verilmez
+
+Aþaðýdaki paragraf, 5 (Garanti Verilmez) numaralý bölüme eklenmiþtir:
+
+Avrupa Birliði'nde ("AB"), tüketicilerin, tüketim mallarýnýn satýþýna iliþkin geçerli ulusal mevzuat kapsamýnda yasal haklarý bulunmaktadýr. Bu haklar, 5 numaralý bölümde (Garanti Verilmez) yer alan hükümlerden etkilenmez.
+
+AB ÜYESÝ ÜLKELER VE TÜRKÝYE
+
+Verilerin gizliliðine veya korunmasýna iliþkin yerel mevzuatýný AB modeline uyumlu hale getirmiþ olan Türkiye veya herhangi bir diðer Avrupa ülkesi.
+
+10. Genel Koþullar
+
+Aþaðýdaki paragraf Madde 10.d'nin yerine geçer:
+
+(1) Tanýmlar - Madde 10.d'nin amacý açýsýndan aþaðýdaki ek tanýmlar geçerli olur:
+
+(a) Ýþ Ýletiþim Bilgileri - Lisans Alan Tarafýn çalýþanlarýna ve yüklenicilerine iliþkin adlar, görevler, iþ adresleri, telefon numaralarý ve e-posta adresleri de dahil olmak üzere Lisans Alan Tarafça IBM'e açýklanan iþle ilgili iletiþim bilgileri. Avusturya, Ýtalya ve Ýsviçre için Ýþ Ýletiþim Bilgileri, tüzel kiþilikler olan Lisans Alan Tarafa ve Lisans Alan Tarafýn yüklenicilerine iliþkin bilgileri (örneðin, Lisans Alan Tarafýn gelir verileri ve diðer iþlem bilgileri) de içerir.
+
+(b) Ýletiþim Sorumlularý - Ýþ Ýletiþim Bilgileriyle ilgili olan Lisans Alan Taraf çalýþanlarý ve yüklenicileri.
+
+(c) Veri Koruma Yetkilisi - Ýlgili ülkede geçerli Veri Koruma ve Elektronik Ýletiþim Mevzuatý tarafýndan belirlenen yetkili veya AB ülkeleri dýþýndaki ülkeler için, ilgili ülkedeki kiþisel verilerin korunmasý için danýþmanlýktan sorumlu yetkili veya (yukarýda belirtilenlerin herhangi biri için) usulüne uygun olarak bu tür yetkililerin halefi olarak atanan yetkili.
+
+(d) Veri Koruma & Elektronik Ýletiþim Mevzuatý - (i) 95/46/EC kodlu AB Yönergesinin (kiþisel verilerin iþlenmesiyle ve bu tür verilerin serbest dolaþýmýyla ilgili olarak kiþilerin korunmasýný amaçlar) ve 2002/58/EC kodlu AB Yönergesinin (elektronik iletiþim sektöründe kiþisel verilerin iþlenmesiyle ve korunmasýyla ilgilidir) koþullarýný uygulamak üzere yürürlükte olan yerel mevzuat ve düzenlemeler; ya da (ii) AB ülkeleri dýþýndaki ülkeler için, (yukarýda belirtilenlerden herhangi biri için) yasal mevzuat ve/veya düzenlemelerde yapýlan herhangi bir yasal deðiþiklik de dahil olmak üzere, ilgili ülkede, kiþisel verilerin korunmasýyla ve kiþisel verilerle ilgili elektronik iletiþimin düzenlenmesiyle ilgili yürürlükte olan yasal mevzuat ve/veya düzenlemeler.
+
+(e) IBM Group - International Business Machines Corporation of Armonk, New York, ABD, baðlý þirketleri ve bunlarýn ilgili Çözüm Ortaklarý ve altyüklenicileri.
+
+(2) Lisans Alan Taraf, IBM'e aþaðýda belirtilenlere iliþkin yetki verir:
+
+(a) Destek hizmetlerinin saðlanmasý da dahil olmak üzere, Lisans Alan Tarafý desteklemek amacýyla Ýletiþim Sorumlularýyla baðlantý kurulmasý (e-posta veya baþka yollarla) ve IBM Group ürünleri ve hizmetlerinin pazarlanmasý amacý da dahil olmak, ancak tümü bunlarla sýnýrlý olmamak üzere, Lisans Alan Tarafla IBM Group arasýndaki iþ iliþkisinin geliþtirilmesini saðlanmasý amacýyla ("Belirlenen Amaç") IBM Group içinde Ýþle Ýlgili Ýletiþim Bilgilerinin iþlenmesi ve kullanýlmasý; ve
+
+(b) Ýþ Ýletiþim Bilgilerinin, yalnýzca Belirlenen Amaçla ilgili olarak IBM Group'un diðer üyelerine açýklanmasý.
+
+(3) IBM, Ýþle Ýlgili Ýletiþim Bilgilerinin, Veri Koruma & Elektronik Ýletiþim Mevzuatýna uygun olarak iþleneceðini ve yalnýzca Belirlenen amaç için kullanýlacaðýný kabul eder.
+
+(4) Veri Koruma & Elektronik Ýletiþim Mevzuatýnýn gerektirdiði ölçüde Lisans Alan Taraf, IBM Group'a Ýþle Ýlgili Ýletiþim Bilgilerinin Belirlenen Amaç için iþlenmesini ve kullanýlmasýný saðlamak amacýyla Ýletiþim Sorumlularýndan gereken tüm izinleri aldýðýný (ve alacaðýný) ve tüm bildirimleri Ýletiþim Sorumlularýna gönderdiðini (veya göndereceðini) beyan eder.
+
+(5) Lisans Alan Taraf, IBM'e Ýþle Ýlgili Ýletiþim Bilgilerini, aktarým iþleminin Veri Koruma Yetkilisi tarafýndan onaylanan sözleþme koþullarýna uygun olarak gerçekleþtirilmesi veya aktarým iþlemine Veri Koruma & Elektronik Ýletiþim Mevzuatý kapsamýnda izin verilmesi koþuluyla Avrupa Ekonomik Alaný dýþýna aktarma yetkisini verir.
+
+Z125-5543-05 (07/2011)
+
+
+Uluslararasý Program Lisans Sözleþmesi
+
+Bölüm 1 - Genel Koþullar
+
+LÝSANS ALAN TARAF, BU PROGRAMI YÜKLEYEREK, KURARAK, KOPYALAYARAK, "KABUL EDÝYORUM" DÜÐMESÝNÝ TIKLATARAK YA DA BU PROGRAMI HERHANGÝ BÝR BAÞKA ÞEKÝLDE KULLANARAK VEYA BU PROGRAMA ERÝÞEREK, BU SÖZLEÞMENÝN KOÞULLARINI KABUL ETMÝÞ SAYILIR. BU KOÞULLARI, LÝSANS ALAN TARAF ADINA KABUL EDÝYORSANIZ, LÝSANS ALAN TARAFIN SÖZ KONUSU KOÞULLARA UYACAÐINI TAAHHÜT EDECEK TAM YETKÝYE SAHÝP OLDUÐUNUZU BEYAN VE GARANTÝ EDERSÝNÝZ. BU KOÞULLARI KABUL ETMÝYORSANIZ;
+
+* BU PROGRAMI YÜKLEMEYÝNÝZ, KURMAYINIZ, KOPYALAMAYINIZ, "KABUL EDÝYORUM" DÜÐMESÝNÝ TIKLATMAYINIZ, KULLANMAYINIZ YA DA BU PROGRAMA ERÝÞMEYÝNÝZ; VE
+
+* ÖDEDÝÐÝNÝZ TUTARIN GERÝ ÖDENMESÝ ÝÇÝN KULLANILMAMIÞ ORTAMI, BELGELERÝ VE YETKÝ BELGESÝNÝ PROGRAMI ALDIÐINIZ TARAFA DERHAL ÝADE EDÝNÝZ. PROGRAMI YÜKLEYEREK EDÝNDÝYSENÝZ, PROGRAMIN TÜM KOPYALARINI ÝMHA EDÝNÝZ.
+
+1. Tanýmlar
+
+"Yetkili Kullaným" - Lisans Alan Tarafýn, Programý yürütmeye veya çalýþtýrmaya yetkili olduðu belirtilen seviye. Bu seviye, kullanýcý sayýsý, milyon cinsinden hizmet birimi ("MSU"), Ýþlemci Deðer Birimi ("PVU") veya IBM tarafýndan belirlenen herhangi bir diðer kullaným seviyesi esas alýnarak ölçülebilir.
+
+"IBM" - International Business Machines Corporation veya baðlý kuruluþlarýndan biri.
+
+"Lisans Bilgileri" ("LI") - Belirli bir Programa özgü bilgileri ve ek koþullarý içeren belge. Programlara iliþkin Lisans Bilgileri belgelerine þu Web adresinden ulaþýlabilir: www.ibm.com/software/sla. Lisans Bilgileri (LI) belgesi ayný zamanda, bir sistem komutu kullanýlarak eriþilen Program dizininde bulunabilir ya da Programla birlikte bir kitapçýk biçiminde gönderilebilir.
+
+"Program" - orijinalleri ve onun tüm kýsmi veya tam kopyalarý da dahil olmak üzere, aþaðýdakiler anlamýndadýr: 1) makine tarafýndan okunabilir komutlar ve veriler, 2) bileþenler, dosyalar ve modüller, 3) iþitsel-görsel içerik (örneðin, görüntüler, metinler, kayýtlar ya da resimler) ve 4) iliþkili lisanslý malzemeler (örneðin, anahtarlar ve belgeler).
+
+"Yetki Belgesi" ("PoE") - Lisans Alan Tarafýn Kullaným Yetkisine sahip olduðuna iliþkin kanýt. Yetki Belgesi (PoE) ayný zamanda, Lisans Alan Tarafýn, garantiden, varsa, gelecekteki güncelleme ücretlerinden ve olasý özel olanaklar ya da promosyon olanaklarýndan yararlanmaya hak kazandýðýný da gösterir. IBM, Lisans Alan Tarafa bir Yetki Belgesi (PoE) saðlamazsa, üzerinde Programýn adýnýn ve Yetkili Kullaným düzeyinin belirtilmesi koþuluyla, Programýn alýndýðý tarafýn verdiði (IBM ya da yetkili satýcýsý) orijinal satýþ makbuzu ya da diðer satýþ kayýtlarý IBM tarafýndan Yetki Belgesi olarak kabul edilebilir.
+
+"Garanti Süresi" - orijinal Lisans Alan Tarafa lisansýn verildiði tarihten itibaren geçerli olmak üzere bir (1) yýl.
+
+2. Sözleþmenin Yapýsý
+
+Bu Sözleþme, Bölüm 1 - Genel Koþullar, Bölüm 2 - Ülkeye Özgü Koþullar (eðer varsa) adlý bölümleri, Lisans Bilgileri belgesini ve Yetki Belgesini içerir ve bu Programýn kullanýmýna iliþkin Lisans Alan Tarafla IBM arasýndaki sözleþmenin tamamýný oluþturur. Bu Sözleþme, Lisans Alan Tarafýn Programý kullanmasýyla ilgili olarak IBM ile arasýnda daha önce gerçekleþtirilen her türlü sözlü ve yazýlý iletiþimin yerine geçer. Bölüm 2'de yer alan koþullar, Bölüm 1'de yer alan koþullarýn yerine geçebilir veya onlarý deðiþtirebilir. Ýki Bölümün koþullarý arasýnda herhangi bir çeliþki olmasý durumunda, Lisans Bilgileri belgesi her iki Bölümün koþullarýndan daha öncelikli olarak uygulanýr.
+
+3. Lisans Verilmesi
+
+Bu Programýn sahibi IBM ya da bir IBM saðlayýcýsýdýr. Bu Program telif hakkýna tabidir ve lisanslanýr, satýlmaz.
+
+IBM, Lisans Alan Tarafa, aþaðýda belirtilen koþullarla 1) Programý Yetki Belgesinde belirtilen düzeye kadar Yetkili olarak Kullanmasý, 2) bu tür bir Yetkili Kullanýmý desteklemek için Program kopyalarýný çýkarmasý ve kurmasý, ve 3) bir yedekleme kopyasý çýkarmasý için münhasýr olmayan bir lisans verir:
+
+a. Lisans Alan Tarafýn Programý yasalara uygun olarak edinmiþ olmasý ve bu Sözleþmesinin koþullarýna uygun davranmasý gerekir;
+
+b. yedekleme kopyasýný, yalnýzca yedeklenen Program çalýþtýrýlamaz olduðunda çalýþtýrmasý gerekir;
+
+c. Lisans Alan Tarafýn tüm telif hakký bildirimlerini ve mülkiyete iliþkin diðer tüm açýklamalarý Programýn her kopyasýna veya kýsmi kopyasýna kopyalayarak eklemesi gerekir;
+
+d. Lisans Alan Taraf, bu Programý kullanan herkesin (yerel olarak veya uzaktan eriþim ile), 1) bu Programý yalnýzca Lisans Alan Taraf adýna kullanacaðýný ve 2) bu Sözleþmenin koþullarýna uymasýný saðlayacaðýný kabul etmiþ sayýlýr;
+
+e. Lisans Alan Taraf, 1) Programý bu Sözleþmede açýkça izin verilenden baþka bir biçimde kullanamaz, kopyalayamaz, deðiþtiremez ya da daðýtamaz; 2) geçerli yasalarýn sözleþme ile deðiþtirilmesine olanak tanýmayarak açýkça izin verdiði durumlar dýþýnda, Programý ters düzenleyemez, ters derleyemez veya baþka yöntemlerle çevirisini yapamaz; 3) Programýn hiçbir bileþenini, dosyasýný, modülünü, sesli ve görüntülü içeriðini veya iliþkili lisanslý malzemeleri programdan ayrý olarak kullanamaz; veya 4) Programý alt lisanslayamaz, kiralayamaz ya da Program için finansal kiralama yapamaz; ve
+
+f. Lisans Alan Taraf, Programý Destekleyici Program (Supporting Program) olarak edinirse, bu Programý yalnýzca Asýl Programý (Principal Program) desteklemek üzere ve Asýl Programýn lisansýnda yer alan tüm sýnýrlamalara tabi olarak kullanýr. Lisans Alan Taraf, bu Programý Asýl Program olarak edinirse, tüm Destekleyici Programlarý yalnýzca bu Programý desteklemek üzere ve bu Sözleþmede yer alan tüm sýnýrlamalara tabi olarak kullanýr. Bu maddenin ("f"), amaçlarý açýsýndan, "Destekleyici Program" baþka bir IBM Programýnýn ("Asýl Program") bir bölümüdür ve Asýl Programýn Lisans Bilgileri (LI) belgesinde Destekleyici Program olarak belirtilir. (Bir Destekleyici Programý herhangi bir sýnýrlamaya tabi olmadan kullanmak üzere destekleyici Program için ayrý bir Lisans almak için Lisans Alan Tarafýn, Destekleyici Programý edindiði tarafa baþvurmasý gerekir.)
+
+Bu lisans, Lisans Alan Tarafýn çýkardýðý tüm Program kopyalarý için geçerlidir.
+
+3.1 Geçiþ Amaçlý Büyütmeler, Güncellemeler, Düzeltmeler ve Yamalar
+
+3.1.1 Geçiþ Amaçlý Büyütmeler
+
+Bu Program, bir Geçiþ Amaçlý Büyütme Programýyla deðiþtirilirse, deðiþtirilen Programýn lisansý derhal sona erer.
+
+3.1.2 Güncellemeler, Düzeltmeler ve Yamalar
+
+Programla ilgili olarak bir güncelleme, düzeltme veya yama alan Lisans Alan Taraf, bu tür güncelleme, düzeltme veya yamalarýn Lisans Bilgileri belgelerinde belirtilen ve bu güncelleme, düzeltme veya yamalar için geçerli olan tüm ek veya farklý koþullarý kabul eder.Herhangi bir ek veya farklý koþul saðlanmadýysa, ilgili güncelleme, düzeltme veya yama için yalnýzca bu Sözleþmenin koþullarý geçerli olur. Lisans Alan Tarafýn, elindeki Program Programýn herhangi bir güncellemesi ile deðiþtirildiyse, deðiþtirilen Programý kullanmaya derhal son verecektir.
+
+3.2 Sabit Süre Lisanslarý
+
+IBM, Programý sabit bir süre için lisansladýysa, Lisans Alan Taraf ve IBM söz konusu sabit süreyi yenilemeye karar vermedikleri sürece, Lisans Alan Tarafýn lisansý bu sabit sürenin sonunda sona erer.
+
+3.3 Süre ve Sona Erdirme
+
+Bu Sözleþme sona erdirilinceye kadar geçerlidir.
+
+Lisans Alan Tarafýn bu Sözleþmenin koþullarýna uygun davranmamasý durumunda, IBM, Lisans Alan Tarafýn lisansýný sona erdirebilir.
+
+Lisans, taraflardan herhangi biri tarafýndan herhangi bir nedenle sona erdirildiyse, Lisans Alan Taraf derhal programý kullanmaya son verir ve Programýn kendisinde bulunan tüm kopyalarýný imha eder.Nitelikleri gereði Sözleþmenin sona erdirilmesi ile sona ermeyen Sözleþme hükümleri yerine getirilinceye kadar yürürlükte kalýr ve taraflarýn haleflerini ve devralanlarýný baðlar.
+
+4. Ücretler
+
+Ücretler, Yetki Belgesinde belirtilen, edinilen Yetkili Kullaným düzeyine baðlýdýr. IBM, bu Sözleþmenin baþka bir yerinde belirtilenler dýþýnda, muaccel olmuþ ya da ödenmiþ ücretler için Lisans Alan Tarafa bir kredi vermez ya da geri ödeme yapmaz.
+
+Yetkili Kullaným düzeyini artýrmak isteyen Lisans Alan Taraf, bu durumu önceden IBM'e veya bir IBM yetkili satýcýsýna bildirmeli ve geçerli tüm ücretleri ödemelidir.
+
+5. Vergiler
+
+Herhangi bir yetkili makam, Programla ilgili olarak, IBM'in net gelirine dayananlar hariç olmak üzere bir vergi, resim, harç veya baþkaca mali yükün ödenmesini zorunlu kýlarsa, Lisans Alan Taraf, bu tutarý bir faturada belirtildiði þekilde ödemeyi veya bunlardan muafsa, muaf olduðuna iliþkin belgeyi IBM'e saðlamayý kabul eder. Lisans Alan Taraf, Programla ilgili olarak, Programý edindiði tarihten sonraki tüm kiþisel mülkiyet vergilerinden kendisi sorumlu olur. Orijinal Lisans Alan Tarafýn lisans aldýðý ülkeye yapýlan ithalat nedeniyle veya orijinal Lisans Alan Tarafýn lisans aldýðý ülkeden yapýlan ihracat veya devir ya da Programýn orijinal Lisans Alan Tarafýn lisans aldýðý ülke dýþýnda kullanýmý veya Programa orijinal Lisans Alan Tarafýn lisans aldýðý ülke dýþýndan eriþilmesi nedeniyle herhangi bir yetkili makam, bir özel vergi, resim, harç veya baþkaca mali yükün ödenmesini zorunlu kýlarsa, Lisans Alan Taraf sözkonusu özel vergi, resim, harç veya baþkaca mali yükleri ödemekten sorumlu olduðunu ve bunlarý ödeyeceðini kabul eder.
+
+6. Para Ýadesi Garantisi
+
+Lisans Alan Taraf, herhangi bir nedenle Programdan memnun kalmazsa ve orijinal Lisans Alan Tarafsa, Programý ve Yetki Belgesini, Yetki Belgesinin kendisine gönderildiði tarihten itibaren otuz (30) gün içinde Programý edindiði tarafa iade etmesi koþuluyla, lisansý sona erdirebilir ve Program için ödediði ücreti geri alabilir. Lisans, yenilemeye tabi olan bir sabit süreli lisans ise, Lisans Alan Taraf, ancak ilk sabit sürenin baþlamasýndan sonraki otuz (30) gün içinde Programý ve Yetki Belgesini (PoE) iade ederse, Program için ödediði ücreti geri alabilir. Lisans Alan Taraf, Programý bir yerden yüklediyse, parasýnýn iade edilmesine iliþkin yönergeler için Programý edindiði tarafla baðlantý kurmalýdýr.
+
+7. Programýn Devri
+
+Lisans Alan Taraf, Programý ve tüm lisans haklarý ve yükümlülüklerini, yalnýzca devralan tarafýn bu Sözleþmenin koþullarýný kabul etmesi koþuluyla baþka bir tarafa devredebilir. Lisans, taraflardan herhangi biri tarafýndan herhangi bir nedenle sona erdirildiyse, Lisans Alan Tarafýn Programý üçüncü bir tarafa devretmesi yasaktýr. Lisans Alan Taraf, 1) Programýn veya 2) Programa iliþkin Yetkili Kullanýmýnýn bir kýsmýný devredemez. Lisans Alan Taraf Programý devrederse, Lisans Bilgileri belgesi ve Yetki Belgesi de dahil olmak üzere, bu Sözleþmenin basýlý bir kopyasýný da devretmelidir. Devir iþlemi tamamlandýktan hemen sonra, Lisans Alan Tarafýn lisansý sona erer.
+
+8. Garantiler ve Hariç Tutma
+
+8.1 Sýnýrlý Garanti
+
+IBM, tanýmlanmýþ iþletim ortamýnda kullanýldýðýnda, Programýn belirtimlerine uygun þekilde çalýþacaðýný garanti eder. Programýn belirtimleri ve tanýmlanmýþ iþletim ortamý bilgileri Programla birlikte gönderilen (READ-ME dosyasý gibi) belgelerde veya IBM tarafýndan yayýnlanan (duyuru mektubu gibi) diðer bilgilerde bulunabilir. Yerel yasalarýn, sözleþme ile deðiþtirilmesine veya sýnýrlandýrýlmasýna olanak tanýmayarak aksini belirttiði durumlar dýþýnda, Lisans Alan Taraf, bu tür belgelerin ve diðer Programa iliþkin içeriðin yalnýzca Ýngilizce olarak saðlanabileceðini kabul eder.
+
+Garanti, Programýn yalnýzca deðiþtirilmemiþ kýsýmlarý için geçerlidir.IBM Programýn kesintisiz ya da hatasýz çalýþacaðýný ya da IBM'in Programda olusan tüm hatalarý düzelteceðini garanti etmez. Bu Programýn kullanýmý sonucunda elde edilen sonuçlardan Lisans Alan Taraf sorumlu olur.
+
+Garanti Süresi Boyunca IBM, Lisans Alan Tarafýn, bilinen Program hatalarý, hata düzeltmeleri, sýnýrlamalar ve sorun atlatma gibi konularda bilgiler içeren IBM veritabanlarýna ek ücret ödemeden eriþmesini saðlar. Daha fazla bilgi edinmek için aþaðýda adresi verilen IBM Software Support Handbook (IBM Yazýlým Desteði Elkitabý) adlý belgeye bakýnýz: www.ibm.com/software/support.
+
+Eðer Program, Garanti Süresi içinde garanti edildiði gibi çalýþmazsa ve sorun IBM'in veritabanýnda bulunan bilgilerle çözülemezse, Lisans Alan Taraf Programý ve Yetki Belgesini, Programý edindiðiniz tarafa (IBM ya da yetkili satýcýsýna) iade edebilir ve program için ödemiþ olduðu ücreti geri alabilir. Programý iade ettikten sonra, Lisans Alan Tarafýn lisansý sona erer. Lisans Alan Taraf, Programý bir yerden yüklediyse, parasýnýn iade edilmesine iliþkin yönergeler için Programý edindiði tarafla baðlantý kurmalýdýr.
+
+8.2 Hariç Tutma
+
+BU GARANTÝLER LÝSANS ALAN TARAFA MÜNHASIR GARANTÝLER OLUP TÝCARÝLÝÐE, YETERLÝ KALÝTEYE VE BELÝRLÝ BÝR AMACA UYGUNLUÐA VE MÜLKÝYETE DAÝR ZIMNÝ GARANTÝ VEYA KOÞULLAR ÝLE HAK ÝHLALÝ YAPILMAYACAÐINA DAÝR GARANTÝ VEYA KOÞULLAR DA DAHÝL OLMAK, ANCAK TÜMÜ BUNLARLA SINIRLI OLMAMAK ÜZERE, AÇIK VEYA ZIMNÝ, DÝÐER TÜM GARANTÝ VEYA KOÞULLARIN YERÝNE GEÇER. BAZI ÜLKELER YA DA HUKUK DÜZENLERÝ, AÇIK YA DA ZIMNÎ GARANTÝLERÝN HARÝÇ TUTULMASINA ÝZÝN VERMEZ, BU DURUMDA YUKARIDA HARÝÇ TUTULAN GARANTÝLER LÝSANS ALAN TARAF ÝÇÝN GEÇERLÝ OLMAYABÝLÝR. BÖYLE BÝR DURUMDA, BU TÜR GARANTÝLER GARANTÝ SÜRESÝYLE SINIRLIDIR. BU SÜRE DOLDUKTAN SONRA HÝÇBÝR GARANTÝ GEÇERLÝ DEÐÝLDÝR. BAZI ÜLKELER YA DA HUKUK DÜZENLERÝ, ZIMNÝ BÝR GARANTÝNÝN NE KADAR SÜRECEÐÝNE ÝLÝÞKÝN SINIRLAMALARA ÝZÝN VERMEZ, BU DURUMDA YUKARIDAKÝ SINIRLAMALAR LÝSANS ALAN TARAF ÝÇÝN GEÇERLÝ OLMAYABÝLÝR.
+
+BU GARANTÝLER, LÝSANS ALAN TARAFA BELÝRLÝ YASAL HAKLAR KAZANDIRIR. LÝSANS ALAN TARAF, AYNI ZAMANDA ÜLKELERE YA DA HUKUK DÜZENLERÝNE GÖRE DEÐÝÞEN BAÞKA HAKLARA DA SAHÝP OLABÝLÝR.
+
+(GARANTÝLER VE HARÝÇ TUTMA) BAÞLIKLI BU 8. BÖLÜMDE YER ALAN GARANTÝLER, YALNIZCA IBM TARAFINDAN SAÐLANIR. ANCAK 8.2 NUMARALI (HARÝÇ TUTMA) BAÞLIKLI BU ALTBÖLÜMDE YER ALAN SORUMLULUÐUN REDDÝ ÝLE ÝLGÝLÝ HÜKÜMLER, IBM'ÝN ÜÇÜNCÜ KÝÞÝ KODU SAÐLAYICILARI ÝÇÝN DE GEÇERLÝDÝR. BU SAÐLAYICILAR, BU TÜR BÝR KODU HÝÇBÝR GARANTÝ VERMEKSÝZÝN VEYA KOÞUL ÖNE SÜRMEKSÝZÝN SAÐLARLAR. BU PARAGRAF, IBM'ÝN ÝÞBU SÖZLEÞME KAPSAMINDAKÝ GARANTÝ YÜKÜMLÜLÜKLERÝNÝ GEÇERSÝZ KILMAZ.
+
+9. Lisans Alan Tarafýn Verileri ve Veritabanlarý
+
+IBM, Lisans Alan tarafa, bu Programla ilgili olarak ortaya çýkan bir sorunun nedenini belirlemesinde yardýmcý olmak için Lisans Alan Taraftan, 1) Lisans Alan Tarafýn sistemine uzaktan eriþmesi amacýyla IBM'e izin vermesini ya da 2) Lisans Alan Tarafýn bilgilerini veya sistem verilerini IBM'e göndermesini talep edebilir. Ancak, IBM'in iþbu Sözleþmeyle üstlendiði garanti yükümlülüklerinin kapsamý dýþýnda kalan bir desteði Lisans Alan Tarafa saðlamasý için IBM ile Lisans Alan Taraf arasýnda ayrý bir yazýlý sözleþmenin imzalanmasý ve bu sözleþmeyle IBM'in Lisans Alan Tarafa bu tür bir desteði vermeyi kabul etmiþ olmasý gerekir. Aksi durumda, IBM Lisans Alan Tarafa bu tür bir desteði saðlamakla yükümlü olmaz. Her durumda, IBM, ürün ve hizmetlerini geliþtirmek amacýyla hata ve sorunlara iliþkin bilgileri kullanýr ve ilgili destek olanaklarýnýn saðlanmasýna yardýmcý olur. IBM bu amaçla, (Lisans Alan Tarafýn yerleþik olduðu ülke dýþýndaki bir veya birden çok ülkede faaliyet gösterenler de dahil olmak üzere) IBM tüzel kiþiliklerini ve altyüklenicilerini kullanabilir ve Lisans Alan taraf da bu þekilde davranmasý için IBM'e yetki verir.
+
+Lisans Alan Taraf, 1) IBM'e saðladýðý tüm verilerden ve tüm veritabaný içeriklerinden, 2) (kiþisel olarak tanýmlanabilen veriler de dahil olmak üzere) verilere eriþilmesi, verilerin güvenliði, þifrelenmesi, kullanýmý ve aktarýmýyla ilgili yordamlarýn ve denetimlerin seçimi ve uygulanmasýndan ve 3) tüm veritabanlarýnýn ve depolanmýþ olan tüm verilerin yedeklenmesinden ve kurtarýlmasýndan sorumludur. Lisans Alan Taraf, hiçbir veriyi veya herhangi bir diðer biçimdeki kiþisel olarak tanýmlanabilen hiçbir bilgiyi IBM'e göndermeyecek veya saðlamayacaktýr ve IBM'e yanlýþlýkla saðlanan bu tür tüm bilgilerle ya da üçüncü kiþi iddialarýndan kaynaklananlar da dahil olmak üzere, bu türlü bilgilerin IBM tarafýndan kaybedilmesiyle veya açýklanmasýyla iliþkili olarak IBM'in ödemek zorunda kalabileceði tüm makul masraflardan ve diðer tutarlardan Lisans Alan Taraf sorumlu olacaktýr.
+
+10. Sorumluluklarýn Sýnýrý
+
+10 numaralý (Sorumluluklarýn Sýnýrý) bu bölümde yer alan tüm sýnýrlamalar ve hariç tutmalar, geçerli yasalar tarafýndan sözleþmeyle deðiþtirilmesine olanak tanýnmayarak yasaklanmadýðý sürece, tümüyle geçerlidir.
+
+10.1 IBM'in Sorumlu Olabileceði Maddeler
+
+IBM'in bir kusurundan veya sorumluluklarýný yerine getirmemesinden kaynaklanan ve Lisans Alan Tarafýn zararlarýný IBM'den talep etmeye hak kazandýðý durumlar olabilir. Lisans Alan tarafýn, zararýný IBM'den talep etmesine olanak saðlayan yasal dayanak (Sözleþmenin esasa iliþkin ihlali, ihmal, yanlýþ beyan, diðer ahdi iddialar veya haksýz fiil iddialarý dahil olmak üzere) her ne olursa olsun, IBM'in her bir Programdan kaynaklanan veya her bir Programla iliþkili veya baþka bir þekilde bu Sözleþmeden kaynaklanan tüm iddialar karþýsýndaki bütün sorumluluðu aþaðýda belirtilenlerin tutarýný aþmayacaktýr: 1) ölüm dahil cismani zarar ile taþýnmaz ve taþýnabilir kiþisel mallara verilen zararlar; ve 2) Lisans Alan Tarafýn iddiaya konu olan Programa iliþkin ödediði ücreti aþmamak koþuluyla (eðer, Program sabit süreli lisans ücretine tabiyse, en çok on iki (12) aylýk ücrete kadar olmak koþuluyla) herhangi diðer gerçek doðrudan zararlar.
+
+Bu sýnýrlama, ayrýca IBM'in Program geliþtiricileri ve saðlayýcýlarý için de geçerlidir. Bu tutar, IBM ve Programgeliþtiricilerinin ve saðlayýcýlarýnýn toplu olarak sorumlu olduklarý azami tutardýr.
+
+10.2 IBM'in Sorumlu Olmadýðý Maddeler
+
+OLASILIKLARI ÖNCEDEN BÝLDÝRÝLMÝÞ OLSA BÝLE, IBM, IBM'ÝN PROGRAM GELÝÞTÝRÝCÝLERÝ VEYA SAÐLAYICILARI AÞAÐIDAKÝLERÝN HÝÇBÝRÝNDEN HÝÇBÝR KOÞUL ALTINDA SORUMLU OLMAZLAR:
+
+a. VERÝLERDEKÝ KAYIP VEYA HASARDAN;
+
+b. ÖZEL, ARIZÝ, CEZAÝ VEYA DOLAYLI ZARARLARDAN VEYA SONUÇTA ORTAYA ÇIKAN EKONOMÝK ZARARLARDAN; VEYA
+
+c. KAR KAYBI, ÝÞ KAYBI, GELÝR KAYBI, ÝTÝBAR KAYBI VEYA BEKLENEN TASARRUFUN KAYBINDAN.
+
+11. Uygunluk Doðrulamasý
+
+11 numaralý (Uygunluk Doðrulamasý) bu bölümün amaçlarý açýsýndan, "UPLS Program Koþullarý", 1) bu Sözleþme ve IBM tarafýndan saðlanan geçerli deðiþiklik ve iþlem belgeleri, ve 2) yedekleme, alt kapasite fiyatlandýrmasý ve geçiþ ile ilgili ilkeler de dahil olmak, ancak tümü bunlarla sýnýrlý olmamak üzere, IBM Software Policy (IBM Yazýlým Ýlkesi) Web sitesinde bulunabilecek (www.ibm.com/softwarepolicies) IBM yazýlým ilkeleri anlamýna gelir.
+
+11 numaralý iþbu bölümde belirtilen haklar ve yükümlülükler, Programýn Lisans Alan Tarafa lisanslandýðý dönem boyunca ve bu süreyi takip eden iki (2) yýl boyunca, geçerliliðini sürdürmeye devam eder.
+
+11.1 Doðrulama Süreci
+
+Lisans Alan Taraf, tüm Programlarý kullanýmýnýn IBM'in hak kazanmaya iliþkin geçerli tüm lisans ve fiyatlandýrma koþullarý da dahil olmak, ancak tümü bunlarla sýnýrlý olmamak kaydýyla, UPLS Program Koþullarýna uygun olup olmadýðýnýn belirlenmesi amacýyla IBM ve denetçileri için, doðru tutulmuþ yazýlý kayýtlarý, sistem araçlarý çýktýlarýný ve diðer sistem bilgilerini yaratmayý, bunlarý saklamayý ve saðlamayý kabul eder. 1) Yetkili Kullanýmýna iliþkin sýnýrlarý aþmadýðýný ve 2) UPLS Program Koþullarýna uygun olduðunu kanýtlamak Lisans Alan Tarafýn sorumluluðudur.
+
+Makul bir süre önceden bildirerek, IBM, Lisans Alan Tarafýn Programlarý (herhangi bir amaçla) kullandýðý tüm yerlerde ve tüm ortamlarda UPLS Program Koþullarýna uygun davranýp davranmadýðýný doðrulayabilir. Bu tür bir doðrulama iþlemi, Lisans Alan Tarafýn iþine en az engel olacak þekilde ve normal iþ saatleri içinde Lisans Alan Tarafýn tesislerinde yapýlacaktýr. IBM'in, bu tür bir denetçiyle yazýlý bir gizlilik sözleþmesi yapmýþ olmasý koþuluyla, IBM bu tür bir doðrulama iþleminde yardýmcý olacak baðýmsýz bir denetçi kullanabilir.
+
+11.2 Karar
+
+Bu tür bir doðrulamanýn sonunda, Lisans Alan Tarafýn herhangi bir Programý Yetkili Kullanýmýný aþacak þekilde kullandýðýnýn ya da UPLS Program Koþullarýna uygun davranmadýðýnýn belirlenmesi durumunda, IBM, Lisans Alan Tarafa bu durumu yazýlý olarak bildirecektir. Lisans Alan Taraf, doðrudan IBM'e IBM'in bir faturada belirttiði 1) bu tür yetkiyi aþan tüm kullanýmlara, 2) hangisi daha kýsaysa, bu tür yetkiyi aþan kullaným süresi veya iki yýl için verilen desteðe, ve 3) bu tür bir doðrulamanýn sonucunda belirlenen tüm ek ücretlere ve diðer yükümlülüklere iliþkin ücretleri derhal ödemeyi kabul eder.
+
+12. Üçüncü Kiþi Bildirimleri
+
+Bu Program, Lisans Alan Tarafa bu Sözleþme kapsamýnda üçüncü kiþi tarafýndan deðil IBM tarafýndan lisanslanan üçüncü kiþi kodunu içerebilir. Eðer varsa, üçüncü kiþi koduna iliþkin Bildirimler ("Üçüncü Kiþi Bildirimleri"), Programa yalnýzca Lisans Alan Tarafa bilgi vermek üzere eklenmiþtir. Bu bildirimler, Programýn NOTICES dosyasýnda/dosyalarýnda bulunabilir. Bazý üçüncü kiþi kodlarýna iliþkin kaynak kodunun nasýl edinilebileceðine iliþkin bilgi, Üçüncü Kiþi Bildirimlerinde bulunabilir. IBM, Üçüncü Kiþi Bildirimlerinde üçüncü kiþi kodunu "Deðiþtirilebilir Üçüncü Kiþi Kodu" olarak tanýmlarsa, Lisans Alan Tarafa 1) Deðiþtirilebilir Üçüncü Kiþi Kodunu deðiþtirme ve 2) yalnýzca, Lisans Alan Tarafýn bu tür bir üçüncü kiþi kodunda yaptýðý deðiþikliklerde hata ayýklama amacýyla olmak koþuluyla, Deðiþtirilebilir Üçüncü Kiþi Koduyla doðrudan arabirim oluþturan Program modüllerini ters düzenleme yetkisini verir. IBM'in hizmet ve destek yükümlülükleri, eðer varsa, yalnýzca deðiþtirilmemiþ Program için geçerlidir.
+
+13. Genel Koþullar
+
+a. Bu Sözleþmenin hiçbir koþulu, tüketicilerin sözleþme yoluyla vazgeçilemeyen veya sýnýrlandýrýlamayan yasal haklarýný etkilemez.
+
+b. IBM'in Lisans Alan Tarafa somut bir ürün olarak saðladýðý Programlar için, Lisans Alan Taraf ile IBM arasýnda yazýlý olarak aksi kararlaþtýrýlmadýkça, IBM, bu Programlarý kendisi tarafýndan belirlenen taþýyýcýya teslim edildikten sonra ortaya çýkan teslimata ve sevkiyata iliþkin yükümlülüklerini yerine getirir.
+
+c. Bu Sözleþmenin herhangi bir hükmü geçersiz ya da uygulanamaz olduðunda, Sözleþmenin geri kalan hükümleri tam olarak yürürlükte kalmaya ve geçerli olmaya devam eder.
+
+d. Lisans Alan Taraf, belirli son kullaným türleri ve belirli kullanýcýlara yönelik ABD ambargosu ve yaptýrýmlarý da dahil olmak üzere, tüm geçerli ihracat ve ithalat yasa ve düzenlemelerine uygun davranmayý kabul eder.
+
+e. Lisans Alan Taraf, International Business Machines Corporation ve baðlý kuruluþlarýna (ve bunlarýn haleflerine ve devralanlarýna, yüklenicilerine ve IBM Çözüm Ortaklarýna) Lisans Alan Tarafýn IBM ürün ve hizmetleriyle ilgili veya IBM ile iþ iliþkisini geliþtirmek amacýyla iletiþim bilgilerini iþ yaptýklarý herhangi bir yerde depolama ve kullanma izni verir.
+
+f. Taraflardan her biri, diðer tarafýn bu Sözleþmeyle ilgili yükümlülüklerini yerine getirmediði iddiasýnda bulunmadan önce, diðer tarafa ilgili yükümlülüðü yerine getirmesi için gereken makul fýrsatý tanýmayý kabul eder. Taraflar, bu Sözleþmeyle ilgili olarak ortaya çýkabilecek tüm ihtilaflarý, anlaþmazlýklarý veya iddialarý iyi niyetle çözmeye çalýþacaklardýr.
+
+g. Geçerli yasalarýn sözleþmeyle deðiþtirilmesine veya sýnýrlandýrýlmasýna olanak tanýmayarak aksini belirttiði durumlar dýþýnda: 1) taraflardan hiçbiri, bu Sözleþmeden kaynaklanan veya bu Sözleþmeyle ilgili olarak yasal iþlem gerektiren bir durumun üzerinden iki yýldan fazla bir süre geçtikten sonra hangi biçimde olursa olsun, yasal bir iþlemde bulunamaz; ve 2) bu sürenin sona ermesiyle birlikte, bu tür tüm iddialar ve bu iddialarla ilgili tüm haklar zamanaþýmýna uðrar.
+
+h. Taraflardan hiçbiri, elinde olmayan nedenlerden ötürü yükümlülüklerini yerine getirememekten sorumlu tutulamaz.
+
+i. Bu Sözleþme herhangi bir üçüncü kiþi için bir dava hakký ya da bir dava nedeni yaratmaz ve ayrýca IBM, yukarýda yer alan 10.1 numaralý (IBM'in Sorumlu Olabileceði Maddeler) baþlýklý bölümde izin verilenler dýþýnda, IBM'in ilgili üçüncü kiþiye karþý yasal olarak sorumlu olduðu (ölüm dahil) cismani zarar veya taþýnmaz ve taþýnabilir kiþisel mallara verilen zarar dýþýnda, üçüncü bir kiþi tarafýndan Lisans Alan tarafa yöneltilen herhangi bir iddiaya karþý sorumluluk üstlenmez.
+
+j. Bu Sözleþmeyi imzalayarak, taraflardan hiçbiri: 1) bu Programa iliþkin yukarýdaki Garantiler ve Hariç Tutma baþlýklý Bölüm 8'de açýkça garanti edilenler dýþýndaki performans veya iþlevler; 2) diðer taraflarýn deneyimleri veya önerileri; veya 3) Lisans Alan Tarafýn elde edebileceði tüm sonuçlar veya tasarruflar da dahil olmak, ancak tümü bunlarla sýnýrlý olmamak üzere bu Sözleþmede belirtilmemiþ olan hiçbir beyana itibar etmeyecektir.
+
+k. IBM, belirli kuruluþlarla ("IBM Çözüm Ortaklarý" olarak adlandýrýlýr) belirli Programlarý tanýtmak, pazarlamak ve desteklemek üzere sözleþmeler imzalamýþtýr. IBM Çözüm Ortaklarý, IBM'den ayrý ve baðýmsýz kuruluþlardýr. IBM, IBM Çözüm Ortaklarýnýn eylemlerinden veya bildirimlerinden ya da Lisans Alan Tarafa karþý yükümlülüklerinden sorumlu deðildir.
+
+l. Lisans Alan Tarafýn IBM ile yaptýðý diðer sözleþmelere (örneðin, IBM Müþteri Sözleþmesi) iliþkin lisans ve fikri mülkiyete iliþkin tazminat koþullarý bu Sözleþme kapsamýnda saðlanan Program lisanslarý için geçerli olmaz.
+
+14. Coðrafi Kapsam ve Geçerli Yasa
+
+14.1 Geçerli Yasa
+
+Taraflar, kanunlarýn ihtilafý prensibine bakýlmaksýzýn, bu Sözleþmenin konusundan doðan veya bir biçimde bu Sözleþmenin konusu ile ilgili olan haklar, görevler ve yükümlülüklerin, Lisans Alan Tarafýn lisansý edindiði ülkenin yasalarýna tabi olup, yine bunlarýn yorumlanmasý ve uygulanmasýnda bu yasalarýn geçerli olduðunu kabul ederler.
+
+Birleþmiþ Milletler'in Uluslararasý Mal Satýþlarýna iliþkin Sözleþme Bildirgesi geçerli deðildir.
+
+14.2 Yetkili Mahkeme
+
+Taraflarýn tüm hak, görev ve yükümlülükleri, Lisans Alan tarafýn Program lisansýný edindiði ülkenin mahkemelerine tabidir.
+
+Bölüm 2 - Ülkeye Özgü Koþullar
+
+Aþaðýda belirtilen ülkelerde verilen lisanslara iliþkin olarak aþaðýda belirtilen koþullar Bölüm 1'de atýfta bulunulan koþullarýn yerine geçer veya onlarý deðiþtirir. Bölüm 1'de yer alan ve bu deðiþiklik eki tarafýndan deðiþtirilmeyen tüm koþullar deðiþmeksizin yürürlükte kalmaya devam eder. Bölüm 2 aþaðýda belirtilen þekilde düzenlenmiþtir:
+
+* Bölüm 1, Madde 14 (Geçerli Yasa ve Yetkili Mahkeme) için Ülkeye özgü deðiþiklikler; ve
+
+* Diðer Sözleþme hükümlerine iliþkin Avrupa, Orta Doðu ve Afrika ülkelerine özgü deðiþiklikler.
+
+Bölüm 1, Madde 14 (Geçerli Yasa ve Yetkili Mahkeme) için ülkeye özgü deðiþiklikler;
+
+14.2 Yetkili Mahkeme
+
+Aþaðýdaki paragraf yetkili mahkeme ile ilgilidir ve aþaðýda belirtilen ülkeler için geçerli olduðundan bu ülkelerle ilgili Altbölüm 14.2 (Yetkili Mahkeme) içinde yer alan koþullarý deðiþtirir:
+
+Taraflarýn tüm hak, görev ve yükümlülükleri, Lisans Alan tarafýn Program lisansýný edindiði ülkenin mahkemelerine tabidir. Ancak, aþaðýda belirtilen ülkeler için, seri yargýlama usulü de dahil olmak üzere, bu Sözleþmeden doðan veya bu Sözleþmenin yürütülmesiyle ilgili tüm anlaþmazlýklar, aþaðýda belirtilen ve yetkili mahkeme olan mahkemelere tabi olacak ve bu mahkemelerde çözümlenecektir:
+
+AVRUPA, ORTA DOÐU VE AFRÝKA
+
+Türkiye'de: Türkiye Cumhuriyeti'nin Ýstanbul Merkez Mahkemelerinde ya da Ýcra Dairelerinde çözümlenecektir.
+
+AVRUPA, ORTA DOÐU, AFRÝKA (EMEA) ÜLKELERÝNE ÝLÝÞKÝN DEÐÝÞÝKLÝKLER
+
+AVRUPA BÝRLÝÐÝ (AB) ÜLKELERÝ
+
+8. Garanti ve Hariç Tutmalar
+
+Aþaðýdaki paragraf, 8 (Garanti ve Hariç Tutmalar) numaralý bölüme eklenmiþtir:
+
+Avrupa Birliði'nde ("AB") tüketicilerin, tüketim mallarýnýn satýþýna iliþkin geçerli ulusal mevzuat kapsamýnda yasal haklarý bulunmaktadýr. Bu haklar, 8 numaralý bölümde (Garanti ve Hariç Tutmalar) yer alan hükümlerden etkilenmez. Sýnýrlý Garantiye iliþkin madde, coðrafi olarak bütün dünyayý kapsar.
+
+AB ÜYESÝ ÜLKELER VE TÜRKÝYE
+
+13. Genel Koþullar
+
+Aþaðýdaki paragraf Madde 13.e'nin yerine geçer:
+
+(1) Tanýmlar - Madde 13.e'nin amacý açýsýndan aþaðýdaki ek tanýmlar geçerli olur:
+
+(a) Ýþ Ýletiþim Bilgileri - Lisans Alan Tarafýn çalýþanlarýna ve yüklenicilerine iliþkin adlar, görevler, iþ adresleri, telefon numaralarý ve e-posta adresleri de dahil olmak üzere Lisans Alan Taraf tarafýndan IBM'e açýklanan iþle ilgili iletiþim bilgileri. Avusturya, Ýtalya ve Ýsviçre için Ýþ Ýletiþim Bilgileri, tüzel kiþilikler olan Müþteri ve Müþterinin yüklenicilerine iliþkin bilgileri (örneðin, Müþterinin gelir verileri ve diðer iþlem bilgileri) de içerir.
+
+(b) Ýletiþim Sorumlularý - Ýþ Ýletiþim Bilgileriyle ilgili olan Lisans Alan Taraf çalýþanlarý ve yükleniciler.
+
+(c) Veri Koruma Yetkilisi - Ýlgili ülkede geçerli Veri Koruma ve Elektronik Ýletiþim Mevzuatý tarafýndan belirlenen yetkili veya AB ülkeleri dýþýndaki ülkeler için, ilgili ülkedeki kiþisel verilerin korunmasý için danýþmanlýktan sorumlu yetkili veya (yukarýda belirtilenlerin herhangi biri için) usulüne uygun olarak bu tür yetkililerin halefi olarak atanan yetkili.
+
+(d) Veri Koruma & Elektronik Ýletiþim Mevzuatý - (i) 95/46/EC kodlu AB Yönergesinin (kiþisel verilerin iþlenmesiyle ve bu tür verilerin serbest dolaþýmýyla ilgili olarak kiþilerin korunmasýný amaçlar) ve 2002/58/EC kodlu AB Yönergesinin (elektronik iletiþim sektöründe kiþisel verilerin iþlenmesiyle ve korunmasýyla ilgilidir) koþullarýný uygulamak üzere yürürlükte olan yasal mevzuat ve düzenlemeler; ya da (ii) AB ülkeleri dýþýndaki ülkeler için, (yukarýda belirtilenlerden herhangi biri için) yasal mevzuat ve/veya düzenlemelerde yapýlan herhangi bir yasal deðiþiklik de dahil olmak üzere, ilgili ülkede, kiþisel verilerin korunmasýyla ve kiþisel verilerle ilgili elektronik iletiþimin düzenlenmesiyle ilgili yürürlükte olan yasal mevzuat ve/veya düzenlemeler.
+
+(e) IBM Grubu - International Business Machines Corporation, Armonk, New York, ABD, baðlý þirketleri ve bunlarýn ilgili Çözüm Ortaklarý ve altyüklenicileri.
+
+(2) Lisans Alan Taraf, IBM'e aþaðýda belirtilenlere iliþkin yetki verir:
+
+(a) Destek hizmetlerinin saðlanmasý da dahil olmak üzere, Lisans Alan Tarafý desteklemek amacýyla Ýletiþim Sorumlularýyla baðlantý kurulmasý (e-posta veya baþka yollarla) ve IBM Grubu ürünleri ve hizmetlerinin pazarlanmasý amacý da dahil olmak, ancak tümü bunlarla sýnýrlý olmamak üzere, Lisans Alan Tarafla IBM Grubu arasýndaki iþ iliþkisinin geliþtirilmesini saðlanmasý amacýyla ("Belirlenen Amaç") IBM Grubu içinde Ýþle Ýlgili Ýletiþim Bilgilerinin iþlenmesi ve kullanýlmasý; ve
+
+(b) Ýþ Ýletiþim Bilgilerinin, yalnýzca Belirlenen Amaçla ilgili olarak IBM Grubunun diðer üyelerine açýklanmasý.
+
+(3) IBM, Ýþle Ýlgili Ýletiþim Bilgilerinin, Veri Koruma & Elektronik Ýletiþim Mevzuatýna uygun olarak iþleneceðini ve yalnýzca Belirlenen amaç için kullanýlacaðýný kabul eder.
+
+(4) Veri Koruma & Elektronik Ýletiþim Mevzuatýnýn gerektirdiði ölçüde Lisans Alan Taraf, IBM Grubuna Ýþle Ýlgili Ýletiþim Bilgilerinin Belirlenen Amaç için iþlenmesini ve kullanýlmasýný saðlamak amacýyla Ýletiþim Sorumlularýndan gereken tüm izinleri aldýðýný (ve alacaðýný) ve tüm bildirimleri Ýletiþim Sorumlularýna gönderdiðini (veya göndereceðini) beyan eder.
+
+(5) Lisans Alan Taraf, IBM'e Ýþle Ýlgili Ýletiþim Bilgilerini, aktarým iþleminin Veri Koruma Yetkilisi tarafýndan onaylanan sözleþme koþullarýna uygun olarak gerçekleþtirilmesi veya aktarým iþlemine Veri Koruma & Elektronik Ýletiþim Mevzuatý kapsamýnda izin verilmesi koþuluyla Avrupa Ekonomik Alaný dýþýna aktarma yetkisini verir.
+
+Z125-3301-14 (07/2011)
+
+

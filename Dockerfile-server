@@ -1,0 +1,48 @@
+# © Copyright IBM Corporation 2015, 2017
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+FROM ubuntu:16.04
+
+ARG IBM_PRODUCT_ID
+ARG IBM_PRODUCT_NAME
+ARG IBM_PRODUCT_VERSION
+
+# The URL to download the MQ installer from in tar.gz format
+# This assumes an archive containing the MQ Debian (.deb) install packages 
+ARG MQ_URL
+
+# The MQ packages to install
+ARG MQ_PACKAGES="ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams"
+
+LABEL "ProductID"=$IBM_PRODUCT_ID \
+      "ProductName"=$IBM_PRODUCT_NAME \
+      "ProductVersion"=$IBM_PRODUCT_VERSION
+
+COPY install-mq.sh /usr/local/bin/
+RUN chmod u+x /usr/local/bin/install-mq.sh \
+  && install-mq.sh
+
+COPY build/runmqserver /usr/local/bin/
+COPY build/chkmq* /usr/local/bin/
+COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
+
+RUN chmod +x /usr/local/bin/runmqserver \
+  && chmod +x /usr/local/bin/chkmq*
+
+# Always use port 1414
+EXPOSE 1414
+
+ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1
+
+ENTRYPOINT ["runmqserver"]

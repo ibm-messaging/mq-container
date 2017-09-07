@@ -1,0 +1,1183 @@
+PASTABA
+
+Toliau ðiame dokumente nurodyti kelioms Programoms skirti Licencijos informacijos dokumentai. Kiekviename Licencijos informacijos dokumente nurodoma Programa (-os), kuriai (-ioms) jis yra taikomas. Taikomi tik tie Programos (-ø) Licencijos informacijos dokumentai, kuriø teises ásigijo Licenciatas.
+
+
+==============================================
+
+
+SVARBU: ATIDÞIAI PERSKAITYKITE
+
+Toliau pateiktos dvi licencinës sutartys.
+
+1. Programø ávertinimo IBM tarptautinë licencinë sutartis
+2. IBM tarptautinë programos licencinë sutartis
+
+Jei Licenciatas ásigyja Programà gamybos tikslais (iðskyrus ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su IBM tarptautinës programos licencinës sutarties sàlygomis be jokiø pakeitimø.
+
+Jei Licenciatas ásigyja Programà ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo tikslais (bendrai ¥Ávertinimas´): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su (i) Programø ávertinimo IBM tarptautinës licencinës sutarties (¥Ávertinimo licencija´) sàlygomis be jokiø pakeitimø ir (ii) IBM tarptautinës programos licencinës sutarties (¥IPLA´) sàlygomis be jokiø pakeitimø.
+
+Ávertinimo licencija bus taikoma Licenciato atliekamo ávertinimo metu.
+
+IPLA bus automatiðkai taikoma, jei po Ávertinimo Licenciatas apsispræs pasilikti Programà (arba po Ávertinimo ásigys naudoti papildomas Programos kopijas) ir sudarys ásigijimo sutartá (pvz., IBM ¥International Passport Advantage´ arba IBM ¥Passport Advantage Express´ sutartá (-is).
+
+Ávertinimo licencija ir IPLA negalioja vienu metu, nepakeièia viena kitos ir yra viena nuo kitos nepriklausomos.
+
+Visas abiejø licenciniø sutarèiø tekstas pateikiamas.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Programø ávertinimo tarptautinë licencinë sutartis (Z125-5543-05).
+
+Programos pavadinimas (Programos numeris):
+IBM MQ V9.0.3 (Evaluation)
+IBM MQ Idle Standby V9.0.3 (Evaluation)
+
+Ðios standartinës sàlygos taikomos Licenciato Programos naudojimui.
+
+Ávertinimo laikotarpis
+
+Ávertinimo laikotarpis prasideda nuo Licenciato sutikimo su ðios Sutarties sàlygomis dienos ir baigiasi po 90 dienø.
+
+Pagalbinës programos
+
+Programa yra licencijuojama kaip keliø produktø paketas ir apima toliau nurodytas Pagalbines programas. Licenciatas ágaliotas diegti ir naudoti tokias Pagalbines programas tik Licenciato Pagrindinës programos naudojimui palaikyti pagal ðià Sutartá, kaip nurodyta Programos Teisiø suteikimo dokumente (nebent ðiame Licencijos informacijos dokumente yra suteiktos platesnës teisës). Frazë ¥palaikyti Licenciato naudojimà´ apima tik tà naudojimà, kuris reikalingas ar kitaip tiesiogiai susijæs su Pagrindinës ar kitos Pagalbinës Programos licencijuotu naudojimu. Pagalbiniø programø negalima naudoti jokiam kitam tikslui. Licenciatas nëra ágaliotas perduoti arba perparduoti Pagalbiniø programø atskirai nuo Pagrindinës Programos. Pagalbinë programa gali bûti pateikiama su licencijos sàlygomis ir ðios sàlygos, jei tokiø yra, taikomos Pagalbinæ programà naudojanèiam Licenciatui. Ávykus ginèui ðiame Licencijos informacijos dokumente pateiktos sàlygos pakeièia Pagalbinës programos sàlygas. Kai Licenciato teisë naudoti Programà baigiasi arba nutraukiama, Licenciatas privalo nutraukti naudojimà, sunaikinti arba nedelsdamas gràþinti visas Pagalbiniø Programø kopijas ðaliai, ið kurios Licenciatas ásigijo Programà. Jeigu Licenciatas Pagalbines Programas atsisiuntë, jis turi susisiekti su ðalimi, ið kurios Licenciatas ásigijo Programà. Jei Licenciatas nori licencijuoti Pagalbines programas naudoti ilgiau, nei nurodyta anksèiau, norëdami gauti atitinkamà licencijà, kreipkitës á IBM pardavimo atstovà arba ðalá, ið kurios Licenciatas ásigijo Programà.
+
+Toliau iðvardytos kartu su Programa licencijuotos Pagalbinës programos:
+IBM WebSphere Application Server Liberty V17.0
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Tarptautinë programos licencinë sutartis (Z125-3301-14).
+
+Programos pavadinimas (Programos numeris):
+IBM MQ V9.0.3 (5724-H72)
+IBM MQ Idle Standby V9.0.3 (5724-H72)
+
+Ðios standartinës sàlygos taikomos Licenciato Programos naudojimui.
+
+Riboto naudojimo teisë
+
+Kaip nurodyta Tarptautinëje programos licencinëje sutartyje (IPLA) ir ðioje Licencijos informacijoje, IBM suteikia licenciatui ribotà teisæ naudoti Programà. Ði teisë apsiriboja Ágaliotojo naudojimo lygiu, pvz., Procesoriaus vertës vieneto (PVV) Iðtekliø vertës vieneto (IVV), Vertës vieneto (VV) ar kitu nurodytu naudojimo lygiu, apmokamu Licenciato ir nurodytu Teisiø suteikimo dokumente. Licenciato naudojimas taip pat gali bûti apribotas tik nurodytame kompiuteryje ar tik kaip Pagalbinës programos, ar taikant kitus apribojimus. Kai Licenciatas nëra sumokëjæs uþ visà Programos ekonominæ vertæ, joks kitas naudojimas neleidþiamas nemokant papildomø mokesèiø. Be to, Licenciatas neturi teisës naudoti Programos komercinëms IT paslaugoms teikti jokiai treèiajai ðaliai, taip pat teikti komercinæ iðtekliø nuomà ar laiko paskirstymà, teikti antrinæ Programos licencijà ar jà nuomoti, jei tai nëra aiðkiai nurodyta taikomose sutartyse, pagal kurias Licenciatas ágyja teisæ naudoti Programà. Licenciatas gali naudotis papildomomis teisëmis sumokëjæs papildomà mokestá ar pagal kitas papildomas sàlygas. IBM pasilieka teisæ nuspræsti, ar Licenciatas galës pasinaudoti tokiomis papildomomis teisëmis.
+
+Specifikacijos
+
+Programos specifikacijas galima rasti Programos praneðimø bendruosiuose Apraðo ir techninës informacijos skyriuose.
+
+Pagalbinës programos
+
+Programa yra licencijuojama kaip keliø produktø paketas ir apima toliau nurodytas Pagalbines programas. Licenciatas ágaliotas diegti ir naudoti tokias Pagalbines programas tik Licenciato Pagrindinës programos naudojimui palaikyti pagal ðià Sutartá, kaip nurodyta Programos Teisiø suteikimo dokumente (nebent ðiame Licencijos informacijos dokumente yra suteiktos platesnës teisës). Frazë ¥palaikyti Licenciato naudojimà´ apima tik tà naudojimà, kuris reikalingas ar kitaip tiesiogiai susijæs su Pagrindinës ar kitos Pagalbinës Programos licencijuotu naudojimu. Pagalbiniø programø negalima naudoti jokiam kitam tikslui. Licenciatas nëra ágaliotas perduoti arba perparduoti Pagalbiniø programø atskirai nuo Pagrindinës Programos. Pagalbinë programa gali bûti pateikiama su licencijos sàlygomis ir ðios sàlygos, jei tokiø yra, taikomos Pagalbinæ programà naudojanèiam Licenciatui. Ávykus ginèui ðiame Licencijos informacijos dokumente pateiktos sàlygos pakeièia Pagalbinës programos sàlygas. Kai Licenciato teisë naudoti Programà baigiasi arba nutraukiama, Licenciatas privalo nutraukti naudojimà, sunaikinti arba nedelsdamas gràþinti visas Pagalbiniø Programø kopijas ðaliai, ið kurios Licenciatas ásigijo Programà. Jeigu Licenciatas Pagalbines Programas atsisiuntë, jis turi susisiekti su ðalimi, ið kurios Licenciatas ásigijo Programà. Jei Licenciatas nori licencijuoti Pagalbines programas naudoti ilgiau, nei nurodyta anksèiau, norëdami gauti atitinkamà licencijà, kreipkitës á IBM pardavimo atstovà arba ðalá, ið kurios Licenciatas ásigijo Programà.
+
+Toliau iðvardytos kartu su Programa licencijuotos Pagalbinës programos:
+IBM WebSphere Application Server Liberty V17.0
+
+Suteikiant bûtinas teises nenaudojami komponentai
+
+Nustatant teisiø, reikalingø Licenciato Programai ádiegti arba naudoti, skaièiø, neatsiþvelgiama á toliau nurodytø Programos komponentø diegimà arba naudojimà. Kitaip tariant, Licenciatas gali diegti ir naudoti toliau nurodytus Programos komponentus pagal licencijos sàlygas, taèiau ðie komponentai nenaudojami Programai reikalingø teisiø skaièiui nustatyti.
+IBM MQ Client 9.0.3
+IBM WebSphere Application Server Liberty 17.0
+
+Perskirstymo paketai
+
+Jeigu á Programà átraukti Perskirstomieji komponentai, jie bus nurodyti REDIST faile, pateiktame kartu su Programa. Kartu su Sutarties suteiktomis licencijos teisëmis Licenciatas gali platinti Perskirstymo komponentus laikydamasis ðiø sàlygø:
+1) perskirstymas turi vykti tik objekto kodo forma ir turi atitikti visus Programos REDIST ar lydraðtyje pateiktus nurodymus, instrukcijas ir specifikacijas;
+2) jei Programos lydraðtyje aiðkiai nurodyta, kad Licenciatui leidþiama modifikuoti Perskirstymo paketus, tokios modifikacijos turi atitikti visus toje dokumentacijoje pateiktus nurodymus, instrukcijas ir specifikacijas, ir ðios modifikacijos, jei tokiø yra, turi bûti laikomos Perskirstymo paketais;
+3) Perskirstymo paketai gali bûti platinami tik kaip Licenciato taikomosios programos, kuri buvo sukurta naudojant Programà, (¥Licenciato taikomoji programa´) dalis ir tik Licenciato klientø naudojamai Licenciato taikomajai programai palaikyti. Licenciato taikomoji programa turi teikti svarbià pridëtinæ vertæ taip, kad Licenciato taikomosios programos produkto galutiniai vartotojai nebûtø motyvuoti ásigyti Perskirstymo paketus;
+4) jeigu á Perskirstymo paketus átraukta ¥Java´ vykdymo aplinka, Licenciatas taip pat privalo á Licenciato taikomàjà programà átraukti kitus ne ¥Java´ Perskirstymo paketus, nebent Taikomoji programa sukurta veikti tik bendruosiuose kompiuteriø árenginiuose (pavyzdþiui, skreitiniuose, staliniuose kompiuteriuose ir serveriuose), o ne kiðeniniuose ar kituose skvarbiuosiuose árenginiuose (t. y. árenginiuose, kurie turi mikroprocesoriø, taèiau kuriø kompiuterio funkcijos nëra pirminis naudojimo tikslas);
+5) Licenciatas negali paðalinti jokiø Perskirstymo paketuose esanèiø autoriaus teisiø arba pastabø failø;
+6) Licenciatas nelaikys IBM, jos tiekëjø arba platintojø atsakingais uþ jokias pretenzijas, susijusias su Licenciato taikomosios programos naudojimu ar platinimu;
+7) Licenciatas negali naudoti tokio paties kaip originaliø Perskirstymo paketø failø / moduliø kelio pavadinimo;
+8) Parduodamas Licenciato taikomàjà programà Licenciatas negali naudoti IBM, jos tiekëjø arba platintojø pavadinimø arba prekiø þenklø, neturëdamas IBM, to tiekëjo arba platintojo iðankstinio raðtiðko sutikimo;
+9) IBM, jos tiekëjai ir platintojai pateikia Perskirstymo paketus ir susijusià dokumentacijà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKDAMI JOKIOS APIBRËÞTOS AR NUMANOMOS GARANTIJOS, ÁSKAITANT PAVADINIMO, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NUMANOMAS TINKAMUMO PREKYBAI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS;
+10) Licenciatas atsakingas uþ visà techninæ pagalbà, susijusià su Licenciato taikomàja programa, ir uþ bet kokias Perskirstymo paketø modifikacijas; ir
+11) Licenciato ir Licenciato taikomosios programos galutinio vartotojo licencijos sutartis turi áspëti galutiná vartotojà, kad Perskirstymo paketø arba jø modifikavimø negalima i) naudoti kitu tikslu, nei Licenciato taikomajai programai ágalinti, ii) kopijuoti (iðskyrus kuriant atsarginæ kopijà), iii) platinti ar perduoti naudoti be Licenciato taikomosios programos, arba iv) iðardyti, dekompiliuoti ar kitaip versti, iðskyrus, jei tai aiðkiai leidþia teisës aktai ir nepaþeidþiami sutartiniai ásipareigojimai. Be to, Licenciato licencinë sutartis turi bûti sauganti IBM bent tiek, kiek tai apibrëþia ðios Sutarties sàlygos.
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+Licenciatas gali platinti Programos REDIST faile iðvardytø modifikuotø Ðaltinio komponentø ir Pavyzdinës medþiagos versijas laikydamasis ðios licencijos sàlygø ir REDIST faile pateiktø instrukcijø.
+
+Ðie matavimo vienetai gali bûti taikomi Licenciato Programos naudojimui.
+
+Procesoriaus vertës vienetas (PVV)
+
+Procesoriaus vertës vienetas (PVV) yra matavimo vienetas, pagal kurá licencijuota ði Programa. Reikalingø PVV teisiø skaièius pagrástas procesoriaus technologija (PVV lentelëje nurodytas procesoriaus tiekëjas, prekës þenklas, tipas ir modelio numeris: http://www.ibm.com/software/lotus/passportadvantage/pvu_licensing_for_customers.html) ir Programai prieinamø procesoriø skaièiumi. Licencijuodama pagal PVV IBM apibrëþia procesoriø kaip mikroschemoje esanèià atskirà procesoriaus ðerdá. Pavyzdþiui, dviejø ðerdþiø procesoriaus mikroschemoje yra dvi procesoriaus ðerdys.
+
+Licenciatas gali diegti Programà naudodamas Visos talpos licencijavimà arba Virtualizavimo talpos (talpos dalies) licencijavimà pagal ¥Passport Advantage´ talpos dalies licencijavimo sàlygas (þr. tinklalapá toliau). Naudodamas Visos talpos licencijavimà Licenciatas privalo ásigyti PVV teises, apimanèias visas fizinëje techninës árangos aplinkoje esanèias suaktyvintas procesoriaus ðerdis*, kurias pasiekia arba valdo Programa, iðskyrus serverius, ið kuriø Programa buvo visam laikui paðalinta. Naudodamas Virtualizavimo talpos licencijavimà Licenciatas privalo ásigyti teises, apimanèias visas suaktyvintas procesoriaus ðerdis, kurias pasiekia arba valdo Programa, kaip apibrëþta Virtualizavimo talpos licencijos skaièiavimo taisyklëse: http://www.ibm.com/software/lotus/passportadvantage/Counting_Software_licenses_using_specific_virtualization_technologies.html.
+
+* Suaktyvinta procesoriaus ðerdis ? tai procesoriaus ðerdis, kurià gali naudoti fizinis arba virtualusis serveris, neatsiþvelgiant á tai, ar procesoriaus ðerdies talpa gali bûti arba yra apribota naudojant virtualizavimo technologijas, operacinës sistemos komandas, BIOS nustatymus ar panaðius apribojimus.
+
+Virtualiojo procesoriaus ðerdis
+
+Virtualiojo procesoriaus ðerdis yra matavimo vienetas, kuriuo remiantis gali bûti licencijuojama ði Programa. Fizinis serveris ? tai fizinis kompiuteris, kurá sudaro procesoriai, atmintis ir ávesties / iðvesties funkcinës galimybës. Jis vykdo uþklausø procedûras, komandas arba taikomàsias programas viename arba keliuose vartotojo arba kliento árenginiuose. Kai naudojami stelaþai, moduliai ar kita panaði áranga, kiekvienas atskiras fizinis árenginys (pvz., modulis arba á stelaþà ámontuotas árenginys), turintis reikiamus komponentus, yra laikomas atskiru Fiziniu serveriu. Virtualusis serveris ? tai virtualusis kompiuteris, sukurtas skaidant Fiziniam serveriui prieinamus iðteklius, arba neiðskaidytas Fizinis serveris. Procesoriaus ðerdis (paprastai vadinama procesoriumi arba CPU) yra instrukcijas interpretuojantis ir vykdantis kompiuterinio árenginio funkcinis vienetas. Procesoriaus ðerdá sudaro bent jau instrukcijø valdymo vienetas ir vienas ar daugiau aritmetiniø ar loginiø vienetø. Virtualiojo procesoriaus ðerdis ? tai neiðskaidyto Fizinio serverio Procesoriaus ðerdis arba Virtualiajam serveriui priskirta virtualioji ðerdis. Licenciatas privalo ásigyti teises kiekvienai Programai prieinamo Virtualiojo procesoriaus ðerdþiai.
+
+Kiekvienam Fiziniam serveriui Licenciatas turi turëti pakankamai teisiø 1) visø Programai pasiekiamø Virtualiøjø procesoriø ðerdþiø sumai arba 2) visoms Fizinio serverio Procesoriaus ðerdims (atsiþvelgiant á tai, kuris skaièius maþesnis).
+
+Be anksèiau nurodytos informacijos, toliau nurodytos sàlygos taikomos Licenciato Programos naudojimui.
+
+Laukimo bûsenos budëjimo konfigûracijos
+
+Ðiame skyriuje ¥Laukimo bûsenos budëjimo´ konfigûracija laikoma tokia, kai Programos kopija ádiegiama serveryje, kuris yra gero pasiekiamumo sprendimo dalis ir á kurá Programa permetama, jei aktyviajame serveryje Programos kopija tampa nebenaudojama. Serveris laikomas veikianèiu laukimo reþimu tik tada, jei, iki ávykstant permetimui, jis yra naudojamas tik administraciniams veiksmams atlikti, kurie padeda vykdant permetimo scenarijus.
+
+Programa negali bûti diegiama Laukimo bûsenos budëjimo serveryje, iðskyrus atvejus, kai yra tinkama licencija.
+
+Jeigu Programos Laukimo bûsenos budëjimo konfigûracija naudojama su Keliø egzemplioriø eiliø tvarkytuvo funkcija, Programos kopija gali bûti laikoma Laukimo bûsenos budëjimo serveryje kaip atsarginë kopija ir gali bûti paleidþiama. Taèiau ji turi likti laukimo bûsenos ir neturi bûti naudojama jokiais gamybiniais tikslais, nebent aktyvus serveris permetamas á Laukimo bûsenos budëjimo serverá. Tokiu atveju permetimo laikotarpiu Laukimo bûsenos budëjimo kopija gali bûti naudojama gamybiniais tikslais.
+
+Jeigu Programos Laukimo bûsenos budëjimo konfigûracija naudojama su kitomis Gero pasiekiamumo sistemomis, Programos kopija gali bûti laikoma Laukimo bûsenos budëjimo serveryje kaip atsarginë kopija, bet negali bûti paleidþiama (ir todël negali bûti naudojama jokiais gamybiniais tikslais). Nustojus veikti aktyviam serveriui, jà automatiðkai paleis Gero pasiekiamumo komponentai. Tokiu atveju permetimo laikotarpiu Laukimo bûsenos budëjimo kopija gali bûti naudojama gamybiniais tikslais.
+
+L/N:  L-APIG-AKHJ8V
+D/N:  L-APIG-AKHJ8V
+P/N:  L-APIG-AKHJ8V
+
+
+
+==============================================
+
+
+SVARBU: ATIDÞIAI PERSKAITYKITE
+
+Toliau pateiktos dvi licencinës sutartys.
+
+1. Programø ávertinimo IBM tarptautinë licencinë sutartis
+2. IBM tarptautinë programos licencinë sutartis
+
+Jei Licenciatas ásigyja Programà gamybos tikslais (iðskyrus ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su IBM tarptautinës programos licencinës sutarties sàlygomis be jokiø pakeitimø.
+
+Jei Licenciatas ásigyja Programà ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo tikslais (bendrai ¥Ávertinimas´): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su (i) Programø ávertinimo IBM tarptautinës licencinës sutarties (¥Ávertinimo licencija´) sàlygomis be jokiø pakeitimø ir (ii) IBM tarptautinës programos licencinës sutarties (¥IPLA´) sàlygomis be jokiø pakeitimø.
+
+Ávertinimo licencija bus taikoma Licenciato atliekamo ávertinimo metu.
+
+IPLA bus automatiðkai taikoma, jei po Ávertinimo Licenciatas apsispræs pasilikti Programà (arba po Ávertinimo ásigys naudoti papildomas Programos kopijas) ir sudarys ásigijimo sutartá (pvz., IBM ¥International Passport Advantage´ arba IBM ¥Passport Advantage Express´ sutartá (-is).
+
+Ávertinimo licencija ir IPLA negalioja vienu metu, nepakeièia viena kitos ir yra viena nuo kitos nepriklausomos.
+
+Visas abiejø licenciniø sutarèiø tekstas pateikiamas.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Programø ávertinimo tarptautinë licencinë sutartis (Z125-5543-05).
+
+Programos pavadinimas (Programos numeris):
+IBM MQ Advanced V9.0.3 (Evaluation)
+
+Ðios standartinës sàlygos taikomos Licenciato Programos naudojimui.
+
+Ávertinimo laikotarpis
+
+Ávertinimo laikotarpis prasideda nuo Licenciato sutikimo su ðios Sutarties sàlygomis dienos ir baigiasi po 90 dienø.
+
+Sugrupuotos programos
+
+Programa yra licencijuojama kaip keliø produktø paketas ir apima toliau nurodytas Sugrupuotas programas. Licenciatas ágaliotas diegti ir naudoti ðias Sugrupuotas programas tik kaip nurodyta Programos Teisiø suteikimo dokumente ir ðiame Licencijos informacijos dokumente. Licenciatas nëra ágaliotas perduoti arba perparduoti Sugrupuotø programø atskirai nuo keliø produktø paketo. Sugrupuota programa gali bûti pateikiama su licencijos sàlygomis ir ðios sàlygos, jei tokiø yra, taikomos Sugrupuotà programà naudojanèiam Licenciatui. Ávykus ginèui ðiame Licencijos informacijos dokumente pateiktos sàlygos pakeièia Sugrupuotos programos sàlygas. Kai Licenciato teisë naudoti Programà baigiasi arba nutraukiama, Licenciatas privalo nutraukti naudojimà, sunaikinti arba nedelsdamas gràþinti visas Sugrupuotø programø kopijas ðaliai, ið kurios Licenciatas ásigijo Programà. Jeigu Licenciatas Sugrupuotas programas atsisiuntë, jis turi susisiekti su ðalimi, ið kurios Licenciatas ásigijo Programà. Jei Licenciatas nori licencijuoti Sugrupuotas programas naudoti ilgiau, nei nurodyta anksèiau, norëdami gauti atitinkamà licencijà, kreipkitës á IBM pardavimo atstovà arba ðalá, ið kurios Licenciatas ásigijo Programà.
+
+Toliau iðvardytos kartu su Programa licencijuotos Sugrupuotos programos:
+IBM MQ V9.0.3
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Tarptautinë programos licencinë sutartis (Z125-3301-14).
+
+Programos pavadinimas (Programos numeris):
+IBM MQ Advanced V9.0.3 (5724-H72)
+
+Ðios standartinës sàlygos taikomos Licenciato Programos naudojimui.
+
+Riboto naudojimo teisë
+
+Kaip nurodyta Tarptautinëje programos licencinëje sutartyje (IPLA) ir ðioje Licencijos informacijoje, IBM suteikia licenciatui ribotà teisæ naudoti Programà. Ði teisë apsiriboja Ágaliotojo naudojimo lygiu, pvz., Procesoriaus vertës vieneto (PVV) Iðtekliø vertës vieneto (IVV), Vertës vieneto (VV) ar kitu nurodytu naudojimo lygiu, apmokamu Licenciato ir nurodytu Teisiø suteikimo dokumente. Licenciato naudojimas taip pat gali bûti apribotas tik nurodytame kompiuteryje ar tik kaip Pagalbinës programos, ar taikant kitus apribojimus. Kai Licenciatas nëra sumokëjæs uþ visà Programos ekonominæ vertæ, joks kitas naudojimas neleidþiamas nemokant papildomø mokesèiø. Be to, Licenciatas neturi teisës naudoti Programos komercinëms IT paslaugoms teikti jokiai treèiajai ðaliai, taip pat teikti komercinæ iðtekliø nuomà ar laiko paskirstymà, teikti antrinæ Programos licencijà ar jà nuomoti, jei tai nëra aiðkiai nurodyta taikomose sutartyse, pagal kurias Licenciatas ágyja teisæ naudoti Programà. Licenciatas gali naudotis papildomomis teisëmis sumokëjæs papildomà mokestá ar pagal kitas papildomas sàlygas. IBM pasilieka teisæ nuspræsti, ar Licenciatas galës pasinaudoti tokiomis papildomomis teisëmis.
+
+Specifikacijos
+
+Programos specifikacijas galima rasti Programos praneðimø bendruosiuose Apraðo ir techninës informacijos skyriuose.
+
+Sugrupuotos programos
+
+Programa yra licencijuojama kaip keliø produktø paketas ir apima toliau nurodytas Sugrupuotas programas. Licenciatas ágaliotas diegti ir naudoti ðias Sugrupuotas programas tik kaip nurodyta Programos Teisiø suteikimo dokumente ir ðiame Licencijos informacijos dokumente. Licenciatas nëra ágaliotas perduoti arba perparduoti Sugrupuotø programø atskirai nuo keliø produktø paketo. Sugrupuota programa gali bûti pateikiama su licencijos sàlygomis ir ðios sàlygos, jei tokiø yra, taikomos Sugrupuotà programà naudojanèiam Licenciatui. Ávykus ginèui ðiame Licencijos informacijos dokumente pateiktos sàlygos pakeièia Sugrupuotos programos sàlygas. Kai Licenciato teisë naudoti Programà baigiasi arba nutraukiama, Licenciatas privalo nutraukti naudojimà, sunaikinti arba nedelsdamas gràþinti visas Sugrupuotø programø kopijas ðaliai, ið kurios Licenciatas ásigijo Programà. Jeigu Licenciatas Sugrupuotas programas atsisiuntë, jis turi susisiekti su ðalimi, ið kurios Licenciatas ásigijo Programà. Jei Licenciatas nori licencijuoti Sugrupuotas programas naudoti ilgiau, nei nurodyta anksèiau, norëdami gauti atitinkamà licencijà, kreipkitës á IBM pardavimo atstovà arba ðalá, ið kurios Licenciatas ásigijo Programà.
+
+Toliau iðvardytos kartu su Programa licencijuotos Sugrupuotos programos:
+IBM MQ V9.0.3
+
+Suteikiant bûtinas teises nenaudojami komponentai
+
+Nustatant teisiø, reikalingø Licenciato Programai ádiegti arba naudoti, skaièiø, neatsiþvelgiama á toliau nurodytø Programos komponentø diegimà arba naudojimà. Kitaip tariant, Licenciatas gali diegti ir naudoti toliau nurodytus Programos komponentus pagal licencijos sàlygas, taèiau ðie komponentai nenaudojami Programai reikalingø teisiø skaièiui nustatyti.
+IBM MQ Managed File Transfer Agent V9.0.1
+IBM MQ Telemetry V9.0.1
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+Ðie matavimo vienetai gali bûti taikomi Licenciato Programos naudojimui.
+
+Procesoriaus vertës vienetas (PVV)
+
+Procesoriaus vertës vienetas (PVV) yra matavimo vienetas, pagal kurá licencijuota ði Programa. Reikalingø PVV teisiø skaièius pagrástas procesoriaus technologija (PVV lentelëje nurodytas procesoriaus tiekëjas, prekës þenklas, tipas ir modelio numeris: http://www.ibm.com/software/lotus/passportadvantage/pvu_licensing_for_customers.html) ir Programai prieinamø procesoriø skaièiumi. Licencijuodama pagal PVV IBM apibrëþia procesoriø kaip mikroschemoje esanèià atskirà procesoriaus ðerdá. Pavyzdþiui, dviejø ðerdþiø procesoriaus mikroschemoje yra dvi procesoriaus ðerdys.
+
+Licenciatas gali diegti Programà naudodamas Visos talpos licencijavimà arba Virtualizavimo talpos (talpos dalies) licencijavimà pagal ¥Passport Advantage´ talpos dalies licencijavimo sàlygas (þr. tinklalapá toliau). Naudodamas Visos talpos licencijavimà Licenciatas privalo ásigyti PVV teises, apimanèias visas fizinëje techninës árangos aplinkoje esanèias suaktyvintas procesoriaus ðerdis*, kurias pasiekia arba valdo Programa, iðskyrus serverius, ið kuriø Programa buvo visam laikui paðalinta. Naudodamas Virtualizavimo talpos licencijavimà Licenciatas privalo ásigyti teises, apimanèias visas suaktyvintas procesoriaus ðerdis, kurias pasiekia arba valdo Programa, kaip apibrëþta Virtualizavimo talpos licencijos skaièiavimo taisyklëse: http://www.ibm.com/software/lotus/passportadvantage/Counting_Software_licenses_using_specific_virtualization_technologies.html.
+
+* Suaktyvinta procesoriaus ðerdis ? tai procesoriaus ðerdis, kurià gali naudoti fizinis arba virtualusis serveris, neatsiþvelgiant á tai, ar procesoriaus ðerdies talpa gali bûti arba yra apribota naudojant virtualizavimo technologijas, operacinës sistemos komandas, BIOS nustatymus ar panaðius apribojimus.
+
+Virtualiojo procesoriaus ðerdis
+
+Virtualiojo procesoriaus ðerdis yra matavimo vienetas, kuriuo remiantis gali bûti licencijuojama ði Programa. Fizinis serveris ? tai fizinis kompiuteris, kurá sudaro procesoriai, atmintis ir ávesties / iðvesties funkcinës galimybës. Jis vykdo uþklausø procedûras, komandas arba taikomàsias programas viename arba keliuose vartotojo arba kliento árenginiuose. Kai naudojami stelaþai, moduliai ar kita panaði áranga, kiekvienas atskiras fizinis árenginys (pvz., modulis arba á stelaþà ámontuotas árenginys), turintis reikiamus komponentus, yra laikomas atskiru Fiziniu serveriu. Virtualusis serveris ? tai virtualusis kompiuteris, sukurtas skaidant Fiziniam serveriui prieinamus iðteklius, arba neiðskaidytas Fizinis serveris. Procesoriaus ðerdis (paprastai vadinama procesoriumi arba CPU) yra instrukcijas interpretuojantis ir vykdantis kompiuterinio árenginio funkcinis vienetas. Procesoriaus ðerdá sudaro bent jau instrukcijø valdymo vienetas ir vienas ar daugiau aritmetiniø ar loginiø vienetø. Virtualiojo procesoriaus ðerdis ? tai neiðskaidyto Fizinio serverio Procesoriaus ðerdis arba Virtualiajam serveriui priskirta virtualioji ðerdis. Licenciatas privalo ásigyti teises kiekvienai Programai prieinamo Virtualiojo procesoriaus ðerdþiai.
+
+Kiekvienam Fiziniam serveriui Licenciatas turi turëti pakankamai teisiø 1) visø Programai pasiekiamø Virtualiøjø procesoriø ðerdþiø sumai arba 2) visoms Fizinio serverio Procesoriaus ðerdims (atsiþvelgiant á tai, kuris skaièius maþesnis).
+
+L/N:  L-APIG-AKHJJP
+D/N:  L-APIG-AKHJJP
+P/N:  L-APIG-AKHJJP
+
+
+
+==============================================
+
+
+SVARBU: ATIDÞIAI PERSKAITYKITE
+
+Toliau pateiktos dvi licencinës sutartys.
+
+1. Programø ávertinimo IBM tarptautinë licencinë sutartis
+2. IBM tarptautinë programos licencinë sutartis
+
+Jei Licenciatas ásigyja Programà gamybos tikslais (iðskyrus ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su IBM tarptautinës programos licencinës sutarties sàlygomis be jokiø pakeitimø.
+
+Jei Licenciatas ásigyja Programà ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo tikslais (bendrai ¥Ávertinimas´): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su (i) Programø ávertinimo IBM tarptautinës licencinës sutarties (¥Ávertinimo licencija´) sàlygomis be jokiø pakeitimø ir (ii) IBM tarptautinës programos licencinës sutarties (¥IPLA´) sàlygomis be jokiø pakeitimø.
+
+Ávertinimo licencija bus taikoma Licenciato atliekamo ávertinimo metu.
+
+IPLA bus automatiðkai taikoma, jei po Ávertinimo Licenciatas apsispræs pasilikti Programà (arba po Ávertinimo ásigys naudoti papildomas Programos kopijas) ir sudarys ásigijimo sutartá (pvz., IBM ¥International Passport Advantage´ arba IBM ¥Passport Advantage Express´ sutartá (-is).
+
+Ávertinimo licencija ir IPLA negalioja vienu metu, nepakeièia viena kitos ir yra viena nuo kitos nepriklausomos.
+
+Visas abiejø licenciniø sutarèiø tekstas pateikiamas.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Programø ávertinimo tarptautinë licencinë sutartis (Z125-5543-05).
+
+Programos pavadinimas (Programos numeris):
+IBM MQ Advanced Idle Standby V9.0.3 (Evaluation)
+
+Ðios standartinës sàlygos taikomos Licenciato Programos naudojimui.
+
+Ávertinimo laikotarpis
+
+Ávertinimo laikotarpis prasideda nuo Licenciato sutikimo su ðios Sutarties sàlygomis dienos ir baigiasi po 90 dienø.
+
+Sugrupuotos programos
+
+Programa yra licencijuojama kaip keliø produktø paketas ir apima toliau nurodytas Sugrupuotas programas. Licenciatas ágaliotas diegti ir naudoti ðias Sugrupuotas programas tik kaip nurodyta Programos Teisiø suteikimo dokumente ir ðiame Licencijos informacijos dokumente. Licenciatas nëra ágaliotas perduoti arba perparduoti Sugrupuotø programø atskirai nuo keliø produktø paketo. Sugrupuota programa gali bûti pateikiama su licencijos sàlygomis ir ðios sàlygos, jei tokiø yra, taikomos Sugrupuotà programà naudojanèiam Licenciatui. Ávykus ginèui ðiame Licencijos informacijos dokumente pateiktos sàlygos pakeièia Sugrupuotos programos sàlygas. Kai Licenciato teisë naudoti Programà baigiasi arba nutraukiama, Licenciatas privalo nutraukti naudojimà, sunaikinti arba nedelsdamas gràþinti visas Sugrupuotø programø kopijas ðaliai, ið kurios Licenciatas ásigijo Programà. Jeigu Licenciatas Sugrupuotas programas atsisiuntë, jis turi susisiekti su ðalimi, ið kurios Licenciatas ásigijo Programà. Jei Licenciatas nori licencijuoti Sugrupuotas programas naudoti ilgiau, nei nurodyta anksèiau, norëdami gauti atitinkamà licencijà, kreipkitës á IBM pardavimo atstovà arba ðalá, ið kurios Licenciatas ásigijo Programà.
+
+Toliau iðvardytos kartu su Programa licencijuotos Sugrupuotos programos:
+IBM MQ Idle Standby V9.0.3
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Tarptautinë programos licencinë sutartis (Z125-3301-14).
+
+Programos pavadinimas (Programos numeris):
+IBM MQ Advanced Idle Standby V9.0.3 (5724-H72)
+
+Ðios standartinës sàlygos taikomos Licenciato Programos naudojimui.
+
+Riboto naudojimo teisë
+
+Kaip nurodyta Tarptautinëje programos licencinëje sutartyje (IPLA) ir ðioje Licencijos informacijoje, IBM suteikia licenciatui ribotà teisæ naudoti Programà. Ði teisë apsiriboja Ágaliotojo naudojimo lygiu, pvz., Procesoriaus vertës vieneto (PVV) Iðtekliø vertës vieneto (IVV), Vertës vieneto (VV) ar kitu nurodytu naudojimo lygiu, apmokamu Licenciato ir nurodytu Teisiø suteikimo dokumente. Licenciato naudojimas taip pat gali bûti apribotas tik nurodytame kompiuteryje ar tik kaip Pagalbinës programos, ar taikant kitus apribojimus. Kai Licenciatas nëra sumokëjæs uþ visà Programos ekonominæ vertæ, joks kitas naudojimas neleidþiamas nemokant papildomø mokesèiø. Be to, Licenciatas neturi teisës naudoti Programos komercinëms IT paslaugoms teikti jokiai treèiajai ðaliai, taip pat teikti komercinæ iðtekliø nuomà ar laiko paskirstymà, teikti antrinæ Programos licencijà ar jà nuomoti, jei tai nëra aiðkiai nurodyta taikomose sutartyse, pagal kurias Licenciatas ágyja teisæ naudoti Programà. Licenciatas gali naudotis papildomomis teisëmis sumokëjæs papildomà mokestá ar pagal kitas papildomas sàlygas. IBM pasilieka teisæ nuspræsti, ar Licenciatas galës pasinaudoti tokiomis papildomomis teisëmis.
+
+Specifikacijos
+
+Programos specifikacijas galima rasti Programos praneðimø bendruosiuose Apraðo ir techninës informacijos skyriuose.
+
+Sugrupuotos programos
+
+Programa yra licencijuojama kaip keliø produktø paketas ir apima toliau nurodytas Sugrupuotas programas. Licenciatas ágaliotas diegti ir naudoti ðias Sugrupuotas programas tik kaip nurodyta Programos Teisiø suteikimo dokumente ir ðiame Licencijos informacijos dokumente. Licenciatas nëra ágaliotas perduoti arba perparduoti Sugrupuotø programø atskirai nuo keliø produktø paketo. Sugrupuota programa gali bûti pateikiama su licencijos sàlygomis ir ðios sàlygos, jei tokiø yra, taikomos Sugrupuotà programà naudojanèiam Licenciatui. Ávykus ginèui ðiame Licencijos informacijos dokumente pateiktos sàlygos pakeièia Sugrupuotos programos sàlygas. Kai Licenciato teisë naudoti Programà baigiasi arba nutraukiama, Licenciatas privalo nutraukti naudojimà, sunaikinti arba nedelsdamas gràþinti visas Sugrupuotø programø kopijas ðaliai, ið kurios Licenciatas ásigijo Programà. Jeigu Licenciatas Sugrupuotas programas atsisiuntë, jis turi susisiekti su ðalimi, ið kurios Licenciatas ásigijo Programà. Jei Licenciatas nori licencijuoti Sugrupuotas programas naudoti ilgiau, nei nurodyta anksèiau, norëdami gauti atitinkamà licencijà, kreipkitës á IBM pardavimo atstovà arba ðalá, ið kurios Licenciatas ásigijo Programà.
+
+Toliau iðvardytos kartu su Programa licencijuotos Sugrupuotos programos:
+IBM MQ Idle Standby V9.0.3
+
+Suteikiant bûtinas teises nenaudojami komponentai
+
+Nustatant teisiø, reikalingø Licenciato Programai ádiegti arba naudoti, skaièiø, neatsiþvelgiama á toliau nurodytø Programos komponentø diegimà arba naudojimà. Kitaip tariant, Licenciatas gali diegti ir naudoti toliau nurodytus Programos komponentus pagal licencijos sàlygas, taèiau ðie komponentai nenaudojami Programai reikalingø teisiø skaièiui nustatyti.
+IBM MQ Managed File Transfer Agent V9.0.1
+IBM MQ Telemetry V9.0.1
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+Ðie matavimo vienetai gali bûti taikomi Licenciato Programos naudojimui.
+
+Procesoriaus vertës vienetas (PVV)
+
+Procesoriaus vertës vienetas (PVV) yra matavimo vienetas, pagal kurá licencijuota ði Programa. Reikalingø PVV teisiø skaièius pagrástas procesoriaus technologija (PVV lentelëje nurodytas procesoriaus tiekëjas, prekës þenklas, tipas ir modelio numeris: http://www.ibm.com/software/lotus/passportadvantage/pvu_licensing_for_customers.html) ir Programai prieinamø procesoriø skaièiumi. Licencijuodama pagal PVV IBM apibrëþia procesoriø kaip mikroschemoje esanèià atskirà procesoriaus ðerdá. Pavyzdþiui, dviejø ðerdþiø procesoriaus mikroschemoje yra dvi procesoriaus ðerdys.
+
+Licenciatas gali diegti Programà naudodamas Visos talpos licencijavimà arba Virtualizavimo talpos (talpos dalies) licencijavimà pagal ¥Passport Advantage´ talpos dalies licencijavimo sàlygas (þr. tinklalapá toliau). Naudodamas Visos talpos licencijavimà Licenciatas privalo ásigyti PVV teises, apimanèias visas fizinëje techninës árangos aplinkoje esanèias suaktyvintas procesoriaus ðerdis*, kurias pasiekia arba valdo Programa, iðskyrus serverius, ið kuriø Programa buvo visam laikui paðalinta. Naudodamas Virtualizavimo talpos licencijavimà Licenciatas privalo ásigyti teises, apimanèias visas suaktyvintas procesoriaus ðerdis, kurias pasiekia arba valdo Programa, kaip apibrëþta Virtualizavimo talpos licencijos skaièiavimo taisyklëse: http://www.ibm.com/software/lotus/passportadvantage/Counting_Software_licenses_using_specific_virtualization_technologies.html.
+
+* Suaktyvinta procesoriaus ðerdis ? tai procesoriaus ðerdis, kurià gali naudoti fizinis arba virtualusis serveris, neatsiþvelgiant á tai, ar procesoriaus ðerdies talpa gali bûti arba yra apribota naudojant virtualizavimo technologijas, operacinës sistemos komandas, BIOS nustatymus ar panaðius apribojimus.
+
+Be anksèiau nurodytos informacijos, toliau nurodytos sàlygos taikomos Licenciato Programos naudojimui.
+
+Laukimo bûsenos budëjimo konfigûracijos
+
+Ðiame skyriuje ¥Laukimo bûsenos budëjimo´ konfigûracija laikoma tokia, kai Programos kopija ádiegiama serveryje, kuris yra gero pasiekiamumo sprendimo dalis ir á kurá Programa permetama, jei aktyviajame serveryje Programos kopija tampa nebenaudojama. Serveris laikomas veikianèiu laukimo reþimu tik tada, jei, iki ávykstant permetimui, jis yra naudojamas tik administraciniams veiksmams atlikti, kurie padeda vykdant permetimo scenarijus.
+
+Programa negali bûti diegiama Laukimo bûsenos budëjimo serveryje, iðskyrus atvejus, kai yra tinkama licencija.
+
+Jeigu Programos Laukimo bûsenos budëjimo konfigûracija naudojama su Keliø egzemplioriø eiliø tvarkytuvo funkcija, Programos kopija gali bûti laikoma Laukimo bûsenos budëjimo serveryje kaip atsarginë kopija ir gali bûti paleidþiama. Taèiau ji turi likti laukimo bûsenos ir neturi bûti naudojama jokiais gamybiniais tikslais, nebent aktyvus serveris permetamas á Laukimo bûsenos budëjimo serverá. Tokiu atveju permetimo laikotarpiu Laukimo bûsenos budëjimo kopija gali bûti naudojama gamybiniais tikslais.
+
+Jeigu Programos Laukimo bûsenos budëjimo konfigûracija naudojama su kitomis Gero pasiekiamumo sistemomis, Programos kopija gali bûti laikoma Laukimo bûsenos budëjimo serveryje kaip atsarginë kopija, bet negali bûti paleidþiama (ir todël negali bûti naudojama jokiais gamybiniais tikslais). Nustojus veikti aktyviam serveriui, jà automatiðkai paleis Gero pasiekiamumo komponentai. Tokiu atveju permetimo laikotarpiu Laukimo bûsenos budëjimo kopija gali bûti naudojama gamybiniais tikslais.
+
+L/N:  L-APIG-AKHJKX
+D/N:  L-APIG-AKHJKX
+P/N:  L-APIG-AKHJKX
+
+
+
+==============================================
+
+
+SVARBU: ATIDÞIAI PERSKAITYKITE
+
+Toliau pateiktos dvi licencinës sutartys.
+
+1. Programø ávertinimo IBM tarptautinë licencinë sutartis
+2. IBM tarptautinë programos licencinë sutartis
+
+Jei Licenciatas ásigyja Programà gamybos tikslais (iðskyrus ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su IBM tarptautinës programos licencinës sutarties sàlygomis be jokiø pakeitimø.
+
+Jei Licenciatas ásigyja Programà ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo tikslais (bendrai ¥Ávertinimas´): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su (i) Programø ávertinimo IBM tarptautinës licencinës sutarties (¥Ávertinimo licencija´) sàlygomis be jokiø pakeitimø ir (ii) IBM tarptautinës programos licencinës sutarties (¥IPLA´) sàlygomis be jokiø pakeitimø.
+
+Ávertinimo licencija bus taikoma Licenciato atliekamo ávertinimo metu.
+
+IPLA bus automatiðkai taikoma, jei po Ávertinimo Licenciatas apsispræs pasilikti Programà (arba po Ávertinimo ásigys naudoti papildomas Programos kopijas) ir sudarys ásigijimo sutartá (pvz., IBM ¥International Passport Advantage´ arba IBM ¥Passport Advantage Express´ sutartá (-is).
+
+Ávertinimo licencija ir IPLA negalioja vienu metu, nepakeièia viena kitos ir yra viena nuo kitos nepriklausomos.
+
+Visas abiejø licenciniø sutarèiø tekstas pateikiamas.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Programø ávertinimo tarptautinë licencinë sutartis (Z125-5543-05).
+
+Programos pavadinimas (Programos numeris):
+IBM MQ Advanced for Developers V9.0.3 (Evaluation)
+
+Ðios standartinës sàlygos taikomos Licenciato Programos naudojimui.
+
+Ávertinimo laikotarpis
+
+Ávertinimo laikotarpis prasideda nuo Licenciato sutikimo su ðios Sutarties sàlygomis dienos ir baigiasi po 90 dienø.
+
+Sugrupuotos programos
+
+Programa yra licencijuojama kaip keliø produktø paketas ir apima toliau nurodytas Sugrupuotas programas. Licenciatas ágaliotas diegti ir naudoti ðias Sugrupuotas programas tik kaip nurodyta Programos Teisiø suteikimo dokumente ir ðiame Licencijos informacijos dokumente. Licenciatas nëra ágaliotas perduoti arba perparduoti Sugrupuotø programø atskirai nuo keliø produktø paketo. Sugrupuota programa gali bûti pateikiama su licencijos sàlygomis ir ðios sàlygos, jei tokiø yra, taikomos Sugrupuotà programà naudojanèiam Licenciatui. Ávykus ginèui ðiame Licencijos informacijos dokumente pateiktos sàlygos pakeièia Sugrupuotos programos sàlygas. Kai Licenciato teisë naudoti Programà baigiasi arba nutraukiama, Licenciatas privalo nutraukti naudojimà, sunaikinti arba nedelsdamas gràþinti visas Sugrupuotø programø kopijas ðaliai, ið kurios Licenciatas ásigijo Programà. Jeigu Licenciatas Sugrupuotas programas atsisiuntë, jis turi susisiekti su ðalimi, ið kurios Licenciatas ásigijo Programà. Jei Licenciatas nori licencijuoti Sugrupuotas programas naudoti ilgiau, nei nurodyta anksèiau, norëdami gauti atitinkamà licencijà, kreipkitës á IBM pardavimo atstovà arba ðalá, ið kurios Licenciatas ásigijo Programà.
+
+Toliau iðvardytos kartu su Programa licencijuotos Sugrupuotos programos:
+IBM MQ V9.0.3
+
+Kûrëjo ribojimas
+
+Jei Programa paþymëta kaip skirta ¥Kûrëjams´, Programà kûrëjo kompiuteryje galima diegti tik kaip Licenciato vidinio kûrimo ir árenginiø testavimo paskirties dalá. Kûrëjo kompiuteris ? tai fizinë arba kompiuterio virtualioji aplinka, kurioje veikia pagrindinë operacinë sistema ir Programa, prie kuriø prieigà turi ir kurias naudoja ne daugiau nei vienas nurodytas kûrëjas. Licenciatas neturi teisës naudoti Programos gamybos darbo krûviams apdoroti, gamybos darbo krûviams modeliuoti arba bet kurio kodo, taikomosios programos arba sistemos pritaikomumui tikrinti. Licenciatas neturi teisës naudoti bet kurios Programos dalies bet kokiais kitais tikslais, jei nëra ásigijæs atitinkamø gamybos teisiø.
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Tarptautinë programos licencinë sutartis (Z125-3301-14).
+
+Programos pavadinimas (Programos numeris):
+IBM MQ Advanced for Developers V9.0.3 (5724-H72)
+
+Ðios standartinës sàlygos taikomos Licenciato Programos naudojimui.
+
+Riboto naudojimo teisë
+
+Kaip nurodyta Tarptautinëje programos licencinëje sutartyje (IPLA) ir ðioje Licencijos informacijoje, IBM suteikia licenciatui ribotà teisæ naudoti Programà. Ði teisë apsiriboja Ágaliotojo naudojimo lygiu, pvz., Procesoriaus vertës vieneto (PVV) Iðtekliø vertës vieneto (IVV), Vertës vieneto (VV) ar kitu nurodytu naudojimo lygiu, apmokamu Licenciato ir nurodytu Teisiø suteikimo dokumente. Licenciato naudojimas taip pat gali bûti apribotas tik nurodytame kompiuteryje ar tik kaip Pagalbinës programos, ar taikant kitus apribojimus. Kai Licenciatas nëra sumokëjæs uþ visà Programos ekonominæ vertæ, joks kitas naudojimas neleidþiamas nemokant papildomø mokesèiø. Be to, Licenciatas neturi teisës naudoti Programos komercinëms IT paslaugoms teikti jokiai treèiajai ðaliai, taip pat teikti komercinæ iðtekliø nuomà ar laiko paskirstymà, teikti antrinæ Programos licencijà ar jà nuomoti, jei tai nëra aiðkiai nurodyta taikomose sutartyse, pagal kurias Licenciatas ágyja teisæ naudoti Programà. Licenciatas gali naudotis papildomomis teisëmis sumokëjæs papildomà mokestá ar pagal kitas papildomas sàlygas. IBM pasilieka teisæ nuspræsti, ar Licenciatas galës pasinaudoti tokiomis papildomomis teisëmis.
+
+Specifikacijos
+
+Programos specifikacijas galima rasti Programos praneðimø bendruosiuose Apraðo ir techninës informacijos skyriuose.
+
+Sugrupuotos programos
+
+Programa yra licencijuojama kaip keliø produktø paketas ir apima toliau nurodytas Sugrupuotas programas. Licenciatas ágaliotas diegti ir naudoti ðias Sugrupuotas programas tik kaip nurodyta Programos Teisiø suteikimo dokumente ir ðiame Licencijos informacijos dokumente. Licenciatas nëra ágaliotas perduoti arba perparduoti Sugrupuotø programø atskirai nuo keliø produktø paketo. Sugrupuota programa gali bûti pateikiama su licencijos sàlygomis ir ðios sàlygos, jei tokiø yra, taikomos Sugrupuotà programà naudojanèiam Licenciatui. Ávykus ginèui ðiame Licencijos informacijos dokumente pateiktos sàlygos pakeièia Sugrupuotos programos sàlygas. Kai Licenciato teisë naudoti Programà baigiasi arba nutraukiama, Licenciatas privalo nutraukti naudojimà, sunaikinti arba nedelsdamas gràþinti visas Sugrupuotø programø kopijas ðaliai, ið kurios Licenciatas ásigijo Programà. Jeigu Licenciatas Sugrupuotas programas atsisiuntë, jis turi susisiekti su ðalimi, ið kurios Licenciatas ásigijo Programà. Jei Licenciatas nori licencijuoti Sugrupuotas programas naudoti ilgiau, nei nurodyta anksèiau, norëdami gauti atitinkamà licencijà, kreipkitës á IBM pardavimo atstovà arba ðalá, ið kurios Licenciatas ásigijo Programà.
+
+Toliau iðvardytos kartu su Programa licencijuotos Sugrupuotos programos:
+IBM MQ V9.0.3
+
+Kûrëjo ribojimas
+
+Jei Programa paþymëta kaip skirta ¥Kûrëjams´, Programà kûrëjo kompiuteryje galima diegti tik kaip Licenciato vidinio kûrimo ir árenginiø testavimo paskirties dalá. Kûrëjo kompiuteris ? tai fizinë arba kompiuterio virtualioji aplinka, kurioje veikia pagrindinë operacinë sistema ir Programa, prie kuriø prieigà turi ir kurias naudoja ne daugiau nei vienas nurodytas kûrëjas. Licenciatas neturi teisës naudoti Programos gamybos darbo krûviams apdoroti, gamybos darbo krûviams modeliuoti arba bet kurio kodo, taikomosios programos arba sistemos pritaikomumui tikrinti. Licenciatas neturi teisës naudoti bet kurios Programos dalies bet kokiais kitais tikslais, jei nëra ásigijæs atitinkamø gamybos teisiø.
+
+Suteikiant bûtinas teises nenaudojami komponentai
+
+Nustatant teisiø, reikalingø Licenciato Programai ádiegti arba naudoti, skaièiø, neatsiþvelgiama á toliau nurodytø Programos komponentø diegimà arba naudojimà. Kitaip tariant, Licenciatas gali diegti ir naudoti toliau nurodytus Programos komponentus pagal licencijos sàlygas, taèiau ðie komponentai nenaudojami Programai reikalingø teisiø skaièiui nustatyti.
+IBM MQ Managed File Transfer Agent V9.0.1
+IBM MQ Telemetry V9.0.1
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+Ðie matavimo vienetai gali bûti taikomi Licenciato Programos naudojimui.
+
+Ádiegtis
+
+Ádiegtis yra matavimo vienetas, kuriuo remiantis gali bûti licencijuojama ði Programa. Ádiegtis ? tai fiziniame arba virtualiajame diske ádiegta Programos kopija, kurià galima vykdyti kompiuteryje. Licenciatas privalo ásigyti teises kiekvienai Programos Ádiegèiai.
+
+L/N:  L-APIG-AKHJMD
+D/N:  L-APIG-AKHJMD
+P/N:  L-APIG-AKHJMD
+
+
+
+==============================================
+
+
+SVARBU: ATIDÞIAI PERSKAITYKITE
+
+Toliau pateiktos dvi licencinës sutartys.
+
+1. Programø ávertinimo IBM tarptautinë licencinë sutartis
+2. IBM tarptautinë programos licencinë sutartis
+
+Jei Licenciatas ásigyja Programà gamybos tikslais (iðskyrus ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su IBM tarptautinës programos licencinës sutarties sàlygomis be jokiø pakeitimø.
+
+Jei Licenciatas ásigyja Programà ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo tikslais (bendrai ¥Ávertinimas´): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su (i) Programø ávertinimo IBM tarptautinës licencinës sutarties (¥Ávertinimo licencija´) sàlygomis be jokiø pakeitimø ir (ii) IBM tarptautinës programos licencinës sutarties (¥IPLA´) sàlygomis be jokiø pakeitimø.
+
+Ávertinimo licencija bus taikoma Licenciato atliekamo ávertinimo metu.
+
+IPLA bus automatiðkai taikoma, jei po Ávertinimo Licenciatas apsispræs pasilikti Programà (arba po Ávertinimo ásigys naudoti papildomas Programos kopijas) ir sudarys ásigijimo sutartá (pvz., IBM ¥International Passport Advantage´ arba IBM ¥Passport Advantage Express´ sutartá (-is).
+
+Ávertinimo licencija ir IPLA negalioja vienu metu, nepakeièia viena kitos ir yra viena nuo kitos nepriklausomos.
+
+Visas abiejø licenciniø sutarèiø tekstas pateikiamas.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Programø ávertinimo tarptautinë licencinë sutartis (Z125-5543-05).
+
+Programos pavadinimas: IBM MQ Managed File Transfer Service V9.0.1
+Programos numeris: Evaluation
+
+Programos pavadinimas: IBM MQ Managed File Transfer Service Idle Standby V9.0.1
+Programos numeris: Evaluation
+
+Programos pavadinimas: IBM MQ Managed File Transfer Agent V9.0.1
+Programos numeris: Evaluation
+
+Ávertinimo laikotarpis
+
+Ávertinimo laikotarpis prasideda nuo Licenciato sutikimo su ðios Sutarties sàlygomis dienos ir baigiasi po 90 dienø.
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Tarptautinë programos licencinë sutartis (Z125-3301-14).
+
+Programos pavadinimas: IBM MQ Managed File Transfer Service V9.0.1
+Programos numeris: 5724-H72
+
+Programos pavadinimas: IBM MQ Managed File Transfer Service Idle Standby V9.0.1
+Programos numeris: 5724-H72
+
+Programos pavadinimas: IBM MQ Managed File Transfer Agent V9.0.1
+Programos numeris: 5724-H72
+
+Kaip nurodyta Tarptautinëje programos licencinëje sutartyje (IPLA) ir ðioje Licencijos informacijoje, IBM suteikia licenciatui ribotà teisæ naudoti Programà. Ði teisë apsiriboja Ágaliotojo naudojimo lygiu, pvz., Procesoriaus vertës vieneto (PVV) Iðtekliø vertës vieneto (IVV), Vertës vieneto (VV) ar kitu nurodytu naudojimo lygiu, apmokamu Licenciato ir nurodytu Teisiø suteikimo dokumente. Licenciato naudojimas taip pat gali bûti apribotas tik nurodytame kompiuteryje ar tik kaip Pagalbinës programos, ar taikant kitus apribojimus. Kai Licenciatas nëra sumokëjæs uþ visà Programos ekonominæ vertæ, joks kitas naudojimas neleidþiamas nemokant papildomø mokesèiø. Be to, Licenciatas neturi teisës naudoti Programos komercinëms IT paslaugoms teikti jokiai treèiajai ðaliai, taip pat teikti komercinæ iðtekliø nuomà ar laiko paskirstymà, teikti antrinæ Programos licencijà ar jà nuomoti, jei tai nëra aiðkiai nurodyta taikomose sutartyse, pagal kurias Licenciatas ágyja teisæ naudoti Programà. Licenciatas gali naudotis papildomomis teisëmis sumokëjæs papildomà mokestá ar pagal kitas papildomas sàlygas. IBM pasilieka teisæ nuspræsti, ar Licenciatas galës pasinaudoti tokiomis papildomomis teisëmis.
+
+Programos specifikacijas galima rasti Programos praneðimø bendruosiuose Apraðo ir techninës informacijos skyriuose.
+
+Perskirstymo paketai
+
+Jeigu á Programà átraukti Perskirstomieji komponentai, jie bus nurodyti REDIST faile, pateiktame kartu su Programa. Kartu su Sutarties suteiktomis licencijos teisëmis Licenciatas gali platinti Perskirstymo komponentus laikydamasis ðiø sàlygø:
+1) perskirstymas turi vykti tik objekto kodo forma ir turi atitikti visus Programos REDIST ar lydraðtyje pateiktus nurodymus, instrukcijas ir specifikacijas;
+2) jei Programos lydraðtyje aiðkiai nurodyta, kad Licenciatui leidþiama modifikuoti Perskirstymo paketus, tokios modifikacijos turi atitikti visus toje dokumentacijoje pateiktus nurodymus, instrukcijas ir specifikacijas, ir ðios modifikacijos, jei tokiø yra, turi bûti laikomos Perskirstymo paketais;
+3) Perskirstymo paketai gali bûti platinami tik kaip Licenciato taikomosios programos, kuri buvo sukurta naudojant Programà, (¥Licenciato taikomoji programa´) dalis ir tik Licenciato klientø naudojamai Licenciato taikomajai programai palaikyti. Licenciato taikomoji programa turi teikti svarbià pridëtinæ vertæ taip, kad Licenciato taikomosios programos produkto galutiniai vartotojai nebûtø motyvuoti ásigyti Perskirstymo paketus;
+4) jeigu á Perskirstymo paketus átraukta ¥Java´ vykdymo aplinka, Licenciatas taip pat privalo á Licenciato taikomàjà programà átraukti kitus ne ¥Java´ Perskirstymo paketus, nebent Taikomoji programa sukurta veikti tik bendruosiuose kompiuteriø árenginiuose (pavyzdþiui, skreitiniuose, staliniuose kompiuteriuose ir serveriuose), o ne kiðeniniuose ar kituose skvarbiuosiuose árenginiuose (t. y. árenginiuose, kurie turi mikroprocesoriø, taèiau kuriø kompiuterio funkcijos nëra pirminis naudojimo tikslas);
+5) Licenciatas negali paðalinti jokiø Perskirstymo paketuose esanèiø autoriaus teisiø arba pastabø failø;
+6) Licenciatas nelaikys IBM, jos tiekëjø arba platintojø atsakingais uþ jokias pretenzijas, susijusias su Licenciato taikomosios programos naudojimu ar platinimu;
+7) Licenciatas negali naudoti tokio paties kaip originaliø Perskirstymo paketø failø / moduliø kelio pavadinimo;
+8) Parduodamas Licenciato taikomàjà programà Licenciatas negali naudoti IBM, jos tiekëjø arba platintojø pavadinimø arba prekiø þenklø, neturëdamas IBM, to tiekëjo arba platintojo iðankstinio raðtiðko sutikimo;
+9) IBM, jos tiekëjai ir platintojai pateikia Perskirstymo paketus ir susijusià dokumentacijà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKDAMI JOKIOS APIBRËÞTOS AR NUMANOMOS GARANTIJOS, ÁSKAITANT PAVADINIMO, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NUMANOMAS TINKAMUMO PREKYBAI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS;
+10) Licenciatas atsakingas uþ visà techninæ pagalbà, susijusià su Licenciato taikomàja programa, ir uþ bet kokias Perskirstymo paketø modifikacijas; ir
+11) Licenciato ir Licenciato taikomosios programos galutinio vartotojo licencijos sutartis turi áspëti galutiná vartotojà, kad Perskirstymo paketø arba jø modifikavimø negalima i) naudoti kitu tikslu, nei Licenciato taikomajai programai ágalinti, ii) kopijuoti (iðskyrus kuriant atsarginæ kopijà), iii) platinti ar perduoti naudoti be Licenciato taikomosios programos, arba iv) iðardyti, dekompiliuoti ar kitaip versti, iðskyrus, jei tai aiðkiai leidþia teisës aktai ir nepaþeidþiami sutartiniai ásipareigojimai. Be to, Licenciato licencinë sutartis turi bûti sauganti IBM bent tiek, kiek tai apibrëþia ðios Sutarties sàlygos.
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+Licenciatas gali platinti Programos REDIST faile iðvardytø modifikuotø Ðaltinio komponentø ir Pavyzdinës medþiagos versijas laikydamasis ðios licencijos sàlygø ir REDIST faile pateiktø instrukcijø.
+
+Ádiegtis
+
+Ádiegtis yra matavimo vienetas, kuriuo remiantis gali bûti licencijuojama ði Programa. Ádiegtis ? tai fiziniame arba virtualiajame diske ádiegta Programos kopija, kurià galima vykdyti kompiuteryje. Licenciatas privalo ásigyti teises kiekvienai Programos Ádiegèiai.
+
+Procesoriaus vertës vienetas (PVV)
+
+Procesoriaus vertës vienetas (PVV) yra matavimo vienetas, pagal kurá licencijuota ði Programa. Reikalingø PVV teisiø skaièius pagrástas procesoriaus technologija (PVV lentelëje nurodytas procesoriaus tiekëjas, prekës þenklas, tipas ir modelio numeris: http://www.ibm.com/software/lotus/passportadvantage/pvu_licensing_for_customers.html) ir Programai prieinamø procesoriø skaièiumi. Licencijuodama pagal PVV IBM apibrëþia procesoriø kaip mikroschemoje esanèià atskirà procesoriaus ðerdá. Pavyzdþiui, dviejø ðerdþiø procesoriaus mikroschemoje yra dvi procesoriaus ðerdys.
+
+Licenciatas gali diegti Programà naudodamas Visos talpos licencijavimà arba Virtualizavimo talpos (talpos dalies) licencijavimà pagal ¥Passport Advantage´ talpos dalies licencijavimo sàlygas (þr. tinklalapá toliau). Naudodamas Visos talpos licencijavimà Licenciatas privalo ásigyti PVV teises, apimanèias visas fizinëje techninës árangos aplinkoje esanèias suaktyvintas procesoriaus ðerdis*, kurias pasiekia arba valdo Programa, iðskyrus serverius, ið kuriø Programa buvo visam laikui paðalinta. Naudodamas Virtualizavimo talpos licencijavimà Licenciatas privalo ásigyti teises, apimanèias visas suaktyvintas procesoriaus ðerdis, kurias pasiekia arba valdo Programa, kaip apibrëþta Virtualizavimo talpos licencijos skaièiavimo taisyklëse: http://www.ibm.com/software/lotus/passportadvantage/Counting_Software_licenses_using_specific_virtualization_technologies.html.
+
+* Suaktyvinta procesoriaus ðerdis ? tai procesoriaus ðerdis, kurià gali naudoti fizinis arba virtualusis serveris, neatsiþvelgiant á tai, ar procesoriaus ðerdies talpa gali bûti arba yra apribota naudojant virtualizavimo technologijas, operacinës sistemos komandas, BIOS nustatymus ar panaðius apribojimus.
+
+Unikalios programos sàlygos
+
+Laukimo bûsenos budëjimo konfigûracijos
+
+Ðiame skyriuje ¥Laukimo bûsenos budëjimo´ konfigûracija laikoma tokia, kai Programos kopija ádiegiama serveryje, kuris yra gero pasiekiamumo sprendimo dalis ir á kurá Programa permetama, jei aktyviajame serveryje Programos kopija tampa nebenaudojama. Serveris laikomas veikianèiu laukimo reþimu tik tada, jei, iki ávykstant permetimui, jis yra naudojamas tik administraciniams veiksmams atlikti, kurie padeda vykdant permetimo scenarijus.
+
+Programa negali bûti diegiama Laukimo bûsenos budëjimo serveryje, iðskyrus atvejus, kai yra tinkama licencija.
+
+Jeigu Programos Laukimo bûsenos budëjimo konfigûracija naudojama su Keliø egzemplioriø eiliø tvarkytuvo funkcija, Programos kopija gali bûti laikoma Laukimo bûsenos budëjimo serveryje kaip atsarginë kopija ir gali bûti paleidþiama. Taèiau ji turi likti laukimo bûsenos ir neturi bûti naudojama jokiais gamybiniais tikslais, nebent aktyvus serveris permetamas á Laukimo bûsenos budëjimo serverá. Tokiu atveju permetimo laikotarpiu Laukimo bûsenos budëjimo kopija gali bûti naudojama gamybiniais tikslais.
+
+Jeigu Programos Laukimo bûsenos budëjimo konfigûracija naudojama su kitomis Gero pasiekiamumo sistemomis, Programos kopija gali bûti laikoma Laukimo bûsenos budëjimo serveryje kaip atsarginë kopija, bet negali bûti paleidþiama (ir todël negali bûti naudojama jokiais gamybiniais tikslais). Nustojus veikti aktyviam serveriui, jà automatiðkai paleis Gero pasiekiamumo komponentai. Tokiu atveju permetimo laikotarpiu Laukimo bûsenos budëjimo kopija gali bûti naudojama gamybiniais tikslais.
+
+
+L/N:  L-APIG-ABMG8R
+D/N:  L-APIG-ABMG8R
+P/N:  L-APIG-ABMG8R
+
+
+
+==============================================
+
+
+SVARBU: ATIDÞIAI PERSKAITYKITE
+
+Toliau pateiktos dvi licencinës sutartys.
+
+1. Programø ávertinimo IBM tarptautinë licencinë sutartis
+2. IBM tarptautinë programos licencinë sutartis
+
+Jei Licenciatas ásigyja Programà gamybos tikslais (iðskyrus ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su IBM tarptautinës programos licencinës sutarties sàlygomis be jokiø pakeitimø.
+
+Jei Licenciatas ásigyja Programà ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo tikslais (bendrai ¥Ávertinimas´): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su (i) Programø ávertinimo IBM tarptautinës licencinës sutarties (¥Ávertinimo licencija´) sàlygomis be jokiø pakeitimø ir (ii) IBM tarptautinës programos licencinës sutarties (¥IPLA´) sàlygomis be jokiø pakeitimø.
+
+Ávertinimo licencija bus taikoma Licenciato atliekamo ávertinimo metu.
+
+IPLA bus automatiðkai taikoma, jei po Ávertinimo Licenciatas apsispræs pasilikti Programà (arba po Ávertinimo ásigys naudoti papildomas Programos kopijas) ir sudarys ásigijimo sutartá (pvz., IBM ¥International Passport Advantage´ arba IBM ¥Passport Advantage Express´ sutartá (-is).
+
+Ávertinimo licencija ir IPLA negalioja vienu metu, nepakeièia viena kitos ir yra viena nuo kitos nepriklausomos.
+
+Visas abiejø licenciniø sutarèiø tekstas pateikiamas.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Programø ávertinimo tarptautinë licencinë sutartis (Z125-5543-05).
+
+Programos pavadinimas: IBM MQ Advanced Message Security V9.0.1
+Programos numeris: Evaluation
+
+Programos pavadinimas: IBM MQ Advanced Message Security Idle Standby V9.0.1
+Programos numeris: Evaluation
+
+Programos pavadinimas: IBM MQ Telemetry V9.0.1
+Programos numeris: Evaluation
+
+Ávertinimo laikotarpis
+
+Ávertinimo laikotarpis prasideda nuo Licenciato sutikimo su ðios Sutarties sàlygomis dienos ir baigiasi po 90 dienø.
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+
+
+LICENCIJOS INFORMACIJA
+
+Toliau nurodytos Programos licencijuojamos pagal ðias Licencijos informacijos sàlygas, kurios papildo Programos licencijos sàlygas, dël kuriø susitarë Klientas ir IBM. Jei Klientas anksèiau nëra sutikæs su Programai taikomomis licencijos sàlygomis, taikoma Tarptautinë programos licencinë sutartis (Z125-3301-14).
+
+Programos pavadinimas: IBM MQ Advanced Message Security V9.0.1
+Programos numeris: 5724-H72
+
+Programos pavadinimas: IBM MQ Advanced Message Security Idle Standby V9.0.1
+Programos numeris: 5724-H72
+
+Programos pavadinimas: IBM MQ Telemetry V9.0.1
+Programos numeris: 5724-H72
+
+Kaip nurodyta Tarptautinëje programos licencinëje sutartyje (IPLA) ir ðioje Licencijos informacijoje, IBM suteikia licenciatui ribotà teisæ naudoti Programà. Ði teisë apsiriboja Ágaliotojo naudojimo lygiu, pvz., Procesoriaus vertës vieneto (PVV) Iðtekliø vertës vieneto (IVV), Vertës vieneto (VV) ar kitu nurodytu naudojimo lygiu, apmokamu Licenciato ir nurodytu Teisiø suteikimo dokumente. Licenciato naudojimas taip pat gali bûti apribotas tik nurodytame kompiuteryje ar tik kaip Pagalbinës programos, ar taikant kitus apribojimus. Kai Licenciatas nëra sumokëjæs uþ visà Programos ekonominæ vertæ, joks kitas naudojimas neleidþiamas nemokant papildomø mokesèiø. Be to, Licenciatas neturi teisës naudoti Programos komercinëms IT paslaugoms teikti jokiai treèiajai ðaliai, taip pat teikti komercinæ iðtekliø nuomà ar laiko paskirstymà, teikti antrinæ Programos licencijà ar jà nuomoti, jei tai nëra aiðkiai nurodyta taikomose sutartyse, pagal kurias Licenciatas ágyja teisæ naudoti Programà. Licenciatas gali naudotis papildomomis teisëmis sumokëjæs papildomà mokestá ar pagal kitas papildomas sàlygas. IBM pasilieka teisæ nuspræsti, ar Licenciatas galës pasinaudoti tokiomis papildomomis teisëmis.
+
+Programos specifikacijas galima rasti Programos praneðimø bendruosiuose Apraðo ir techninës informacijos skyriuose.
+
+Ðaltinio komponentai ir pavyzdinë medþiaga
+
+Á Programà gali bûti átraukti keli komponentai iðeitinio kodo forma (¥Ðaltinio komponentai´) ir kita medþiaga, apibrëþta kaip Pavyzdinë medþiaga. Licenciatas gali kopijuoti ir modifikuoti Ðaltinio komponentus ir Pavyzdinæ medþiagà tik naudoti viduje, jei toks naudojimas nepaþeidþia ðios Sutarties licencijos teisiø ir jei Licenciatas nekeièia ar nenaikina jokios Ðaltinio komponentuose ir Pavyzdinëje medþiagoje esanèios autoriaus teisiø informacijos ar praneðimø. IBM pateikia Ðaltinio komponentus ir Pavyzdinæ medþiagà be palaikymo ásipareigojimo ir TOKIÀ, KOKIA YRA, NESUTEIKIANT JOKIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ, ÁSKAITANT NUOSAVYBËS TEISËS, NEPAÞEIDÞIAMUMO AR NEÁSIKIÐIMO GARANTIJAS IR NENURODYTAS TINKAMUMO PREKIAUTI IR TAM TIKRAM TIKSLUI GARANTIJAS IR SÀLYGAS.
+
+Ádiegtis
+
+Ádiegtis yra matavimo vienetas, kuriuo remiantis gali bûti licencijuojama ði Programa. Ádiegtis ? tai fiziniame arba virtualiajame diske ádiegta Programos kopija, kurià galima vykdyti kompiuteryje. Licenciatas privalo ásigyti teises kiekvienai Programos Ádiegèiai.
+
+Procesoriaus vertës vienetas (PVV)
+
+Procesoriaus vertës vienetas (PVV) yra matavimo vienetas, pagal kurá licencijuota ði Programa. Reikalingø PVV teisiø skaièius pagrástas procesoriaus technologija (PVV lentelëje nurodytas procesoriaus tiekëjas, prekës þenklas, tipas ir modelio numeris: http://www.ibm.com/software/lotus/passportadvantage/pvu_licensing_for_customers.html) ir Programai prieinamø procesoriø skaièiumi. Licencijuodama pagal PVV IBM apibrëþia procesoriø kaip mikroschemoje esanèià atskirà procesoriaus ðerdá. Pavyzdþiui, dviejø ðerdþiø procesoriaus mikroschemoje yra dvi procesoriaus ðerdys.
+
+Licenciatas gali diegti Programà naudodamas Visos talpos licencijavimà arba Virtualizavimo talpos (talpos dalies) licencijavimà pagal ¥Passport Advantage´ talpos dalies licencijavimo sàlygas (þr. tinklalapá toliau). Naudodamas Visos talpos licencijavimà Licenciatas privalo ásigyti PVV teises, apimanèias visas fizinëje techninës árangos aplinkoje esanèias suaktyvintas procesoriaus ðerdis*, kurias pasiekia arba valdo Programa, iðskyrus serverius, ið kuriø Programa buvo visam laikui paðalinta. Naudodamas Virtualizavimo talpos licencijavimà Licenciatas privalo ásigyti teises, apimanèias visas suaktyvintas procesoriaus ðerdis, kurias pasiekia arba valdo Programa, kaip apibrëþta Virtualizavimo talpos licencijos skaièiavimo taisyklëse: http://www.ibm.com/software/lotus/passportadvantage/Counting_Software_licenses_using_specific_virtualization_technologies.html.
+
+* Suaktyvinta procesoriaus ðerdis ? tai procesoriaus ðerdis, kurià gali naudoti fizinis arba virtualusis serveris, neatsiþvelgiant á tai, ar procesoriaus ðerdies talpa gali bûti arba yra apribota naudojant virtualizavimo technologijas, operacinës sistemos komandas, BIOS nustatymus ar panaðius apribojimus.
+
+Unikalios programos sàlygos
+
+Laukimo bûsenos budëjimo konfigûracijos
+
+Ðiame skyriuje ¥Laukimo bûsenos budëjimo´ konfigûracija laikoma tokia, kai Programos kopija ádiegiama serveryje, kuris yra gero pasiekiamumo sprendimo dalis ir á kurá Programa permetama, jei aktyviajame serveryje Programos kopija tampa nebenaudojama. Serveris laikomas veikianèiu laukimo reþimu tik tada, jei, iki ávykstant permetimui, jis yra naudojamas tik administraciniams veiksmams atlikti, kurie padeda vykdant permetimo scenarijus.
+
+Programa negali bûti diegiama Laukimo bûsenos budëjimo serveryje, iðskyrus atvejus, kai yra tinkama licencija.
+
+Jeigu Programos Laukimo bûsenos budëjimo konfigûracija naudojama su Keliø egzemplioriø eiliø tvarkytuvo funkcija, Programos kopija gali bûti laikoma Laukimo bûsenos budëjimo serveryje kaip atsarginë kopija ir gali bûti paleidþiama. Taèiau ji turi likti laukimo bûsenos ir neturi bûti naudojama jokiais gamybiniais tikslais, nebent aktyvus serveris permetamas á Laukimo bûsenos budëjimo serverá. Tokiu atveju permetimo laikotarpiu Laukimo bûsenos budëjimo kopija gali bûti naudojama gamybiniais tikslais.
+
+Jeigu Programos Laukimo bûsenos budëjimo konfigûracija naudojama su kitomis Gero pasiekiamumo sistemomis, Programos kopija gali bûti laikoma Laukimo bûsenos budëjimo serveryje kaip atsarginë kopija, bet negali bûti paleidþiama (ir todël negali bûti naudojama jokiais gamybiniais tikslais). Nustojus veikti aktyviam serveriui, jà automatiðkai paleis Gero pasiekiamumo komponentai. Tokiu atveju permetimo laikotarpiu Laukimo bûsenos budëjimo kopija gali bûti naudojama gamybiniais tikslais.
+
+
+L/N:  L-APIG-ACVHBA
+D/N:  L-APIG-ACVHBA
+P/N:  L-APIG-ACVHBA
+
+
+
+
+
+SVARBU: ATIDÞIAI PERSKAITYKITE
+
+Toliau pateiktos dvi licencinës sutartys.
+
+1. Programø ávertinimo IBM tarptautinë licencinë sutartis
+2. IBM tarptautinë programos licencinë sutartis
+
+Jei Licenciatas ásigyja Programà gamybos tikslais (iðskyrus ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su IBM tarptautinës programos licencinës sutarties sàlygomis be jokiø pakeitimø.
+
+Jei Licenciatas ásigyja Programà ávertinimo, tikrinimo, bandymo ¥iðbandyti arba pirkti´ arba demonstravimo tikslais (bendrai ¥Ávertinimas´): spustelëjæs toliau esantá mygtukà ¥Sutinku´, Licenciatas sutinka su (i) Programø ávertinimo IBM tarptautinës licencinës sutarties (¥Ávertinimo licencija´) sàlygomis be jokiø pakeitimø ir (ii) IBM tarptautinës programos licencinës sutarties (¥IPLA´) sàlygomis be jokiø pakeitimø.
+
+Ávertinimo licencija bus taikoma Licenciato atliekamo ávertinimo metu.
+
+IPLA bus automatiðkai taikoma, jei po Ávertinimo Licenciatas apsispræs pasilikti Programà (arba po Ávertinimo ásigys naudoti papildomas Programos kopijas) ir sudarys ásigijimo sutartá (pvz., IBM ¥International Passport Advantage´ arba IBM ¥Passport Advantage Express´ sutartá (-is).
+
+Ávertinimo licencija ir IPLA negalioja vienu metu, nepakeièia viena kitos ir yra viena nuo kitos nepriklausomos.
+
+Visas abiejø licenciniø sutarèiø tekstas pateikiamas.
+
+
+Programø ávertinimo tarptautinë licencinë sutartis
+
+1 dalis - bendrosios sàlygos
+
+ATSISIØSDAMAS, DIEGDAMAS, KOPIJUODAMAS, PASIEKDAMAS PROGRAMÀ, SPAUSDAMAS MYGTUKÀ ¥SUTINKU´ AR KITAIS BÛDAIS NAUDODAMAS PROGRAMÀ, LICENCIATAS SUTINKA SU ÐIOS SUTARTIES SÀLYGOMIS.JEIGU SU ÐIOS LICENCIJOS SÀLYGOMIS SUTINKATE LICENCIATO VARDU, JÛS PAREIÐKIATE IR GARANTUOJATE, KAD PRISIIMATE VISÀ ATSAKOMYBÆ UÞ ÐIØ SÀLYGØ LAIKYMÀSI. JEIGU NESUTINKATE SU ÐIOMIS SÀLYGOMIS,
+
+* NESIØSKITE, NEDIEKITE, NEKOPIJUOKITE, NEBANDYKITE PASIEKTI PROGRAMOS, NESPAUSKITE MYGTUKO ¥SUTINKU´ AR NESINAUDOKITE PROGRAMA; IR
+
+* NEDELSDAMI GRÀÞINKITE NENAUDOTAS LAIKMENAS IR DOKUMENTACIJÀ ÐALIAI, IÐ KURIOS JUOS GAVOTE. JEI PROGRAMA BUVO ATSISIØSTA, SUNAIKINKITE VISAS PROGRAMOS KOPIJAS.
+
+1. Apibrëþimai
+
+¥Ágaliotasis naudojimas´ - numatytas lygis, apibrëþiantis, kaip Licenciatas ágaliotas paleisti ir vykdyti Programà. Ðis lygis gali bûti nustatomas pagal naudotojø skaièiø, paslaugø vienetø milijonus (MPV), procesoriaus vertës vienetus (PVV) arba kitus naudojimo lygius, kuriuos nurodo IBM.
+
+IBM - ¥International Business Machines Corporation´ arba vienas ið jos filialø.
+
+¥Licencijos informacija´ (LI) - dokumentas, kuriame pateikta specifinë informacija apie Programà ir papildomos sàlygos. Programos LI galima rasti Programos kataloge, naudojant sisteminæ komandà, arba lankstinuke, kuris pridëtas prie Programos.
+
+¥Programa´ - ðie iðvardyti dalykai, jø originalai ir visos iðsamios arba dalinës kopijos: 1) kompiuterio skaitomos instrukcijos ir duomenys, 2) komponentai, failai ir moduliai, 3) garsinë ir vaizdinë medþiaga (pvz., vaizdai, tekstas, áraðai ar paveikslëliai), ir 4) susijusi licencijos medþiaga (tokia, kaip raktai ir dokumentacija).
+
+2. Sutarties struktûra
+
+Ðià sutartá sudaro: 1 dalis - bendrosios sàlygos, 2 dalis - konkreèiai ðaliai taikomos sàlygos (jei tokiø yra) ir LI. Tai yra galutinis susitarimas tarp Licenciato ir IBM dël naudojimosi Programa. Ji pakeièia bet koká ankstesná þodiná ar raðtiná bendravimà tarp Licenciato ir IBM, kuriø metu buvo aptariamas Licenciato naudojimasis Programa. 2 dalies sàlygos gali pakeisti 1 dalies sàlygas. Atsiradus bet kokiems prieðtaravimams, bus remiamasi LI.
+
+3. Licencijos suteikiamos teisës
+
+Programa yra IBM arba IBM platintojo nuosavybë, ginama autoriaus teisiø, naudojimuisi ja suteikiama licencija, bet ji nëra parduodama.
+
+IBM suteikia Licenciatui apribotà, neiðimtinæ, neperduodamà licencijà 1) atsisiøsti, diegti ir naudotis Programa vertinimo laikotarpiu pagal Ágaliotojo naudojimo sàlygas, nurodytas LI, iðskirtinai vidinio vertinimo, tikrinimo arba demonstravimo tikslais, 2) kurti ir diegti pagrástà skaièiø kopijø, kurios palaikytø Ágaliotàjá naudojimàsi, ir 3) kurti atsarginæ kopijà su sàlyga, kad
+
+a. Licenciatas teisëtai ásigijo Programà ir laikosi ðios Sutarties sàlygø;
+
+b. atsarginë kopija nepaleidþiama, nebent neveikia pati Programa, kurios atsarginë kopija sukurta;
+
+c. Licenciatas ant kiekvienos Programos iðsamios ar dalinës kopijos nurodo visà autoriaus teisiø informacijà bei kitus nuosavybës þenklus;
+
+d. Licenciatas valdo visø Programos kopijø áraðus ir uþtikrina, kad kiekvienas, kuris naudojasi Programa (vietine ar nuotoline prieiga) 1) naudojasi tik Licenciato vardu ir 2) laikosi ðios Sutarties sàlygø;
+
+e. Licenciatas 1) nenaudoja Programos gamybos tikslais arba nenaudoja, nekopijuoja, nekeièia ir neplatina Programos kitais tikslais, nei aiðkiai leidþiama ðioje Sutartyje; 2) nebando iðardyti, dekompiliuoti, kitaip versti ar atkurti Programos, nebent tai aiðkiai leidþia ástatymai, nenumatant sutartinio atleidimo nuo ásipareigojimø; 3) nenaudoja jokiø Programos komponentø, failø, moduliø, garsinio ir vaizdinio turinio ar susijusios licencijuotos medþiagos atskirai nuo Programos; 4) neiðduoda licencijos treèiajai ðaliai, nenuomoja ir iðperkamosios nuomos pagrindais nesuteikia Programos; arba 5) nenaudoja Programos teikdamas komercinæ taikomøjø programø iðtekliø nuomà; ir
+
+f. jei Licenciatas ágyja ðià Programà kaip Pagalbinæ programà, Licenciatas naudoja ðià Programà tik kaip pagalbinæ priemonæ, palaikanèià Pagrindinæ programà, jai taikomi bet kokie Pagrindinës programos licencijos apribojimai, arba, jei Licenciatas ágyja ðià programà kaip Pagrindinæ programà, Licenciatas naudoja visas Pagalbines programas tik ðiai Programai palaikyti, jai taikomi bet kokie ðios Sutarties apribojimai. Ðiame punkte ¥f´ ¥Pagalbinë programa´ yra Programa, kuri yra kitos IBM Programos (¥Pagrindinës programos´) dalis ir kuri Pagrindinës programos LI yra nurodoma kaip Pagalbinë programa. (Norëdamas gauti atskirà Pagalbinës programos licencijà be ðiø apribojimø, Licenciatas turëtø susisiekti ðalimi, ið kurios ásigijo Pagalbinæ programà.)
+
+Ði licencija taikoma kiekvienai Licenciato padarytai Programos kopijai.
+
+3.1 Atnaujinimai, pataisos ir taisymai
+
+Kai Licenciatas gauna Programos atnaujinimà, pataisà ar pataisymà, Licenciatas sutinka su bet kokiomis papildomomis ar skirtingomis sàlygomis, taikomomis ðiems atnaujinimas, pataisoms ar pataisymams, kurios yra nurodytos LI. Jei nepateikta jokiø papildomø ar pakeistø sàlygø, tuomet atnaujinimui, pataisai ar pataisymui taikomos tik ðios Sutarties sàlygos. Jei Programa pakeièiama atnaujinimu, Licenciatas sutinka nedelsdamas nutraukti pakeistos Programos naudojimà.
+
+3.2 Terminas ir sutarties nutraukimas
+
+Vertinimo laikotarpis prasideda tada, kai Licenciatas sutinka su ðios Sutarties sàlygomis ir pasibaigia 1) praëjus laikotarpiui arba dienà, kurià IBM nurodë Licencijos informacijos arba perdavimo dokumente, arba 2) dienà, kai Programa automatiðkai iðsijungia. Licenciatas sunaikins Programà ir visas sukurtas jos kopijas per deðimt dienø po vertinimo laikotarpio pabaigos. Jeigu IBM nurodo LI, kad Licenciatas gali pasilikti Programà, ir Licenciatas pasinaudoja ðia sàlyga, Programai bus taikoma kita licencinë sutartis, kurià IBM pateiks Licenciatui. Be to, gali bûti taikomas mokestis.
+
+IBM gali nutraukti Licenciato licencijà, jei Licenciatas nesilaiko Sutarties sàlygø. Jei licencija yra nutraukiama bet kurios ðalies iniciatyva dël bet kokios prieþasties, Licenciatas sutinka nedelsdamas nutraukti Programos naudojimà ir sunaikinti visas turimas Programos kopijas. Jei tam tikros Sutarties sàlygos dël savo pobûdþio iðlieka galioti po Sutarties nutraukimo, jos galioja, kol bus ávykdytos, ir taikomos abiejø ðaliø atitinkamiems teisiø perëmëjams ir ágaliotiniams.
+
+PROGRAMOJE GALI BÛTI IÐJUNGIMO ÁRENGINYS, KURIS APSAUGO NUO PROGRAMOS NAUDOJIMO PASIBAIGUS VERTINIMO LAIKOTARPIUI. LICENCIATAS SUTINKA NELIESTI ÐIO IÐJUNGIMO ÁRENGINIO ARBA PROGRAMOS. LICENCIATAS TURI IMTIS ATSARGUMO PRIEMONIØ, KAD NEPRARASTØ DUOMENØ TADA, KAI PROGRAMOS NEBEBUS GALIMA NAUDOTI.
+
+4. Mokëjimas
+
+Mokestis uþ Programos naudojimà vertinimo laikotarpiu netaikomas.
+
+5. Garantijø atsisakymas
+
+PAGAL ÁSTATYMO NUSTATYTAS GARANTIJAS, KURIØ NEGALIMA NEÁTRAUKTI, ¥IBM´ NESUTEIKIA JOKIØ SU PROGRAMA AR PALAIKYMO PASLAUGOMIS (JEI TOKIOS TEIKIAMOS) SUSIJUSIØ AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ ARBA SÀLYGØ, ÁSKAITANT, BET NEAPSIRIBOJANT, NENURODYTAS TINKAMUMO PREKIAUTI, TINKAMUMO TAM TIKRAM TIKSLUI, NUOSAVYBËS TEISËS IR BET KOKIAS NEPAÞEIDÞIAMUMO GARANTIJAS ARBA SÀLYGAS.
+
+KAI KURIOSE VALSTYBËSE ARBA JURISDIKCIJOSE NELEIDÞIAMOS AIÐKIAI NURODYTØ AR NENURODYTØ GARANTIJØ IÐIMTYS, TODËL ÈIA NURODYTA IÐIMTIS LICENCIATUI GALI BÛTI NETAIKOMA. TOKIU ATVEJU ÐIØ GARANTIJØ TAIKYMAS APRIBOJAMAS MINIMALIA TEISËS AKTUOSE NUMATYTA TRUKME. ÐIAM LAIKOTARPIUI PRAËJUS NEBETAIKOMOS JOKIOS GARANTIJOS. KAI KURIOSE VALSTYBËSE AR JURISDIKCIJOSE NELEIDÞIAMA RIBOTI NUMANOMOS GARANTIJOS TRUKMËS, TODËL AUKÐÈIAU PATEIKTI APRIBOJIMAI LICENCIATUI GALI BÛTI NETAIKOMI.LICENCIATAS TAIP PAT GALI TURËTI KITØ TEISIØ, KURIOS SKIRSIS PRIKLAUSOMAI NUO VALSTYBËS ARBA JURISDIKCIJOS.
+
+5 SKYRIUJE NURODYTI ATSAKOMYBËS ATSISAKYMAI IR IÐIMTYS TAIP PAT TAIKOMI VISIEMS ¥IBM´ PROGRAMØ KÛRËJAMS IR TIEKËJAMS.
+
+NE ¥IBM´ PROGRAMØ GAMINTOJAI, TIEKËJAI ARBA LEIDËJAI GALI TEIKTI SAVO GARANTIJAS.
+
+¥IBM´ NETEIKIA JOKIO PALAIKYMO, JEI ¥IBM´ NENURODO KITAIP. TOKIU ATVEJU BET KOKIAM ¥IBM´ SUTEIKTAM PALAIKYMUI TAIKOMOS 5 SKYRIUJE NURODYTØ PANEIGIMØ IR IÐIMÈIØ SÀLYGOS.
+
+6. Licenciato duomenys ir duomenø bazës
+
+Siekdama padëti Licenciatui iðspræsti su Programa susijusias problemas, IBM gali papraðyti, kad Licenciatas 1) leistø IBM nuotoliniu bûdu prisijungti prie Licenciato sistemos arba 2) atsiøstø savo informacijà ar sistemos duomenis á IBM. Taèiau IBM neprivalo teikti tokios pagalbos, nebent IBM ir Licenciatas pasiraðo atskirà susitarimà, kuriame IBM sutinka teikti Licenciatui tokio pobûdþio palaikymà, kuris nëra numatytas ðios Sutarties IBM ásipareigojimuose. Bet kokiu atveju IBM naudoja informacijà apie klaidas ir problemas savo produktams ir paslaugoms tobulinti ir techninei pagalbai teikti. Licenciatas sutinka su tokia IBM, IBM juridiniø asmenø ir subrangovø (veikianèiø ne tik Licenciato valstybëje) veikla.
+
+Licenciatas lieka atsakingas uþ 1) bet kokius duomenis ar kità bet kurios duomenø bazës turiná, kurá jis padaro prieinamà IBM, 2) duomenø prieigos, apsaugos, kodavimo, naudojimo bei duomenø perdavimo (áskaitant ir bet kokius asmeninius duomenis) procedûrø ir kontrolës pasirinkimà ir vykdymà ir 3) visø duomenø baziø ir visø saugomø duomenø atsarginiø kopijø sukûrimà bei jø atkûrimà. Licenciatas nesiøs ir nesuteiks IBM prieigos prie asmeninës informacijos, nepriklausomai nuo to, kokios formos ji yra, ir bus atsakingas uþ pagrástas iðlaidas, kurias IBM patirs dël tokios informacijos klaidingo perdavimo IBM arba jei IBM prarastø ar paskelbtø tokià informacijà, taip pat ir iðlaidas, susijusias su treèiøjø ðaliø iðkeltais ieðkiniais.
+
+7. Atsakomybës apribojimas
+
+Apribojimai, pateikti 7 skyriuje (Atsakomybës apribojimas), yra taikomi tiek, kiek leidþia taikomi ástatymai ir neleidþiama atsisakyti sutartyse.
+
+7.1 Dalykai, uþ kuriuos IBM atsakinga
+
+Gali susiklostyti tokios aplinkybës, kad dël IBM ar kitø ásipareigojimø nevykdymo Licenciatui bûtø suteikta teisë gauti þalos atlyginimà ið IBM. Neatsiþvelgiant á pagrindà, pagal kurá Licenciatas gauna teisæ reikalauti ið IBM atlyginti þalà (áskaitant esminá paþeidimà, aplaidumà, faktø iðkraipymà arba kità sutarties ar civilinës teisës paþeidimà), visa IBM atsakomybës dël visø pretenzijø, susijusiø su kiekviena Programa ar kitaip atsiradusiø dël ðios Sutarties, suma nevirðys 1) þalos dël kûno suþalojimo (áskaitant mirtá), þalos nekilnojamajam turtui ir materialiajam asmeniniam turtui atlyginimo ir 2) kitos faktinës tiesioginës þalos iki 10 000 JAV doleriø (arba vietinës valiutos ekvivalentu).
+
+Ðis apribojimas taip pat taikomas visiems IBM Programos kûrëjams ir tiekëjams. Tai yra didþiausia IBM ir jos Programos kûrëjø ir tiekëjø kolektyvinës atsakomybës suma.
+
+7.2 Dalykai, uþ kuriuos IBM nëra atsakinga
+
+JOKIU ATVEJU IBM, JOS PROGRAMOS KÛRËJAI AR TIEKËJAI NËRA ATSAKINGI UÞ ÐIUOS DALYKUS, NET JEI JIEMS BUVO PRANEÐTA APIE TOKIØ APLINKYBIØ ATSIRADIMO GALIMYBÆ:
+
+a. DUOMENØ PRARADIMÀ AR SUGADINIMÀ;
+
+b. SPECIALIUOSIUS, ATSITIKTINIUS, BAUDINIUS AR NETIESIOGINIUS NUOSTOLIUS, ARBA BET KOKIUS PRIEÞASTINIUS EKONOMINIUS NUOSTOLIUS; ARBA
+
+c. PRARASTÀ PELNÀ, VERSLÀ, PAJAMAS, PRESTIÞÀ AR PLANUOTAS SUTAUPYTI LËÐAS.
+
+8. Sàlygø laikymosi tikrinimas
+
+8 skyriuje (Sàlygø laikymosi tikrinimas) ¥Vertinimo programos sàlygos¡ reiðkia 1) ðià Sutartá ir jos pataisymus bei IBM pateiktus sandorio dokumentus, ir 2) IBM programinës árangos politikà, kurià galima rasti IBM programinës árangos politikos svetainëje (www.ibm.com/softwarepolicies), áskaitant, bet neapsiribojant, politikà, susijusià su atsarginëmis kopijomis, pagalbinës talpos kainø nustatymu ir informacijos perkëlimu.
+
+8 skyriuje pateikiamos teisës ir ásipareigojimai taikomi visà Programos licencijos galiojimo laikà ir dvejus metus po galiojimo pabaigos.
+
+8.1 Tikrinimo procesas
+
+Licenciatas sutinka sukurti, iðsaugoti ir pateikti IBM bei jos auditoriams tikslias raðytines ataskaitas, sistemos árankiø iðvestis ir kità sistemos informacijà, kuri leistø ávertinti, ar Licenciatas, naudodamasis visomis Programomis, laikosi Vertinimo programos sàlygø, áskaitant, bet neapsiribojant, visas IBM licencijavimo ir kainø nustatymo sàlygas. Licenciatas yra atsakingas, kad 1) tai nevirðytø jo Ágaliotojo naudojimo ribø ir 2) atitiktø Vertinimo programos sàlygas.
+
+Priimtinai perspëjusi, IBM gali patikrinti, kaip Licenciatas laikosi Vertinimo programos sàlygø visose darbo vietose ir visose aplinkose, kuriose Licenciatas naudojasi Programomis (bet kokiu tikslu), kurioms taikomos Vertinimo programos sàlygos. Toks patikrinimas bus atliktas taip, kad kuo maþiau sutrikdytø Licenciato veiklà, ir gali bûti atliekamas Licenciato patalpose darbo valandomis. Tikrinti IBM gali samdyti nepriklausomà treèiàjá asmená, jei IBM ir treèiasis asmuo yra pasiraðæ konfidencialumo sutartá.
+
+8.2 Sprendimas
+
+Jei tikrinimo metu paaiðkës, kad Licenciatas naudojosi kuria nors Programa, virðydamas Ágaliotojo naudojimo ribas, ar kitu bûdu nesilaikë Vertinimo programos sàlygø, IBM praneð apie tai Licenciatui raðtu. Licenciatas sutinka nedelsdamas tiesiogiai IBM padengti iðlaidas, kurias IBM nurodo sàskaitoje faktûroje, uþ 1) bet koká naudojimosi pervirðá, 2) palaikymà, suteiktà ðiam pervirðiui per naudojimo laikotarpá arba dvejus metus, atsiþvelgiant á tai, kuris laikotarpis trumpesnis, ir 3) kitas iðlaidas bei ásipareigojimus, nustatytus tikrinimo metu.
+
+9. Treèiøjø ðaliø pastabos
+
+Programoje gali bûti treèiøjø ðaliø kodas, kurá IBM, ne treèioji ðalis, suteikia Licenciatui, remdamasi ðia Sutartimi. Jei yra pastabø apie treèiøjø ðaliø kodà (¥Treèiøjø ðaliø pastabos¡), jos átrauktos tik Licenciatui informuoti. Ðios pastabos pateikiamos Programos faile (-uose) PASTABOS. Informacija, kaip gauti ðaltinio kodà tam tikram treèiosios ðalies kodui, pateikta skyriuje ¥Treèiøjø ðaliø pastabos¡. Jei Treèiøjø ðaliø pastabose IBM treèiosios ðalies kodà nurodo kaip ¥Modifikuojamà treèiosios ðalies kodà¡, IBM leidþia Licenciatui 1) modifikuoti Modifikuojamà treèiosios ðalies kodà ir 2) atkurti kodà tø Programos moduliø, kurie tiesiogiai siejasi su Modifikuojamu treèiosios ðalies kodu, su sàlyga, kad tai daroma tik norint suderinti Licenciato modifikacijas su treèiosios ðalies kodu. IBM aptarnavimo ir techninës pagalbos ásipareigojimai, jei tokie yra, taikomi tik nemodifikuotai Programai.
+
+10. Bendrosios nuostatos
+
+a. Joks ðios Sutarties punktas neturi átakos ástatymø numatytoms vartotojø teisëms, kurias sutartis galëtø panaikinti ar apriboti.
+
+b. Jeigu kuri nors ðios Sutarties nuostata laikoma netekusi galios ar neturinti ieðkinio galios, kitos ðios Sutarties nuostatos lieka galioti.
+
+c. Licenciatui draudþiama eksportuoti Programà.
+
+d. Licenciatas ágalioja ¥International Business Machines Corporation´ ir jos filialus (bei jø teisiø perëmëjus, rangovus ir IBM verslo partnerius) laikyti ir naudoti Licenciato verslo sandorio informacijà, neatsiþvelgiant á sandoriø vietà, susijusià su IBM produktais ir paslaugomis, arba IBM ir Licenciato verslo ryðiams palaikyti.
+
+e. Kiekviena ðalis, prieð iðkeldama ieðkiná kitai ðaliai dël Sutarties ásipareigojimø nevykdymo, pirmiausia suteikia galimybæ ávykdyti tuos ásipareigojimus. Ðalys bando gera valia iðspræsti iðkilusius ginèus, nesutarimus ar ieðkinius, susijusius su ðia Sutartimi.
+
+f. Jei kitaip nereikalauja taikomi ástatymai, ir tai nepanaikina bei neapriboja sutarties ásipareigojimø, 1) në viena ðalis nesiims jokiø teisiniø veiksmø dël jokio ieðkinio, susijusio su ðia Sutartimi, jei yra praëjæ dveji metai nuo ávykio pradþios; ir 2) pasibaigus ðiam terminui bet koks ieðkinys ir su juo susijusios atitinkamos teisës netenka galios.
+
+g. Nei Licenciatas, nei IBM neatsako uþ savo ásipareigojimø nevykdymà dël nuo ðaliø nepriklausanèiø prieþasèiø.
+
+h. Ðioje Sutartyje nenumatomos jokios treèiøjø ðaliø teisës ar veiksmai, ir IBM nëra atsakinga uþ jokius treèiøjø ðaliø ieðkinius, pateiktus Licenciatui, iðskyrus atvejus, nurodytus 7.1 poskyryje (Dalykai, uþ kuriuos IBM atsakinga), kai IBM juridiðkai atsako treèiajai ðaliai uþ kûno suþalojimus (taip pat mirtá) ar turtinæ þalà.
+
+i. Pasiraðydamos ðià Sutartá, në viena ðalis nesitiki ásipareigojimø vykdymo, nenumatyto ðioje Sutartyje, áskaitant, bet neapsiribojant, ásipareigojimø, susijusiø su: 1) Programos veikimu, jei tai nenurodyta 5 skyriuje (Garantijø atsisakymas), 2) kitø ðaliø patirtimi ar rekomendacijomis arba 3) bet kokiais Licenciato gautais rezultatais.
+
+j. Programoms reklamuoti, parduoti ar aptarnauti IBM yra pasiraðiusi sutartis su tam tikromis organizacijomis (vadinamomis IBM verslo partneriais). IBM verslo partneriai yra nepriklausomos ir atskirai nuo IBM veikianèios institucijos. IBM nëra atsakinga uþ IBM verslo Partneriø veiksmus ar pareiðkimus, ar jø ásipareigojimus Licenciatui.
+
+k. Licencijos ir intelektinës nuosavybës nuostoliø kompensacijos sàlygos, nurodytos kitose Licenciato sutartyse su IBM (tokiose, kaip IBM kliento sutartis) netaikomos ðios Sutarties suteikiamos Programos licencijoms.
+
+11. Geografinë veiklos sfera ir taikoma teisë
+
+11.1 Taikoma teisë
+
+Abi ðalys sutinka, kad vykdydamos, aiðkindamos ir ágyvendindamos visas Licenciato ir IBM teises, prievoles ir ásipareigojimus, kylanèius ar susijusius su ðios Sutarties turiniu, taikys valstybës, kurioje Licenciatas ásigijo Programos licencijà, ástatymus, nepaisant teisës principø prieðtaravimø.
+
+Jungtiniø Tautø Konvencija dël tarptautiniø prekiø pirkimo ir pardavimo sutarèiø netaikoma.
+
+11.2 Jurisdikcija
+
+Visos teisës, prievolës ir ásipareigojimai yra pavaldûs Valstybës, kurioje Licenciatas ágijo Programos licencijà, teismams.
+
+2 dalis - konkreèiai ðaliai taikomos sàlygos
+
+Ðios sàlygos pakeièia arba modifikuoja Lietuvoje suteiktø licencijø sàlygas, nurodytas 1 dalyje. Visos 1 dalyje nurodytos sàlygos, kuriø ðios pataisos nepakeièia, iðlieka nepakeistos ir galiojanèios. 2 dalis iðdëstoma taip:
+
+* 1 dalies 11 skyriaus (Taikoma teisë ir jurisdikcija) su ðalimis susijusios pataisos ir
+
+* Europos, Viduriniø Rytø ir Afrikos ðalyse taikomos kitø Sutarties sàlygø pataisos.
+
+1 dalies 11 skyriaus (Taikoma teisë ir jurisdikcija) su ðalimis susijusios pataisos
+
+11.1 Taikoma teisë
+
+Skyriaus 11.1 Taikoma teisë 1 pastraipos frazë ¥valstybës, kurioje Licenciatas ásigijo Programos licencijà, ástatymus´ Lietuvoje pakeièiama ðia fraze:
+
+Suomijos ástatymus.
+
+11.3 Arbitraþas
+
+Ði pastraipa pridedama kaip naujas poskyris ¥11.3 Arbitraþas´, nes ji taikoma Lietuvoje. Ðio 11.3 poskyrio nuostatos turi aukðtesnæ teisinæ galià nei poskyrio ¥11.2 Jurisdikcija´ nuostatos iki ribos, numatytos taikomuose vietos teisës aktuose ir reglamentuose:
+
+Visi su ðia Sutartimi susijæ ginèai bus galutinai sprendþiami arbitraþo teisme, kuris vyks Helsinkyje, Suomijoje, remiantis tuo metu galiojanèiais Suomijos arbitraþo teisës aktais. Kiekviena ðalis paskirs vienà arbitrà. Arbitrai kartu paskirs pirmininkà. Jei arbitrams nepavyks susitarti ir paskirti pirmininko, já paskirs Helsinkio centriniai pramonës ir prekybos rûmai.
+
+EUROPOS, VIDURINIØ RYTØ IR AFRIKOS (EMEA) ÐALIMS TAIKOMOS PATAISOS
+
+EUROPOS SÀJUNGOS VALSTYBËS NARËS
+
+5. Garantijø atsisakymas
+
+Prie skyriaus ¥5. Garantijø atsisakymas´ pridedama ði informacija:
+
+Europos Sàjungoje (ES) vartotojai turi juridines teises, kurios apibrëþiamos pagal vietos teisës aktus, taikomus plataus vartojimo prekiø pardavimui. Nuostatos, iðvardytos ðiame skyriuje ¥5. Garantijø atsisakymas´, ðioms teisëms neturi jokios átakos.
+
+ES VALSTYBËS NARËS IR TOLIAU NURODYTOS ÐALYS
+
+Bet kuri Europos valstybë, kurioje taikomi vietiniai duomenø apsaugos teisës aktai, panaðûs á taikomus ES.
+
+10. Bendrosios nuostatos
+
+10.d punktà pakeièia tokia informacija:
+
+(1) Apibrëþtys - ðiam 10.d punktui taikomos tokios papildomos apibrëþtys:
+
+(a) Verslo kontaktinë informacija - su verslu susijusi kontaktinë informacija, kurià Licenciatas pateikia IBM: Licenciato darbuotojø ir subrangovø vardai, pareigos, darbo vietø adresai, telefono numeriai ir el. paðto adresai. Austrijoje, Italijoje ir Ðveicarijoje verslo kontaktinë informacija apima ir informacijà apie Licenciatà ir jo subrangovus kaip juridinius asmenis (pavyzdþiui, duomenis apie Licenciato pajamas ir kità su sandoriais susijusià informacijà).
+
+(b) Verslo kontaktiniai asmenys - Licenciato darbuotojai ir subrangovai, su kuriais susijusi verslo kontaktinë informacija.
+
+(c) Duomenø apsaugos institucija - institucija, ásteigta remiantis konkreèios ðalies duomenø apsaugos ir elektroniniø ryðiø teisës aktais, arba ne ES ðalies institucija, atsakinga uþ asmens duomenø apsaugà toje ðalyje, arba (bet kurioje ið anksèiau paminëtø ðaliø) tinkama tvarka paskirtas tokias pareigas perimantis subjektas.
+
+(d) Duomenø apsauga ir elektroniniø ryðiø teisës aktai - (i) taikomi galiojantys vietos teisës aktai ir nuostatos, pagal kurias vykdomi ES direktyvos 95/46/EB (dël asmenø apsaugos tvarkant asmens duomenis ir dël laisvo tokiø duomenø judëjimo) ir ES direktyvos 2002/58/EB (dël asmens duomenø tvarkymo ir privatumo apsaugos elektroniniø ryðiø sektoriuje) reikalavimai, arba (ii) ne ES ðaliø teisës aktai ir (arba) nuostatos, susijusios su asmens duomenø apsauga ir elektroniniø ryðiø, kuriems naudojami asmens duomenys, reguliavimu, áskaitant (bet kurioje ið anksèiau paminëtø ðaliø) visus ástatymø nustatytus pakeitimus arba modifikacijas.
+
+(e) IBM grupë - ¥International Business Machines Corporation´, esanti JAV, Niujorko valstijos mieste Armonke, jos filialai ir atitinkami verslo partneriai bei subrangovai.
+
+(2) Licenciatas suteikia IBM teisæ:
+
+(a) apdoroti ir naudoti verslo kontaktinæ informacijà IBM grupëje teikiant Licenciatui palaikymo paslaugas ir siekiant toliau palaikyti verslo ryðius tarp Licenciato ir IBM grupës, áskaitant, be apribojimø, kreipimàsi á verslo kontaktiná asmená (el. paðtu ar kitu bûdu) ir IBM grupës produktø ir paslaugø pardavimà (¥Nurodytas tikslas´), ir
+
+(b) atskleisti verslo kontaktinio asmens informacijà kitiems IBM grupës nariams tik siekiant Nurodyto tikslo.
+
+(3) IBM sutinka, kad visa verslo kontaktinë informacija bus apdorojama laikantis duomenø apsaugos ir elektroniniø ryðiø teisës aktø ir naudojama tik Nurodytu tikslu.
+
+(4) Iki duomenø apsaugos ir elektroniniø ryðiø teisës aktø nustatytos ribos Licenciatas patvirtina, kad (a) gavo (arba gaus) visus sutikimus ið verslo kontaktiniø asmenø ir jiems pateikë (arba pateiks) visus praneðimus, bûtinus norint leisti IBM grupei apdoroti ir naudoti verslo kontaktinæ informacijà Nurodytu tikslu.
+
+(5) Licenciatas suteikia IBM teisæ perduoti verslo kontaktinæ informacijà uþ Europos ekonominës zonos ribø, jei toks perdavimas vykdomas pagal sutarties sàlygas, kurias patvirtino duomenø apsaugos institucija, arba jei toká perdavimà leidþia duomenø apsaugos ir elektroniniø ryðiø teisës aktai.
+
+Z125-5543-05 (07/2011)
+
+
+Tarptautinë programinës árangos licencinë sutartis
+
+1 dalis - bendrosios sàlygos
+
+ATSISIØSDAMAS, DIEGDAMAS, KOPIJUODAMAS, PASIEKDAMAS PROGRAMÀ, SPAUSDAMAS MYGTUKÀ ¥SUTINKU´ AR KITAIS BÛDAIS NAUDODAMAS PROGRAMÀ, LICENCIATAS SUTINKA SU ÐIOS SUTARTIES SÀLYGOMIS.JEIGU SU ÐIOS LICENCIJOS SÀLYGOMIS SUTINKATE LICENCIATO VARDU, JÛS PAREIÐKIATE IR GARANTUOJATE, KAD PRISIIMATE VISÀ ATSAKOMYBÆ UÞ ÐIØ SÀLYGØ LAIKYMÀSI. JEIGU NESUTINKATE SU ÐIOMIS SÀLYGOMIS,
+
+* NESIØSKITE, NEDIEKITE, NEKOPIJUOKITE, NEBANDYKITE PASIEKTI PROGRAMOS, NESPAUSKITE MYGTUKO ¥SUTINKU´ AR NESINAUDOKITE PROGRAMA; IR
+
+* NEDELSDAMI GRÀÞINKITE NENAUDOTAS LAIKMENAS, DOKUMENTACIJÀ IR NUOSAVYBËS TEISËS DOKUMENTÀ ÐALIAI, IÐ KURIOS JUOS GAVOTE, KAD SUSIGRÀÞINTUMËTE UÞ PROGRAMÀ SUMOKËTUS PINIGUS. JEI PROGRAMA BUVO ATSISIØSTA, SUNAIKINKITE VISAS PROGRAMOS KOPIJAS.
+
+1. Apibrëþimai
+
+Ágaliotasis naudojimas - numatytas lygis, apibrëþiantis, kaip Licenciatas ágaliotas paleisti ir vykdyti Programà. Ðis lygis gali bûti nustatomas pagal naudotojø skaièiø, paslaugø vienetø milijonus (MSU), procesoriaus vertës vienetus (PVU) arba kitus naudojimo lygius, kuriuos nurodo IBM.
+
+IBM - ¥International Business Machines Corporation´ arba vienas ið jos filialø.
+
+Licencijos informacija (LI) - dokumentas, kuriame pateikta specifinë informacija apie Programà ir papildomos sàlygos. Programos LI galima rasti internete adresu: www.ibm.com/software/sla. LI taip pat galima rasti Programos kataloge, naudojant sisteminæ komandà, arba lankstinuke, kuris pridëtas prie Programos.
+
+Programa - ðie iðvardyti dalykai, jø originalai ir visos iðsamios arba dalinës kopijos: 1) kompiuterio skaitomos instrukcijos ir duomenys, 2) komponentai, failai ir moduliai, 3) garsinë ir vaizdinë medþiaga (pvz., vaizdai, tekstas, áraðai ar paveikslëliai), ir 4) susijusi licencijos medþiaga (tokia, kaip raktai ir dokumentacija).
+
+Nuosavybës teisës dokumentas (NTD) - Licenciato ágaliotojo naudojimo árodymas. NTD taip pat árodo, kad Licenciatas galës naudotis garantiniu aptarnavimu, bûsimø naujinimø kainomis, jei tokie bus iðleisti, ir galimais specialiais ar reklamos pasiûlymais. Jeigu IBM nepateikia Licenciatui NTD, tada IBM vietoj NTD gali priimti originalø pirkimo kvità ar kità pirkimo dokumentà ið ðalies (arba IBM, arba jos platintojo), ið kurios Licenciatas ásigijo Programà, su sàlyga, kad dokumente nurodytas Programos pavadinimas bei suteiktos Ágaliotojo naudojimo sàlygos.
+
+Garantijos laikas - vieneri metai nuo datos, kai Licenciatui suteikta licencija.
+
+2. Sutarties struktûra
+
+Ðià sutartá sudaro: 1 dalis - bendrosios sàlygos, 2 dalis - konkreèiai ðaliai taikomos sàlygos (jei tokiø yra), LI ir NTD, ir tai yra galutinis susitarimas tarp Licenciato ir IBM dël naudojimosi Programa. Ji pakeièia bet koká ankstesná þodiná ar raðtiná bendravimà tarp Licenciato ir IBM, kuriø metu buvo aptariamas Licenciato naudojimasis Programa. 2 dalies sàlygos gali pakeisti 1 dalies sàlygas. Atsiradus bet kokiems prieðtaravimams, bus remiamasi LI.
+
+3. Licencijos suteikiamos teisës
+
+Programa yra IBM arba IBM platintojo nuosavybë, ginama autoriaus teisiø, naudojimuisi ja suteikiama licencija, bet ji nëra parduodama.
+
+IBM suteikia Licenciatui neiðimtinæ licencijà 1) naudotis Programa pagal Ágaliotojo naudojimo sàlygas, nurodytas NTD, 2) kurti ir diegti kopijas, kurios palaikytø Ágaliotàjá naudojimàsi programa, ir 3) kurti atsarginæ kopijà su sàlyga, kad
+
+a. Licenciatas teisëtai ásigijo Programà ir laikosi ðios Sutarties sàlygø;
+
+b. atsarginë kopija nepaleidþiama, nebent neveikia pati Programa, kurios atsarginë kopija sukurta;
+
+c. Licenciatas ant kiekvienos Programos iðsamios ar dalinës kopijos nurodo visà autoriaus teisiø informacijà bei kitus nuosavybës þenklus;
+
+d. Licenciatas uþtikrina, kad kiekvienas, kuris naudojasi Programa (vietine ar nuotoline prieiga) 1) naudojasi tik Licenciato vardu ir 2) laikosi ðios Sutarties sàlygø;
+
+e. Licenciatas 1) nenaudoja, nekopijuoja, nekeièia ir neplatina Programos, nebent tai aiðkiai leidþiama ðioje Sutartyje; 2) nebando iðardyti, dekompiliuoti, versti ar atkurti Programos kodo, nebent tai aiðkiai leidþia ástatymai ir nesuteikiama teisë atsisakyti sutartyse; 3) nenaudoja jokiø Programos komponentø, failø, moduliø, garsinio ir vaizdinio turinio ar susijusios licencijuotos medþiagos atskirai nuo Programos; ir 4) neiðduoda licencijos treèiajai ðaliai, nenuomoja ir iðperkamosios nuomos pagrindais nesuteikia Programos; ir
+
+f. jei Licenciatas ágyja ðià Programà kaip Pagalbinæ programà, Licenciatas naudoja ðià Programà tik kaip pagalbinæ priemonæ, palaikanèià Pagrindinæ programà, jai taikomi bet kokie Pagrindinës programos licencijos apribojimai, arba, jei Licenciatas ágyja ðià programà kaip Pagrindinæ programà, Licenciatas naudoja visas Pagalbines programas tik ðiai Programai palaikyti, jai taikomi bet kokie ðios Sutarties apribojimai. Ðiame punkte ¥f´ ¥Pagalbinë programa´ yra Programa, kuri yra kitos IBM Programos (¥Pagrindinës programos´) dalis ir kuri Pagrindinës programos LI yra nurodoma kaip Pagalbinë programa. (Norëdamas gauti atskirà Pagalbinës programos licencijà be ðiø apribojimø, Licenciatas turëtø susisiekti ðalimi, ið kurios ásigijo Pagalbinæ programà.)
+
+Ði licencija taikoma kiekvienai Licenciato padarytai Programos kopijai.
+
+3.1 Pakeitimai, atnaujinimai, pataisos ir taisymai
+
+3.1.1 Pakeitimai
+
+Jei Programa pakeièiama kita Programa, pakeistos Programos licencija yra nedelsiant nutraukiama.
+
+3.1.2 Atnaujinimai, pataisos ir taisymai
+
+Kai Licenciatas gauna Programos atnaujinimà, pataisà ar pataisymà, Licenciatas sutinka su bet kokiomis papildomomis ar skirtingomis sàlygomis, taikomomis ðiems atnaujinimas, pataisoms ar pataisymams, kurios yra nurodytos LI. Jei nepateikta jokiø papildomø ar pakeistø sàlygø, tuomet atnaujinimui, pataisai ar pataisymui taikomos tik ðios Sutarties sàlygos. Jei Programa pakeièiama atnaujinimu, Licenciatas sutinka nedelsdamas nutraukti pakeistos Programos naudojimà.
+
+3.2 Fiksuotos trukmës licencijos
+
+Jei IBM suteikia Programai fiksuotos trukmës licencijà, Licenciato licencija baigia galioti, pasibaigus fiksuotam laikotarpiui, nebent Licenciatas ir IBM susitaria jà atnaujinti.
+
+3.3 Terminas ir nutraukimas
+
+Ði sutartis galioja tol, kol yra nutraukiama.
+
+IBM gali nutraukti Licenciato licencijà, jei Licenciatas nesilaiko Sutarties sàlygø.
+
+Jei licencija yra nutraukiama bet kurios ðalies iniciatyva dël bet kokios prieþasties, Licenciatas sutinka nedelsdamas nutraukti Programos naudojimà ir sunaikinti visas turimas Programos kopijas. Jei tam tikros Sutarties sàlygos dël savo pobûdþio iðlieka galioti po Sutarties nutraukimo, jos galioja, kol bus ávykdytos, ir taikomos abiejø ðaliø atitinkamiems teisiø perëmëjams ir ágaliotiniams.
+
+4. Mokëjimas
+
+Mokëjimas priklauso nuo Ágaliotojo naudojimo pobûdþio, kuris yra apraðytas NTD. IBM neteikia kreditø, jei vëluojama sumokëti, ir negràþina jau sumokëtø pinigø, iðskyrus atvejus, apraðytus Sutartyje.
+
+Jei Licenciatas nori iðplësti savo Ágaliotojo naudojimo ribas, Licenciatas turi ið anksto praneðti IBM arba ágaliotajam IBM atstovui ir apmokëti visas susijusias iðlaidas.
+
+5. Mokesèiai
+
+Jeigu kuri nors valdþios institucija taiko Programai muità, mokesèius ar kitokià rinkliavà, iðskyrus tuos, kurie skaièiuojami nuo IBM grynojo pelno, Licenciatas sutinka sumokëti sàskaitoje faktûroje nurodytà sumà arba pateikti atleidimo nuo mokesèiø dokumentus. Nuo Programos ásigijimo dienos Licenciatas yra atsakingas uþ bet kokius Programos nuosavybës mokesèius. Jeigu kuri nors valdþios institucija taiko muità, mokesèius ar kitokià rinkliavà uþ Programos importà, eksportà, persiuntimà, prieigà ar naudojimà uþ valstybës, kurioje Licenciatui suteikta licencija, ribø, Licenciatas sutinka sumokëti paskirtà sumà.
+
+6. Pinigø gràþinimo garantijos
+
+Jei pradinis Licenciatas dël kokiø nors prieþasèiø yra nepatenkintas Programa, jis gali per 30 dienø nuo NTD gavimo datos nutraukti licencijà ir susigràþinti pinigus, kuriuos mokëjo uþ Programà, su sàlyga, kad Licenciatas gràþina Programà ir NTD tai ðaliai, ið kurios jà ásigijo. Jei suteikta fiksuotos trukmës licencija, kurià galima pratæsti, Licenciatas gali susigràþinti pinigus tik tuo atveju, jei Programa ir jos NTD sugràþindami per pirmàsias 30 pirmojo termino dienø. Jeigu Licenciatas Programà atsisiuntë, jis turi susisiekti su jà iðdavusia ðalimi ir ið jos gauti pinigø susigràþinimo instrukcijas.
+
+7. Programos perleidimas
+
+Licenciatas gali perleisti Programà bei visas savo licencines teises ir ásipareigojimus kitai ðaliai tik tuo atveju, jei ta ðalis sutinka su ðios Sutarties sàlygomis. Jei kuri nors ðalis dël tam tikrø prieþasèiø licencijà nutraukia, Licenciatas nebegali perleisti Programos treèiajai ðaliai. Licenciatas negali perleisti dalies 1) Programos ar 2) Programos Ágaliotojo naudojimo. Perleisdamas Programà, Licenciatas kartu su LI ir NTD taip pat privalo perleisti spausdintà ðios Sutarties kopijà. Ið karto po perleidimo Licenciato licencija yra nutraukiama.
+
+8. Garantija ir iðimtys
+
+8.1 Ribotoji garantija
+
+IBM garantuoja, kad Programa, jei ji naudojama numatytoje veikimo aplinkoje, atitinka specifikacijas. Programos specifikacijos ir nurodytos veikimo aplinkos informacija yra pateikta Programos dokumentacijoje (tokioje kaip ¥read-me´ failas) arba kituose informacijos ðaltiniuose, kuriuos iðleido IBM (pvz., praneðime). Licenciatas sutinka, kad tokia dokumentacija ir kitas Programos turinys pateikiami tik anglø kalba, nebent vietos ástatymai reikalauja kitaip, nesuteikiama teisë sutartyje to atsisakyti arba apriboti.
+
+Garantija galioja tik nemodifikuotai Programos daliai. IBM negarantuoja, kad Programa veiks be trikèiø ir klaidø ar kad IBM paðalins visus Programos defektus. Licenciatas yra atsakingas uþ naudojimosi Programa rezultatus.
+
+Garantiniu periodu IBM suteikia Licenciatui nemokamà prieigà prie IBM duomenø baziø, kuriose yra informacija apie þinomus Programos defektus, jø taisymus, apribojimus ir apëjimus. Iðsamesnës informacijos rasite IBM programos palaikymo vadove adresu www.ibm.com/software/support.
+
+Jei Garantiniu laikotarpiu Programa neveikia, kaip buvo garantuota, ir problemos negalima iðspræsti, naudojantis IBM duomenø bazëse esanèia informacija, Licenciatas gali gràþinti Programà ir jos NTD ðaliai (arba IBM, arba jos atstovui), ið kurios Licenciatas ásigijo Programà, ir susigràþinti pinigus. Gràþinus Programà, Licenciato licencija nutraukiama. Jeigu Licenciatas Programà atsisiuntë, jis turi susisiekti su jà iðdavusia ðalimi ir ið jos gauti pinigø susigràþinimo instrukcijas.
+
+8.2 Iðimtys
+
+ÐIOS GARANTIJOS YRA LICENCIATO IÐIMTINËS GARANTIJOS IR PAKEIÈIA VISAS KITAS GARANTIJAS AR SÀLYGAS, IÐREIKÐTAS AR NUMANOMAS, ÁSKAITANT, BET NEAPSIRIBOJANT, BET KOKIAS NUMANOMAS TINKAMUMO PREKYBAI, PATENKINAMOS KOKYBËS, TINKAMUMO TAM TIKRAI PASKIRÈIAI IR BET KOKIAS NUOSAVYBËS IR NEPAÞEIDÞIAMUMO GARANTIJAS AR SÀLYGAS. KAI KURIOSE JURISDIKCIJOSE NELEIDÞIAMA NEÁTRAUKTI IÐREIKÐTØ AR NUMANOMØ GARANTIJØ, TODËL ANKSÈIAU IÐVARDYTOS IÐIMTYS LICENCIATUI GALI BÛTI NETAIKOMOS. TOKIU ATVEJU ÐIØ GARANTIJØ TAIKYMAS APRIBOJAMAS GARANTIJOS LAIKOTARPIO TRUKME. ÐIAM LAIKOTARPIUI PRAËJUS NEBETAIKOMOS JOKIOS GARANTIJOS. KAI KURIOSE VALSTYBËSE AR JURISDIKCIJOSE NELEIDÞIAMA RIBOTI NUMANOMOS GARANTIJOS TRUKMËS, TODËL ANKSÈIAU PATEIKTI APRIBOJIMAI LICENCIATUI GALI BÛTI NETAIKOMI.
+
+ÐIOS GARANTIJOS SUTEIKIA LICENCIATUI APIBRËÞTAS JURIDINES TEISES. LICENCIATAS TAIP PAT GALI TURËTI KITØ TEISIØ, KURIOS SKIRSIS ATSIÞVELGIANT Á JURISDIKCIJÀ.
+
+GARANTIJAS, NURODYTAS 8 SKYRIUJE (GARANTIJOS IR IÐIMTYS), SUTEIKIA TIK ¥IBM¡. APRIBOJIMAI, PAMINËTI 8.2 POSKYRYJE (IÐIMTYS), TAIP PAT TAIKOMI IR ¥IBM¡ TIEKËJAMS, VEIKIANTIEMS KAIP TREÈIOJI ÐALIS. TOKIE TIEKËJAI VEIKIA BE JOKIØ GARANTIJØ AR SÀLYGØ. ÐIS PARAGRAFAS NEPANAIKINA ¥IBM¡ GARANTINIØ ÁSIPAREIGOJIMØ, NURODYTØ ÐIOJE SUTARTYJE.
+
+9. Licenciato duomenys ir duomenø bazës
+
+Siekdama padëti Licenciatui iðspræsti su Programa susijusias problemas, IBM gali papraðyti, kad Licenciatas 1) leistø IBM nuotoliniu bûdu prisijungti prie Licenciato sistemos arba 2) atsiøstø savo informacijà ar sistemos duomenis á IBM. Taèiau IBM neprivalo teikti tokios pagalbos, nebent IBM ir Licenciatas pasiraðo atskirà susitarimà, kuriame IBM sutinka teikti Licenciatui tokio pobûdþio palaikymà, kuri nëra numatyta ðios Sutarties IBM garantiniuose ásipareigojimuose. Bet kokiu atveju IBM naudoja informacijà apie klaidas ir problemas savo produktams ir paslaugoms tobulinti ir techninei pagalbai teikti. Licenciatas sutinka su tokia IBM, IBM juridiniø asmenø ir subrangovø (veikianèiø ne tik Licenciato valstybëje) veikla.
+
+Licenciatas lieka atsakingas uþ 1) bet kokius duomenis ar kità bet kurios duomenø bazës turiná, kurá jis padaro prieinamà IBM, 2) duomenø prieigos, apsaugos, kodavimo, naudojimo bei duomenø perdavimo (áskaitant ir bet kokius asmeninius duomenis) procedûrø ir kontrolës pasirinkimà ir vykdymà ir 3) visø duomenø baziø ir visø saugomø duomenø atsarginiø kopijø sukûrimà bei jø atkûrimà. Licenciatas nesiøs ir nesuteiks IBM prieigos prie asmeninës informacijos, nepriklausomai nuo to, kokios formos ji yra, ir bus atsakingas uþ pagrástas iðlaidas, kurias IBM patirs dël tokios informacijos klaidingo perdavimo IBM arba jei IBM prarastø ar paskelbtø tokià informacijà, taip pat ir iðlaidas, susijusias su treèiøjø ðaliø iðkeltais ieðkiniais.
+
+10. Atsakomybës apribojimas
+
+Apribojimai, pateikti 10 skyriuje (Atsakomybës apribojimas) yra taikomi tiek, kiek leidþia taikomi ástatymai ir neleidþiama atsisakyti sutartyse.
+
+10.1 Dalykai, uþ kuriuos IBM atsakinga
+
+Gali susiklostyti tokios aplinkybës, kad dël IBM ar kitø ásipareigojimø nevykdymo Licenciatui bûtø suteikta teisë gauti þalos atlyginimà ið IBM. Neatsiþvelgiant á pagrindà, pagal kurá Licenciatas gauna teisæ reikalauti ið IBM atlyginti þalà (áskaitant esminá paþeidimà, aplaidumà, faktø iðkraipymà arba kità sutarties ar civilinës teisës paþeidimà), iðskyrus bet kokià atsakomybæ, kurios negalima atsisakyti arba apriboti remiantis atitinkamais ástatymais, visa IBM atsakomybë dël visø pretenzijø, susijusiø su kiekviena Programa, nevirðys a) þalos dël kûno suþalojimo (áskaitant mirtá), þalos nekilnojamajam turtui ir materialiajam asmeniniam turtui atlyginimo; b) bet kokios kitos faktinës tiesioginës þalos, áskaitant mokesèius (jei uþ Programà mokama fiksuotais terminais, taikomi 12 mënesiø mokesèiai) uþ Programà, dël kurios pateiktas ieðkinys.
+
+Ðis apribojimas taip pat taikomas visiems IBM Programos kûrëjams ir tiekëjams. Tai yra didþiausia IBM ir jos Programos kûrëjø ir tiekëjø kolektyvinës atsakomybës suma.
+
+10.2 Dalykai, uþ kuriuos IBM nëra atsakinga
+
+JOKIU ATVEJU IBM, JOS PROGRAMOS KÛRËJAI AR TIEKËJAI NËRA ATSAKINGI UÞ ÐIUOS DALYKUS, NET JEI JIEMS BUVO PRANEÐTA APIE TOKIØ APLINKYBIØ ATSIRADIMO GALIMYBÆ:
+
+a. DUOMENØ PRARADIMÀ AR SUGADINIMÀ;
+
+b. SPECIALIUOSIUS, ATSITIKTINIUS, BAUDINIUS AR NETIESIOGINIUS NUOSTOLIUS, ARBA BET KOKIUS PRIEÞASTINIUS EKONOMINIUS NUOSTOLIUS; ARBA
+
+c. PRARASTÀ PELNÀ, VERSLÀ, PAJAMAS, PRESTIÞÀ AR PLANUOTAS SUTAUPYTI LËÐAS.
+
+11. Sàlygø laikymosi tikrinimas
+
+11 skyriuje (Sàlygø laikymosi tikrinimas), ¥IPLA Programos sàlygos¡ reiðkia 1) ðià Sutartá ir jos pataisymus bei IBM pateiktus sandorio dokumentus, ir 2) IBM programinës árangos politikà, kurià galima rasti IBM Programinës árangos politikos svetainëje (www.ibm.com/softwarepolicies), áskaitant, bet neapsiribojant, politikà, susijusià su atsarginëmis kopijomis, pagalbinës talpyklos kainø nustatymu bei informacijos perkëlimu.
+
+11 skyriuje pateikiamos teisës ir ásipareigojimai taikomi visà Programos licencijos galiojimo laikà bei dvejus metus pasibaigus galiojimui.
+
+11.1 Tikrinimo procesas
+
+Licenciatas sutinka sukurti, iðsaugoti ir pateikti IBM bei jos auditoriams tikslias raðytines ataskaitas, sistemos árankiø iðvestis ir kità sistemos informacijà, kuri leistø ávertinti, ar Licenciatas, naudodamasis visomis Programomis, laikosi IPLA programos sàlygø, áskaitant, bet neapsiribojant, visas IBM licencijavimo ir kainø nustatymo sàlygas. Licenciatas yra atsakingas, kad 1) tai nevirðytø jo Ágaliotojo naudojimo ribø ir 2) atitiktø IPLA Programos sàlygas.
+
+Priimtinai perspëjusi, IBM gali patikrinti, kaip Licenciatas laikosi IPLA programos sàlygø visose darbo vietose ir visose aplinkose, kuriose Licenciatas naudojasi Programomis (bet kokiu tikslu), kurioms taikomos IPLA programos sàlygos. Toks patikrinimas bus atliktas taip, kad kuo maþiau sutrikdytø Licenciato veiklà, ir gali bûti atliekamas Licenciato patalpose darbo valandomis. Tikrinti IBM gali samdyti nepriklausomà auditoriø, jei IBM ir auditorius yra pasiraðæ konfidencialumo sutartá.
+
+11.2 Sprendimas
+
+Jei tikrinimo metu paaiðkës, kad Licenciatas naudojosi kuria nors Programa, virðydamas Ágaliotojo naudojimo ribas, ar kitu bûdu nesilaikë IPLA programos sàlygø, IBM praneð apie tai Licenciatui raðtu. Licenciatas sutinka nedelsdamas tiesiogiai IBM padengti iðlaidas, kurias IBM nurodo sàskaitoje faktûroje, uþ 1) bet koká naudojimosi pervirðá, 2) palaikymà, suteiktà ðiam pervirðiui per naudojimo laikotarpá arba dvejus metus, atsiþvelgiant á tai, kuris laikotarpis trumpesnis, ir 3) kitas iðlaidas bei ásipareigojimus, nustatytus tikrinimo metu.
+
+12. Treèiøjø ðaliø pastabos
+
+Programoje gali bûti treèiøjø ðaliø kodas, kurá IBM, ne treèioji ðalis, suteikia Licenciatui, remdamasi ðia Sutartimi. Jei yra pastabø apie treèiøjø ðaliø kodà (¥Treèiøjø ðaliø pastabos¡), jos átrauktos tik Licenciatui informuoti. Ðios pastabos pateikiamos Programos faile (-uose) PASTABOS. Informacija, kaip gauti ðaltinio kodà tam tikram treèiosios ðalies kodui, pateikta skyriuje ¥Treèiøjø ðaliø pastabos¡. Jei Treèiøjø ðaliø pastabose IBM treèiosios ðalies kodà nurodo kaip ¥Modifikuojamà treèiosios ðalies kodà¡, IBM leidþia Licenciatui 1) modifikuoti Modifikuojamà treèiosios ðalies kodà ir 2) atkurti kodà tø Programos moduliø, kurie tiesiogiai siejasi su Modifikuojamu treèiosios ðalies kodu, su sàlyga, kad tai daroma tik norint suderinti Licenciato modifikacijas su treèiosios ðalies kodu. IBM aptarnavimo ir techninës pagalbos ásipareigojimai, jei tokie yra, taikomi tik nemodifikuotai Programai.
+
+13. Bendrosios nuostatos
+
+a. Joks ðios Sutarties punktas neturi átakos ástatymø numatytoms vartotojø teisëms, kurias sutartis galëtø panaikinti ar apriboti.
+
+b. Tais atvejais, kai Licenciatui IBM Programas pateikia materialios formos, IBM savo siuntimo ir pristatymo ásipareigojimus ávykdo, perdavusi Programas IBM paskirtam veþëjui, nebent Licenciatas ir IBM raðtu susitarë kitaip.
+
+c. Jeigu kuri nors ðios Sutarties nuostata laikoma netekusi galios ar neturinti ieðkinio galios, kitos ðios Sutarties nuostatos lieka galioti.
+
+d. Licenciatas sutinka laikytis visø taikomø eksporto ir importo ástatymø bei taisykliø, tarp jø JAV embargo ir sankcijø taisykliø bei eksporto draudimø tam tikriems galutiniams vartotojams.
+
+e. Licenciatas ágalioja ¥International Business Machines Corporation´ ir jos filialus (bei jø teisiø perëmëjus, rangovus ir IBM verslo partnerius) laikyti ir naudoti Licenciato verslo sandorio informacijà, neatsiþvelgiant á sandoriø vietà, susijusià su IBM produktais ir paslaugomis, arba IBM ir Licenciato verslo ryðiams palaikyti.
+
+f. Kiekviena ðalis, prieð iðkeldama ieðkiná kitai ðaliai dël Sutarties ásipareigojimø nevykdymo, pirmiausia suteikia galimybæ ávykdyti tuos ásipareigojimus. Ðalys bando gera valia iðspræsti iðkilusius ginèus, nesutarimus ar ieðkinius, susijusius su ðia Sutartimi.
+
+g. Jei kitaip nereikalauja taikomi ástatymai, ir tai nepanaikina bei neapriboja sutarties ásipareigojimø, 1) në viena ðalis nesiims jokiø teisiniø veiksmø dël jokio ieðkinio, susijusio su ðia Sutartimi, jei yra praëjæ dveji metai nuo ávykio pradþios; ir 2) pasibaigus ðiam terminui bet koks ieðkinys ir su juo susijusios atitinkamos teisës netenka galios.
+
+h. Nei Licenciatas, nei IBM neatsako uþ savo ásipareigojimø nevykdymà dël nuo ðaliø nepriklausanèiø prieþasèiø.
+
+i. Ðioje Sutartyje nenumatomos jokios treèiøjø ðaliø teisës ar veiksmai, ir IBM nëra atsakinga uþ jokius treèiøjø ðaliø ieðkinius, pateiktus Licenciatui, iðskyrus atvejus, nurodytus 10.1 poskyryje (Dalykai, uþ kuriuos IBM atsakinga), kai IBM juridiðkai atsako treèiajai ðaliai uþ kûno suþalojimus (taip pat mirtá) ar turtinæ þalà.
+
+j. Pasiraðydamos ðià Sutartá, në viena ðalis nesitiki ásipareigojimø vykdymo, nenumatyto Sutartyje, áskaitant, bet neapsiribojant, ásipareigojimus, susijusius su: 1) Programos veikimu, jei tai nenurodyta 8 skyriuje (Garantijos ir iðimtys) ; 2) kitø ðaliø patirtimi ar rekomendacijomis; arba 3) bet kokiais Licenciato gautais rezultatais.
+
+k. Programoms reklamuoti, parduoti ar aptarnauti IBM yra pasiraðiusi sutartis su tam tikromis organizacijomis (vadinamomis IBM verslo partneriais). IBM verslo partneriai yra nepriklausomos ir atskirai nuo IBM veikianèios institucijos. IBM nëra atsakinga uþ IBM verslo Partneriø veiksmus ar pareiðkimus, ar jø ásipareigojimus Licenciatui.
+
+l. Licencijos ir intelektinës nuosavybës nuostoliø kompensacijos sàlygos, nurodytos kitose Licenciato sutartyse su IBM (tokiose, kaip IBM kliento sutartis) netaikomos ðios Sutarties suteikiamos Programos licencijoms.
+
+14. Geografinë veiklos sfera ir taikoma teisë
+
+14.1 Taikoma teisë
+
+Abi ðalys sutinka, kad vykdydamos, aiðkindamos ir ágyvendindamos visas Licenciato ir IBM teises, prievoles ir ásipareigojimus, kylanèius ar susijusius su ðios Sutarties turiniu, taikys valstybës, kurioje Licenciatas ásigijo Programos licencijà, ástatymus, nepaisant teisës principø prieðtaravimø.
+
+Jungtiniø Tautø Konvencija dël tarptautiniø prekiø pirkimo ir pardavimo sutarèiø netaikoma.
+
+14.2 Jurisdikcija
+
+Visos teisës, prievolës ir ásipareigojimai yra pavaldûs Valstybës, kurioje Licenciatas ágijo Programos licencijà, teismams.
+
+2 dalis - konkreèiai ðaliai taikomos sàlygos
+
+Ðios sàlygos pakeièia arba modifikuoja toliau iðvardytose ðalyse suteiktø licencijø sàlygas, nurodytas 1 dalyje. Visos 1 dalyje nurodytos sàlygos, kuriø ðios pataisos nepakeièia, iðlieka nepakeistos ir galiojanèios. 2 dalis iðdëstoma taip:
+
+* 1 dalies 14 skyriaus (Taikoma teisë ir jurisdikcija) su ðalimis susijusios pataisos ir
+
+* Europos, Viduriniø Rytø ir Afrikos ðalyse taikomos kitø Sutarties sàlygø pataisos.
+
+1 dalies 14 skyriaus (Taikoma teisë ir jurisdikcija) su ðalimis susijusios pataisos
+
+14.1 Taikoma teisë
+
+Skyriaus 14.1 Taikoma teisë 1 pastraipos frazë ¥valstybës, kurioje Licenciatas ásigijo Programos licencijà, ástatymus´ pakeièiama ðiomis frazëmis (atitinkamai pagal ðalá):
+
+EUROPA, VIDURINIAI RYTAI IR AFRIKA
+
+Lietuvoje: Suomijos ástatymus.
+
+14.3 Arbitraþas
+
+Ði pastraipa pridedama kaip naujas poskyris 14.3 Arbitraþas, nes ji taikoma ðalims, toliau iðskirtoms ðriftu. Ðio 14.3 poskyrio nuostatos turi aukðtesnæ teisinæ galià nei poskyrio 14.2 Jurisdikcija nuostatos iki ribos, numatytos taikomuose vietos teisës aktuose ir reglamentuose:
+
+EUROPA, VIDURINIAI RYTAI IR AFRIKA
+
+Lietuva:
+
+Visi su ðia Sutartimi susijæ ginèai bus galutinai sprendþiami arbitraþo teisme, kuris vyks Helsinkyje, Suomijoje, remiantis tuo metu galiojanèiais Suomijos arbitraþo teisës aktais. Kiekviena ðalis paskirs vienà arbitrà. Arbitrai kartu paskirs pirmininkà. Jei arbitrams nepavyks susitarti ir paskirti pirmininko, já paskirs Helsinkio centriniai pramonës ir prekybos rûmai.
+
+EUROPOS, VIDURINIØ RYTØ IR AFRIKOS (EMEA) ÐALIMS TAIKOMOS PATAISOS
+
+EUROPOS SÀJUNGOS VALSTYBËS NARËS
+
+8. Garantija ir iðimtys
+
+Prie skyriaus 8. Garantija ir iðimtys pridedama ði informacija:
+
+Europos Sàjungoje (ES) vartotojai turi juridines teises, kurios apibrëþiamos pagal vietos teisës aktus, taikomus plataus vartojimo prekiø pardavimui. Nuostatos, iðvardytos ðiame skyriuje 8. Garantija ir iðimtys, ðioms teisëms neturi jokios átakos. Ribotoji garantija taikoma visame pasaulyje.
+
+13. Bendrosios nuostatos
+
+13.e punktà pakeièia tokia informacija:
+
+(1) Apibrëþtys - ðiam 13.e punktui taikomos tokios papildomos apibrëþtys:
+
+(a) Verslo kontaktinë informacija - su verslu susijusi kontaktinë informacija, kurià Licenciatas pateikia IBM: Licenciato darbuotojø ir subrangovø vardai, pareigos, darbo vietø adresai, telefono numeriai ir el. paðto adresai. Austrijoje, Italijoje ir Ðveicarijoje verslo kontaktinë informacija apima ir informacijà apie Licenciatà ir jo subrangovus kaip juridinius asmenis (pavyzdþiui, duomenis apie Licenciato pajamas ir kità su sandoriais susijusià informacijà).
+
+(b) Verslo kontaktiniai asmenys - Licenciato darbuotojai ir subrangovai, su kuriais susijusi verslo kontaktinë informacija.
+
+(c) Duomenø apsaugos institucija - institucija, ásteigta remiantis konkreèios ðalies duomenø apsaugos ir elektroniniø ryðiø teisës aktais, arba ne ES ðalies institucija, atsakinga uþ asmens duomenø apsaugà toje ðalyje, arba (bet kurioje ið anksèiau paminëtø ðaliø) tinkama tvarka paskirtas tokias pareigas perimantis subjektas.
+
+(d) Duomenø apsaugos ir elektroniniø ryðiø teisës aktai - (i) taikomi galiojantys vietos teisës aktai ir nuostatos, pagal kurias vykdomi ES direktyvos 95/46/EB (dël asmenø apsaugos tvarkant asmens duomenis ir dël laisvo tokiø duomenø judëjimo) ir ES direktyvos 2002/58/EB (dël asmens duomenø tvarkymo ir privatumo apsaugos elektroniniø ryðiø sektoriuje) reikalavimai, arba (ii) ne ES ðaliø teisës aktai ir (arba) nuostatos, susijusios su asmens duomenø apsauga ir elektroniniø ryðiø, kuriems naudojami asmens duomenys, reguliavimu, áskaitant (bet kurioje ið anksèiau paminëtø ðaliø) visus ástatymø nustatytus pakeitimus arba modifikacijas.
+
+(e) IBM grupë - ¥International Business Machines Corporation´, esanti JAV, Niujorko valstijos mieste Armonke, jos filialai ir atitinkami verslo partneriai bei subrangovai.
+
+(2) Licenciatas suteikia IBM teisæ:
+
+(a) apdoroti ir naudoti verslo kontaktinæ informacijà IBM grupëje teikiant Licenciatui palaikymo paslaugas ir siekiant toliau palaikyti verslo ryðius tarp Licenciato ir IBM grupës, áskaitant, be apribojimø, kreipimàsi á verslo kontaktiná asmená (el. paðtu ar kitu bûdu) ir IBM grupës produktø ir paslaugø pardavimà (¥Nurodytas tikslas´), ir
+
+(b) atskleisti verslo kontaktinio asmens informacijà kitiems IBM grupës nariams tik siekiant Nurodyto tikslo.
+
+(3) IBM sutinka, kad visa verslo kontaktinë informacija bus apdorojama laikantis duomenø apsaugos ir elektroniniø ryðiø teisës aktø ir naudojama tik Nurodytu tikslu.
+
+(4) Iki duomenø apsaugos ir elektroniniø ryðiø teisës aktø nustatytos ribos Licenciatas patvirtina, kad (a) gavo (arba gaus) visus sutikimus ið verslo kontaktiniø asmenø ir jiems pateikë (arba pateiks) visus praneðimus, bûtinus norint leisti IBM grupei apdoroti ir naudoti verslo kontaktinæ informacijà Nurodytu tikslu.
+
+(5) Licenciatas suteikia IBM teisæ perduoti verslo kontaktinæ informacijà uþ Europos ekonominës zonos ribø, jei toks perdavimas vykdomas pagal sutarties sàlygas, kurias patvirtino duomenø apsaugos institucija, arba jei toká perdavimà leidþia duomenø apsaugos ir elektroniniø ryðiø teisës aktai.
+
+Z125-3301-14 (07/2011)
+
+
