@@ -32,7 +32,7 @@ RUN chmod u+x /usr/local/bin/install-mq.sh \
 
 ENV LANG=en_US.UTF-8
 
-# Run as mqm (1000)
-USER 1000
+# Run as mqm (999)
+USER 999
 
 ENTRYPOINT ["MQExplorer"]

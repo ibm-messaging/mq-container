@@ -24,8 +24,8 @@ import (
 )
 
 //const mainDir string := "/mnt/mqm"
-const mqmUID uint32 = 1000
-const mqmGID uint32 = 1000
+const mqmUID uint32 = 999
+const mqmGID uint32 = 999
 
 func createVolume(path string) error {
 	// fi, err := os.Stat(path)
