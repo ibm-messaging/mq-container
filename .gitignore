@@ -5,3 +5,4 @@ test/kubernetes/vendor
 build
 coverage
 downloads
+vendor
