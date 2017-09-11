@@ -37,7 +37,7 @@ The command removes all the Kubernetes components associated with the chart, exc
 
 ```bash
 kubectl delete pvc -l release=foo
-``` 
+```
 
 ## Configuration
 The following table lists the configurable parameters of the `mq-advancedserver` chart and their default values.
@@ -71,10 +71,102 @@ The chart mounts a [Persistent Volume](http://kubernetes.io/docs/user-guide/pers
 You have two major options for configuring the MQ queue manager itself:
 
 1. Use existing tools, such as `runmqsc`, MQ Explorer or the MQ Command Server to configure your queue manager directly.
-2. Create a new image with your configuration baked-in 
+2. Create a new image with your configuration baked-in
+
+If you decide to opt for option 1 you will need to create any administrative entry point to your Queue Manager. This can be completed by either manually running kubectl commands to execute `runmqsc` and configure your entry point or creating a new image which automatically does this. At a minimum you will need to:
+
+* Create a user with MQ administrative permissions (is a member of the `mqm` group) which you can use to log into your Queue Manager.
+* Enable `ADOPTCTX` so we use the user for authorization as well as authentication when connecting a MQ Application.
+* Refresh the security configuration so the new `ADOPTCTX` value becomes active
+* Create a channel to use as our entrypoint.
+* Create a channel authentication rule to allow access for administrative users to connect through the channel.
+
+For the above minimum you should execute the following commands through a shell prompt on the pod, if you choose to do this then you should replace `mquser` with your own username:
+
+```
+useradd --gid mqm mquser
+passwd mquser
+runmqsc <QM Name>
+```
+
+Then in the runmqsc program i would execute the following MQSC commands:
+
+```
+DEFINE CHANNEL('EXAMPLE.ENTRYPOINT') CHLTYPE(SVRCONN)
+ALTER AUTHINFO(SYSTEM.DEFAULT.AUTHINFO.IDPWOS) AUTHTYPE(IDPWOS) ADOPTCTX(YES)
+REFRESH SECURITY(*) TYPE(CONNAUTH)
+SET CHLAUTH('EXAMPLE.ENTRYPOINT') TYPE(BLOCKUSER) USERLIST('nobody')
+```
+
+At this point you can now connect a MQ Explorer or other remote MQ administrative client using the channel `EXAMPLE.ENTRYPOINT` and user `mquser`.
+
+> **Tip**: If you are using a client that has a compatibility mode option for user authentication to connect to your IBM MQ Queue Manager. Make sure you have compatibility mode turned off.
 
 ## Configuring MQ objects with a new image
-You can create a new container image layer, on top of the IBM MQ Advanced base image.  You can add MQSC files to define MQ objects such as queues and topics, and place these files into `/etc/mqm` in your image.  When the MQ container starts, it will run any MQSC files found in this directory (in sorted order).
+You can create a new container image layer, on top of the IBM MQ Advanced base image.  You can add MQSC files to define MQ objects such as queues and topics, and place these files into `/etc/mqm` in your image.  When the MQ pod starts, it will run any MQSC files found in this directory (in sorted order).
+
+## Example Dockerfile and MQSC script for creating a new image
+In this example you will create a Dockerfile that creates two users:
+* `admin` - Administrator users which is a member of the `mqm` group
+* `app` - Client application user which is a member of the `mqclient` group. (You will also create this group)
+
+You will also create a MQSC Script file called `config.mqsc` that will be copied to `/etc/mqm` on my pod so it is ran automatically at startup. This script will do multiple things including:
+* Creating default Local Queues for my applications
+* Creating channels for my Admin and App users
+* Configuring security to allow use of the channels by remote applications
+* Creating authority records to allow members of the `mqclient` group to access the Queue Manager and the default Local Queues.
+
+First create a file called `config.MQSC`. This the MQSC file that will be ran at startup. It should contain the following:
+
+```
+* Create Local Queues that my application(s) can use.
+DEFINE QLOCAL('EXAMPLE.QUEUE.1') REPLACE
+DEFINE QLOCAL('EXAMPLE.QUEUE.2') REPLACE
+
+* Create a Dead Letter Queue for undeliverable messages and set the Queue Manager to use it.
+DEFINE QLOCAL('EXAMPLE.DEAD.LETTER.QUEUE') REPLACE
+ALTER QMGR DEADQ('EXAMPLE.DEAD.LETTER.QUEUE')
+
+* Set ADOPTCTX to YES so we use the same userid passed for authentication as the one for authorization and refresh the security configuration
+ALTER AUTHINFO(SYSTEM.DEFAULT.AUTHINFO.IDPWOS) AUTHTYPE(IDPWOS) ADOPTCTX(YES)
+REFRESH SECURITY(*) TYPE(CONNAUTH)
+
+* Create a entry channel for the Admin user and Application user
+DEFINE CHANNEL('EXAMP.ADMIN.SVRCONN') CHLTYPE(SVRCONN) REPLACE
+DEFINE CHANNEL('EXAMP.APP.SVRCONN') CHLTYPE(SVRCONN) MCAUSER('app') REPLACE
+
+* Set Channel authentication rules to only allow access through the two channels we created and only allow admin users to connect through EXAMPLE.ADMIN.SVRCONN
+SET CHLAUTH('*') TYPE(ADDRESSMAP) ADDRESS('*') USERSRC(NOACCESS) DESCR('Back-stop rule - Blocks everyone') ACTION(REPLACE)
+SET CHLAUTH('EXAMP.APP.SVRCONN') TYPE(ADDRESSMAP) ADDRESS('*') USERSRC(CHANNEL) DESCR('Allows connection via APP channel') ACTION(REPLACE)
+SET CHLAUTH('EXAMP.ADMIN.SVRCONN') TYPE(ADDRESSMAP) ADDRESS('*') USERSRC(CHANNEL) DESCR('Allows connection via ADMIN channel') ACTION(REPLACE)
+SET CHLAUTH('EXAMP.ADMIN.SVRCONN') TYPE(BLOCKUSER) USERLIST('nobody') DESCR('Allows admins on ADMIN channel') ACTION(REPLACE)
+
+* Set Authority records to allow the members of the mqclient group to connect to the Queue Manager and access the Local Queues which start with "EXAMPLE."
+SET AUTHREC OBJTYPE(QMGR) GROUP('mqclient') AUTHADD(CONNECT,INQ)
+SET AUTHREC PROFILE('EXAMPLE.**') OBJTYPE(QUEUE) GROUP('mqclient') AUTHADD(INQ,PUT,GET,BROWSE)
+```
+
+Next create a `Dockerfile` that expands on the MQ Advanced server image to create the users and groups. It should contain the following, replacing <IMAGE NAME> with the mqadvanced image you want to base this new image off:
+
+```
+FROM <IMAGE NAME>
+
+# Add the admin user as a member of the mqm group and set their password
+RUN useradd admin -G mqm \
+    && echo admin:passw0rd | chpasswd \
+# Create the mqclient group
+    && groupadd mqclient \
+# Create the app user as a member of the mqclient group and set their password
+    && useradd app -G mqclient \
+    && echo app:passw0rd | chpasswd
+
+# Copy the configuration script to /etc/mqm where it will be picked up automatically
+COPY config.mqsc /etc/mqm/
+```
+
+Finally build and push the image to your registry.
+
+You can then use the new image when you deploy MQ into your cluster. You will find that once you have run the image you will be able to see your new default objects and users.
 
 # Copyright
 
