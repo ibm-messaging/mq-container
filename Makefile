@@ -67,10 +67,15 @@ build-cov:
 	mkdir -p build
 	cd build; go test -c -covermode=count ../cmd/runmqserver
 
-.PHONY: test
-test: build
+.PHONY: test-advancedserver
+test-advancedserver: build
 	cd pkg/name && go test
-	cd test/docker && go test
+	cd test/docker-advancedserver && go test
+
+.PHONY: test-devserver
+test-devserver: build
+	cd pkg/name && go test
+	cd test/docker-devserver && go test
 
 define docker-build-mq
 	# Create a temporary network to use for the build
