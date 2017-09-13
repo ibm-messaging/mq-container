@@ -7,6 +7,8 @@ Run [IBM® MQ](http://www-03.ibm.com/software/products/en/ibm-mq) in a container
 # Current status
 This repository contains code under active development.  **It is not yet ready for production use**
 
+Dockerfile-devserver Build Status: [![Build Status](https://travis-ci.org/ibm-messaging/mq-container.svg?branch=master)](https://travis-ci.org/ibm-messaging/mq-container)
+
 # Build
 After extracting the code from this repository, you can build an image with the latest version of MQ using the following command:
 
