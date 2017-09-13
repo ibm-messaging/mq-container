@@ -36,7 +36,7 @@ clean:
 
 downloads/mqadv_dev903_ubuntu_x86-64.tar.gz:
 	mkdir -p downloads
-	cd build; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev903_ubuntu_x86-64.tar.gz
+#	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev903_ubuntu_x86-64.tar.gz
 
 .PHONY: downloads
 downloads: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
@@ -106,7 +106,7 @@ build-advancedserver: build downloads/CNJR7ML.tar.gz
 	docker tag mq-advancedserver:latest-$(DOCKER_TAG_ARCH) mq-advancedserver:9.0.3-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-devserver
-build-devserver: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz 
+build-devserver: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
 	$(call docker-build-mq,mq-devserver:latest-$(DOCKER_TAG_ARCH),Dockerfile-server,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
 	docker tag mq-devserver:latest-$(DOCKER_TAG_ARCH) mq-devserver:9.0.3-$(DOCKER_TAG_ARCH)
 
@@ -124,5 +124,5 @@ build-advancedserver-cover: build-advanced-server build-cov
 # 	$(call docker-build-mq,mq-web:latest-$(DOCKER_TAG_ARCH),Dockerfile-mq-web)
 
 .PHONY: build-devserver
-build-explorer: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz 
+build-explorer: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
 	$(call docker-build-mq,mq-explorer:latest-$(DOCKER_TAG_ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
