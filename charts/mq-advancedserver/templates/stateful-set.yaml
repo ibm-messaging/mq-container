@@ -40,7 +40,7 @@ spec:
       containers:
         - name: qmgr
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }} 
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
           - containerPort: 1414
           env:
@@ -56,9 +56,9 @@ spec:
           # Set liveness probe to determine if the queue manager is running
           livenessProbe:
             exec:
-              command: 
+              command:
               - chkmqhealthy
-            initialDelaySeconds: 60
+            initialDelaySeconds: {{ .Values.livenessDelay }}
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 1
@@ -92,5 +92,5 @@ spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          storage: {{ .Values.data.persistence.size | quote }} 
+          storage: {{ .Values.data.persistence.size | quote }}
   {{- end }}

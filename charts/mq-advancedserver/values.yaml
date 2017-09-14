@@ -16,10 +16,10 @@
 license: "not accepted"
 image:
   # repository is the container repository to use, which must contain IBM MQ Advanced
-  repository: 
+  repository:
   # tag is the tag to use for the container repository
   tag:
-  # pullSecret is the secret to use when pulling the image from a private registry 
+  # pullSecret is the secret to use when pulling the image from a private registry
   pullSecret:
   # pullPolicy is either IfNotPresent or Always (https://kubernetes.io/docs/concepts/containers/images/)
   pullPolicy: IfNotPresent
@@ -49,3 +49,5 @@ queueManager:
   name:
 # nameOverride can be set to partially override the name of the resources created by this chart
 nameOverride:
+# livenessDelay should be raised if your system cannot start the Queue Manager in 60 seconds
+livenessDelay: 60

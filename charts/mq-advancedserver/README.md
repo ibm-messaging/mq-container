@@ -43,18 +43,24 @@ kubectl delete pvc -l release=foo
 The following table lists the configurable parameters of the `mq-advancedserver` chart and their default values.
 
 | Parameter                       | Description                                     | Default                                                    |
-| ----------------------------    | ---------------------------------------------   | ---------------------------------------------------------- |
-| `license`                    | Set to `accept` to accept the terms of the IBM license  | `not accepted`                                                      |
-| `image.name`                    | Image name                                      | `nil`                                                      |
+| ------------------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| `license`                       | Set to `accept` to accept the terms of the IBM license  | `not accepted`                                     |
+| `image.repository`              | Image full name including repository            | `nil`                                                      |
 | `image.tag`                     | Image tag                                       | `nil`                                                      |
 | `image.pullPolicy`              | Image pull policy                               | `IfNotPresent`                                             |
 | `image.pullSecret`              | Image pull secret, if you are using a private Docker registry | `nil`                                        |
 | `data.persistence.enabled`      | Use a PersistentVolume to persist MQ data (under `/var/mqm`)  | `true`                                       |
-| `data.persistence.storageClass` | Storage class of backing Persistent Volume                    | `nil`                                        |
+| `data.persistence.storageClass` | Storage class of backing Persistent Volume      | `nil`                                                      |
 | `data.persistence.size`         | Size of data volume                             | `2Gi`                                                      |
 | `service.name`                  | Name of the Kubernetes service to create        | `qmgr`                                                     |
 | `service.type`                  | Kubernetes service type exposing ports, e.g. `NodePort`       | `ClusterIP`                                  |
-| `queueManager.name`                  | MQ Queue Manager name       | Helm release name                                  |
+| `resources.limits.cpu`          | Kubernetes CPU limit for the Queue Manager container | `1`                                                   |
+| `resources.limits.memory`       | Kubernetes memory limit for the Queue Manager container | `1Gi`                                              |
+| `resources.requests.cpu`        | Kubernetes CPU request for the Queue Manager container | `1`                                                 |
+| `resources.requests.memory`     | Kubernetes memory request for the Queue Manager container | `1Gi`                                            |
+| `queueManager.name`             | MQ Queue Manager name       | Helm release name                                                              |
+| `nameOverride`                  | Set to partially override the resource names used in this chart | `nil`                                      |
+| `livenessDelay`                 | Raises the time out before Kubernetes checks for Queue Manager's health. Useful for slower systems that take longer to start the Queue Manager. | 60 |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
