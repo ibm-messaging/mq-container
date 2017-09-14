@@ -37,26 +37,27 @@ The command removes all the Kubernetes components associated with the chart, exc
 
 ```bash
 kubectl delete pvc -l release=foo
-``` 
+```
 
 ## Configuration
 The following table lists the configurable parameters of the `mq-advancedserver` chart and their default values.
 
-| Parameter                       | Description                                     | Default                                                    |
-| ----------------------------    | ---------------------------------------------   | ---------------------------------------------------------- |
-| `license`                        | Set to `accept` to accept the terms of the IBM license  | `not accepted`                                    |
-| `image.name`                     | Image name                                      | `ibmcom/mq`                                               |
-| `image.tag`                      | Image tag                                       | `9`                                                       |
-| `image.pullPolicy`               | Image pull policy                               | `IfNotPresent`                                            |
-| `image.pullSecret`               | Image pull secret, if you are using a private Docker registry | `nil`                                       |
-| `data.persistence.enabled`       | Use a PersistentVolume to persist MQ data (under `/var/mqm`)  | `true`                                      |
-| `data.persistence.storageClass`  | Storage class of backing Persistent Volume                    | `nil`                                       |
-| `data.persistence.size`          | Size of data volume                             | `2Gi`                                                     |
-| `service.name`                   | Name of the Kubernetes service to create        | `qmgr`                                                    |
-| `service.type`                   | Kubernetes service type exposing ports, e.g. `NodePort`       | `ClusterIP`                                 |
-| `queueManager.name`              | MQ Queue Manager name                           | Helm release name                                         |
+| Parameter                        | Description                                     | Default                                                    |
+| -------------------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| `license`                        | Set to `accept` to accept the terms of the IBM license  | `not accepted`                                     |
+| `image.repository`               | Image full name including repository            | `ibmcom/mq`                                                |
+| `image.tag`                      | Image tag                                       | `9`                                                        |
+| `image.pullPolicy`               | Image pull policy                               | `IfNotPresent`                                             |
+| `image.pullSecret`               | Image pull secret, if you are using a private Docker registry | `nil`                                        |
+| `data.persistence.enabled`       | Use a PersistentVolume to persist MQ data (under `/var/mqm`)  | `true`                                       |
+| `data.persistence.storageClass`  | Storage class of backing Persistent Volume                    | `nil`                                        |
+| `data.persistence.size`          | Size of data volume                             | `2Gi`                                                      |
+| `service.name`                   | Name of the Kubernetes service to create        | `qmgr`                                                     |
+| `service.type`                   | Kubernetes service type exposing ports, e.g. `NodePort`       | `ClusterIP`                                  |
+| `queueManager.name`              | MQ Queue Manager name                           | Helm release name                                          |
 | `queueManager.dev.adminPassword` | Developer defaults - administrator password     | Random generated string.  See the notes that appear when you install for how to retrieve this.                            |
-| `queueManager.dev.appPassword`   | Developer defaults - app password   | `nil` (no password required to connect an MQ client) |
+| `queueManager.dev.appPassword`   | Developer defaults - app password   | `nil` (no password required to connect an MQ client)                   |
+| `nameOverride`                   | Set to partially override the resource names used in this chart | `nil`                                      |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
