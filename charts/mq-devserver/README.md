@@ -54,6 +54,10 @@ The following table lists the configurable parameters of the `mq-advancedserver`
 | `data.persistence.size`          | Size of data volume                             | `2Gi`                                                      |
 | `service.name`                   | Name of the Kubernetes service to create        | `qmgr`                                                     |
 | `service.type`                   | Kubernetes service type exposing ports, e.g. `NodePort`       | `ClusterIP`                                  |
+| `resources.limits.cpu`          | Kubernetes CPU limit for the Queue Manager container | `500m`                                                   |
+| `resources.limits.memory`       | Kubernetes memory limit for the Queue Manager container | `512Mi`                                              |
+| `resources.requests.cpu`        | Kubernetes CPU request for the Queue Manager container | `500m`                                                 |
+| `resources.requests.memory`     | Kubernetes memory request for the Queue Manager container | `512Mi`                                            |
 | `queueManager.name`              | MQ Queue Manager name                           | Helm release name                                          |
 | `queueManager.dev.adminPassword` | Developer defaults - administrator password     | Random generated string.  See the notes that appear when you install for how to retrieve this.                            |
 | `queueManager.dev.appPassword`   | Developer defaults - app password   | `nil` (no password required to connect an MQ client)                   |
