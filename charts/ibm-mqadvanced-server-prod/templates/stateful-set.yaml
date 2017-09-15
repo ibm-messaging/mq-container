@@ -48,7 +48,7 @@ spec:
             value: {{ .Values.license }}
           - name: MQ_QMGR_NAME
             value: {{ .Values.queueManager.name | default .Release.Name | replace "-" "" }}
-          {{- if .Values.data.persistence.enabled }}
+          {{- if .Values.persistence.enabled }}
           volumeMounts:
           - mountPath: "/mnt/mqm"
             name: {{ template "fullname" . }}-{{ .Values.data.name }}
@@ -77,7 +77,7 @@ spec:
             requests:
 {{ toYaml .Values.resources.requests | indent 14 }}
   volumeClaimTemplates:
-  {{- if .Values.data.persistence.enabled }}
+  {{- if .Values.persistence.enabled }}
   - metadata:
       name: {{ template "fullname" . }}-{{ .Values.data.name }}
       labels:

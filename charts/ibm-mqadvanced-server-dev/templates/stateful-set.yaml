@@ -40,7 +40,7 @@ spec:
       containers:
         - name: qmgr
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }} 
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
           - containerPort: 1414
           - containerPort: 9443
@@ -63,7 +63,7 @@ spec:
                 name: {{ template "fullname" . }}
                 key: appPassword
           {{- end }}
-          {{- if .Values.data.persistence.enabled }}
+          {{- if .Values.persistence.enabled }}
           volumeMounts:
           - mountPath: "/mnt/mqm"
             name: {{ template "fullname" . }}-{{ .Values.data.name }}
@@ -74,7 +74,7 @@ spec:
             requests:
 {{ toYaml .Values.resources.requests | indent 14 }}
   volumeClaimTemplates:
-  {{- if .Values.data.persistence.enabled }}
+  {{- if .Values.persistence.enabled }}
   - metadata:
       name: {{ template "fullname" . }}-{{ .Values.data.name }}
       labels:
@@ -89,5 +89,5 @@ spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          storage: {{ .Values.data.persistence.size | quote }} 
+          storage: {{ .Values.data.persistence.size | quote }}
   {{- end }}
