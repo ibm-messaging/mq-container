@@ -23,18 +23,15 @@ image:
   pullSecret:
   # pullPolicy is either IfNotPresent or Always (https://kubernetes.io/docs/concepts/containers/images/)
   pullPolicy: IfNotPresent
-# data section specifies settings for the main persistent volume claim, which is used for data in /var/mqm
+# persistence section specifies settings for the main persistent volume claim, which is used for data in /var/mqm
 persistence:
   enabled: true
-data:
   # name sets part of the name for this persistent volume claim
   name: "data"
-  persistence:
-    enabled: true
-    ## storageClassName is the name of the storage class to use, or an empty string for no storage class
-    storageClassName: ""
-    ## size is the minimum size of the persistent volume
-    size: 2Gi
+  ## storageClassName is the name of the storage class to use, or an empty string for no storage class
+  storageClassName: ""
+  ## size is the minimum size of the persistent volume
+  size: 2Gi
 service:
   name: qmgr
   type: ClusterIP

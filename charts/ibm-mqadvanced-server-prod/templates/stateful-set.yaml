@@ -51,7 +51,7 @@ spec:
           {{- if .Values.persistence.enabled }}
           volumeMounts:
           - mountPath: "/mnt/mqm"
-            name: {{ template "fullname" . }}-{{ .Values.data.name }}
+            name: {{ template "fullname" . }}-{{ .Values.persistence.name }}
           {{- end }}
           # Set liveness probe to determine if the queue manager is running
           livenessProbe:
@@ -79,18 +79,18 @@ spec:
   volumeClaimTemplates:
   {{- if .Values.persistence.enabled }}
   - metadata:
-      name: {{ template "fullname" . }}-{{ .Values.data.name }}
+      name: {{ template "fullname" . }}-{{ .Values.persistence.name }}
       labels:
         app: {{ template "fullname" . }}
         chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
         release: "{{ .Release.Name }}"
         heritage: "{{ .Release.Service }}"
     spec:
-      {{- if .Values.data.persistence.storageClassName }}
-      storageClassName: {{ .Values.data.persistence.storageClassName | quote }}
+      {{- if .Values.persistence.storageClassName }}
+      storageClassName: {{ .Values.persistence.storageClassName | quote }}
       {{- end }}
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          storage: {{ .Values.data.persistence.size | quote }}
+          storage: {{ .Values.persistence.size | quote }}
   {{- end }}

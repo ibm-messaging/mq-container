@@ -50,8 +50,8 @@ The following table lists the configurable parameters of the `ibm-mqadvanced-ser
 | `image.pullPolicy`               | Image pull policy                               | `IfNotPresent`                                             |
 | `image.pullSecret`               | Image pull secret, if you are using a private Docker registry | `nil`                                        |
 | `persistence.enabled`       | Use a PersistentVolume to persist MQ data (under `/var/mqm`)  | `true`                                       |
-| `data.persistence.storageClass`  | Storage class of backing Persistent Volume                    | `nil`                                        |
-| `data.persistence.size`          | Size of data volume                             | `2Gi`                                                      |
+| `persistence.storageClass`  | Storage class of backing Persistent Volume                    | `nil`                                        |
+| `persistence.size`          | Size of data volume                             | `2Gi`                                                      |
 | `service.name`                   | Name of the Kubernetes service to create        | `qmgr`                                                     |
 | `service.type`                   | Kubernetes service type exposing ports, e.g. `NodePort`       | `ClusterIP`                                  |
 | `resources.limits.cpu`          | Kubernetes CPU limit for the Queue Manager container | `500m`                                                   |
