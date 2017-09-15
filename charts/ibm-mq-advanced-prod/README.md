@@ -18,7 +18,7 @@ This chart deploys a single IBM MQ Advanced server (queue manager) into an IBM C
 To install the chart with the release name `foo`:
 
 ```bash
-helm install --name foo stable/mq-advancedserver --set license=accept
+helm install --name foo stable/ibm-mq-advanced-prod --set license=accept
 ```
 
 This command accepts the [IBM MQ Advanced license](LICENSE) and deploys an MQ Advanced server on the Kubernetes cluster. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -40,7 +40,7 @@ kubectl delete pvc -l release=foo
 ```
 
 ## Configuration
-The following table lists the configurable parameters of the `mq-advancedserver` chart and their default values.
+The following table lists the configurable parameters of the `ibm-mq-advanced-prod` chart and their default values.
 
 | Parameter                       | Description                                     | Default                                                    |
 | ------------------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
@@ -152,7 +152,7 @@ SET AUTHREC OBJTYPE(QMGR) GROUP('mqclient') AUTHADD(CONNECT,INQ)
 SET AUTHREC PROFILE('EXAMPLE.**') OBJTYPE(QUEUE) GROUP('mqclient') AUTHADD(INQ,PUT,GET,BROWSE)
 ```
 
-Next create a `Dockerfile` that expands on the MQ Advanced server image to create the users and groups. It should contain the following, replacing <IMAGE NAME> with the mqadvanced image you want to base this new image off:
+Next create a `Dockerfile` that expands on the MQ Advanced server image to create the users and groups. It should contain the following, replacing <IMAGE NAME> with the ibm-mq-prod image you want to base this new image off:
 
 ```
 FROM <IMAGE NAME>
