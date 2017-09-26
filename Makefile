@@ -13,9 +13,11 @@
 # limitations under the License.
 
 BUILD_SERVER_CONTAINER=build-server
-export GOARCH=amd64
+export GOARCH ?= amd64
 # Don't set GOOS globally, so that tests can be run locally
-DOCKER_TAG_ARCH=x86_64
+DOCKER_TAG_ARCH ?= x86_64
+DOCKER_IMAGE_DEVSERVER = mq-devserver:latest-$(DOCKER_TAG_ARCH)
+DOCKER_IMAGE_ADVANCEDSERVER = mq-advancedserver:latest-$(DOCKER_TAG_ARCH)
 
 .PHONY: default
 default: build-devserver test
@@ -44,8 +46,7 @@ downloads: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
 .PHONY: deps
 deps:
 	glide install --strip-vendor
-	cd test/docker-advancedserver && dep ensure
-	cd test/docker-devserver && dep ensure
+	cd test/docker && dep ensure
 	cd test/kubernetes && dep ensure
 
 build/runmqserver:
@@ -71,12 +72,12 @@ build-cov:
 .PHONY: test-advancedserver
 test-advancedserver: build
 	cd pkg/name && go test
-	cd test/docker-advancedserver && go test
+	cd test/docker && TEST_IMAGE=$(DOCKER_IMAGE_ADVANCEDSERVER) go test
 
 .PHONY: test-devserver
 test-devserver: build
 	cd pkg/name && go test
-	cd test/docker-devserver && go test
+	cd test/docker && TEST_IMAGE=$(DOCKER_IMAGE_DEVSERVER) go test
 
 define docker-build-mq
 	# Create a temporary network to use for the build
@@ -108,13 +109,13 @@ endef
 
 .PHONY: build-advancedserver
 build-advancedserver: build downloads/CNJR7ML.tar.gz
-	$(call docker-build-mq,mq-advancedserver:latest-$(DOCKER_TAG_ARCH),Dockerfile-server,CNJR7ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.3")
-	docker tag mq-advancedserver:latest-$(DOCKER_TAG_ARCH) mq-advancedserver:9.0.3-$(DOCKER_TAG_ARCH)
+	$(call docker-build-mq,$(DOCKER_IMAGE_ADVANCEDSERVER),Dockerfile-server,CNJR7ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.3")
+	docker tag $(DOCKER_IMAGE_ADVANCEDSERVER) mq-advancedserver:9.0.3-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-devserver
 build-devserver: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
-	$(call docker-build-mq,mq-devserver:latest-$(DOCKER_TAG_ARCH),Dockerfile-server,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
-	docker tag mq-devserver:latest-$(DOCKER_TAG_ARCH) mq-devserver:9.0.3-$(DOCKER_TAG_ARCH)
+	$(call docker-build-mq,$(DOCKER_IMAGE_DEVSERVER),Dockerfile-server,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
+	docker tag $(DOCKER_IMAGE_DEVSERVER) mq-devserver:9.0.3-$(DOCKER_TAG_ARCH)
 
 # .PHONY: build-server
 # build-server: build downloads/CNJR7ML.tar.gz

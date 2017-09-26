@@ -26,16 +26,12 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-const image string = "mq-devserver:latest-x86_64"
-
 func TestLicenseNotSet(t *testing.T) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	containerConfig := container.Config{
-		Image: image,
-	}
+	containerConfig := container.Config{}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	rc := waitForContainer(t, cli, id, 5)
@@ -50,8 +46,7 @@ func TestLicenseView(t *testing.T) {
 		t.Fatal(err)
 	}
 	containerConfig := container.Config{
-		Image: image,
-		Env:   []string{"LICENSE=view"},
+		Env: []string{"LICENSE=view"},
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
@@ -72,8 +67,7 @@ func TestGoldenPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	containerConfig := container.Config{
-		Image: image,
-		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		//ExposedPorts: ports,
 		ExposedPorts: nat.PortSet{
 			"1414/tcp": struct{}{},
@@ -91,7 +85,6 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 		t.Fatal(err)
 	}
 	containerConfig := container.Config{
-		Image:    image,
 		Env:      []string{"LICENSE=accept"},
 		Hostname: hostName,
 		ExposedPorts: nat.PortSet{
@@ -124,7 +117,7 @@ func TestWithVolume(t *testing.T) {
 	vol := createVolume(t, cli)
 	defer removeVolume(t, cli, vol.Name)
 	containerConfig := container.Config{
-		Image: image,
+		Image: imageName(),
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
 	hostConfig := container.HostConfig{
@@ -162,8 +155,7 @@ func TestNoVolumeWithRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 	containerConfig := container.Config{
-		Image: image,
-		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		//ExposedPorts: ports,
 		ExposedPorts: nat.PortSet{
 			"1414/tcp": struct{}{},

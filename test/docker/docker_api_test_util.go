@@ -33,6 +33,14 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
+func imageName() string {
+	image, ok := os.LookupEnv("TEST_IMAGE")
+	if !ok {
+		image = "mq-devserver:latest-x86-64"
+	}
+	return image
+}
+
 func coverageBind(t *testing.T) string {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -72,8 +80,13 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	}
 }
 
+// runContainer creates and starts a container.  If no image is specified in
+// the container config, then the image name is retrieved from the TEST_IMAGE
+// environment variable.
 func runContainer(t *testing.T, cli *client.Client, containerConfig *container.Config) string {
-	t.Logf("Running container")
+	if containerConfig.Image == "" {
+		containerConfig.Image = imageName()
+	}
 	hostConfig := container.HostConfig{
 		PortBindings: nat.PortMap{
 			"1414/tcp": []nat.PortBinding{
@@ -85,6 +98,7 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 		},
 	}
 	networkingConfig := network.NetworkingConfig{}
+	t.Logf("Running container (%s)", containerConfig.Image)
 	ctr, err := cli.ContainerCreate(context.Background(), containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
