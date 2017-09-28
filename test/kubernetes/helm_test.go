@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
@@ -30,13 +31,13 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-var namespace string = "default"
+var namespace = "default"
 
 // runCommand runs an OS command.  On Linux it waits for the command to
 // complete and returns the exit status (return code).
 // TODO: duplicated from cmd/runmqserver/main.go
 func runCommand(t *testing.T, name string, arg ...string) (string, int, error) {
-	t.Logf("Running command %v %v", name, arg)
+	t.Logf("Running command: %v %v", name, strings.Trim(fmt.Sprintf("%v", arg), "[]"))
 	cmd := exec.Command(name, arg...)
 	// Run the command and wait for completion
 	out, err := cmd.CombinedOutput()
@@ -44,12 +45,8 @@ func runCommand(t *testing.T, name string, arg ...string) (string, int, error) {
 		var rc int
 		// Only works on Linux
 		if runtime.GOOS == "linux" {
-			// func Wait4(pid int, wstatus *WaitStatus, options int, rusage *Rusage) (wpid int, err error)
 			var ws unix.WaitStatus
-			//var rusage syscall.Rusage
 			unix.Wait4(cmd.Process.Pid, &ws, 0, nil)
-			//ee := err.(*os.SyscallError)
-			//ws := ee.Sys().(syscall.WaitStatus)
 			rc = ws.ExitStatus()
 		} else {
 			rc = -1
@@ -60,6 +57,34 @@ func runCommand(t *testing.T, name string, arg ...string) (string, int, error) {
 		return string(out), rc, err
 	}
 	return string(out), 0, nil
+}
+
+func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values ...string) {
+	chart := "../../charts/ibm-mqadvanced-server-prod"
+	image := "mycluster.icp:8500/default/mq-devserver"
+	tag := "latest"
+	arg := []string{
+		"install",
+		"--debug",
+		chart,
+		"--name",
+		release,
+		"--set",
+		"image.repository=" + image,
+		"--set",
+		"image.tag=" + tag,
+		"--set",
+		"image.pullSecret=admin.registrykey",
+	}
+	for _, value := range values {
+		arg = append(arg, "--set", value)
+	}
+	out, _, err := runCommand(t, "helm", arg...)
+	t.Log(out)
+	if err != nil {
+		t.Error(out)
+		t.Fatal(err)
+	}
 }
 
 func helmDelete(t *testing.T, release string) {
@@ -73,10 +98,10 @@ func helmDelete(t *testing.T, release string) {
 func helmDeleteWithPVC(t *testing.T, cs *kubernetes.Clientset, release string) {
 	helmDelete(t, release)
 	pvcs, err := cs.CoreV1().PersistentVolumeClaims(namespace).List(metav1.ListOptions{
-		LabelSelector: "app=" + release + "-mq",
+		LabelSelector: "release=" + release,
 	})
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	for _, pvc := range pvcs.Items {
 		t.Logf("Deleting persistent volume claim: %v", pvc.Name)
@@ -100,47 +125,67 @@ func kubeLogin(t *testing.T) *kubernetes.Clientset {
 	return cs
 }
 
-func waitForTerminated(pods types.PodInterface, name string) (v1.PodPhase, error) {
-	status := v1.PodUnknown
-	var pod *v1.Pod
-	var err error
-	for status != v1.PodSucceeded && status != v1.PodFailed {
-		pod, err = pods.Get(name, metav1.GetOptions{})
+func waitForReady(t *testing.T, cs *kubernetes.Clientset, release string) {
+	pods := getPodsForHelmRelease(t, cs, release)
+	pod := pods.Items[0]
+	podName := pod.Name
+	// Wait for the queue manager container to be started...
+	for {
+		pod, err := cs.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
 		if err != nil {
-			return status, err
+			t.Fatal(err)
 		}
-		status = pod.Status.Phase
+		if len(pod.Status.ContainerStatuses) > 0 {
+			// Got a container now, but it could still be in state "ContainerCreating"
+			// TODO: Check the status here properly
+			time.Sleep(3 * time.Second)
+			break
+		}
+	}
+	// Exec into the container to check if it's ready
+	for {
+		// Current version of Kubernetes Go client doesn't support "exec", so run this via the command line
+		// TODO: If we run "chkmqready" here, it doesn't seem to work
+		out, _, err := runCommand(t, "kubectl", "exec", podName, "--", "dspmq")
+		//out, rc, err := runCommand(t, "kubectl", "exec", podName, "--", "chkmqready")
+		if err != nil {
+			t.Error(out)
+			out2, _, err2 := runCommand(t, "kubectl", "describe", "pod", podName)
+			if err2 == nil {
+				t.Log(out2)
+			}
+			t.Fatal(err)
+		}
+		if strings.Contains(out, "Running") {
+			t.Log("MQ is ready")
+			return
+		}
+		// if rc == 0 {
+		// 	return
+		// }
 		time.Sleep(1 * time.Second)
 	}
-	// The LastTerminationState doesn't seem to include an exit code
-	//t := pod.Status.ContainerStatuses[0].LastTerminationState
-	return status, nil
 }
 
-func TestHelmGoldenPath(t *testing.T) {
-	cs := kubeLogin(t)
-	chart := "../charts/mqadvanced-dev"
-	image := "master.cfc:8500/default/mqadvanced"
-	tag := "latest"
-	release := strings.ToLower(t.Name())
-	out, _, err := runCommand(t, "helm", "install", chart, "--name", release, "--set", "license=accept", "--set", "image.repository="+image, "--set", "image.tag="+tag)
-	if err != nil {
-		t.Error(out)
-		t.Fatal(err)
-	}
-	defer helmDeleteWithPVC(t, cs, release)
-
-	nodes, err := cs.CoreV1().Nodes().List(metav1.ListOptions{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("There are %d nodes in the cluster\n", len(nodes.Items))
-
-	pods, err := cs.CoreV1().Pods("").List(metav1.ListOptions{
-		LabelSelector: "app=" + release + "-mq",
+func getPodsForHelmRelease(t *testing.T, cs *kubernetes.Clientset, release string) *v1.PodList {
+	pods, err := cs.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		LabelSelector: "release=" + release,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("There are %d pods with the right label in the cluster\n", len(pods.Items))
+	return pods
+}
+
+func TestHelmGoldenPath(t *testing.T) {
+	cs := kubeLogin(t)
+	release := strings.ToLower(t.Name())
+	helmInstall(t, cs, release, "license=accept", "persistence.useDynamicProvisioning=false")
+	defer helmDeleteWithPVC(t, cs, release)
+
+	waitForReady(t, cs, release)
+	pods := getPodsForHelmRelease(t, cs, release)
+	if len(pods.Items) != 1 {
+		t.Fatalf("Expected 1 pod with the right label, found %v pods", len(pods.Items))
+	}
 }
