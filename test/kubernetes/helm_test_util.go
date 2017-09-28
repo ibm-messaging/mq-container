@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -57,9 +58,23 @@ func runCommand(t *testing.T, name string, arg ...string) (string, int, error) {
 	return string(out), 0, nil
 }
 
+func inspectLogs(t *testing.T, cs *kubernetes.Clientset, release string) string {
+	pods := getPodsForHelmRelease(t, cs, release)
+	opt := v1.PodLogOptions{}
+	r := cs.CoreV1().Pods(namespace).GetLogs(pods.Items[0].Name, &opt)
+	buf := new(bytes.Buffer)
+	rc, err := r.Stream()
+	if err != nil {
+		t.Fatal(err)
+	}
+	buf.ReadFrom(rc)
+	return buf.String()
+}
+
 func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values ...string) {
 	chart := "../../charts/ibm-mqadvanced-server-prod"
-	image := "mycluster.icp:8500/default/mq-devserver"
+	//image := "mycluster.icp:8500/default/mq-devserver"
+	image := "ibmcom/mq"
 	tag := "latest"
 	arg := []string{
 		"install",
@@ -85,7 +100,8 @@ func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values 
 	}
 }
 
-func helmDelete(t *testing.T, release string) {
+func helmDelete(t *testing.T, cs *kubernetes.Clientset, release string) {
+	t.Log(inspectLogs(t, cs, release))
 	out, _, err := runCommand(t, "helm", "delete", "--purge", release)
 	if err != nil {
 		t.Error(out)
@@ -184,3 +200,16 @@ func getPodsForHelmRelease(t *testing.T, cs *kubernetes.Clientset, release strin
 	}
 	return pods
 }
+
+func storageClassesDefined(t *testing.T, cs *kubernetes.Clientset) bool {
+	c, err := cs.Storage().StorageClasses().List(metav1.ListOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(c.Items) > 0 {
+		return true
+	}
+	return false
+}
+
+// TODO: On Minikube, need to make sure Helm is initialized first
