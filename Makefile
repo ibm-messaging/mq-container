@@ -50,8 +50,8 @@ downloads: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
 .PHONY: deps
 deps:
 	glide install --strip-vendor
-	cd test/docker && dep ensure
-	cd test/kubernetes && dep ensure
+	cd test/docker && dep ensure -vendor-only
+	cd test/kubernetes && dep ensure -vendor-only
 
 build/runmqserver:
 	mkdir -p build
