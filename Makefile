@@ -82,7 +82,7 @@ test-advancedserver: build
 test-devserver: build
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_IMAGE_DEVSERVER)"$(END)))
 	cd pkg/name && go test
-	#cd test/docker && TEST_IMAGE=$(DOCKER_IMAGE_DEVSERVER) go test
+	cd test/docker && TEST_IMAGE=$(DOCKER_IMAGE_DEVSERVER) go test
 
 define docker-build-mq
 	# Create a temporary network to use for the build
