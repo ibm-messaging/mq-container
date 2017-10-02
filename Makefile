@@ -40,7 +40,7 @@ clean:
 	rm -rf ./deps
 
 downloads/mqadv_dev903_ubuntu_x86-64.tar.gz:
-	$(info $(SPACER)$(shell printf $(TITLE)"Downloading MQ Advanced for Developers"$(END)))
+	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers"$(END)))
 	mkdir -p downloads
 	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev903_ubuntu_x86-64.tar.gz
 
