@@ -24,11 +24,27 @@ import (
 
 var namespace = "default"
 
-func TestHelmGoldenPath(t *testing.T) {
+// Prior to running this test, a Persistent Volume must be created
+func TestHelmPredefinedVolume(t *testing.T) {
 	cs := kubeLogin(t)
 	release := strings.ToLower(t.Name())
+	if !volumesAvailable(t, cs) {
+		t.Skipf("Skipping test because no persistent volumes were found")
+	}
 	helmInstall(t, cs, release, "license=accept", "persistence.useDynamicProvisioning=false")
-	defer helmDelete(t, release)
+	defer helmDelete(t, cs, release)
+	defer helmDeletePVC(t, cs, release)
+	waitForReady(t, cs, release)
+}
+
+func TestHelmStorageClass(t *testing.T) {
+	cs := kubeLogin(t)
+	release := strings.ToLower(t.Name())
+	if !storageClassesDefined(t, cs) {
+		t.Skipf("Skipping test because no storage classes were found")
+	}
+	helmInstall(t, cs, release, "license=accept", "persistence.useDynamicProvisioning=true")
+	defer helmDelete(t, cs, release)
 	defer helmDeletePVC(t, cs, release)
 	waitForReady(t, cs, release)
 }
@@ -37,7 +53,7 @@ func TestPersistenceDisabled(t *testing.T) {
 	cs := kubeLogin(t)
 	release := strings.ToLower(t.Name())
 	helmInstall(t, cs, release, "license=accept", "persistence.enabled=false")
-	defer helmDelete(t, release)
+	defer helmDelete(t, cs, release)
 	waitForReady(t, cs, release)
 
 	// Check that no PVCs were created
