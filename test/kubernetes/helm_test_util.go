@@ -32,6 +32,14 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+func imageName() string {
+	image, ok := os.LookupEnv("TEST_IMAGE")
+	if !ok {
+		image = "ibmcom/mq"
+	}
+	return image
+}
+
 // runCommand runs an OS command.  On Linux it waits for the command to
 // complete and returns the exit status (return code).
 // TODO: duplicated from cmd/runmqserver/main.go
@@ -74,7 +82,7 @@ func inspectLogs(t *testing.T, cs *kubernetes.Clientset, release string) string 
 func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values ...string) {
 	chart := "../../charts/ibm-mqadvanced-server-prod"
 	//image := "mycluster.icp:8500/default/mq-devserver"
-	image := "ibmcom/mq"
+	//image := "ibmcom/mq"
 	tag := "latest"
 	arg := []string{
 		"install",
@@ -83,12 +91,13 @@ func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values 
 		"--name",
 		release,
 		"--set",
-		"image.repository=" + image,
+		"image.repository=" + imageName(),
 		"--set",
 		"image.tag=" + tag,
 		"--set",
 		"image.pullSecret=admin.registrykey",
 	}
+	// Add any extra values to the Helm command
 	for _, value := range values {
 		arg = append(arg, "--set", value)
 	}
@@ -208,6 +217,22 @@ func storageClassesDefined(t *testing.T, cs *kubernetes.Clientset) bool {
 	}
 	if len(c.Items) > 0 {
 		return true
+	}
+	return false
+}
+
+// volumesAvailable checks to see if any persistent volumes are available.
+// On some Kubernetes clusters, only storage classes are used, so there won't
+// be any volumes pre-created.
+func volumesAvailable(t *testing.T, cs *kubernetes.Clientset) bool {
+	pvs, err := cs.CoreV1().PersistentVolumes().List(metav1.ListOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, pv := range pvs.Items {
+		if pv.Status.Phase == v1.VolumeAvailable {
+			return true
+		}
 	}
 	return false
 }

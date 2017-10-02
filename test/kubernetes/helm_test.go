@@ -28,6 +28,9 @@ var namespace = "default"
 func TestHelmPredefinedVolume(t *testing.T) {
 	cs := kubeLogin(t)
 	release := strings.ToLower(t.Name())
+	if !volumesAvailable(t, cs) {
+		t.Skipf("Skipping test because no persistent volumes were found")
+	}
 	helmInstall(t, cs, release, "license=accept", "persistence.useDynamicProvisioning=false")
 	defer helmDelete(t, cs, release)
 	defer helmDeletePVC(t, cs, release)
