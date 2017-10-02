@@ -26,6 +26,9 @@ default: build-devserver test
 .PHONY: all
 all: build-devserver build-advancedserver
 
+.PHONY: devserver
+devserver: build-devserver test-devserver
+
 # Build incubating components
 .PHONY: incubating
 incubating: build-explorer
@@ -37,6 +40,7 @@ clean:
 	rm -rf ./deps
 
 downloads/mqadv_dev903_ubuntu_x86-64.tar.gz:
+	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers"$(END)))
 	mkdir -p downloads
 	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev903_ubuntu_x86-64.tar.gz
 
@@ -46,8 +50,8 @@ downloads: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
 .PHONY: deps
 deps:
 	glide install --strip-vendor
-	cd test/docker && dep ensure
-	cd test/kubernetes && dep ensure
+	cd test/docker && dep ensure -vendor-only
+	cd test/kubernetes && dep ensure -vendor-only
 
 build/runmqserver:
 	mkdir -p build
@@ -76,6 +80,7 @@ test-advancedserver: build
 
 .PHONY: test-devserver
 test-devserver: build
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_IMAGE_DEVSERVER)"$(END)))
 	cd pkg/name && go test
 	cd test/docker && TEST_IMAGE=$(DOCKER_IMAGE_DEVSERVER) go test
 
@@ -109,11 +114,13 @@ endef
 
 .PHONY: build-advancedserver
 build-advancedserver: build downloads/CNJR7ML.tar.gz
+	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_IMAGE_ADVANCEDSERVER)"$(END)))
 	$(call docker-build-mq,$(DOCKER_IMAGE_ADVANCEDSERVER),Dockerfile-server,CNJR7ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.3")
 	docker tag $(DOCKER_IMAGE_ADVANCEDSERVER) mq-advancedserver:9.0.3-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-devserver
 build-devserver: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
+	$(info $(shell printf $(TITLE)"Build $(DOCKER_IMAGE_DEVSERVER)"$(END)))
 	$(call docker-build-mq,$(DOCKER_IMAGE_DEVSERVER),Dockerfile-server,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
 	docker tag $(DOCKER_IMAGE_DEVSERVER) mq-devserver:9.0.3-$(DOCKER_TAG_ARCH)
 
@@ -130,6 +137,8 @@ build-advancedserver-cover: build-advanced-server build-cov
 # build-web: build downloads/CNJR7ML.tar.gz
 # 	$(call docker-build-mq,mq-web:latest-$(DOCKER_TAG_ARCH),Dockerfile-mq-web)
 
-.PHONY: build-devserver
+.PHONY: build-explorer
 build-explorer: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
 	$(call docker-build-mq,mq-explorer:latest-$(DOCKER_TAG_ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
+
+include formatting.mk

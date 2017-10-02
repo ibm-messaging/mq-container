@@ -16,10 +16,14 @@
   branch = "master"
   name = "golang.org/x/sys"
 
-[[constraint]]
-  branch = "master"
-  name = "k8s.io/apimachinery"
-
+# The version of client-go corresponds to a specific Kubernetes version
+# (e.g. client-go 4.0.0 is for kubernetes 1.7)
+# If you change this version, you also need to update the corresponding
+# branch for k8s.io/apimachinery (below)
 [[constraint]]
   name = "k8s.io/client-go"
   version = "4.0.0"
+
+[[constraint]]
+  name = "k8s.io/apimachinery"
+  branch = "release-1.7"
