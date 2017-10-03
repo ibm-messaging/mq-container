@@ -33,11 +33,27 @@ import (
 )
 
 func imageName() string {
-	image, ok := os.LookupEnv("TEST_IMAGE")
+	v, ok := os.LookupEnv("TEST_REPO")
 	if !ok {
-		image = "ibmcom/mq"
+		v = "ibmcom/mq"
 	}
-	return image
+	return v
+}
+
+func imageTag() string {
+	v, ok := os.LookupEnv("TEST_TAG")
+	if !ok {
+		v = "latest"
+	}
+	return v
+}
+
+func chartName() string {
+	v, ok := os.LookupEnv("TEST_CHART")
+	if !ok {
+		v = "../../charts/ibm-mqadvanced-server-dev"
+	}
+	return v
 }
 
 // runCommand runs an OS command.  On Linux it waits for the command to
@@ -80,7 +96,7 @@ func inspectLogs(t *testing.T, cs *kubernetes.Clientset, release string) string 
 }
 
 func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values ...string) {
-	chart := "../../charts/ibm-mqadvanced-server-prod"
+	chart := chartName()
 	tag := "latest"
 	arg := []string{
 		"install",

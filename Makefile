@@ -16,8 +16,15 @@ BUILD_SERVER_CONTAINER=build-server
 export GOARCH ?= amd64
 # Don't set GOOS globally, so that tests can be run locally
 DOCKER_TAG_ARCH ?= x86_64
-DOCKER_IMAGE_DEVSERVER = mq-devserver:latest-$(DOCKER_TAG_ARCH)
-DOCKER_IMAGE_ADVANCEDSERVER = mq-advancedserver:latest-$(DOCKER_TAG_ARCH)
+DOCKER_TAG ?= latest-$(DOCKER_TAG_ARCH)
+DOCKER_REPO_DEVSERVER ?= mq-devserver
+DOCKER_REPO_ADVANCEDSERVER ?= mq-advancedserver
+DOCKER_FULL_DEVSERVER = $(DOCKER_REPO_DEVSERVER):$(DOCKER_TAG)
+DOCKER_FULL_ADVANCEDSERVER = $(DOCKER_REPO_ADVANCEDSERVER):$(DOCKER_TAG)
+# Options to `go test` for the Docker tests
+TEST_OPTS_DOCKER ?=
+# Options to `go test` for the Kubernetes tests
+TEST_OPTS_KUBERNETES ?=
 
 .PHONY: default
 default: build-devserver test
@@ -76,13 +83,26 @@ build-cov:
 .PHONY: test-advancedserver
 test-advancedserver: build
 	cd pkg/name && go test
-	cd test/docker && TEST_IMAGE=$(DOCKER_IMAGE_ADVANCEDSERVER) go test
+	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_ADVANCEDSERVER) go test $(TEST_OPTS_DOCKER)
 
 .PHONY: test-devserver
 test-devserver: build
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_IMAGE_DEVSERVER)"$(END)))
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER)"$(END)))
 	cd pkg/name && go test
-	cd test/docker && TEST_IMAGE=$(DOCKER_IMAGE_DEVSERVER) go test
+	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_DEVSERVER) go test
+
+.PHONY: test-kubernetes-devserver
+test-kubernetes-devserver: build
+	$(call test-kubernetes,$(DOCKER_REPO_DEVSERVER),$(DOCKER_TAG),"../../charts/ibm-mqadvanced-server-dev")
+
+.PHONY: test-kubernetes-advancedserver
+test-kubernetes-advancedserver: build
+	$(call test-kubernetes,$(DOCKER_REPO_ADVANCEDSERVER),$(DOCKER_TAG),"../../charts/ibm-mqadvanced-server-prod")
+
+define test-kubernetes
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $1:$2 on Kubernetes"$(END)))
+	cd test/kubernetes && TEST_REPO=$1 TEST_TAG=$2 TEST_CHART=$3 go test $(TEST_OPTS_KUBERNETES)
+endef
 
 define docker-build-mq
 	# Create a temporary network to use for the build
@@ -114,15 +134,15 @@ endef
 
 .PHONY: build-advancedserver
 build-advancedserver: build downloads/CNJR7ML.tar.gz
-	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_IMAGE_ADVANCEDSERVER)"$(END)))
-	$(call docker-build-mq,$(DOCKER_IMAGE_ADVANCEDSERVER),Dockerfile-server,CNJR7ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.3")
-	docker tag $(DOCKER_IMAGE_ADVANCEDSERVER) mq-advancedserver:9.0.3-$(DOCKER_TAG_ARCH)
+	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
+	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,CNJR7ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.3")
+	docker tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.3-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-devserver
 build-devserver: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
-	$(info $(shell printf $(TITLE)"Build $(DOCKER_IMAGE_DEVSERVER)"$(END)))
-	$(call docker-build-mq,$(DOCKER_IMAGE_DEVSERVER),Dockerfile-server,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
-	docker tag $(DOCKER_IMAGE_DEVSERVER) mq-devserver:9.0.3-$(DOCKER_TAG_ARCH)
+	$(info $(shell printf $(TITLE)"Build $(DOCKER_FULL_DEVSERVER)"$(END)))
+	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
+	docker tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):9.0.3-$(DOCKER_TAG_ARCH)
 
 # .PHONY: build-server
 # build-server: build downloads/CNJR7ML.tar.gz
