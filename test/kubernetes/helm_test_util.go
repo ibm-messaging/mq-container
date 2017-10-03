@@ -81,8 +81,6 @@ func inspectLogs(t *testing.T, cs *kubernetes.Clientset, release string) string 
 
 func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values ...string) {
 	chart := "../../charts/ibm-mqadvanced-server-prod"
-	//image := "mycluster.icp:8500/default/mq-devserver"
-	//image := "ibmcom/mq"
 	tag := "latest"
 	arg := []string{
 		"install",
@@ -110,6 +108,7 @@ func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values 
 }
 
 func helmDelete(t *testing.T, cs *kubernetes.Clientset, release string) {
+	t.Log("Deleting Helm release")
 	t.Log(inspectLogs(t, cs, release))
 	out, _, err := runCommand(t, "helm", "delete", "--purge", release)
 	if err != nil {
@@ -161,17 +160,22 @@ func waitForReady(t *testing.T, cs *kubernetes.Clientset, release string) {
 	}
 	pod := pods.Items[0]
 	podName := pod.Name
-	// Wait for the queue manager container to be started...
-	for {
+	// Wait for the queue manager container to be started
+	running := false
+	for !running {
 		pod, err := cs.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
 		if err != nil {
 			t.Fatal(err)
 		}
 		if len(pod.Status.ContainerStatuses) > 0 {
-			// Got a container now, but it could still be in state "ContainerCreating"
-			// TODO: Check the status here properly
-			time.Sleep(3 * time.Second)
-			break
+			state := pod.Status.ContainerStatuses[0].State
+			switch {
+			case state.Waiting != nil:
+				t.Logf("Waiting for container")
+				time.Sleep(1 * time.Second)
+			case state.Running != nil:
+				running = true
+			}
 		}
 	}
 	// Exec into the container to check if it's ready

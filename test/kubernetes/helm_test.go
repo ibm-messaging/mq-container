@@ -67,3 +67,68 @@ func TestPersistenceDisabled(t *testing.T) {
 		t.Errorf("Expected no PVC, found %v (%+v)", len(pvcs.Items), pvcs.Items)
 	}
 }
+
+// TestPassThroughValues tests several values which are set when installing
+// the Helm chart, and should be passed straight through to Kubernetes
+func TestPassThroughValues(t *testing.T) {
+	cs := kubeLogin(t)
+	release := strings.ToLower(t.Name())
+	queueManagerName := "foo"
+	requestCPU := "501m"
+	requestMem := "501Mi"
+	limitCPU := "502m"
+	limitMem := "502Mi"
+	helmInstall(t, cs, release,
+		"license=accept",
+		"persistence.enabled=false",
+		"resources.requests.cpu="+requestCPU,
+		"resources.requests.memory="+requestMem,
+		"resources.limits.cpu="+limitCPU,
+		"resources.limits.memory="+limitMem,
+		"queueManager.name="+queueManagerName,
+	)
+	defer helmDelete(t, cs, release)
+	waitForReady(t, cs, release)
+	pods := getPodsForHelmRelease(t, cs, release)
+	pod := pods.Items[0]
+
+	t.Run("resources.requests.cpu", func(t *testing.T) {
+		cpu := pod.Spec.Containers[0].Resources.Requests.Cpu()
+		if cpu.String() != requestCPU {
+			t.Errorf("Expected requested CPU to be %v, got %v", requestCPU, cpu.String())
+		}
+	})
+	t.Run("resources.requests.memory", func(t *testing.T) {
+		mem := pod.Spec.Containers[0].Resources.Requests.Memory()
+		if mem.String() != requestMem {
+			t.Errorf("Expected requested memory to be %v, got %v", requestMem, mem.String())
+		}
+	})
+	t.Run("resources.limits.cpu", func(t *testing.T) {
+		cpu := pod.Spec.Containers[0].Resources.Limits.Cpu()
+		if cpu.String() != limitCPU {
+			t.Errorf("Expected CPU limits to be %v, got %v", limitCPU, cpu.String())
+		}
+	})
+	t.Run("resources.limits.memory", func(t *testing.T) {
+		mem := pod.Spec.Containers[0].Resources.Limits.Memory()
+		if mem.String() != limitMem {
+			t.Errorf("Expected memory to be %v, got %v", limitMem, mem.String())
+		}
+	})
+	t.Run("queueManager.name", func(t *testing.T) {
+		out, _, err := kubeExec(t, pod.Name, "dspmq", "-n")
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Example output of `dspmq -n`:
+		// QMNAME(qm1)      STATUS(RUNNING)
+		n := strings.Fields(out)[0]
+		n = strings.Split(n, "(")[1]
+		n = strings.Trim(n, "() ")
+		t.Logf("Queue manager name detected: %v", n)
+		if n != queueManagerName {
+			t.Errorf("Expected queue manager name to be %v, got %v", queueManagerName, n)
+		}
+	})
+}
