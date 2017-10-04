@@ -24,6 +24,8 @@ metadata:
 spec:
   serviceName: {{ .Values.service.name }}
   replicas: 1
+  updateStrategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
