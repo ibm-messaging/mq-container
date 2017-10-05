@@ -17,3 +17,4 @@ description: IBM MQ queue manager
 name: ibm-mqadvanced-server-prod
 version: 1.0.0-beta 
 icon: https://developer.ibm.com/messaging/wp-content/uploads/sites/18/2017/07/IBM-MQ-Square-200.png
+tillerVersion: ">=2.4.0"

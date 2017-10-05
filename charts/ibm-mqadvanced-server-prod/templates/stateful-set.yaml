@@ -24,6 +24,8 @@ metadata:
 spec:
   serviceName: {{ .Values.service.name }}
   replicas: 1
+  updateStrategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -58,19 +60,19 @@ spec:
             exec:
               command:
               - chkmqhealthy
-            initialDelaySeconds: {{ .Values.livenessDelay }}
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 1
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
           # Set readiness probe to determine if the MQ listener is running
           readinessProbe:
             exec:
               command:
               - chkmqready
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 1
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
           resources:
             limits:
 {{ toYaml .Values.resources.limits | indent 14 }}

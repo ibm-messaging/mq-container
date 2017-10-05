@@ -61,5 +61,17 @@ queueManager:
 # nameOverride can be set to partially override the name of the resources created by this chart
 nameOverride:
 
-# livenessDelay should be raised if your system cannot start the Queue Manager in 60 seconds
-livenessDelay: 60
+# livenessProbe section specifies setting for the MQ liveness probe, which checks for a running Queue Manager
+livenessProbe:
+  # initialDelaySeconds should be raised if your system cannot start the Queue Manager in 60 seconds
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 1
+
+# readinessProbe section specifies setting for the MQ readiness probe, which checks when the MQ listener is running
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 1
