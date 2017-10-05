@@ -30,7 +30,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/hpcloud/tail"
 	"golang.org/x/sys/unix"
 )
 
@@ -187,6 +186,7 @@ func updateCommandLevel() {
 }
 
 func startQueueManager() {
+	log.Println("Starting queue manager")
 	out, rc, err := runCommand("strmqm")
 	if err != nil {
 		log.Fatalf("Error %v starting queue manager: %v", rc, string(out))
@@ -276,32 +276,32 @@ func createReaper() {
 // mirrorLog tails the specified file, and logs each line.
 // This is useful for usability, as the container console log can show
 // messages from the MQ log.
-func mirrorLog(path string) error {
-	tail, err := tail.TailFile(path, tail.Config{
-		ReOpen: true,
-		Follow: true,
-		Poll:   true,
-		Location: &tail.SeekInfo{
-			Offset: 0,
-			// End of file
-			Whence: 2,
-		},
-		Logger: tail.DiscardingLogger,
-	})
-	if err != nil {
-		return err
-	}
-	go func() {
-		for line := range tail.Lines {
-			// TODO: Unless we parse the message, the timestamp will be (slightly) wrong
-			if strings.HasPrefix(line.Text, "AMQ") {
-				// TODO: Extended characters don't print correctly
-				log.Println(line.Text)
-			}
-		}
-	}()
-	return nil
-}
+// func mirrorLog(path string) error {
+// 	tail, err := tail.TailFile(path, tail.Config{
+// 		ReOpen: true,
+// 		Follow: true,
+// 		Poll:   true,
+// 		Location: &tail.SeekInfo{
+// 			Offset: 0,
+// 			// End of file
+// 			Whence: 2,
+// 		},
+// 		Logger: tail.DiscardingLogger,
+// 	})
+// 	if err != nil {
+// 		return err
+// 	}
+// 	go func() {
+// 		for line := range tail.Lines {
+// 			// TODO: Unless we parse the message, the timestamp will be (slightly) wrong
+// 			if strings.HasPrefix(line.Text, "AMQ") {
+// 				// TODO: Extended characters don't print correctly
+// 				log.Println(line.Text)
+// 			}
+// 		}
+// 	}()
+// 	return nil
+// }
 
 func main() {
 	createReaper()
@@ -321,7 +321,7 @@ func main() {
 		log.Fatal(err)
 	}
 	createDirStructure()
-	mirrorLog("/var/mqm/qmgrs/" + name + "/errors/AMQERR01.LOG")
+	//mirrorLog("/var/mqm/qmgrs/" + name + "/errors/AMQERR01.LOG")
 	createQueueManager(name)
 	updateCommandLevel()
 	startQueueManager()
