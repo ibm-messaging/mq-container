@@ -182,6 +182,11 @@ Finally, build and push the image to your registry.
 
 You can then use the new image when you deploy MQ into your cluster. You will find that once you have run the image you will be able to see your new default objects and users.
 
+# Troubleshooting
+
+## Cannot create a GlusterFS PersistentVolumeClaim
+The generated PVC name is too long.  See [here](https://www-03preprod.ibm.com/support/knowledgecenter/SSBS6K_2.1.0-beta/troubleshoot/cannot_create_pvc.html) for more information.  You can shorten the claim name using the `dataPVC.name` parameter.
+
 # Copyright
 
 © Copyright IBM Corporation 2017

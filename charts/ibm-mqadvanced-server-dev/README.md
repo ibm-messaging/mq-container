@@ -75,6 +75,11 @@ Alternatively, a YAML file that specifies the values for the parameters can be p
 
 The chart mounts a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/).
 
+# Troubleshooting
+
+## Cannot create a GlusterFS PersistentVolumeClaim
+The generated PVC name is too long.  See [here](https://www-03preprod.ibm.com/support/knowledgecenter/SSBS6K_2.1.0-beta/troubleshoot/cannot_create_pvc.html) for more information.  You can shorten the claim name using the `dataPVC.name` parameter.
+
 # Copyright
 
 © Copyright IBM Corporation 2017
