@@ -75,6 +75,15 @@ Alternatively, a YAML file that specifies the values for the parameters can be p
 
 The chart mounts a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/).
 
+# Troubleshooting
+
+## Cannot create a GlusterFS PersistentVolumeClaim
+The generated PVC name can be too long when using GlusterFS.  See [here](https://www.ibm.com/support/knowledgecenter/SSBS6K_2.1.0/troubleshoot/cannot_create_pvc.html) for more information.  The PVC name is generated from three things:
+
+1. The Helm release name, which is set by you at deployment time
+2. A short PVC label, which defaults to "data" and can be changed using the `dataPVC.name` parameter.
+3. The name of the chart you are using, which can be changed using the `nameOverride` parameter.
+
 # Copyright
 
 © Copyright IBM Corporation 2017
