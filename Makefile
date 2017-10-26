@@ -126,9 +126,9 @@ define docker-build-mq
 	  --file $2 \
 	  --network build \
 	  --build-arg MQ_URL=http://build:80/$3 \
-	  --build-arg IBM_PRODUCT_ID=$4 \
-	  --build-arg IBM_PRODUCT_NAME=$5 \
-	  --build-arg IBM_PRODUCT_VERSION=$6 \
+	  --label IBM_PRODUCT_ID=$4 \
+	  --label IBM_PRODUCT_NAME=$5 \
+	  --label IBM_PRODUCT_VERSION=$6 \
 	  .
 	# Stop the web server (will also remove the container)
 	$(DOCKER) kill $(BUILD_SERVER_CONTAINER)

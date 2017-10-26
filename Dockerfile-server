@@ -14,10 +14,6 @@
 
 FROM ubuntu:16.04
 
-ARG IBM_PRODUCT_ID
-ARG IBM_PRODUCT_NAME
-ARG IBM_PRODUCT_VERSION
-
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ Debian (.deb) install packages
 ARG MQ_URL
@@ -25,14 +21,12 @@ ARG MQ_URL
 # The MQ packages to install
 ARG MQ_PACKAGES="ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams"
 
-LABEL "ProductID"=$IBM_PRODUCT_ID \
-      "ProductName"=$IBM_PRODUCT_NAME \
-      "ProductVersion"=$IBM_PRODUCT_VERSION
-
 COPY install-mq.sh /usr/local/bin/
+
+# Install MQ.  To avoid a "text file busy" error here, we sleep before installing.
 RUN chmod u+x /usr/local/bin/install-mq.sh \
-# To avoid a "text file busy" error here we sleep before installing.
-  && sleep 1 && install-mq.sh
+  && sleep 1 \
+  && install-mq.sh
 
 COPY build/runmqserver /usr/local/bin/
 COPY build/chkmq* /usr/local/bin/
