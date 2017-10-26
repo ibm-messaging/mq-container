@@ -13,9 +13,12 @@
 # limitations under the License.
 
 BUILD_SERVER_CONTAINER=build-server
+# Set architecture for Go code.  Don't set GOOS globally, so that tests can be run locally
 export GOARCH ?= amd64
-# Don't set GOOS globally, so that tests can be run locally
 DOCKER_TAG_ARCH ?= x86_64
+# By default, all Docker client commands are run inside a Docker container.
+# This means that newer features of the client can be used, even with an older daemon.
+DOCKER ?= docker run --tty --interactive --rm --volume /var/run/docker.sock:/var/run/docker.sock --volume "$(CURDIR)":/var/src --workdir /var/src docker:stable docker
 DOCKER_TAG ?= latest-$(DOCKER_TAG_ARCH)
 DOCKER_REPO_DEVSERVER ?= mq-devserver
 DOCKER_REPO_ADVANCEDSERVER ?= mq-advancedserver
@@ -106,9 +109,9 @@ endef
 
 define docker-build-mq
 	# Create a temporary network to use for the build
-	docker network create build
+	$(DOCKER) network create build
 	# Start a web server to host the MQ downloadable (tar.gz) file
-	docker run \
+	$(DOCKER) run \
 	  --rm \
 	  --name $(BUILD_SERVER_CONTAINER) \
 	  --network build \
@@ -117,7 +120,7 @@ define docker-build-mq
 	  --detach \
 	  nginx:alpine
 	# Build the new image
-	docker build \
+	$(DOCKER) build \
 	  --tag $1 \
 	  --file $2 \
 	  --network build \
@@ -127,31 +130,31 @@ define docker-build-mq
 	  --build-arg IBM_PRODUCT_VERSION=$6 \
 	  .
 	# Stop the web server (will also remove the container)
-	docker kill $(BUILD_SERVER_CONTAINER)
+	$(DOCKER) kill $(BUILD_SERVER_CONTAINER)
 	# Delete the temporary network
-	docker network rm build
+	$(DOCKER) network rm build
 endef
 
 .PHONY: build-advancedserver
 build-advancedserver: build downloads/CNJR7ML.tar.gz
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
 	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,CNJR7ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.3")
-	docker tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.3-$(DOCKER_TAG_ARCH)
+	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.3-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-devserver
 build-devserver: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
 	$(info $(shell printf $(TITLE)"Build $(DOCKER_FULL_DEVSERVER)"$(END)))
 	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
-	docker tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):9.0.3-$(DOCKER_TAG_ARCH)
+	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):9.0.3-$(DOCKER_TAG_ARCH)
 
 # .PHONY: build-server
 # build-server: build downloads/CNJR7ML.tar.gz
 # 	$(call docker-build-mq,mq-server:latest-$(DOCKER_TAG_ARCH),Dockerfile-server,"79afd716d55b4f149a87bec52c9dc1aa","IBM MQ","9.0.3")
-# 	docker tag mq-server:latest-$(DOCKER_TAG_ARCH) mq-server:9.0.3-$(DOCKER_TAG_ARCH)
+# 	$(DOCKER) tag mq-server:latest-$(DOCKER_TAG_ARCH) mq-server:9.0.3-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: build-advanced-server build-cov
-	docker build -t mq-advancedserver:cover -f Dockerfile-server.cover .
+	$(DOCKER) build -t mq-advancedserver:cover -f Dockerfile-server.cover .
 
 # .PHONY: build-web
 # build-web: build downloads/CNJR7ML.tar.gz
