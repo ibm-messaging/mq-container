@@ -121,6 +121,8 @@ define docker-build-mq
 	  nginx:alpine
 	# Build the new image
 	$(DOCKER) build \
+	  # Always ensure that we have the latest base image
+	  --pull \
 	  --tag $1 \
 	  --file $2 \
 	  --network build \
