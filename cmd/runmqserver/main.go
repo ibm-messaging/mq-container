@@ -191,6 +191,7 @@ func startQueueManager() {
 	if err != nil {
 		log.Fatalf("Error %v starting queue manager: %v", rc, string(out))
 	}
+	log.Println("Started queue manager")
 }
 
 func configureQueueManager() {
