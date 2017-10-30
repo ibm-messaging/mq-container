@@ -12,6 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Build stage to build Go code
+FROM golang:1.9 as builder 
+WORKDIR /go/src/github.com/ibm-messaging/mq-container/
+COPY cmd/ ./cmd
+COPY pkg/ ./pkg
+COPY vendor/ ./vendor
+RUN GOOS=linux go build ./cmd/runmqserver/
+RUN GOOS=linux go build ./cmd/chkmqready/
+RUN GOOS=linux go build ./cmd/chkmqhealthy/
+
+# Build stage to run Go unit tests
+FROM golang:1.9 as tester
+COPY pkg/ ./pkg
+RUN cd pkg/name && GOOS=linux go test
+
+# Main build stage, to build MQ image
 FROM ubuntu:16.04
 
 # The URL to download the MQ installer from in tar.gz format
@@ -28,8 +44,8 @@ RUN chmod u+x /usr/local/bin/install-mq.sh \
   && sleep 1 \
   && install-mq.sh
 
-COPY build/runmqserver /usr/local/bin/
-COPY build/chkmq* /usr/local/bin/
+COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqserver /usr/local/bin/
+COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/chkmq* /usr/local/bin/
 COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
 
 RUN chmod +x /usr/local/bin/runmqserver \

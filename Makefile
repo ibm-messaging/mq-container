@@ -63,43 +63,28 @@ deps:
 	cd test/docker && dep ensure -vendor-only
 	cd test/kubernetes && dep ensure -vendor-only
 
-build/runmqserver:
-	mkdir -p build
-	cd build; GOOS=linux go build ../cmd/runmqserver/
-
-build/chkmqready:
-	mkdir -p build
-	cd build; GOOS=linux go build ../cmd/chkmqready/
-
-build/chkmqhealthy:
-	mkdir -p build
-	cd build; GOOS=linux go build ../cmd/chkmqhealthy/
-
-.PHONY: build
-build: build/runmqserver build/chkmqready build/chkmqhealthy
-
 .PHONY: build-cov
 build-cov:
 	mkdir -p build
 	cd build; go test -c -covermode=count ../cmd/runmqserver
 
 .PHONY: test-advancedserver
-test-advancedserver: build
+test-advancedserver:
 	cd pkg/name && go test
 	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_ADVANCEDSERVER) go test $(TEST_OPTS_DOCKER)
 
 .PHONY: test-devserver
-test-devserver: build
+test-devserver:
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER)"$(END)))
 	cd pkg/name && go test
 	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_DEVSERVER) go test
 
 .PHONY: test-kubernetes-devserver
-test-kubernetes-devserver: build
+test-kubernetes-devserver:
 	$(call test-kubernetes,$(DOCKER_REPO_DEVSERVER),$(DOCKER_TAG),"../../charts/ibm-mqadvanced-server-dev")
 
 .PHONY: test-kubernetes-advancedserver
-test-kubernetes-advancedserver: build
+test-kubernetes-advancedserver:
 	$(call test-kubernetes,$(DOCKER_REPO_ADVANCEDSERVER),$(DOCKER_TAG),"../../charts/ibm-mqadvanced-server-prod")
 
 define test-kubernetes
