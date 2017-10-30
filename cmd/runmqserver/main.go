@@ -125,7 +125,6 @@ func getQueueManagerName() (string, error) {
 // runCommand runs an OS command.  On Linux it waits for the command to
 // complete and returns the exit status (return code).
 func runCommand(name string, arg ...string) (string, int, error) {
-	//	log.Debugf("Running command %v %v", name, arg)
 	cmd := exec.Command(name, arg...)
 	// Run the command and wait for completion
 	out, err := cmd.CombinedOutput()
@@ -133,12 +132,8 @@ func runCommand(name string, arg ...string) (string, int, error) {
 		var rc int
 		// Only works on Linux
 		if runtime.GOOS == "linux" {
-			// func Wait4(pid int, wstatus *WaitStatus, options int, rusage *Rusage) (wpid int, err error)
 			var ws unix.WaitStatus
-			//var rusage syscall.Rusage
 			unix.Wait4(cmd.Process.Pid, &ws, 0, nil)
-			//ee := err.(*os.SyscallError)
-			//ws := ee.Sys().(syscall.WaitStatus)
 			rc = ws.ExitStatus()
 		} else {
 			rc = -1
@@ -274,40 +269,9 @@ func createReaper() {
 	}()
 }
 
-// mirrorLog tails the specified file, and logs each line.
-// This is useful for usability, as the container console log can show
-// messages from the MQ log.
-// func mirrorLog(path string) error {
-// 	tail, err := tail.TailFile(path, tail.Config{
-// 		ReOpen: true,
-// 		Follow: true,
-// 		Poll:   true,
-// 		Location: &tail.SeekInfo{
-// 			Offset: 0,
-// 			// End of file
-// 			Whence: 2,
-// 		},
-// 		Logger: tail.DiscardingLogger,
-// 	})
-// 	if err != nil {
-// 		return err
-// 	}
-// 	go func() {
-// 		for line := range tail.Lines {
-// 			// TODO: Unless we parse the message, the timestamp will be (slightly) wrong
-// 			if strings.HasPrefix(line.Text, "AMQ") {
-// 				// TODO: Extended characters don't print correctly
-// 				log.Println(line.Text)
-// 			}
-// 		}
-// 	}()
-// 	return nil
-// }
-
 func main() {
 	createReaper()
 	checkLicense()
-
 	// Start SIGTERM handler channel
 	done := createTerminateChannel()
 
@@ -316,13 +280,13 @@ func main() {
 		log.Fatalln(err)
 	}
 	log.Printf("Using queue manager name: %v", name)
+
 	logConfig()
 	err = createVolume("/mnt/mqm")
 	if err != nil {
 		log.Fatal(err)
 	}
 	createDirStructure()
-	//mirrorLog("/var/mqm/qmgrs/" + name + "/errors/AMQERR01.LOG")
 	createQueueManager(name)
 	updateCommandLevel()
 	startQueueManager()
