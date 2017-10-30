@@ -121,11 +121,20 @@ define docker-build-mq
 	$(DOCKER) network rm build
 endef
 
-.PHONY: build-advancedserver
-build-advancedserver: build downloads/CNJR7ML.tar.gz
+# .PHONY: build-advancedserver-903
+# build-advancedserver-903: build downloads/CNJR7ML.tar.gz
+# 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
+# 	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,CNJR7ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.3")
+# 	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.3-$(DOCKER_TAG_ARCH)
+
+.PHONY: build-advancedserver-904
+build-advancedserver-904: build downloads/CNLE4ML.tar.gz
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
-	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,CNJR7ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.3")
-	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.3-$(DOCKER_TAG_ARCH)
+	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,CNLE4ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.4")
+	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.4-$(DOCKER_TAG_ARCH)
+
+.PHONY: build-advancedserver
+build-advancedserver: build-advancedserver-904
 
 .PHONY: build-devserver
 build-devserver: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
