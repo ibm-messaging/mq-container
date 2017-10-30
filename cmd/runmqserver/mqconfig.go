@@ -18,6 +18,7 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"os/user"
 	"runtime"
 	"strings"
 
@@ -52,6 +53,13 @@ func logBaseImage() error {
 		}
 	}
 	return nil
+}
+
+func logUser() {
+	u, err := user.Current()
+	if err == nil {
+		log.Printf("Running as user ID %v (%v) with primary group %v", u.Uid, u.Name, u.Gid)
+	}
 }
 
 func readProc(filename string) (value string, err error) {
@@ -106,13 +114,6 @@ func checkFS(path string) {
 
 func logConfig() {
 	log.Printf("CPU architecture: %v", runtime.GOARCH)
-	// TODO: You can't use os.user if you're cross-compiling
-	// u, err := user.Current()
-	// if err != nil {
-	// 	log.Println(err)
-	// } else {
-	// 	log.Printf("Running as user ID %v (%v) with primary group %v", u.Uid, u.Name, u.Gid)
-	// }
 	if runtime.GOOS == "linux" {
 		var err error
 		osr, err := readProc("/proc/sys/kernel/osrelease")
@@ -128,6 +129,7 @@ func logConfig() {
 		} else {
 			log.Printf("Maximum file handles: %v", fileMax)
 		}
+		logUser()
 		readMounts()
 	} else {
 		log.Fatalf("Unsupported platform: %v", runtime.GOOS)
