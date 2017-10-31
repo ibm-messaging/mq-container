@@ -128,7 +128,7 @@ endef
 # 	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.3-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-advancedserver-904
-build-advancedserver-904: build downloads/CNLE4ML.tar.gz
+build-advancedserver-904: downloads/CNLE4ML.tar.gz
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
 	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,CNLE4ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.4")
 	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.4-$(DOCKER_TAG_ARCH)
@@ -137,7 +137,7 @@ build-advancedserver-904: build downloads/CNLE4ML.tar.gz
 build-advancedserver: build-advancedserver-904
 
 .PHONY: build-devserver
-build-devserver: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
+build-devserver: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
 	$(info $(shell printf $(TITLE)"Build $(DOCKER_FULL_DEVSERVER)"$(END)))
 	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
 	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):9.0.3-$(DOCKER_TAG_ARCH)
@@ -156,7 +156,7 @@ build-advancedserver-cover: build-advanced-server build-cov
 # 	$(call docker-build-mq,mq-web:latest-$(DOCKER_TAG_ARCH),Dockerfile-mq-web)
 
 .PHONY: build-explorer
-build-explorer: build downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
+build-explorer: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
 	$(call docker-build-mq,mq-explorer:latest-$(DOCKER_TAG_ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
 
 include formatting.mk
