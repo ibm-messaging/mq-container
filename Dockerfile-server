@@ -18,14 +18,15 @@ WORKDIR /go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
 COPY pkg/ ./pkg
 COPY vendor/ ./vendor
-RUN GOOS=linux go build ./cmd/runmqserver/
-RUN GOOS=linux go build ./cmd/chkmqready/
-RUN GOOS=linux go build ./cmd/chkmqhealthy/
+RUN go build ./cmd/runmqserver/
+RUN go build ./cmd/chkmqready/
+RUN go build ./cmd/chkmqhealthy/
 
 # Build stage to run Go unit tests
 FROM golang:1.9 as tester
 COPY pkg/ ./pkg
-RUN cd pkg/name && GOOS=linux go test
+RUN cd pkg/name && go test
+RUN cd pkg/linux/capabilities && go test
 
 # Main build stage, to build MQ image
 FROM ubuntu:16.04

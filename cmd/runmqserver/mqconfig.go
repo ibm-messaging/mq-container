@@ -22,6 +22,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/ibm-messaging/mq-container/pkg/linux/capabilities"
 	"golang.org/x/sys/unix"
 )
 
@@ -59,6 +60,18 @@ func logUser() {
 	u, err := user.Current()
 	if err == nil {
 		log.Printf("Running as user ID %v (%v) with primary group %v", u.Uid, u.Name, u.Gid)
+	}
+}
+
+func logCapabilities() {
+	status, err := readProc("/proc/1/status")
+	if err != nil {
+		// Ignore
+		return
+	}
+	caps, err := capabilities.DetectCapabilities(status)
+	if err == nil {
+		log.Printf("Detected capabilities: %v", strings.Join(caps, ","))
 	}
 }
 
@@ -130,6 +143,7 @@ func logConfig() {
 			log.Printf("Maximum file handles: %v", fileMax)
 		}
 		logUser()
+		logCapabilities()
 		readMounts()
 	} else {
 		log.Fatalf("Unsupported platform: %v", runtime.GOOS)
