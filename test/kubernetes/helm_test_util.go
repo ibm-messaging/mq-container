@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -255,6 +256,25 @@ func volumesAvailable(t *testing.T, cs *kubernetes.Clientset) bool {
 		}
 	}
 	return false
+}
+
+// assertKubeVersion is used to assert that a test requires a specific version of Kubernetes
+func assertKubeVersion(t *testing.T, cs *kubernetes.Clientset, major int, minor int) {
+	v, err := cs.Discovery().ServerVersion()
+	if err != nil {
+		t.Fatal(err)
+	}
+	maj, err := strconv.Atoi(v.Major)
+	if err != nil {
+		t.Fatal(err)
+	}
+	min, err := strconv.Atoi(v.Minor)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if maj <= major && min < minor {
+		t.Skipf("Skipping test because it's not suitable for Kubernetes %v.%v", v.Major, v.Minor)
+	}
 }
 
 // TODO: On Minikube, need to make sure Helm is initialized first

@@ -40,6 +40,7 @@ func TestHelmPredefinedVolume(t *testing.T) {
 func TestHelmStorageClass(t *testing.T) {
 	cs := kubeLogin(t)
 	release := strings.ToLower(t.Name())
+	assertKubeVersion(t, cs, 1, 6)
 	if !storageClassesDefined(t, cs) {
 		t.Skipf("Skipping test because no storage classes were found")
 	}
