@@ -34,7 +34,6 @@ apt-get install -y --no-install-recommends \
   gawk \
   grep \
   libc-bin \
-  lsb-release \
   mount \
   passwd \
   procps \
@@ -43,20 +42,33 @@ apt-get install -y --no-install-recommends \
   util-linux
 
 # Download and extract the MQ installation files
-mkdir -p /tmp/mq
-cd /tmp/mq
+DIR_EXTRACT=/tmp/mq
+mkdir -p ${DIR_EXTRACT} 
+cd ${DIR_EXTRACT}
 curl -LO $MQ_URL
 tar -zxvf ./*.tar.gz
+
+# Remove packages only needed by this script
+apt-get purge -y \
+  ca-certificates \
+  curl
+
+# Remove any orphaned packages
+apt-get autoremove -y
 
 # Recommended: Create the mqm user ID with a fixed UID and group, so that the file permissions work between different images
 groupadd --system --gid 999 mqm
 useradd --system --uid 999 --gid mqm mqm
 usermod -G mqm root
-cd /tmp/mq/DebianMQServer
+
+# Find directory containing .deb files
+DIR_DEB=$(find ${DIR_EXTRACT} -name "*.deb" -printf "%h\n" | sort -u | head -1)
+# Find location of mqlicense.sh
+MQLICENSE=$(find ${DIR_EXTRACT} -name "mqlicense.sh")
 
 # Accept the MQ license
-./mqlicense.sh -text_only -accept
-echo "deb [trusted=yes] file:/tmp/mq/DebianMQServer ./" > /etc/apt/sources.list.d/IBM_MQ.list
+${MQLICENSE} -text_only -accept
+echo "deb [trusted=yes] file:${DIR_DEB} ./" > /etc/apt/sources.list.d/IBM_MQ.list
 
 # Install MQ using the DEB packages
 apt-get update
@@ -73,7 +85,7 @@ find /opt/mqm -name '*.tar.gz' -delete
 
 # Clean up all the downloaded files
 rm -f /etc/apt/sources.list.d/IBM_MQ.list
-rm -rf /tmp/mq
+rm -rf ${DIR_EXTRACT}
 
 # Apply any bug fixes not included in base Ubuntu or MQ image.
 # Don't upgrade everything based on Docker best practices https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run
@@ -81,6 +93,8 @@ apt-get upgrade -y libkrb5-26-heimdal
 apt-get upgrade -y libexpat1
 
 # End of bug fixes
+
+# Clean up cached apt files
 rm -rf /var/lib/apt/lists/*
 
 # Optional: Update the command prompt with the MQ version

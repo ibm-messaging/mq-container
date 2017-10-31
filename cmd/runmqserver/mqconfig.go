@@ -18,9 +18,11 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"os/user"
 	"runtime"
 	"strings"
 
+	"github.com/ibm-messaging/mq-container/pkg/linux/capabilities"
 	"golang.org/x/sys/unix"
 )
 
@@ -52,6 +54,25 @@ func logBaseImage() error {
 		}
 	}
 	return nil
+}
+
+func logUser() {
+	u, err := user.Current()
+	if err == nil {
+		log.Printf("Running as user ID %v (%v) with primary group %v", u.Uid, u.Name, u.Gid)
+	}
+}
+
+func logCapabilities() {
+	status, err := readProc("/proc/1/status")
+	if err != nil {
+		// Ignore
+		return
+	}
+	caps, err := capabilities.DetectCapabilities(status)
+	if err == nil {
+		log.Printf("Detected capabilities: %v", strings.Join(caps, ","))
+	}
 }
 
 func readProc(filename string) (value string, err error) {
@@ -106,13 +127,6 @@ func checkFS(path string) {
 
 func logConfig() {
 	log.Printf("CPU architecture: %v", runtime.GOARCH)
-	// TODO: You can't use os.user if you're cross-compiling
-	// u, err := user.Current()
-	// if err != nil {
-	// 	log.Println(err)
-	// } else {
-	// 	log.Printf("Running as user ID %v (%v) with primary group %v", u.Uid, u.Name, u.Gid)
-	// }
 	if runtime.GOOS == "linux" {
 		var err error
 		osr, err := readProc("/proc/sys/kernel/osrelease")
@@ -128,6 +142,8 @@ func logConfig() {
 		} else {
 			log.Printf("Maximum file handles: %v", fileMax)
 		}
+		logUser()
+		logCapabilities()
 		readMounts()
 	} else {
 		log.Fatalf("Unsupported platform: %v", runtime.GOOS)

@@ -12,11 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:16.04
+# Build stage to build Go code
+FROM golang:1.9 as builder 
+WORKDIR /go/src/github.com/ibm-messaging/mq-container/
+COPY cmd/ ./cmd
+COPY pkg/ ./pkg
+COPY vendor/ ./vendor
+RUN go build ./cmd/runmqserver/
+RUN go build ./cmd/chkmqready/
+RUN go build ./cmd/chkmqhealthy/
 
-ARG IBM_PRODUCT_ID
-ARG IBM_PRODUCT_NAME
-ARG IBM_PRODUCT_VERSION
+# Build stage to run Go unit tests
+FROM golang:1.9 as tester
+COPY pkg/ ./pkg
+RUN cd pkg/name && go test
+RUN cd pkg/linux/capabilities && go test
+
+# Main build stage, to build MQ image
+FROM ubuntu:16.04
 
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ Debian (.deb) install packages
@@ -25,17 +38,15 @@ ARG MQ_URL
 # The MQ packages to install
 ARG MQ_PACKAGES="ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams"
 
-LABEL "ProductID"=$IBM_PRODUCT_ID \
-      "ProductName"=$IBM_PRODUCT_NAME \
-      "ProductVersion"=$IBM_PRODUCT_VERSION
-
 COPY install-mq.sh /usr/local/bin/
-RUN chmod u+x /usr/local/bin/install-mq.sh \
-# To avoid a "text file busy" error here we sleep before installing.
-  && sleep 1 && install-mq.sh
 
-COPY build/runmqserver /usr/local/bin/
-COPY build/chkmq* /usr/local/bin/
+# Install MQ.  To avoid a "text file busy" error here, we sleep before installing.
+RUN chmod u+x /usr/local/bin/install-mq.sh \
+  && sleep 1 \
+  && install-mq.sh
+
+COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqserver /usr/local/bin/
+COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/chkmq* /usr/local/bin/
 COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
 
 RUN chmod +x /usr/local/bin/runmqserver \

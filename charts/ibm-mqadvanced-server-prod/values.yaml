@@ -17,9 +17,9 @@ license: "not accepted"
 
 image:
   # repository is the container repository to use, which must contain IBM MQ Advanced
-  repository:
+  repository: ibm-mqadvanced-server
   # tag is the tag to use for the container repository
-  tag:
+  tag: 9.0.4.0-x86_64
   # pullSecret is the secret to use when pulling the image from a private registry
   pullSecret:
   # pullPolicy is either IfNotPresent or Always (https://kubernetes.io/docs/concepts/containers/images/)
