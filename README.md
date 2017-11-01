@@ -2,7 +2,7 @@
 
 # Overview
 
-Run [IBM® MQ](http://www-03.ibm.com/software/products/en/ibm-mq) in a container.  The supplied [Helm](https://helm.sh/) chart can be used to run the container on a [Kubernetes](https://kubernetes.io) cluster, such as [IBM Cloud private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/) or the [IBM Bluemix Container Service](https://www.ibm.com/cloud-computing/bluemix/containers).  
+Run [IBM® MQ](http://www-03.ibm.com/software/products/en/ibm-mq) in a container.  The supplied [Helm](https://helm.sh/) chart can be used to run the container on a [Kubernetes](https://kubernetes.io) cluster, such as [IBM Cloud Private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/) or the [IBM Bluemix Container Service](https://www.ibm.com/cloud-computing/bluemix/containers).  
 
 # Current status
 MQ Advanced for Developers image - [![Build Status](https://travis-ci.org/ibm-messaging/mq-container.svg?branch=master)](https://travis-ci.org/ibm-messaging/mq-container)
