@@ -27,7 +27,6 @@ In order to use the image, it is necessary to accept the terms of the IBM MQ lic
 * **LICENSE** - Set this to `accept` to agree to the MQ Advanced for Developers license. If you wish to see the license you can set this to `view`.
 * **LANG** - Set this to the language you would like the license to be printed in.
 * **MQ_QMGR_NAME** - Set this to the name you want your Queue Manager to be created with.
-* **MQ_QMGR_CMDLEVEL** - Set this to the `CMDLEVEL` you wish your Queue Manager to be started with.
 
 
 # Issues and contributions
