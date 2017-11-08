@@ -41,12 +41,18 @@ func imageName() string {
 	return image
 }
 
-func coverageBind(t *testing.T) string {
+// coverageDir returns the host directory to use for code coverage data
+func coverageDir(t *testing.T) string {
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
-	return filepath.Join(dir, "coverage") + ":/var/coverage"
+	return filepath.Join(dir, "coverage")
+}
+
+// coverageBind returns a string to use to add a bind-mounted directory for code coverage data
+func coverageBind(t *testing.T) string {
+	return coverageDir(t) + ":/var/coverage"
 }
 
 func cleanContainer(t *testing.T, cli *client.Client, ID string) {
@@ -62,10 +68,8 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 		// Just log the error and continue
 		t.Log(err)
 	}
-	//waitForContainer(t, cli, ID, 20, container.WaitConditionNotRunning)
-
-	// TODO: This is probably no longer necessary
-	time.Sleep(20 * time.Second)
+	// If a code coverage file has been generated, then rename it to match the test name
+	os.Rename(filepath.Join(coverageDir(t), "container.cov"), filepath.Join(coverageDir(t), t.Name()+".cov"))
 	// Log the container output for any container we're about to delete
 	t.Logf("Console log from container %v:\n%v", ID, inspectLogs(t, cli, ID))
 
@@ -87,6 +91,8 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	if containerConfig.Image == "" {
 		containerConfig.Image = imageName()
 	}
+	// if coverage
+	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
 	hostConfig := container.HostConfig{
 		PortBindings: nat.PortMap{
 			"1414/tcp": []nat.PortBinding{
@@ -95,6 +101,9 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 					HostPort: "1414",
 				},
 			},
+		},
+		Binds: []string{
+			coverageBind(t),
 		},
 	}
 	networkingConfig := network.NetworkingConfig{}
