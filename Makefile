@@ -28,6 +28,7 @@ DOCKER_FULL_ADVANCEDSERVER = $(DOCKER_REPO_ADVANCEDSERVER):$(DOCKER_TAG)
 TEST_OPTS_DOCKER ?=
 # Options to `go test` for the Kubernetes tests
 TEST_OPTS_KUBERNETES ?=
+TEST_IMAGE ?= $(DOCKER_FULL_ADVANCEDSERVER)
 
 .PHONY: default
 default: build-devserver test
@@ -78,6 +79,16 @@ test-devserver:
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER)"$(END)))
 	cd pkg/name && go test
 	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_DEVSERVER) go test
+
+.PHONY: test-advancedserver-cover
+test-advancedserver-cover:
+	cd pkg/name && go test
+	rm -f ./test/docker/coverage/*.cov
+	rm -f ./coverage/docker.*
+	cd test/docker && TEST_IMAGE=$(DOCKER_REPO_ADVANCEDSERVER):cover go test $(TEST_OPTS_DOCKER)
+	echo 'mode: count' > ./coverage/docker.cov
+	tail -q -n +2 ./test/docker/coverage/*.cov >> ./coverage/docker.cov
+	go tool cover -html=./coverage/docker.cov -o ./coverage/docker.html
 
 .PHONY: test-kubernetes-devserver
 test-kubernetes-devserver:
@@ -148,8 +159,8 @@ build-devserver: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
 # 	$(DOCKER) tag mq-server:latest-$(DOCKER_TAG_ARCH) mq-server:9.0.3-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-advancedserver-cover
-build-advancedserver-cover: build-advanced-server build-cov
-	$(DOCKER) build -t mq-advancedserver:cover -f Dockerfile-server.cover .
+build-advancedserver-cover:
+	$(DOCKER) build -t $(DOCKER_REPO_ADVANCEDSERVER):cover -f Dockerfile-server.cover .
 
 # .PHONY: build-web
 # build-web: build downloads/CNJR7ML.tar.gz

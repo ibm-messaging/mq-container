@@ -4,7 +4,7 @@
 You need to ensure you have the following tools installed:
 
 * [Docker](https://www.docker.com/)
-* [Go](https://golang.org/)
+* [Go](https://golang.org/) - only needed for running the tests
 * [Glide](https://glide.sh/)
 * [dep](https://github.com/golang/dep) (official Go dependency management tool)
 * make
@@ -21,9 +21,26 @@ There are three main sets of tests:
 ### Running the tests
 The unit and Docker tests can be run locally.  For example:
 
-```bash
+```
 make test-devserver
 ```
+
+or:
+
+```
+make test-advancedserver
+```
+
+### Running the tests with code coverage
+You can produce code coverage results from the Docker tests by running the following:
+
+```
+make build-advancedserver-cover
+make test-advancedserver-cover
+```
+
+In order to generate code coverage metrics from the Docker tests, the build step creates a new Docker image with an instrumented version of the code.  Each test is then run individually, producing a coverage report each under `test/docker/coverage/`.  These individual reports are then combined.  The combined report is written to the `coverage` directory. 
+
 
 ### Running the Kubernetes tests
 

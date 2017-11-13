@@ -123,7 +123,6 @@ func TestWithVolume(t *testing.T) {
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
-			//"coverage:/var/coverage",
 			vol.Name + ":/mnt/mqm",
 		},
 	}

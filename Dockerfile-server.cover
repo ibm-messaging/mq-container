@@ -12,11 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM mqadvanced:latest-x86_64 
+# Build stage to build Go code
+FROM golang:1.9 as builder 
+WORKDIR /go/src/github.com/ibm-messaging/mq-container/
+COPY cmd/ ./cmd
+COPY pkg/ ./pkg
+COPY vendor/ ./vendor
+RUN go test -c -covermode=count ./cmd/runmqserver
+
+FROM mq-advancedserver:latest-x86_64 
 
 # Copy in the version of the code instrumented for code coverage
-COPY build/runmqserver.test /usr/local/bin/runmqserver.test
+COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqserver.test /usr/local/bin/
 RUN chmod +x /usr/local/bin/runmqserver.test \
   && mkdir -p /var/coverage/
 
-ENTRYPOINT ["runmqserver.test", "-test", "-test.coverprofile", "/var/coverage/coverage.cov"]
+ENTRYPOINT ["runmqserver.test", "-test", "-test.coverprofile", "/var/coverage/container.cov"]
