@@ -1,6 +1,6 @@
 # Change log
 
-## 9.0.4 (2017-11-01)
+## 9.0.4 (2017-11-06)
 * Updated to MQ version 9.0.4.0
 * Updated to Go version 9
 * Removed packages `curl`, `ca-certificates`, and their dependencies, which were only used at build time

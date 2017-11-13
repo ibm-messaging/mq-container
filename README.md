@@ -2,7 +2,7 @@
 
 # Overview
 
-Run [IBM® MQ](http://www-03.ibm.com/software/products/en/ibm-mq) in a container.  The supplied [Helm](https://helm.sh/) chart can be used to run the container on a [Kubernetes](https://kubernetes.io) cluster, such as [IBM Cloud private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/) or the [IBM Bluemix Container Service](https://www.ibm.com/cloud-computing/bluemix/containers).  
+Run [IBM® MQ](http://www-03.ibm.com/software/products/en/ibm-mq) in a container.  The supplied [Helm](https://helm.sh/) chart can be used to run the container on a [Kubernetes](https://kubernetes.io) cluster, such as [IBM Cloud Private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/) or the [IBM Bluemix Container Service](https://www.ibm.com/cloud-computing/bluemix/containers).  
 
 # Current status
 MQ Advanced for Developers image - [![Build Status](https://travis-ci.org/ibm-messaging/mq-container.svg?branch=master)](https://travis-ci.org/ibm-messaging/mq-container)
@@ -27,7 +27,6 @@ In order to use the image, it is necessary to accept the terms of the IBM MQ lic
 * **LICENSE** - Set this to `accept` to agree to the MQ Advanced for Developers license. If you wish to see the license you can set this to `view`.
 * **LANG** - Set this to the language you would like the license to be printed in.
 * **MQ_QMGR_NAME** - Set this to the name you want your Queue Manager to be created with.
-* **MQ_QMGR_CMDLEVEL** - Set this to the `CMDLEVEL` you wish your Queue Manager to be started with.
 
 
 # Issues and contributions
