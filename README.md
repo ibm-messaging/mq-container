@@ -15,7 +15,7 @@ You can build an image for MQ Advanced, follow these steps:
 
 1. Clone this repository into the correct location in your [`GOPATH`](https://github.com/golang/go/wiki/GOPATH)
 2. Create a directory called `downloads` under the cloned directory tree
-3. Download the MQ Advanced for Ubuntu (debs) installer package file `CNJR7ML.tar.gz` into the `downloads` directory
+3. Download the MQ Advanced for Ubuntu (debs) installer package file `CNLE4ML.tar.gz` into the `downloads` directory
 4. Run `make build-advancedserver`
 
 # Usage
