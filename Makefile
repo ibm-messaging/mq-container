@@ -24,6 +24,7 @@ DOCKER_REPO_DEVSERVER ?= mq-devserver
 DOCKER_REPO_ADVANCEDSERVER ?= mq-advancedserver
 DOCKER_FULL_DEVSERVER = $(DOCKER_REPO_DEVSERVER):$(DOCKER_TAG)
 DOCKER_FULL_ADVANCEDSERVER = $(DOCKER_REPO_ADVANCEDSERVER):$(DOCKER_TAG)
+MQ_PACKAGES ?=ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
 # Options to `go test` for the Kubernetes tests
@@ -125,6 +126,7 @@ define docker-build-mq
 	  --label IBM_PRODUCT_ID=$4 \
 	  --label IBM_PRODUCT_NAME=$5 \
 	  --label IBM_PRODUCT_VERSION=$6 \
+	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
 	  .
 	# Stop the web server (will also remove the container)
 	$(DOCKER) kill $(BUILD_SERVER_CONTAINER)
