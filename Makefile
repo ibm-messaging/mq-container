@@ -127,11 +127,7 @@ define docker-build-mq
 	  --label IBM_PRODUCT_NAME=$5 \
 	  --label IBM_PRODUCT_VERSION=$6 \
 	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
-	  .
-	# Stop the web server (will also remove the container)
-	$(DOCKER) kill $(BUILD_SERVER_CONTAINER)
-	# Delete the temporary network
-	$(DOCKER) network rm build
+	  . ; $(DOCKER) kill $(BUILD_SERVER_CONTAINER) && $(DOCKER) network rm build
 endef
 
 # .PHONY: build-advancedserver-903
