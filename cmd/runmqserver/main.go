@@ -25,11 +25,11 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"regexp"
-	"runtime"
 	"strings"
 	"syscall"
 
+	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/name"
 	"golang.org/x/sys/unix"
 )
 
@@ -99,56 +99,9 @@ func checkLicense() {
 	os.Exit(1)
 }
 
-// sanitizeQueueManagerName removes any invalid characters from a queue manager name
-func sanitizeQueueManagerName(name string) string {
-	var re = regexp.MustCompile("[^a-zA-Z0-9._%/]")
-	return re.ReplaceAllString(name, "")
-}
-
-// GetQueueManagerName resolves the queue manager name to use.  Resolved from
-// either an environment variable, or the hostname.
-func getQueueManagerName() (string, error) {
-	var name string
-	var err error
-	name, ok := os.LookupEnv("MQ_QMGR_NAME")
-	if !ok || name == "" {
-		name, err = os.Hostname()
-		if err != nil {
-			return "", err
-		}
-		name = sanitizeQueueManagerName(name)
-	}
-	// TODO: What if the specified env variable is an invalid name?
-	return name, nil
-}
-
-// runCommand runs an OS command.  On Linux it waits for the command to
-// complete and returns the exit status (return code).
-func runCommand(name string, arg ...string) (string, int, error) {
-	cmd := exec.Command(name, arg...)
-	// Run the command and wait for completion
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		var rc int
-		// Only works on Linux
-		if runtime.GOOS == "linux" {
-			var ws unix.WaitStatus
-			unix.Wait4(cmd.Process.Pid, &ws, 0, nil)
-			rc = ws.ExitStatus()
-		} else {
-			rc = -1
-		}
-		if rc == 0 {
-			return string(out), rc, nil
-		}
-		return string(out), rc, err
-	}
-	return string(out), 0, nil
-}
-
 // createDirStructure creates the default MQ directory structure under /var/mqm
 func createDirStructure() {
-	out, _, err := runCommand("/opt/mqm/bin/crtmqdir", "-f", "-s")
+	out, _, err := command.Run("/opt/mqm/bin/crtmqdir", "-f", "-s")
 	if err != nil {
 		log.Fatalf("Error creating directory structure: %v\n", string(out))
 	}
@@ -157,7 +110,7 @@ func createDirStructure() {
 
 func createQueueManager(name string) {
 	log.Printf("Creating queue manager %v", name)
-	out, rc, err := runCommand("crtmqm", "-q", "-p", "1414", name)
+	out, rc, err := command.Run("crtmqm", "-q", "-p", "1414", name)
 	if err != nil {
 		// 8=Queue manager exists, which is fine
 		if rc != 8 {
@@ -173,7 +126,7 @@ func createQueueManager(name string) {
 func updateCommandLevel() {
 	level, ok := os.LookupEnv("MQ_CMDLEVEL")
 	if ok && level != "" {
-		out, rc, err := runCommand("strmqm", "-e", "CMDLEVEL="+level)
+		out, rc, err := command.Run("strmqm", "-e", "CMDLEVEL="+level)
 		if err != nil {
 			log.Fatalf("Error %v setting CMDLEVEL: %v", rc, string(out))
 		}
@@ -182,7 +135,7 @@ func updateCommandLevel() {
 
 func startQueueManager() {
 	log.Println("Starting queue manager")
-	out, rc, err := runCommand("strmqm")
+	out, rc, err := command.Run("strmqm")
 	if err != nil {
 		log.Fatalf("Error %v starting queue manager: %v", rc, string(out))
 	}
@@ -223,7 +176,7 @@ func configureQueueManager() {
 
 func stopQueueManager() {
 	log.Println("Stopping queue manager")
-	out, _, err := runCommand("endmqm", "-w")
+	out, _, err := command.Run("endmqm", "-w")
 	if err != nil {
 		log.Fatalf("Error stopping queue manager: %v", string(out))
 	}
@@ -275,7 +228,7 @@ func main() {
 	// Start SIGTERM handler channel
 	done := createTerminateChannel()
 
-	name, err := getQueueManagerName()
+	name, err := name.GetQueueManagerName()
 	if err != nil {
 		log.Fatalln(err)
 	}
