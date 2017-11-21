@@ -8,8 +8,14 @@ You need to ensure you have the following tools installed:
 * [Glide](https://glide.sh/)
 * [dep](https://github.com/golang/dep) (official Go dependency management tool)
 * make
+* [Helm](https://helm.sh) - only needed for running the Kubernetes tests
 
 For running the Kubernetes tests, a Kubernetes environment is needed, for example [Minikube](https://github.com/kubernetes/minikube) or [IBM Cloud Private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/).
+
+## Building a production image
+
+1. Download MQ from IBM Passport Advantage, and place the downloaded file (for example, `CNLE4ML.tar.gz` for MQ V9.0.4) in the `downloads` directory
+2. Run `make build-advancedserver`
 
 ## Running the tests
 There are three main sets of tests:
