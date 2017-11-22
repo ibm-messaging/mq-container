@@ -18,135 +18,73 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/name"
-	"golang.org/x/sys/unix"
 )
 
-// resolveLicenseFile returns the file name of the MQ license file, taking into
-// account the language set by the LANG environment variable
-func resolveLicenseFile() string {
-	lang, ok := os.LookupEnv("LANG")
-	if !ok {
-		return "English.txt"
-	}
-	switch {
-	case strings.HasPrefix(lang, "zh_TW"):
-		return "Chinese_TW.txt"
-	case strings.HasPrefix(lang, "zh"):
-		return "Chinese.txt"
-	case strings.HasPrefix(lang, "cs"):
-		return "Czech.txt"
-	case strings.HasPrefix(lang, "fr"):
-		return "French.txt"
-	case strings.HasPrefix(lang, "de"):
-		return "German.txt"
-	case strings.HasPrefix(lang, "el"):
-		return "Greek.txt"
-	case strings.HasPrefix(lang, "id"):
-		return "Indonesian.txt"
-	case strings.HasPrefix(lang, "it"):
-		return "Italian.txt"
-	case strings.HasPrefix(lang, "ja"):
-		return "Japanese.txt"
-	case strings.HasPrefix(lang, "ko"):
-		return "Korean.txt"
-	case strings.HasPrefix(lang, "lt"):
-		return "Lithuanian.txt"
-	case strings.HasPrefix(lang, "pl"):
-		return "Polish.txt"
-	case strings.HasPrefix(lang, "pt"):
-		return "Portugese.txt"
-	case strings.HasPrefix(lang, "ru"):
-		return "Russian.txt"
-	case strings.HasPrefix(lang, "sl"):
-		return "Slovenian.txt"
-	case strings.HasPrefix(lang, "es"):
-		return "Spanish.txt"
-	case strings.HasPrefix(lang, "tr"):
-		return "Turkish.txt"
-	}
-	return "English.txt"
-}
-
-func checkLicense() {
-	lic, ok := os.LookupEnv("LICENSE")
-	switch {
-	case ok && lic == "accept":
-		return
-	case ok && lic == "view":
-		file := filepath.Join("/opt/mqm/licenses", resolveLicenseFile())
-		buf, err := ioutil.ReadFile(file)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		fmt.Println(string(buf))
-		os.Exit(1)
-	}
-	fmt.Println("Error: Set environment variable LICENSE=accept to indicate acceptance of license terms and conditions.")
-	fmt.Println("License agreements and information can be viewed by setting the environment variable LICENSE=view.  You can also set the LANG environment variable to view the license in a different language.")
-	os.Exit(1)
-}
-
 // createDirStructure creates the default MQ directory structure under /var/mqm
-func createDirStructure() {
+func createDirStructure() error {
 	out, _, err := command.Run("/opt/mqm/bin/crtmqdir", "-f", "-s")
 	if err != nil {
-		log.Fatalf("Error creating directory structure: %v\n", string(out))
+		log.Printf("Error creating directory structure: %v\n", string(out))
+		return err
 	}
 	log.Println("Created directory structure under /var/mqm")
+	return nil
 }
 
-func createQueueManager(name string) {
+func createQueueManager(name string) error {
 	log.Printf("Creating queue manager %v", name)
 	out, rc, err := command.Run("crtmqm", "-q", "-p", "1414", name)
 	if err != nil {
 		// 8=Queue manager exists, which is fine
 		if rc != 8 {
 			log.Printf("crtmqm returned %v", rc)
-			log.Fatalln(string(out))
-		} else {
-			log.Printf("Detected existing queue manager %v", name)
-			return
+			log.Println(string(out))
+			return err
 		}
+		log.Printf("Detected existing queue manager %v", name)
 	}
+	return nil
 }
 
-func updateCommandLevel() {
+func updateCommandLevel() error {
 	level, ok := os.LookupEnv("MQ_CMDLEVEL")
 	if ok && level != "" {
 		out, rc, err := command.Run("strmqm", "-e", "CMDLEVEL="+level)
 		if err != nil {
-			log.Fatalf("Error %v setting CMDLEVEL: %v", rc, string(out))
+			log.Printf("Error %v setting CMDLEVEL: %v", rc, string(out))
+			return err
 		}
 	}
+	return nil
 }
 
-func startQueueManager() {
+func startQueueManager() error {
 	log.Println("Starting queue manager")
 	out, rc, err := command.Run("strmqm")
 	if err != nil {
-		log.Fatalf("Error %v starting queue manager: %v", rc, string(out))
+		log.Printf("Error %v starting queue manager: %v", rc, string(out))
+		return err
 	}
 	log.Println("Started queue manager")
+	return nil
 }
 
-func configureQueueManager() {
+func configureQueueManager() error {
 	const configDir string = "/etc/mqm"
 	files, err := ioutil.ReadDir(configDir)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 
 	for _, file := range files {
@@ -154,12 +92,14 @@ func configureQueueManager() {
 			abs := filepath.Join(configDir, file.Name())
 			mqsc, err := ioutil.ReadFile(abs)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
+				return err
 			}
 			cmd := exec.Command("runmqsc")
 			stdin, err := cmd.StdinPipe()
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
+				return err
 			}
 			stdin.Write(mqsc)
 			stdin.Close()
@@ -172,78 +112,76 @@ func configureQueueManager() {
 			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
 		}
 	}
+	return nil
 }
 
-func stopQueueManager() {
+func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
-	out, _, err := command.Run("endmqm", "-w")
+	out, _, err := command.Run("endmqm", "-w", name)
 	if err != nil {
-		log.Fatalf("Error stopping queue manager: %v", string(out))
+		log.Printf("Error stopping queue manager: %v", string(out))
+		return err
 	}
 	log.Println("Stopped queue manager")
+	return nil
 }
 
-// createTerminateChannel creates a channel which will be closed when SIGTERM
-// is received.
-func createTerminateChannel() chan struct{} {
-	done := make(chan struct{})
-	// Handle SIGTERM
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		sig := <-c
-		log.Printf("Signal received: %v", sig)
-		stopQueueManager()
-		close(done)
-	}()
-	return done
-}
-
-// createReaperChannel creates a channel which will be used to reap zombie
-// (defunct) processes.  This is a responsibility of processes running
-// as PID 1.
-func createReaper() {
-	// Handle SIGCHLD
-	c := make(chan os.Signal, 3)
-	signal.Notify(c, syscall.SIGCHLD)
-	go func() {
-		for {
-			<-c
-			for {
-				var ws unix.WaitStatus
-				_, err := unix.Wait4(-1, &ws, 0, nil)
-				// If err indicates "no child processes" left to reap, then
-				// wait for next SIGCHLD signal
-				if err == unix.ECHILD {
-					break
-				}
-			}
-		}
-	}()
-}
-
-func main() {
-	createReaper()
-	checkLicense()
-	// Start SIGTERM handler channel
-	done := createTerminateChannel()
+func doMain() error {
+	accepted, err := checkLicense()
+	if err != nil {
+		return err
+	}
+	if !accepted {
+		return errors.New("License not accepted")
+	}
 
 	name, err := name.GetQueueManagerName()
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		return err
 	}
 	log.Printf("Using queue manager name: %v", name)
+
+	// Start signal handler
+	signalControl := signalHandler(name)
 
 	logConfig()
 	err = createVolume("/mnt/mqm")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
-	createDirStructure()
-	createQueueManager(name)
-	updateCommandLevel()
-	startQueueManager()
+	err = createDirStructure()
+	if err != nil {
+		return err
+	}
+	err = createQueueManager(name)
+	if err != nil {
+		return err
+	}
+	err = updateCommandLevel()
+	if err != nil {
+		return err
+	}
+	err = startQueueManager()
+	if err != nil {
+		return err
+	}
 	configureQueueManager()
+	// Start reaping zombies from now on.
+	// Start this here, so that we don't reap any sub-processes created
+	// by this process (e.g. for crtmqm or strmqm)
+	signalControl <- startReaping
+	// Reap zombies now, just in case we've already got some
+	signalControl <- reapNow
 	// Wait for terminate signal
-	<-done
+	<-signalControl
+	return nil
+}
+
+func main() {
+	err := doMain()
+	if err != nil {
+		os.Exit(1)
+	}
 }

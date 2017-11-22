@@ -61,13 +61,15 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 		// Log the results and continue
 		t.Logf("Inspected container %v: %#v", ID, i)
 	}
-	t.Logf("Killing container: %v", ID)
-	// Kill the container.  This allows the coverage output to be generated.
-	err = cli.ContainerKill(context.Background(), ID, "SIGTERM")
+	t.Logf("Stopping container: %v", ID)
+	timeout := 10 * time.Second
+	// Stop the container.  This allows the coverage output to be generated.
+	err = cli.ContainerStop(context.Background(), ID, &timeout)
 	if err != nil {
 		// Just log the error and continue
 		t.Log(err)
 	}
+	t.Log("Container stopped")
 	// If a code coverage file has been generated, then rename it to match the test name
 	os.Rename(filepath.Join(coverageDir(t), "container.cov"), filepath.Join(coverageDir(t), t.Name()+".cov"))
 	// Log the container output for any container we're about to delete
