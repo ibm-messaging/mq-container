@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -136,11 +137,40 @@ func stopContainer(t *testing.T, cli *client.Client, ID string) {
 	}
 }
 
+func getCoverageExitCode(t *testing.T, orig int64) int64 {
+	f := filepath.Join(coverageDir(t), "exitCode")
+	_, err := os.Stat(f)
+	if err != nil {
+		t.Log(err)
+		return orig
+	}
+	// Remove the file, ready for the next test
+	//defer os.Remove(f)
+	buf, err := ioutil.ReadFile(f)
+	if err != nil {
+		t.Log(err)
+		return orig
+	}
+	rc, err := strconv.Atoi(string(buf))
+	if err != nil {
+		t.Log(err)
+		return orig
+	}
+	t.Logf("Retrieved exit code %v from file", rc)
+	return int64(rc)
+}
+
 // waitForContainer waits until a container has exited
 func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64) int64 {
 	//ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	//defer cancel()
 	rc, err := cli.ContainerWait(context.Background(), ID)
+
+	// COVERAGE: When running coverage, the exit code is written to a file,
+	// to allow the coverage to be generated (which doesn't happen for non-zero
+	// exit codes)
+	rc = getCoverageExitCode(t, rc)
+
 	//	err := <-errC
 	if err != nil {
 		t.Fatal(err)

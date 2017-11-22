@@ -17,6 +17,9 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
+	"log"
+	"strconv"
 	"testing"
 )
 
@@ -29,6 +32,15 @@ func init() {
 // Test started when the test binary is started. Only calls main.
 func TestSystem(t *testing.T) {
 	if *test {
+		var oldExit = osExit
+		defer func() {
+			osExit = oldExit
+		}()
+		osExit = func(rc int) {
+			// Write the exit code to a file instead
+			log.Printf("Writing exit code %v to file", strconv.Itoa(rc))
+			ioutil.WriteFile("/var/coverage/exitCode", []byte(strconv.Itoa(rc)), 0644)
+		}
 		main()
 	}
 }

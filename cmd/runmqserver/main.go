@@ -179,9 +179,11 @@ func doMain() error {
 	return nil
 }
 
+var osExit = os.Exit
+
 func main() {
 	err := doMain()
 	if err != nil {
-		os.Exit(1)
+		osExit(1)
 	}
 }
