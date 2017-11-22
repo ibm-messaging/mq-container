@@ -16,9 +16,9 @@
 FROM golang:1.9 as builder 
 WORKDIR /go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
-COPY pkg/ ./pkg
+COPY internal/ ./internal
 COPY vendor/ ./vendor
-RUN go test -c -covermode=count ./cmd/runmqserver
+RUN go test -c -covermode=count -coverpkg $(go list ./cmd/runmqserver ./internal/... | paste -s -d, -) ./cmd/runmqserver
 
 FROM mq-advancedserver:latest-x86_64 
 

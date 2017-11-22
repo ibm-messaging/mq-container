@@ -54,7 +54,7 @@ clean:
 downloads/mqadv_dev903_ubuntu_x86-64.tar.gz:
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers"$(END)))
 	mkdir -p downloads
-	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev903_ubuntu_x86-64.tar.gz
+	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev904_ubuntu_x86-64.tar.gz
 
 .PHONY: downloads
 downloads: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
@@ -72,24 +72,34 @@ build-cov:
 
 .PHONY: test-advancedserver
 test-advancedserver:
-	cd pkg/name && go test
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_ADVANCEDSERVER) on Docker"$(END)))
 	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_ADVANCEDSERVER) go test $(TEST_OPTS_DOCKER)
 
 .PHONY: test-devserver
 test-devserver:
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER)"$(END)))
-	cd pkg/name && go test
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER) on Docker"$(END)))
 	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_DEVSERVER) go test
 
 .PHONY: test-advancedserver-cover
 test-advancedserver-cover:
-	cd pkg/name && go test
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_REPO_ADVANCEDSERVER) on Docker with code coverage"$(END)))
+	rm -f ./coverage/unit*.cov
+	# Run unit tests with coverage, for each package under 'internal'
+	go list -f '{{.Name}}' ./internal/... | xargs -I {} go test -cover -covermode count -coverprofile ./coverage/unit-{}.cov ./internal/{}
+	echo 'mode: count' > ./coverage/unit.cov
+	tail -q -n +2 ./coverage/unit-*.cov >> ./coverage/unit.cov
+	go tool cover -html=./coverage/unit.cov -o ./coverage/unit.html
+
 	rm -f ./test/docker/coverage/*.cov
 	rm -f ./coverage/docker.*
 	cd test/docker && TEST_IMAGE=$(DOCKER_REPO_ADVANCEDSERVER):cover go test $(TEST_OPTS_DOCKER)
 	echo 'mode: count' > ./coverage/docker.cov
 	tail -q -n +2 ./test/docker/coverage/*.cov >> ./coverage/docker.cov
 	go tool cover -html=./coverage/docker.cov -o ./coverage/docker.html
+
+	echo 'mode: count' > ./coverage/combined.cov
+	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
+	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
 
 .PHONY: test-kubernetes-devserver
 test-kubernetes-devserver:
