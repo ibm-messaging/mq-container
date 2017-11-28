@@ -20,11 +20,9 @@ package name
 import (
 	"os"
 	"regexp"
-	//log "github.com/sirupsen/logrus"
 )
 
 // sanitizeQueueManagerName removes any invalid characters from a queue manager name
-// TODO: This is duplicate code
 func sanitizeQueueManagerName(name string) string {
 	var re = regexp.MustCompile("[^a-zA-Z0-9._%/]")
 	return re.ReplaceAllString(name, "")

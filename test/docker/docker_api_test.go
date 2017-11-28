@@ -167,3 +167,55 @@ func TestNoVolumeWithRestart(t *testing.T) {
 	startContainer(t, cli, id)
 	waitForReady(t, cli, id)
 }
+
+// Test the case where `crtmqm` will fail
+func TestCreateQueueManagerFail(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
+	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
+	containerConfig := container.Config{
+		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		//ExposedPorts: ports,
+		ExposedPorts: nat.PortSet{
+			"1414/tcp": struct{}{},
+		},
+		// Override the entrypoint to create the queue manager directory, but leave it empty.
+		// This will cause `crtmqm` to return with an exit code of 2.
+		Entrypoint: []string{"bash", "-c", "mkdir -p /mnt/mqm/data && mkdir -p /var/mqm/qmgrs/qm1 && exec " + oldEntrypoint},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	rc := waitForContainer(t, cli, id, 10)
+	if rc != 1 {
+		t.Errorf("Expected rc=1, got rc=%v", rc)
+	}
+}
+
+// Test the case where `strmqm` will fail
+func TestStartQueueManagerFail(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
+	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
+	containerConfig := container.Config{
+		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		//ExposedPorts: ports,
+		ExposedPorts: nat.PortSet{
+			"1414/tcp": struct{}{},
+		},
+		// Override the entrypoint to replace `crtmqm` with a no-op script.
+		// This will cause `strmqm` to return with an exit code of 16.
+		Entrypoint: []string{"bash", "-c", "echo '#!/bin/bash\n' > /opt/mqm/bin/crtmqm && exec " + oldEntrypoint},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	rc := waitForContainer(t, cli, id, 10)
+	if rc != 1 {
+		t.Errorf("Expected rc=1, got rc=%v", rc)
+	}
+}

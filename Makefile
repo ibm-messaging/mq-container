@@ -13,9 +13,7 @@
 # limitations under the License.
 
 BUILD_SERVER_CONTAINER=build-server
-# Set architecture for Go code.  Don't set GOOS globally, so that tests can be run locally
-export GOARCH ?= amd64
-DOCKER_TAG_ARCH ?= x86_64
+DOCKER_TAG_ARCH ?= $(shell uname -m)
 # By default, all Docker client commands are run inside a Docker container.
 # This means that newer features of the client can be used, even with an older daemon.
 DOCKER ?= docker run --tty --interactive --rm --volume /var/run/docker.sock:/var/run/docker.sock --volume "$(CURDIR)":/var/src --workdir /var/src docker:stable docker
@@ -24,7 +22,22 @@ DOCKER_REPO_DEVSERVER ?= mq-devserver
 DOCKER_REPO_ADVANCEDSERVER ?= mq-advancedserver
 DOCKER_FULL_DEVSERVER = $(DOCKER_REPO_DEVSERVER):$(DOCKER_TAG)
 DOCKER_FULL_ADVANCEDSERVER = $(DOCKER_REPO_ADVANCEDSERVER):$(DOCKER_TAG)
+# MQ_PACKAGES is the list of MQ packages to install
 MQ_PACKAGES ?=ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams
+# MQ_VERSION is the fully qualified MQ version number to build
+MQ_VERSION ?= 9.0.4.0
+# Archive names for IBM MQ Continuous Delivery Release for Ubuntu
+MQ_ARCHIVE_9.0.3.0_ppc64le=CNJR5ML.tar.gz
+MQ_ARCHIVE_9.0.3.0_s390x=CNJR6ML.tar.gz
+MQ_ARCHIVE_9.0.3.0_x86_64=CNJR7ML.tar.gz
+MQ_ARCHIVE_9.0.4.0_ppc64le=CNLE2ML.tar.gz
+MQ_ARCHIVE_9.0.4.0_s390x=CNLE3ML.tar.gz
+MQ_ARCHIVE_9.0.4.0_x86_64=CNLE4ML.tar.gz
+# Archive names for IBM MQ Advanced for Developers for Ubuntu
+MQ_ARCHIVE_DEV_9.0.3.0=mqadv_dev903_ubuntu_x86-64.tar.gz
+MQ_ARCHIVE_DEV_9.0.4.0=mqadv_dev904_ubuntu_x86-64.tar.gz
+MQ_ARCHIVE ?= $(MQ_ARCHIVE_$(MQ_VERSION)_$(DOCKER_TAG_ARCH))
+MQ_ARCHIVE_DEV=$(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
 # Options to `go test` for the Kubernetes tests
@@ -51,13 +64,13 @@ clean:
 	rm -rf ./build
 	rm -rf ./deps
 
-downloads/mqadv_dev903_ubuntu_x86-64.tar.gz:
+downloads/$(MQ_ARCHIVE_DEV):
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers"$(END)))
 	mkdir -p downloads
-	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev903_ubuntu_x86-64.tar.gz
+	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV)
 
 .PHONY: downloads
-downloads: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
+downloads: downloads/$(MQ_ARCHIVE_DEV)
 
 .PHONY: deps
 deps:
@@ -72,24 +85,34 @@ build-cov:
 
 .PHONY: test-advancedserver
 test-advancedserver:
-	cd pkg/name && go test
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_ADVANCEDSERVER) on Docker"$(END)))
 	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_ADVANCEDSERVER) go test $(TEST_OPTS_DOCKER)
 
 .PHONY: test-devserver
 test-devserver:
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER)"$(END)))
-	cd pkg/name && go test
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER) on Docker"$(END)))
 	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_DEVSERVER) go test
 
 .PHONY: test-advancedserver-cover
 test-advancedserver-cover:
-	cd pkg/name && go test
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_REPO_ADVANCEDSERVER) on Docker with code coverage"$(END)))
+	rm -f ./coverage/unit*.cov
+	# Run unit tests with coverage, for each package under 'internal'
+	go list -f '{{.Name}}' ./internal/... | xargs -I {} go test -cover -covermode count -coverprofile ./coverage/unit-{}.cov ./internal/{}
+	echo 'mode: count' > ./coverage/unit.cov
+	tail -q -n +2 ./coverage/unit-*.cov >> ./coverage/unit.cov
+	go tool cover -html=./coverage/unit.cov -o ./coverage/unit.html
+
 	rm -f ./test/docker/coverage/*.cov
 	rm -f ./coverage/docker.*
 	cd test/docker && TEST_IMAGE=$(DOCKER_REPO_ADVANCEDSERVER):cover go test $(TEST_OPTS_DOCKER)
 	echo 'mode: count' > ./coverage/docker.cov
 	tail -q -n +2 ./test/docker/coverage/*.cov >> ./coverage/docker.cov
 	go tool cover -html=./coverage/docker.cov -o ./coverage/docker.html
+
+	echo 'mode: count' > ./coverage/combined.cov
+	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
+	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
 
 .PHONY: test-kubernetes-devserver
 test-kubernetes-devserver:
@@ -127,38 +150,24 @@ define docker-build-mq
 	  --label IBM_PRODUCT_NAME=$5 \
 	  --label IBM_PRODUCT_VERSION=$6 \
 	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
-	  .
-	# Stop the web server (will also remove the container)
-	$(DOCKER) kill $(BUILD_SERVER_CONTAINER)
-	# Delete the temporary network
-	$(DOCKER) network rm build
+	  . ; $(DOCKER) kill $(BUILD_SERVER_CONTAINER) && $(DOCKER) network rm build
 endef
 
-# .PHONY: build-advancedserver-903
-# build-advancedserver-903: build downloads/CNJR7ML.tar.gz
-# 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
-# 	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,CNJR7ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.3")
-# 	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.3-$(DOCKER_TAG_ARCH)
-
-.PHONY: build-advancedserver-904
-build-advancedserver-904: downloads/CNLE4ML.tar.gz
-	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
-	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,CNLE4ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.4")
-	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.4-$(DOCKER_TAG_ARCH)
-
 .PHONY: build-advancedserver
-build-advancedserver: build-advancedserver-904
+build-advancedserver: downloads/$(MQ_ARCHIVE)
+	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
+	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,$(MQ_ARCHIVE),"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced",$(MQ_VERSION))
+	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):$(MQ_VERSION)-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-devserver
-build-devserver: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
+build-devserver: downloads/$(MQ_ARCHIVE_DEV)
+ifneq "x86_64" "$(shell uname -m)"
+    $(error MQ Advanced for Developers is only available for x86_64 architecture)
+else
 	$(info $(shell printf $(TITLE)"Build $(DOCKER_FULL_DEVSERVER)"$(END)))
-	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
-	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):9.0.3-$(DOCKER_TAG_ARCH)
-
-# .PHONY: build-server
-# build-server: build downloads/CNJR7ML.tar.gz
-# 	$(call docker-build-mq,mq-server:latest-$(DOCKER_TAG_ARCH),Dockerfile-server,"79afd716d55b4f149a87bec52c9dc1aa","IBM MQ","9.0.3")
-# 	$(DOCKER) tag mq-server:latest-$(DOCKER_TAG_ARCH) mq-server:9.0.3-$(DOCKER_TAG_ARCH)
+	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
+	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):$(MQ_VERSION)-$(DOCKER_TAG_ARCH)
+endif
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover:
@@ -169,7 +178,7 @@ build-advancedserver-cover:
 # 	$(call docker-build-mq,mq-web:latest-$(DOCKER_TAG_ARCH),Dockerfile-mq-web)
 
 .PHONY: build-explorer
-build-explorer: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
-	$(call docker-build-mq,mq-explorer:latest-$(DOCKER_TAG_ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
+build-explorer: downloads/$(MQ_ARCHIVE_DEV)
+	$(call docker-build-mq,mq-explorer:latest-$(DOCKER_TAG_ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 
 include formatting.mk

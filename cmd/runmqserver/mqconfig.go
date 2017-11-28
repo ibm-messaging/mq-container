@@ -22,7 +22,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/ibm-messaging/mq-container/pkg/linux/capabilities"
+	"github.com/ibm-messaging/mq-container/internal/capabilities"
 	"golang.org/x/sys/unix"
 )
 
