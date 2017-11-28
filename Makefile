@@ -13,9 +13,7 @@
 # limitations under the License.
 
 BUILD_SERVER_CONTAINER=build-server
-# Set architecture for Go code.  Don't set GOOS globally, so that tests can be run locally
-export GOARCH ?= amd64
-DOCKER_TAG_ARCH ?= x86_64
+DOCKER_TAG_ARCH ?= $(shell uname -m)
 # By default, all Docker client commands are run inside a Docker container.
 # This means that newer features of the client can be used, even with an older daemon.
 DOCKER ?= docker run --tty --interactive --rm --volume /var/run/docker.sock:/var/run/docker.sock --volume "$(CURDIR)":/var/src --workdir /var/src docker:stable docker
@@ -151,9 +149,13 @@ build-advancedserver: build-advancedserver-904
 
 .PHONY: build-devserver
 build-devserver: downloads/mqadv_dev904_ubuntu_x86-64.tar.gz
+ifneq "x86_64" "$(shell uname -m)"
+    $(error MQ Advanced for Developers is only available for x86_64 architecture)
+else
 	$(info $(shell printf $(TITLE)"Build $(DOCKER_FULL_DEVSERVER)"$(END)))
 	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,mqadv_dev904_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.4")
 	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):9.0.4.0-$(DOCKER_TAG_ARCH)
+endif
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover:
