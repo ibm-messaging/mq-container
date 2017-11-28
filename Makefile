@@ -22,7 +22,22 @@ DOCKER_REPO_DEVSERVER ?= mq-devserver
 DOCKER_REPO_ADVANCEDSERVER ?= mq-advancedserver
 DOCKER_FULL_DEVSERVER = $(DOCKER_REPO_DEVSERVER):$(DOCKER_TAG)
 DOCKER_FULL_ADVANCEDSERVER = $(DOCKER_REPO_ADVANCEDSERVER):$(DOCKER_TAG)
+# MQ_PACKAGES is the list of MQ packages to install
 MQ_PACKAGES ?=ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams
+# MQ_VERSION is the fully qualified MQ version number to build
+MQ_VERSION ?= 9.0.4.0
+# Archive names for IBM MQ Continuous Delivery Release for Ubuntu
+MQ_ARCHIVE_9.0.3.0_ppc64le=CNJR5ML.tar.gz
+MQ_ARCHIVE_9.0.3.0_s390x=CNJR6ML.tar.gz
+MQ_ARCHIVE_9.0.3.0_x86_64=CNJR7ML.tar.gz
+MQ_ARCHIVE_9.0.4.0_ppc64le=CNLE2ML.tar.gz
+MQ_ARCHIVE_9.0.4.0_s390x=CNLE3ML.tar.gz
+MQ_ARCHIVE_9.0.4.0_x86_64=CNLE4ML.tar.gz
+# Archive names for IBM MQ Advanced for Developers for Ubuntu
+MQ_ARCHIVE_DEV_9.0.3.0=mqadv_dev903_ubuntu_x86-64.tar.gz
+MQ_ARCHIVE_DEV_9.0.4.0=mqadv_dev904_ubuntu_x86-64.tar.gz
+MQ_ARCHIVE ?= $(MQ_ARCHIVE_$(MQ_VERSION)_$(DOCKER_TAG_ARCH))
+MQ_ARCHIVE_DEV=$(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
 # Options to `go test` for the Kubernetes tests
@@ -49,13 +64,13 @@ clean:
 	rm -rf ./build
 	rm -rf ./deps
 
-downloads/mqadv_dev904_ubuntu_x86-64.tar.gz:
+downloads/$(MQ_ARCHIVE_DEV):
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers"$(END)))
 	mkdir -p downloads
-	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev904_ubuntu_x86-64.tar.gz
+	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV)
 
 .PHONY: downloads
-downloads: downloads/mqadv_dev904_ubuntu_x86-64.tar.gz
+downloads: downloads/$(MQ_ARCHIVE_DEV)
 
 .PHONY: deps
 deps:
@@ -138,23 +153,20 @@ define docker-build-mq
 	  . ; $(DOCKER) kill $(BUILD_SERVER_CONTAINER) && $(DOCKER) network rm build
 endef
 
-.PHONY: build-advancedserver-904
-build-advancedserver-904: downloads/CNLE4ML.tar.gz
-	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
-	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,CNLE4ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.4")
-	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.4.0-$(DOCKER_TAG_ARCH)
-
 .PHONY: build-advancedserver
-build-advancedserver: build-advancedserver-904
+build-advancedserver: downloads/$(MQ_ARCHIVE)
+	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
+	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,$(MQ_ARCHIVE),"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced",$(MQ_VERSION))
+	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):$(MQ_VERSION)-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-devserver
-build-devserver: downloads/mqadv_dev904_ubuntu_x86-64.tar.gz
+build-devserver: downloads/$(MQ_ARCHIVE_DEV)
 ifneq "x86_64" "$(shell uname -m)"
     $(error MQ Advanced for Developers is only available for x86_64 architecture)
 else
 	$(info $(shell printf $(TITLE)"Build $(DOCKER_FULL_DEVSERVER)"$(END)))
-	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,mqadv_dev904_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.4")
-	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):9.0.4.0-$(DOCKER_TAG_ARCH)
+	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
+	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):$(MQ_VERSION)-$(DOCKER_TAG_ARCH)
 endif
 
 .PHONY: build-advancedserver-cover
@@ -166,7 +178,7 @@ build-advancedserver-cover:
 # 	$(call docker-build-mq,mq-web:latest-$(DOCKER_TAG_ARCH),Dockerfile-mq-web)
 
 .PHONY: build-explorer
-build-explorer: downloads/mqadv_dev904_ubuntu_x86-64.tar.gz
-	$(call docker-build-mq,mq-explorer:latest-$(DOCKER_TAG_ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,mqadv_dev904_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.4")
+build-explorer: downloads/$(MQ_ARCHIVE_DEV)
+	$(call docker-build-mq,mq-explorer:latest-$(DOCKER_TAG_ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 
 include formatting.mk
