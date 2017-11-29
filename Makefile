@@ -89,6 +89,11 @@ build-cov:
 	mkdir -p build
 	cd build; go test -c -covermode=count ../cmd/runmqserver
 
+# Shortcut to just run the unit tests
+.PHONY: test-unit
+test-unit:
+	docker build --target builder --file Dockerfile-server .
+
 .PHONY: test-advancedserver
 test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_ADVANCEDSERVER) on Docker"$(END)))
