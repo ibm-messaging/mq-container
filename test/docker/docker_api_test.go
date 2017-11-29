@@ -19,6 +19,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -94,7 +95,7 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
-	_, out := execContainer(t, cli, id, []string{"dspmq"})
+	out := execContainerWithOutput(t, cli, id, "mqm", []string{"dspmq"})
 	if !strings.Contains(out, search) {
 		t.Errorf("Expected result of running dspmq to contain name=%v, got name=%v", search, out)
 	}
@@ -217,5 +218,48 @@ func TestStartQueueManagerFail(t *testing.T) {
 	rc := waitForContainer(t, cli, id, 10)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
+	}
+}
+
+func TestVolumeUnmount(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	vol := createVolume(t, cli)
+	defer removeVolume(t, cli, vol.Name)
+	containerConfig := container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+	hostConfig := container.HostConfig{
+		// SYS_ADMIN capability is required to unmount file systems
+		CapAdd: []string{
+			"SYS_ADMIN",
+		},
+		Binds: []string{
+			coverageBind(t),
+			vol.Name + ":/mnt/mqm",
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+	// Unmount the volume as root
+	rc := execContainerWithExitCode(t, cli, ctr.ID, "root", []string{"umount", "-l", "-f", "/mnt/mqm"})
+	if rc != 0 {
+		t.Fatalf("Expected umount to work with rc=0, got %v", rc)
+	}
+	time.Sleep(3 * time.Second)
+	rc = execContainerWithExitCode(t, cli, ctr.ID, "mqm", []string{"chkmqhealthy"})
+	if rc == 0 {
+		t.Errorf("Expected chkmqhealthy to fail")
+		t.Logf(execContainerWithOutput(t, cli, ctr.ID, "mqm", []string{"df"}))
+		t.Logf(execContainerWithOutput(t, cli, ctr.ID, "mqm", []string{"ps", "-ef"}))
 	}
 }
