@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -32,6 +33,7 @@ import (
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/pkg/stdcopy"
 )
 
 func imageName() string {
@@ -241,13 +243,13 @@ func execContainerWithOutput(t *testing.T, cli *client.Client, ID string, user s
 	if err != nil {
 		t.Fatal(err)
 	}
-	// TODO: For some reason, each line seems to start with an extra, random character
-	buf, err := ioutil.ReadAll(hijack.Reader)
+	buf := new(bytes.Buffer)
+	// Each output line has a header, which needs to be removed
+	_, err = stdcopy.StdCopy(buf, buf, hijack.Reader)
 	if err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
-	hijack.Close()
-	return string(buf)
+	return strings.TrimSpace(buf.String())
 }
 
 func waitForReady(t *testing.T, cli *client.Client, ID string) {
@@ -320,8 +322,11 @@ func inspectLogs(t *testing.T, cli *client.Client, ID string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(reader)
+	// Each output line has a header, which needs to be removed
+	_, err = stdcopy.StdCopy(buf, buf, reader)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return buf.String()
 }

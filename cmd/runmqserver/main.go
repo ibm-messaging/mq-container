@@ -19,6 +19,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -29,6 +30,20 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/name"
 )
+
+var debug = false
+
+func logDebug(msg string) {
+	if debug {
+		log.Printf("DEBUG: %v", msg)
+	}
+}
+
+func logDebugf(format string, args ...interface{}) {
+	if debug {
+		log.Printf("DEBUG: %v", fmt.Sprintf(format, args...))
+	}
+}
 
 // createDirStructure creates the default MQ directory structure under /var/mqm
 func createDirStructure() error {
@@ -127,6 +142,10 @@ func stopQueueManager(name string) error {
 }
 
 func doMain() error {
+	debugEnv, ok := os.LookupEnv("DEBUG")
+	if ok && (debugEnv == "true" || debugEnv == "1") {
+		debug = true
+	}
 	accepted, err := checkLicense()
 	if err != nil {
 		return err

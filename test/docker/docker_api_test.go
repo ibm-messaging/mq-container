@@ -17,6 +17,7 @@ package main
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -268,5 +269,40 @@ func TestVolumeUnmount(t *testing.T) {
 		t.Errorf("Expected chkmqhealthy to fail")
 		t.Logf(execContainerWithOutput(t, cli, ctr.ID, "mqm", []string{"df"}))
 		t.Logf(execContainerWithOutput(t, cli, ctr.ID, "mqm", []string{"ps", "-ef"}))
+	}
+}
+
+// TestZombies starts a queue manager, then causes a zombie process to be
+// created, then checks that no zombies exist (runmqserver should reap them)
+func TestZombies(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=true"},
+		//ExposedPorts: ports,
+		ExposedPorts: nat.PortSet{
+			"1414/tcp": struct{}{},
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	// Kill an MQ process with children.  After it is killed, its children
+	// will be adopted by PID 1, and should then be reaped when they die.
+	out := execContainerWithOutput(t, cli, id, "mqm", []string{"pkill", "--signal", "kill", "-c", "amqzxma0"})
+	if out == "0" {
+		t.Fatalf("Expected pkill to kill a process, got %v", out)
+	}
+	time.Sleep(3 * time.Second)
+	// Create a zombie process for up to ten seconds
+	out = execContainerWithOutput(t, cli, id, "mqm", []string{"bash", "-c", "ps -lA | grep '^. Z' | wc -l"})
+	count, err := strconv.Atoi(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 0 {
+		t.Fatalf("Expected zombies=0, got %v", count)
 	}
 }
