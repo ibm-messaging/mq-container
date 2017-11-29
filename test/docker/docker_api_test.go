@@ -62,6 +62,7 @@ func TestLicenseView(t *testing.T) {
 	}
 }
 
+// TestGoldenPath starts a queue manager successfully
 func TestGoldenPath(t *testing.T) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -149,6 +150,8 @@ func TestWithVolume(t *testing.T) {
 	waitForReady(t, cli, ctr2.ID)
 }
 
+// TestNoVolumeWithRestart ensures a queue manager container can be stopped
+// and restarted cleanly
 func TestNoVolumeWithRestart(t *testing.T) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -169,7 +172,7 @@ func TestNoVolumeWithRestart(t *testing.T) {
 	waitForReady(t, cli, id)
 }
 
-// Test the case where `crtmqm` will fail
+// TestCreateQueueManagerFail causes a failure of `crtmqm`
 func TestCreateQueueManagerFail(t *testing.T) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -195,7 +198,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 	}
 }
 
-// Test the case where `strmqm` will fail
+// TestStartQueueManagerFail causes a failure of `strmqm`
 func TestStartQueueManagerFail(t *testing.T) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -221,6 +224,10 @@ func TestStartQueueManagerFail(t *testing.T) {
 	}
 }
 
+// TestVolumeUnmount runs a queue manager with a volume, and then forces an
+// unmount of the volume.  The health check should then fail.
+// This simulates behaviour seen in some cloud environments, where network
+// attached storage gets unmounted.
 func TestVolumeUnmount(t *testing.T) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
