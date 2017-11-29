@@ -50,6 +50,12 @@ or:
 make test-advancedserver
 ```
 
+You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command::
+
+```
+TEST_OPTS_DOCKER="-run TestGoldenPath" make test-advancedserver
+```
+
 ### Running the Docker tests with code coverage
 You can produce code coverage results from the Docker tests by running the following:
 
