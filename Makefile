@@ -75,8 +75,14 @@ downloads: downloads/$(MQ_ARCHIVE_DEV)
 .PHONY: deps
 deps:
 	glide install --strip-vendor
+
+# Vendor Go dependencies for the Docker tests
+test/docker/vendor:
 	cd test/docker && dep ensure -vendor-only
-	cd test/kubernetes && dep ensure -vendor-only
+
+# Vendor Go dependencies for the Kubernetes tests
+test/kubernetes/vendor:
+	cd test/docker && dep ensure -vendor-only
 
 .PHONY: build-cov
 build-cov:
@@ -84,17 +90,17 @@ build-cov:
 	cd build; go test -c -covermode=count ../cmd/runmqserver
 
 .PHONY: test-advancedserver
-test-advancedserver:
+test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_ADVANCEDSERVER) on Docker"$(END)))
 	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_ADVANCEDSERVER) go test $(TEST_OPTS_DOCKER)
 
 .PHONY: test-devserver
-test-devserver:
+test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER) on Docker"$(END)))
 	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_DEVSERVER) go test
 
 .PHONY: test-advancedserver-cover
-test-advancedserver-cover:
+test-advancedserver-cover: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_REPO_ADVANCEDSERVER) on Docker with code coverage"$(END)))
 	rm -f ./coverage/unit*.cov
 	# Run unit tests with coverage, for each package under 'internal'
@@ -115,11 +121,11 @@ test-advancedserver-cover:
 	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
 
 .PHONY: test-kubernetes-devserver
-test-kubernetes-devserver:
+test-kubernetes-devserver: test/kubernetes/vendor
 	$(call test-kubernetes,$(DOCKER_REPO_DEVSERVER),$(DOCKER_TAG),"../../charts/ibm-mqadvanced-server-dev")
 
 .PHONY: test-kubernetes-advancedserver
-test-kubernetes-advancedserver:
+test-kubernetes-advancedserver: test/kubernetes/vendor
 	$(call test-kubernetes,$(DOCKER_REPO_ADVANCEDSERVER),$(DOCKER_TAG),"../../charts/ibm-mqadvanced-server-prod")
 
 define test-kubernetes
