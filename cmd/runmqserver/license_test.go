@@ -25,6 +25,7 @@ var licenseTests = []struct {
 	out string
 }{
 	{"en_US.UTF_8", "English.txt"},
+	{"en_US.ISO-8859-15", "English.txt"},
 	{"es_GB", "Spanish.txt"},
 	{"el_ES.UTF_8", "Greek.txt"},
 	// Cover a wide variety of valid values
@@ -59,6 +60,7 @@ var licenseTests = []struct {
 	{"ca_ES", "English.txt"},
 	{"cs", "Czech.txt"},
 	{"cs_CZ", "Czech.txt"},
+	{"csb_PL", "English.txt"},
 	{"cy", "English.txt"},
 	{"cy_GB", "English.txt"},
 	{"da", "English.txt"},
