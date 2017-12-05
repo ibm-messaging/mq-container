@@ -43,6 +43,14 @@ TEST_OPTS_DOCKER ?=
 # Options to `go test` for the Kubernetes tests
 TEST_OPTS_KUBERNETES ?=
 TEST_IMAGE ?= $(DOCKER_FULL_ADVANCEDSERVER)
+NUM_CPU=$(shell docker info --format "{{ .NCPU }}")
+
+.PHONY: vars
+vars:
+	echo $(DOCKER_SERVER_VERSION_MAJOR)
+	echo $(DOCKER_SERVER_VERSION_MINOR)
+	echo $(DOCKER_CLIENT_VERSION_MAJOR)
+	echo $(DOCKER_CLIENT_VERSION_MINOR)
 
 .PHONY: default
 default: build-devserver test
@@ -97,12 +105,12 @@ test-unit:
 .PHONY: test-advancedserver
 test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_ADVANCEDSERVER) on Docker"$(END)))
-	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_ADVANCEDSERVER) go test $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_ADVANCEDSERVER) go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
 .PHONY: test-devserver
 test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER) on Docker"$(END)))
-	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_DEVSERVER) go test
+	cd test/docker && TEST_IMAGE=$(DOCKER_FULL_DEVSERVER) go test -parallel $(NUM_CPU)
 
 .PHONY: test-advancedserver-cover
 test-advancedserver-cover: test/docker/vendor
@@ -165,24 +173,30 @@ define docker-build-mq
 	  . ; $(DOCKER) kill $(BUILD_SERVER_CONTAINER) && $(DOCKER) network rm build
 endef
 
+DOCKER_SERVER_VERSION=$(shell docker version --format "{{ .Server.Version }}")
+DOCKER_CLIENT_VERSION=$(shell docker version --format "{{ .Client.Version }}")
+.PHONY: docker-version
+docker-version:
+	@test "$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "17" || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
+	@test "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05" || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
+	@test "$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "17" || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
+	@test "$(word 2,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "05" || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
+
 .PHONY: build-advancedserver
-build-advancedserver: downloads/$(MQ_ARCHIVE)
+build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
 	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,$(MQ_ARCHIVE),"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced",$(MQ_VERSION))
 	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):$(MQ_VERSION)-$(DOCKER_TAG_ARCH)
 
 .PHONY: build-devserver
-build-devserver: downloads/$(MQ_ARCHIVE_DEV)
-ifneq "x86_64" "$(shell uname -m)"
-    $(error MQ Advanced for Developers is only available for x86_64 architecture)
-else
+build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version
+	@test "$(uname -m)" = "x86_64" || (echo "Error: MQ Advanced for Developers is only available for x86_64 architecture" && exit 1)
 	$(info $(shell printf $(TITLE)"Build $(DOCKER_FULL_DEVSERVER)"$(END)))
 	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):$(MQ_VERSION)-$(DOCKER_TAG_ARCH)
-endif
 
 .PHONY: build-advancedserver-cover
-build-advancedserver-cover:
+build-advancedserver-cover: docker-version
 	$(DOCKER) build -t $(DOCKER_REPO_ADVANCEDSERVER):cover -f Dockerfile-server.cover .
 
 # .PHONY: build-web
