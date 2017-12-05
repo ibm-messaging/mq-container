@@ -143,11 +143,11 @@ func getCoverageExitCode(t *testing.T, orig int64) int64 {
 	f := filepath.Join(coverageDir(t), "exitCode")
 	_, err := os.Stat(f)
 	if err != nil {
-		t.Log(err)
+		//t.Log(err)
 		return orig
 	}
 	// Remove the file, ready for the next test
-	//defer os.Remove(f)
+	defer os.Remove(f)
 	buf, err := ioutil.ReadFile(f)
 	if err != nil {
 		t.Log(err)

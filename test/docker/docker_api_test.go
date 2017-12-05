@@ -81,6 +81,31 @@ func TestGoldenPath(t *testing.T) {
 	waitForReady(t, cli, id)
 }
 
+// TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
+// by Ubuntu
+func TestSecurityVulnerabilities(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		// Override the entrypoint to make "apt" only receive security updates, then check for updates
+		Entrypoint: []string{"bash", "-c", "source /etc/os-release && echo \"deb http://security.ubuntu.com/ubuntu/ ${VERSION_CODENAME}-security main restricted\" > /etc/apt/sources.list && apt-get update 2>&1 >/dev/null && apt-get --simulate -qq upgrade"},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	// rc is the return code from apt-get
+	rc := waitForContainer(t, cli, id, 10)
+	if rc != 0 {
+		t.Fatalf("Expected success, got %v", rc)
+	}
+	log := inspectLogs(t, cli, id)
+	lines := strings.Split(strings.TrimSpace(log), "\n")
+	if len(lines) > 0 && lines[0] != "" {
+		t.Errorf("Expected no vulnerabilities, found the following:\n%v", log)
+	}
+}
+
 func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName string) {
 	search := "QMNAME(" + expectedName + ")"
 	cli, err := client.NewEnvClient()
