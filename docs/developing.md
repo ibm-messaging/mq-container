@@ -2,8 +2,8 @@
 
 ## Prerequisites
 You need to ensure you have the following tools installed:
-* [Docker](https://www.docker.com/)
-* GNU make
+* [Docker](https://www.docker.com/) V17.05 or later
+* [GNU make](https://www.gnu.org/software/make/)
 
 You might also need the following tools installed: 
 * [Go](https://golang.org/) - only needed for running the tests
