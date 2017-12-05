@@ -190,7 +190,7 @@ build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version
 
 .PHONY: build-devserver
 build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version
-	@test "$(uname -m)" = "x86_64" || (echo "Error: MQ Advanced for Developers is only available for x86_64 architecture" && exit 1)
+	@test "$(shell uname -m)" = "x86_64" || (echo "Error: MQ Advanced for Developers is only available for x86_64 architecture" && exit 1)
 	$(info $(shell printf $(TITLE)"Build $(DOCKER_FULL_DEVSERVER)"$(END)))
 	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):$(MQ_VERSION)-$(DOCKER_TAG_ARCH)
