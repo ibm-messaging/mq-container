@@ -29,6 +29,7 @@ import (
 )
 
 func TestLicenseNotSet(t *testing.T) {
+	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -43,6 +44,7 @@ func TestLicenseNotSet(t *testing.T) {
 }
 
 func TestLicenseView(t *testing.T) {
+	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -65,16 +67,16 @@ func TestLicenseView(t *testing.T) {
 
 // TestGoldenPath starts a queue manager successfully
 func TestGoldenPath(t *testing.T) {
+	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-		//ExposedPorts: ports,
-		ExposedPorts: nat.PortSet{
-			"1414/tcp": struct{}{},
-		},
+		// ExposedPorts: nat.PortSet{
+		// 	"1414/tcp": struct{}{},
+		// },
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
@@ -84,6 +86,7 @@ func TestGoldenPath(t *testing.T) {
 // TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
 // by Ubuntu
 func TestSecurityVulnerabilities(t *testing.T) {
+	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -115,9 +118,6 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 	containerConfig := container.Config{
 		Env:      []string{"LICENSE=accept"},
 		Hostname: hostName,
-		ExposedPorts: nat.PortSet{
-			"1414/tcp": struct{}{},
-		},
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
@@ -128,16 +128,19 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 	}
 }
 func TestNoQueueManagerName(t *testing.T) {
+	t.Parallel()
 	utilTestNoQueueManagerName(t, "test", "test")
 }
 
 func TestNoQueueManagerNameInvalidHostname(t *testing.T) {
+	t.Parallel()
 	utilTestNoQueueManagerName(t, "test-1", "test1")
 }
 
 // TestWithVolume runs a container with a Docker volume, then removes that
 // container and starts a new one with same volume.
 func TestWithVolume(t *testing.T) {
+	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -179,16 +182,13 @@ func TestWithVolume(t *testing.T) {
 // TestNoVolumeWithRestart ensures a queue manager container can be stopped
 // and restarted cleanly
 func TestNoVolumeWithRestart(t *testing.T) {
+	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-		//ExposedPorts: ports,
-		ExposedPorts: nat.PortSet{
-			"1414/tcp": struct{}{},
-		},
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
@@ -200,6 +200,7 @@ func TestNoVolumeWithRestart(t *testing.T) {
 
 // TestCreateQueueManagerFail causes a failure of `crtmqm`
 func TestCreateQueueManagerFail(t *testing.T) {
+	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -208,10 +209,6 @@ func TestCreateQueueManagerFail(t *testing.T) {
 	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-		//ExposedPorts: ports,
-		ExposedPorts: nat.PortSet{
-			"1414/tcp": struct{}{},
-		},
 		// Override the entrypoint to create the queue manager directory, but leave it empty.
 		// This will cause `crtmqm` to return with an exit code of 2.
 		Entrypoint: []string{"bash", "-c", "mkdir -p /mnt/mqm/data && mkdir -p /var/mqm/qmgrs/qm1 && exec " + oldEntrypoint},
@@ -226,6 +223,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 
 // TestStartQueueManagerFail causes a failure of `strmqm`
 func TestStartQueueManagerFail(t *testing.T) {
+	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -234,10 +232,6 @@ func TestStartQueueManagerFail(t *testing.T) {
 	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-		//ExposedPorts: ports,
-		ExposedPorts: nat.PortSet{
-			"1414/tcp": struct{}{},
-		},
 		// Override the entrypoint to replace `crtmqm` with a no-op script.
 		// This will cause `strmqm` to return with an exit code of 16.
 		Entrypoint: []string{"bash", "-c", "echo '#!/bin/bash\n' > /opt/mqm/bin/crtmqm && exec " + oldEntrypoint},
@@ -255,6 +249,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 // This simulates behaviour seen in some cloud environments, where network
 // attached storage gets unmounted.
 func TestVolumeUnmount(t *testing.T) {
+	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -300,6 +295,7 @@ func TestVolumeUnmount(t *testing.T) {
 // TestZombies starts a queue manager, then causes a zombie process to be
 // created, then checks that no zombies exist (runmqserver should reap them)
 func TestZombies(t *testing.T) {
+	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)

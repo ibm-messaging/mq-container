@@ -32,7 +32,6 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 	"github.com/moby/moby/pkg/stdcopy"
 )
 
@@ -99,14 +98,14 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	// if coverage
 	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
 	hostConfig := container.HostConfig{
-		PortBindings: nat.PortMap{
-			"1414/tcp": []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "1414",
-				},
-			},
-		},
+		// PortBindings: nat.PortMap{
+		// 	"1414/tcp": []nat.PortBinding{
+		// 		{
+		// 			HostIP:   "0.0.0.0",
+		// 			HostPort: "1414",
+		// 		},
+		// 	},
+		// },
 		Binds: []string{
 			coverageBind(t),
 		},
