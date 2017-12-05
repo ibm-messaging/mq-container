@@ -16,7 +16,7 @@ BUILD_SERVER_CONTAINER=build-server
 DOCKER_TAG_ARCH ?= $(shell uname -m)
 # By default, all Docker client commands are run inside a Docker container.
 # This means that newer features of the client can be used, even with an older daemon.
-DOCKER ?= docker run --tty --interactive --rm --volume /var/run/docker.sock:/var/run/docker.sock --volume "$(CURDIR)":/var/src --workdir /var/src docker:stable docker
+DOCKER ?= docker run --interactive --rm --volume /var/run/docker.sock:/var/run/docker.sock --volume "$(CURDIR)":/var/src --workdir /var/src docker:stable docker
 DOCKER_TAG ?= latest-$(DOCKER_TAG_ARCH)
 DOCKER_REPO_DEVSERVER ?= mq-devserver
 DOCKER_REPO_ADVANCEDSERVER ?= mq-advancedserver
