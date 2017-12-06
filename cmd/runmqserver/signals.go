@@ -50,11 +50,13 @@ func signalHandler(qmgr string) chan int {
 				// End the goroutine
 				return
 			case <-reapSignals:
+				logDebug("Received SIGCHLD signal")
 				reapZombies()
 			case job := <-control:
 				switch {
 				case job == startReaping:
 					// Add SIGCHLD to the list of signals we're listening to
+					logDebug("Listening for SIGCHLD signals")
 					signal.Notify(reapSignals, syscall.SIGCHLD)
 				case job == reapNow:
 					reapZombies()
@@ -75,5 +77,6 @@ func reapZombies() {
 		if pid == 0 || err == unix.ECHILD {
 			return
 		}
+		logDebugf("Reaped PID %v", pid)
 	}
 }

@@ -87,12 +87,10 @@ find /opt/mqm -name '*.tar.gz' -delete
 rm -f /etc/apt/sources.list.d/IBM_MQ.list
 rm -rf ${DIR_EXTRACT}
 
-# Apply any bug fixes not included in base Ubuntu or MQ image.
+#### Apply any bug fixes not included in base Ubuntu or MQ image.
 # Don't upgrade everything based on Docker best practices https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run
-apt-get upgrade -y libkrb5-26-heimdal
-apt-get upgrade -y libexpat1
-
-# End of bug fixes
+apt-get upgrade -y libdb5.3
+#### End of bug fixes
 
 # Clean up cached apt files
 rm -rf /var/lib/apt/lists/*

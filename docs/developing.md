@@ -2,12 +2,13 @@
 
 ## Prerequisites
 You need to ensure you have the following tools installed:
+* [Docker](https://www.docker.com/) V17.05 or later
+* [GNU make](https://www.gnu.org/software/make/)
 
-* [Docker](https://www.docker.com/)
+You might also need the following tools installed: 
 * [Go](https://golang.org/) - only needed for running the tests
-* [Glide](https://glide.sh/)
-* [dep](https://github.com/golang/dep) (official Go dependency management tool)
-* make
+* [Glide](https://glide.sh/) - only needed if you update the main dependencies
+* [dep](https://github.com/golang/dep) (official Go dependency management tool) - only needed to prepare for running the tests
 * [Helm](https://helm.sh) - only needed for running the Kubernetes tests
 
 For running the Kubernetes tests, a Kubernetes environment is needed, for example [Minikube](https://github.com/kubernetes/minikube) or [IBM Cloud Private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/).
@@ -22,6 +23,12 @@ You can build a different version of MQ by setting the `MQ_VERSION` environment 
 
 ```bash
 MQ_VERSION=9.0.3.0 make build-advancedserver
+```
+
+If you have an MQ archive file with a different file name, you can specify a particular file (which must be in the `downloads` directory).  You should also specify the MQ version, so that the resulting image is tagged correctly, for example:
+
+```bash
+MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 build-advancedserver
 ```
 
 ## Running the tests
@@ -48,6 +55,12 @@ or:
 
 ```
 make test-advancedserver
+```
+
+You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command::
+
+```
+TEST_OPTS_DOCKER="-run TestGoldenPath" make test-advancedserver
 ```
 
 ### Running the Docker tests with code coverage

@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -31,7 +32,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
+	"github.com/docker/docker/pkg/stdcopy"
 )
 
 func imageName() string {
@@ -97,14 +98,14 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	// if coverage
 	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
 	hostConfig := container.HostConfig{
-		PortBindings: nat.PortMap{
-			"1414/tcp": []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "1414",
-				},
-			},
-		},
+		// PortBindings: nat.PortMap{
+		// 	"1414/tcp": []nat.PortBinding{
+		// 		{
+		// 			HostIP:   "0.0.0.0",
+		// 			HostPort: "1414",
+		// 		},
+		// 	},
+		// },
 		Binds: []string{
 			coverageBind(t),
 		},
@@ -141,11 +142,11 @@ func getCoverageExitCode(t *testing.T, orig int64) int64 {
 	f := filepath.Join(coverageDir(t), "exitCode")
 	_, err := os.Stat(f)
 	if err != nil {
-		t.Log(err)
+		//t.Log(err)
 		return orig
 	}
 	// Remove the file, ready for the next test
-	//defer os.Remove(f)
+	defer os.Remove(f)
 	buf, err := ioutil.ReadFile(f)
 	if err != nil {
 		t.Log(err)
@@ -179,11 +180,45 @@ func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64
 	return rc
 }
 
-// execContainer runs the specified command inside the container, returning the
-// exit code and the stdout/stderr string.
-func execContainer(t *testing.T, cli *client.Client, ID string, cmd []string) (int, string) {
+// execContainerWithExitCode runs a command in a running container, and returns the exit code
+// Note: due to a bug in Docker/Moby code, you always get an exit code of 0 if you attach to the
+// container to get output.  This is why these are two separate commands.
+func execContainerWithExitCode(t *testing.T, cli *client.Client, ID string, user string, cmd []string) int {
 	config := types.ExecConfig{
-		User:         "mqm",
+		User:        user,
+		Privileged:  false,
+		Tty:         false,
+		AttachStdin: false,
+		// Note that you still need to attach stdout/stderr, even though they're not wanted
+		AttachStdout: true,
+		AttachStderr: true,
+		Detach:       false,
+		Cmd:          cmd,
+	}
+	resp, err := cli.ContainerExecCreate(context.Background(), ID, config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
+		Detach: false,
+		Tty:    false,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return inspect.ExitCode
+}
+
+// execContainerWithOutput runs a command in a running container, and returns the output from stdout/stderr
+// Note: due to a bug in Docker/Moby code, you always get an exit code of 0 if you attach to the
+// container to get output.  This is why these are two separate commands.
+func execContainerWithOutput(t *testing.T, cli *client.Client, ID string, user string, cmd []string) string {
+	config := types.ExecConfig{
+		User:         user,
 		Privileged:   false,
 		Tty:          false,
 		AttachStdin:  false,
@@ -207,46 +242,19 @@ func execContainer(t *testing.T, cli *client.Client, ID string, cmd []string) (i
 	if err != nil {
 		t.Fatal(err)
 	}
-	inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
+	buf := new(bytes.Buffer)
+	// Each output line has a header, which needs to be removed
+	_, err = stdcopy.StdCopy(buf, buf, hijack.Reader)
 	if err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
-	// TODO: For some reason, each line seems to start with an extra, random character
-	buf, err := ioutil.ReadAll(hijack.Reader)
-	if err != nil {
-		t.Fatal(err)
-	}
-	hijack.Close()
-	return inspect.ExitCode, string(buf)
+	return strings.TrimSpace(buf.String())
 }
 
 func waitForReady(t *testing.T, cli *client.Client, ID string) {
 	for {
-		resp, err := cli.ContainerExecCreate(context.Background(), ID, types.ExecConfig{
-			User:         "mqm",
-			Privileged:   false,
-			Tty:          false,
-			AttachStdin:  false,
-			AttachStdout: true,
-			AttachStderr: true,
-			Detach:       false,
-			Cmd:          []string{"chkmqready"},
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
-			Detach: false,
-			Tty:    false,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if inspect.ExitCode == 0 {
+		rc := execContainerWithExitCode(t, cli, ID, "mqm", []string{"chkmqready"})
+		if rc == 0 {
 			t.Log("MQ is ready")
 			return
 		}
@@ -313,8 +321,11 @@ func inspectLogs(t *testing.T, cli *client.Client, ID string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(reader)
+	// Each output line has a header, which needs to be removed
+	_, err = stdcopy.StdCopy(buf, buf, reader)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return buf.String()
 }

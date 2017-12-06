@@ -36,7 +36,8 @@ func resolveLicenseFile() string {
 		return "Chinese_TW.txt"
 	case strings.HasPrefix(lang, "zh"):
 		return "Chinese.txt"
-	case strings.HasPrefix(lang, "cs"):
+	// Differentiate Czech (cs) and Kashubian (csb)
+	case strings.HasPrefix(lang, "cs") && !strings.HasPrefix(lang, "csb"):
 		return "Czech.txt"
 	case strings.HasPrefix(lang, "fr"):
 		return "French.txt"
@@ -50,7 +51,8 @@ func resolveLicenseFile() string {
 		return "Italian.txt"
 	case strings.HasPrefix(lang, "ja"):
 		return "Japanese.txt"
-	case strings.HasPrefix(lang, "ko"):
+	// Differentiate Korean (ko) from Konkani (kok)
+	case strings.HasPrefix(lang, "ko") && !strings.HasPrefix(lang, "kok"):
 		return "Korean.txt"
 	case strings.HasPrefix(lang, "lt"):
 		return "Lithuanian.txt"
