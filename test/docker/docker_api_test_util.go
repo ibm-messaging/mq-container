@@ -32,7 +32,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
-	"github.com/moby/moby/pkg/stdcopy"
+	"github.com/docker/docker/pkg/stdcopy"
 )
 
 func imageName() string {
