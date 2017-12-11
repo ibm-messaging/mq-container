@@ -120,6 +120,15 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	return ctr.ID
 }
 
+func runContainerOneShot(t *testing.T, cli *client.Client, command ...string) (int64, string) {
+	containerConfig := container.Config{
+		Entrypoint: command,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	return waitForContainer(t, cli, id, 10), inspectLogs(t, cli, id)
+}
+
 func startContainer(t *testing.T, cli *client.Client, ID string) {
 	t.Logf("Starting container: %v", ID)
 	startOptions := types.ContainerStartOptions{}

@@ -1,34 +1,20 @@
-# Developing
+# Testing 
 
 ## Prerequisites
 You need to ensure you have the following tools installed:
-* [Docker](https://www.docker.com/) V17.05 or later
+* [Docker](https://www.docker.com/)
 * [GNU make](https://www.gnu.org/software/make/)
-
-You might also need the following tools installed: 
 * [Go](https://golang.org/) - only needed for running the tests
-* [Glide](https://glide.sh/) - only needed if you update the main dependencies
-* [dep](https://github.com/golang/dep) (official Go dependency management tool) - only needed to prepare for running the tests
+* [dep](https://github.com/golang/dep) (official Go dependency management tool) - needed to prepare for running the tests
 * [Helm](https://helm.sh) - only needed for running the Kubernetes tests
 
 For running the Kubernetes tests, a Kubernetes environment is needed, for example [Minikube](https://github.com/kubernetes/minikube) or [IBM Cloud Private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/).
 
-## Building a production image
-This procedure works for building the MQ Continuous Delivery release, on `x86_64`, `ppc64le` and `s390x` architectures.
+## Preparing to run the tests
+The test dependencies are not included with the source code, so you need to download them before you can run them.  This can be done with the following command, which uses the `dep` tool:
 
-1. Download MQ from IBM Passport Advantage, and place the downloaded file (for example, `CNLE4ML.tar.gz` for MQ V9.0.4 on x86_64 architecture) in the `downloads` directory
-2. Run `make build-advancedserver`
-
-You can build a different version of MQ by setting the `MQ_VERSION` environment variable, for example:
-
-```bash
-MQ_VERSION=9.0.3.0 make build-advancedserver
 ```
-
-If you have an MQ archive file with a different file name, you can specify a particular file (which must be in the `downloads` directory).  You should also specify the MQ version, so that the resulting image is tagged correctly, for example:
-
-```bash
-MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 build-advancedserver
+make deps
 ```
 
 ## Running the tests
@@ -39,28 +25,29 @@ There are three main sets of tests:
 3. Kubernetes tests, which test the Helm charts (and the Docker image) via [Helm](https://helm.sh)
 
 ### Running the Docker tests
-The Docker tests can be run locally.  Before you run them for the first time, you need to download the test dependencies:
-
-```
-make deps
-```
-
-You can then run the tests, for example:
+The Docker tests can be run locally on a machine with Docker.  For example:
 
 ```
 make test-devserver
-```
-
-or:
-
-```
 make test-advancedserver
+```
+
+You can specify the image to use directly by using the `MQ_IMAGE_ADVANCEDSERVER` or `MQ_IMAGE_DEVSERVER` variables, for example:
+
+```
+MQ_IMAGE_ADVANCEDSERVER=mqadvanced-server9.0.4.0-x86_64-ubuntu-16.04 make test-advancedserver
 ```
 
 You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command::
 
 ```
 TEST_OPTS_DOCKER="-run TestGoldenPath" make test-advancedserver
+```
+
+You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `mqadvanced-server9.0.3.0-x86_64-ubuntu-16.04`:
+
+```
+MQ_VERSION=9.0.3.0 make test-advancedserver
 ```
 
 ### Running the Docker tests with code coverage
@@ -79,5 +66,5 @@ In order to generate code coverage metrics from the Docker tests, the build step
 For the Kubernetes tests, you need to have built the Docker image, and pushed it to the registry used by your Kubernetes cluster.  Most of the configuration used by the tests is picked up from your `kubectl` configuration, but you will typically need to specify the image details.  For example:
 
 ```bash
-DOCKER_REPO_DEVSERVER=mycluster.icp:8500/default/mq-devserver make test-kubernetes-devserver
+MQ_IMAGE=mycluster.icp:8500/default/mq-devserver make test-kubernetes-devserver
 ```

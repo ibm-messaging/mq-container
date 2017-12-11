@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ARG BASE_IMAGE=ubuntu:16.04
+
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
@@ -29,14 +31,14 @@ RUN go test -v ./cmd/... ./internal/...
 ###############################################################################
 # Main build stage, to build MQ image
 ###############################################################################
-FROM ubuntu:16.04
+FROM $BASE_IMAGE 
 
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ Debian (.deb) install packages
 ARG MQ_URL
 
-# The MQ packages to install
-ARG MQ_PACKAGES="ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams"
+# The MQ packages to install - see install-mq.sh for default value
+ARG MQ_PACKAGES
 
 COPY install-mq.sh /usr/local/bin/
 
