@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"io/ioutil"
@@ -337,4 +338,55 @@ func inspectLogs(t *testing.T, cli *client.Client, ID string) string {
 		log.Fatal(err)
 	}
 	return buf.String()
+}
+
+// generateTAR creates a TAR-formatted []byte, with the specified files included.
+func generateTAR(t *testing.T, files []struct{ Name, Body string }) []byte {
+	buf := new(bytes.Buffer)
+	tw := tar.NewWriter(buf)
+	for _, file := range files {
+		hdr := &tar.Header{
+			Name: file.Name,
+			Mode: 0600,
+			Size: int64(len(file.Body)),
+		}
+		err := tw.WriteHeader(hdr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = tw.Write([]byte(file.Body))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	err := tw.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
+
+// createImage creates a new Docker image with the specified files included.
+func createImage(t *testing.T, cli *client.Client, files []struct{ Name, Body string }) string {
+	r := bytes.NewReader(generateTAR(t, files))
+	tag := strings.ToLower(t.Name())
+	buildOptions := types.ImageBuildOptions{
+		Context: r,
+		Tags:    []string{tag},
+	}
+	resp, err := cli.ImageBuild(context.Background(), r, buildOptions)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	// Sleep for two seconds, to try and prevent "No such image" errors
+	time.Sleep(2 * time.Second)
+	return tag
+}
+
+// deleteImage deletes a Docker image
+func deleteImage(t *testing.T, cli *client.Client, id string) {
+	cli.ImageRemove(context.Background(), id, types.ImageRemoveOptions{
+		Force: true,
+	})
 }

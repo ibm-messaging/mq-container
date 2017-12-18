@@ -17,7 +17,7 @@ package main
 
 import (
 	"context"
-	"strconv"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -323,13 +323,41 @@ func TestZombies(t *testing.T) {
 		t.Fatalf("Expected pkill to kill a process, got %v", out)
 	}
 	time.Sleep(3 * time.Second)
-	// Create a zombie process for up to ten seconds
-	out = execContainerWithOutput(t, cli, id, "mqm", []string{"bash", "-c", "ps -lA | grep '^. Z' | wc -l"})
-	count, err := strconv.Atoi(out)
+	out = execContainerWithOutput(t, cli, id, "mqm", []string{"bash", "-c", "ps -lA | grep '^. Z'"})
+	if out != "" {
+		count := strings.Count(out, "\n") + 1
+		t.Errorf("Expected zombies=0, got %v", count)
+		t.Error(out)
+		t.Fail()
+	}
+}
+
+// TestMQSC creates a new image with an MQSC file in, starts a container based
+// on that image, and checks that the MQSC has been applied correctly.
+func TestMQSC(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if count != 0 {
-		t.Fatalf("Expected zombies=0, got %v", count)
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf("FROM %v\nADD test.mqsc /etc/mqm/", imageName())},
+		{"test.mqsc", "DEFINE QLOCAL(test)"},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	rc := execContainerWithExitCode(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
+	if rc != 0 {
+		t.Fatalf("Expected runmqsc to exit with rc=0, got %v", rc)
 	}
 }
