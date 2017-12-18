@@ -30,10 +30,12 @@ TEST_OPTS_DOCKER ?=
 TEST_OPTS_KUBERNETES ?=
 # MQ_IMAGE_ADVANCEDSERVER is the name and tag of the built MQ Advanced image
 MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
-# MQ_IMAGE_ADVANCEDSERVER is the name and tag of the built MQ Advanced for Developers image
+# MQ_IMAGE_DEVSERVER is the name and tag of the built MQ Advanced for Developers image
 MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # DOCKER is the Docker command to run
 DOCKER ?= docker
+# MQ_PACKAGES specifies the MQ packages (.deb or .rpm) to install.  Defaults vary on base image.
+MQ_PACKAGES ?=
 
 ###############################################################################
 # Other variables
@@ -145,13 +147,15 @@ test-advancedserver-cover: test/docker/vendor
 	rm -f ./coverage/unit*.cov
 	# Run unit tests with coverage, for each package under 'internal'
 	go list -f '{{.Name}}' ./internal/... | xargs -I {} go test -cover -covermode count -coverprofile ./coverage/unit-{}.cov ./internal/{}
+#	ls -1 ./cmd | xargs -I {} go test -cover -covermode count -coverprofile ./coverage/unit-{}.cov ./cmd/{}/...
 	echo 'mode: count' > ./coverage/unit.cov
 	tail -q -n +2 ./coverage/unit-*.cov >> ./coverage/unit.cov
 	go tool cover -html=./coverage/unit.cov -o ./coverage/unit.html
 
 	rm -f ./test/docker/coverage/*.cov
 	rm -f ./coverage/docker.*
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER)-cover go test $(TEST_OPTS_DOCKER)
+	mkdir -p ./test/docker/coverage/
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER)-cover TEST_COVER=true go test $(TEST_OPTS_DOCKER)
 	echo 'mode: count' > ./coverage/docker.cov
 	tail -q -n +2 ./test/docker/coverage/*.cov >> ./coverage/docker.cov
 	go tool cover -html=./coverage/docker.cov -o ./coverage/docker.html
@@ -214,22 +218,16 @@ docker-version:
 build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_ADVANCEDSERVER),Dockerfile-server,$(MQ_ARCHIVE),"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced",$(MQ_VERSION))
-#	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):$(MQ_VERSION)-$(ARCH)-$(subst :,-,$(BASE_IMAGE))
 
 .PHONY: build-devserver
 build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version
 	@test "$(shell uname -m)" = "x86_64" || (echo "Error: MQ Advanced for Developers is only available for x86_64 architecture" && exit 1)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
-#	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):$(MQ_VERSION)-$(ARCH)
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: docker-version
-	$(DOCKER) build -t $(MQ_IMAGE_ADVANCEDSERVER)-cover -f Dockerfile-server.cover .
-
-# .PHONY: build-web
-# build-web: build downloads/CNJR7ML.tar.gz
-# 	$(call docker-build-mq,mq-web:latest-$(ARCH),Dockerfile-mq-web)
+	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_IMAGE_ADVANCEDSERVER)-cover -f Dockerfile-server.cover .
 
 .PHONY: build-explorer
 build-explorer: downloads/$(MQ_ARCHIVE_DEV)
