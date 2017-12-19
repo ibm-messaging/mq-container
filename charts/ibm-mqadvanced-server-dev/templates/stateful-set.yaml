@@ -46,6 +46,19 @@ spec:
         heritage: "{{ .Release.Service }}"
         QM_IDENTIFIER: "{{ .Release.Name }}"
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+              - key: beta.kubernetes.io/os
+                operator: In
+                values:
+                - linux                
       {{- if .Values.image.pullSecret }}
       imagePullSecrets:
         - name: {{ .Values.image.pullSecret }}
