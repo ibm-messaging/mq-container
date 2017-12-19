@@ -10,7 +10,7 @@ This chart deploys a single IBM MQ Advanced for Developers server (queue manager
 
 - Kubernetes 1.6 or greater, with beta APIs enabled
 - If persistence is enabled (see [configuration](#configuration)), then you either need to create a PersistentVolume, or specify a Storage Class if classes are defined in your cluster.
-
+¸
 ## Installing the Chart
 
 To install the chart with the release name `foo`:
@@ -61,7 +61,7 @@ The following table lists the configurable parameters of the `ibm-mqadvanced-ser
 | `queueManager.name`              | MQ Queue Manager name                           | Helm release name                                          |
 | `queueManager.dev.adminPassword` | Developer defaults - administrator password     | Random generated string.  See the notes that appear when you install for how to retrieve this.                            |
 | `queueManager.dev.appPassword`   | Developer defaults - app password   | `nil` (no password required to connect an MQ client)                   |
-| `nameOverride`                   | Set to partially override the resource names used in this chart | `nil`                                      |
+| `nameOverride`                   | Set to partially override the resource names used in this chart | `ibm-mq`                                      |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
