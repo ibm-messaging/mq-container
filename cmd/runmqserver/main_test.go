@@ -25,6 +25,8 @@ import (
 
 var test *bool
 
+const filename = "/var/coverage/exitCode"
+
 func init() {
 	test = flag.Bool("test", false, "Set to true when running tests for coverage")
 }
@@ -38,8 +40,11 @@ func TestSystem(t *testing.T) {
 		}()
 		osExit = func(rc int) {
 			// Write the exit code to a file instead
-			log.Printf("Writing exit code %v to file", strconv.Itoa(rc))
-			ioutil.WriteFile("/var/coverage/exitCode", []byte(strconv.Itoa(rc)), 0644)
+			log.Printf("Writing exit code %v to file %v", strconv.Itoa(rc), filename)
+			err := ioutil.WriteFile(filename, []byte(strconv.Itoa(rc)), 0644)
+			if err != nil {
+				log.Print(err)
+			}
 		}
 		main()
 	}

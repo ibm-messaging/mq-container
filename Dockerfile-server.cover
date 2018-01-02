@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ARG BASE_IMAGE
+
 # Build stage to build Go code
 FROM golang:1.9 as builder 
 WORKDIR /go/src/github.com/ibm-messaging/mq-container/
@@ -20,7 +22,7 @@ COPY internal/ ./internal
 COPY vendor/ ./vendor
 RUN go test -c -covermode=count -coverpkg $(go list ./cmd/runmqserver ./internal/... | paste -s -d, -) ./cmd/runmqserver
 
-FROM mq-advancedserver:latest-x86_64 
+FROM $BASE_IMAGE
 
 # Copy in the version of the code instrumented for code coverage
 COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqserver.test /usr/local/bin/

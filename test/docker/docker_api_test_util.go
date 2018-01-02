@@ -16,8 +16,11 @@ limitations under the License.
 package main
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
+	"encoding/json"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -32,6 +35,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
 )
 
@@ -41,6 +45,14 @@ func imageName() string {
 		image = "mq-devserver:latest-x86-64"
 	}
 	return image
+}
+
+func coverage() bool {
+	cover := os.Getenv("TEST_COVER")
+	if cover == "true" || cover == "1" {
+		return true
+	}
+	return false
 }
 
 // coverageDir returns the host directory to use for code coverage data
@@ -62,6 +74,11 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	if err == nil {
 		// Log the results and continue
 		t.Logf("Inspected container %v: %#v", ID, i)
+		s, err := json.MarshalIndent(i, "", "    ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("Inspected container %v: %v", ID, string(s))
 	}
 	t.Logf("Stopping container: %v", ID)
 	timeout := 10 * time.Second
@@ -120,6 +137,15 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	return ctr.ID
 }
 
+func runContainerOneShot(t *testing.T, cli *client.Client, command ...string) (int64, string) {
+	containerConfig := container.Config{
+		Entrypoint: command,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	return waitForContainer(t, cli, id, 10), inspectLogs(t, cli, id)
+}
+
 func startContainer(t *testing.T, cli *client.Client, ID string) {
 	t.Logf("Starting container: %v", ID)
 	startOptions := types.ContainerStartOptions{}
@@ -142,7 +168,7 @@ func getCoverageExitCode(t *testing.T, orig int64) int64 {
 	f := filepath.Join(coverageDir(t), "exitCode")
 	_, err := os.Stat(f)
 	if err != nil {
-		//t.Log(err)
+		t.Log(err)
 		return orig
 	}
 	// Remove the file, ready for the next test
@@ -167,10 +193,12 @@ func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64
 	//defer cancel()
 	rc, err := cli.ContainerWait(context.Background(), ID)
 
-	// COVERAGE: When running coverage, the exit code is written to a file,
-	// to allow the coverage to be generated (which doesn't happen for non-zero
-	// exit codes)
-	rc = getCoverageExitCode(t, rc)
+	if coverage() {
+		// COVERAGE: When running coverage, the exit code is written to a file,
+		// to allow the coverage to be generated (which doesn't happen for non-zero
+		// exit codes)
+		rc = getCoverageExitCode(t, rc)
+	}
 
 	//	err := <-errC
 	if err != nil {
@@ -328,4 +356,68 @@ func inspectLogs(t *testing.T, cli *client.Client, ID string) string {
 		log.Fatal(err)
 	}
 	return buf.String()
+}
+
+// generateTAR creates a TAR-formatted []byte, with the specified files included.
+func generateTAR(t *testing.T, files []struct{ Name, Body string }) []byte {
+	buf := new(bytes.Buffer)
+	tw := tar.NewWriter(buf)
+	for _, file := range files {
+		hdr := &tar.Header{
+			Name: file.Name,
+			Mode: 0600,
+			Size: int64(len(file.Body)),
+		}
+		err := tw.WriteHeader(hdr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = tw.Write([]byte(file.Body))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	err := tw.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
+
+// createImage creates a new Docker image with the specified files included.
+func createImage(t *testing.T, cli *client.Client, files []struct{ Name, Body string }) string {
+	r := bytes.NewReader(generateTAR(t, files))
+	tag := strings.ToLower(t.Name())
+	buildOptions := types.ImageBuildOptions{
+		Context: r,
+		Tags:    []string{tag},
+	}
+	resp, err := cli.ImageBuild(context.Background(), r, buildOptions)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// resp (ImageBuildResponse) contains a series of JSON messages
+	dec := json.NewDecoder(resp.Body)
+	for {
+		m := jsonmessage.JSONMessage{}
+		err := dec.Decode(&m)
+		if m.Error != nil {
+			t.Fatal(m.ErrorMessage)
+		}
+		t.Log(strings.TrimSpace(m.Stream))
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	return tag
+}
+
+// deleteImage deletes a Docker image
+func deleteImage(t *testing.T, cli *client.Client, id string) {
+	cli.ImageRemove(context.Background(), id, types.ImageRemoveOptions{
+		Force: true,
+	})
 }

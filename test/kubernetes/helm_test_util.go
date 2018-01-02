@@ -17,36 +17,34 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"os"
-	"os/exec"
-	"runtime"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+	"unicode"
 
-	"golang.org/x/sys/unix"
+	"github.com/ibm-messaging/mq-container/internal/command"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func imageName() string {
-	v, ok := os.LookupEnv("TEST_REPO")
+func image(t *testing.T) string {
+	v, ok := os.LookupEnv("TEST_IMAGE")
 	if !ok {
-		v = "ibmcom/mq"
+		t.Fatal("TEST_IMAGE environment variable not set")
 	}
 	return v
 }
 
-func imageTag() string {
-	v, ok := os.LookupEnv("TEST_TAG")
-	if !ok {
-		v = "latest"
-	}
-	return v
+func imageName(t *testing.T) string {
+	return strings.Fields(strings.Replace(image(t), ":", " ", -1))[0]
+}
+
+func imageTag(t *testing.T) string {
+	return strings.Fields(strings.Replace(image(t), ":", " ", -1))[1]
 }
 
 func chartName() string {
@@ -55,32 +53,6 @@ func chartName() string {
 		v = "../../charts/ibm-mqadvanced-server-dev"
 	}
 	return v
-}
-
-// runCommand runs an OS command.  On Linux it waits for the command to
-// complete and returns the exit status (return code).
-// TODO: duplicated from cmd/runmqserver/main.go
-func runCommand(t *testing.T, name string, arg ...string) (string, int, error) {
-	t.Logf("Running command: %v %v", name, strings.Trim(fmt.Sprintf("%v", arg), "[]"))
-	cmd := exec.Command(name, arg...)
-	// Run the command and wait for completion
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		var rc int
-		// Only works on Linux
-		if runtime.GOOS == "linux" {
-			var ws unix.WaitStatus
-			unix.Wait4(cmd.Process.Pid, &ws, 0, nil)
-			rc = ws.ExitStatus()
-		} else {
-			rc = -1
-		}
-		if rc == 0 {
-			return string(out), rc, nil
-		}
-		return string(out), rc, err
-	}
-	return string(out), 0, nil
 }
 
 func inspectLogs(t *testing.T, cs *kubernetes.Clientset, release string) string {
@@ -98,7 +70,7 @@ func inspectLogs(t *testing.T, cs *kubernetes.Clientset, release string) string 
 
 func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values ...string) {
 	chart := chartName()
-	tag := "latest"
+	tag := imageTag(t)
 	arg := []string{
 		"install",
 		"--debug",
@@ -106,7 +78,7 @@ func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values 
 		"--name",
 		release,
 		"--set",
-		"image.repository=" + imageName(),
+		"image.repository=" + imageName(t),
 		"--set",
 		"image.tag=" + tag,
 		"--set",
@@ -116,7 +88,7 @@ func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values 
 	for _, value := range values {
 		arg = append(arg, "--set", value)
 	}
-	out, _, err := runCommand(t, "helm", arg...)
+	out, _, err := command.Run("helm", arg...)
 	t.Log(out)
 	if err != nil {
 		t.Error(out)
@@ -127,7 +99,7 @@ func helmInstall(t *testing.T, cs *kubernetes.Clientset, release string, values 
 func helmDelete(t *testing.T, cs *kubernetes.Clientset, release string) {
 	t.Log("Deleting Helm release")
 	t.Log(inspectLogs(t, cs, release))
-	out, _, err := runCommand(t, "helm", "delete", "--purge", release)
+	out, _, err := command.Run("helm", "delete", "--purge", release)
 	if err != nil {
 		t.Error(out)
 		t.Fatal(err)
@@ -151,7 +123,10 @@ func helmDeletePVC(t *testing.T, cs *kubernetes.Clientset, release string) {
 }
 
 func kubeLogin(t *testing.T) *kubernetes.Clientset {
-	kc := os.Getenv("HOME") + "/.kube/config"
+	kc := os.Getenv("KUBECONFIG")
+	if kc == "" {
+		kc = os.Getenv("HOME") + "/.kube/config"
+	}
 	c, err := clientcmd.BuildConfigFromFlags("", kc)
 	if err != nil {
 		t.Fatal(err)
@@ -167,7 +142,7 @@ func kubeExec(t *testing.T, podName string, name string, arg ...string) (string,
 	// Current version of Kubernetes Go client doesn't support "exec", so run this via the command line
 	param := []string{"exec", podName, "--", name}
 	param = append(param, arg...)
-	return runCommand(t, "kubectl", param...)
+	return command.Run("kubectl", param...)
 }
 
 func waitForReady(t *testing.T, cs *kubernetes.Clientset, release string) {
@@ -199,12 +174,12 @@ func waitForReady(t *testing.T, cs *kubernetes.Clientset, release string) {
 	for {
 		// Current version of Kubernetes Go client doesn't support "exec", so run this via the command line
 		// TODO: If we run "chkmqready" here, it doesn't seem to work
-		//out, _, err := runCommand(t, "kubectl", "exec", podName, "--", "dspmq")
+		//out, _, err := command.Run(t, "kubectl", "exec", podName, "--", "dspmq")
 		out, _, err := kubeExec(t, podName, "dspmq")
-		//out, rc, err := runCommand(t, "kubectl", "exec", podName, "--", "chkmqready")
+		//out, rc, err := command.Run(t, "kubectl", "exec", podName, "--", "chkmqready")
 		if err != nil {
 			t.Error(out)
-			out2, _, err2 := runCommand(t, "kubectl", "describe", "pod", podName)
+			out2, _, err2 := command.Run("kubectl", "describe", "pod", podName)
 			if err2 == nil {
 				t.Log(out2)
 			}
@@ -258,17 +233,32 @@ func volumesAvailable(t *testing.T, cs *kubernetes.Clientset) bool {
 	return false
 }
 
+// digitsOnly returns only the digits from the supplied string
+func digitsOnly(s string) string {
+	return strings.Map(
+		func(r rune) rune {
+			if unicode.IsDigit(r) {
+				return r
+			}
+			return -1
+		},
+		s,
+	)
+}
+
 // assertKubeVersion is used to assert that a test requires a specific version of Kubernetes
 func assertKubeVersion(t *testing.T, cs *kubernetes.Clientset, major int, minor int) {
 	v, err := cs.Discovery().ServerVersion()
 	if err != nil {
 		t.Fatal(err)
 	}
-	maj, err := strconv.Atoi(v.Major)
+	// Make sure we use only the digits from the version, to account for things like "1.8+"
+	maj, err := strconv.Atoi(digitsOnly(v.Major))
 	if err != nil {
 		t.Fatal(err)
 	}
-	min, err := strconv.Atoi(v.Minor)
+	// Make sure we use only the digits from the version, to account for things like "1.8+"
+	min, err := strconv.Atoi(digitsOnly(v.Minor))
 	if err != nil {
 		t.Fatal(err)
 	}

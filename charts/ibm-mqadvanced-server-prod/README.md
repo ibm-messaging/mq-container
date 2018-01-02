@@ -1,5 +1,3 @@
-![IBM MQ logo](https://developer.ibm.com/messaging/wp-content/uploads/sites/18/2017/07/IBM-MQ-Square-200.png)
-
 # IBM MQ
 
 IBM® MQ is messaging middleware that simplifies and accelerates the integration of diverse applications and business data across multiple platforms. It uses message queues to facilitate the exchanges of information and offers a single messaging solution for cloud, mobile, Internet of Things (IoT) and on-premises environments.
@@ -45,8 +43,8 @@ The following table lists the configurable parameters of the `ibm-mqadvanced-ser
 | Parameter                       | Description                                                     | Default                                    |
 | ------------------------------- | --------------------------------------------------------------- | ------------------------------------------ |
 | `license`                       | Set to `accept` to accept the terms of the IBM license          | `"not accepted"`                           |
-| `image.repository`              | Image full name including repository                            | `nil`                                      |
-| `image.tag`                     | Image tag                                                       | `nil`                                      |
+| `image.repository`              | Image full name including repository                            | `MQ image in your registry`                |
+| `image.tag`                     | Image tag                                                       | `Tag of MQ image in your registry`         |
 | `image.pullPolicy`              | Image pull policy                                               | `IfNotPresent`                             |
 | `image.pullSecret`              | Image pull secret, if you are using a private Docker registry   | `nil`                                      |
 | `persistence.enabled`           | Use persistent volumes for all defined volumes                  | `true`                                     |
@@ -61,7 +59,7 @@ The following table lists the configurable parameters of the `ibm-mqadvanced-ser
 | `resources.requests.cpu`        | Kubernetes CPU request for the Queue Manager container          | `1`                                        |
 | `resources.requests.memory`     | Kubernetes memory request for the Queue Manager container       | `1Gi`                                      |
 | `queueManager.name`             | MQ Queue Manager name                                           | Helm release name                          |
-| `nameOverride`                  | Set to partially override the resource names used in this chart | `nil`                                      |
+| `nameOverride`                  | Set to partially override the resource names used in this chart | `ibm-mq`                                   |
 | `livenessProbe.initialDelaySeconds` | The initial delay before starting the liveness probe. Useful for slower systems that take longer to start the Queue Manager. | 60 |
 | `livenessProbe.periodSeconds` | How often to run the probe | 10 |
 | `livenessProbe.timeoutSeconds` | Number of seconds after which the probe times out | 5 |

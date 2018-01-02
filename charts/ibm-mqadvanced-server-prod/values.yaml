@@ -59,7 +59,7 @@ queueManager:
   name:
 
 # nameOverride can be set to partially override the name of the resources created by this chart
-nameOverride:
+nameOverride: ibm-mq
 
 # livenessProbe section specifies setting for the MQ liveness probe, which checks for a running Queue Manager
 livenessProbe:
