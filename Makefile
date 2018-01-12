@@ -20,7 +20,7 @@
 BASE_IMAGE ?= ubuntu:16.04
 # MQ_VERSION is the fully qualified MQ version number to build
 MQ_VERSION ?= 9.0.4.0
-# MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can 
+# MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
 MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION)_$(MQ_ARCHIVE_TYPE)_$(MQ_ARCHIVE_ARCH).tar.gz
@@ -190,7 +190,7 @@ define docker-build-mq
 	  --detach \
 	  nginx:alpine
 	# Make sure we have the latest base image
-	$(DOCKER) pull $(BASE_IMAGE) 
+	$(DOCKER) pull $(BASE_IMAGE)
 	# Build the new image
 	$(DOCKER) build \
 	  --tag $1 \
@@ -209,10 +209,8 @@ DOCKER_SERVER_VERSION=$(shell docker version --format "{{ .Server.Version }}")
 DOCKER_CLIENT_VERSION=$(shell docker version --format "{{ .Client.Version }}")
 .PHONY: docker-version
 docker-version:
-	@test "$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "17" || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
-	@test "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05" || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
-	@test "$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "17" || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
-	@test "$(word 2,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "05" || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
+	@test "$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
+	@test "$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
 
 .PHONY: build-advancedserver
 build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version
