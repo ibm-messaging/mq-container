@@ -16,8 +16,6 @@ limitations under the License.
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -39,9 +37,10 @@ func TestMirrorLogWithoutRotation(t *testing.T) {
 			}
 			t.Log(tmp.Name())
 			defer os.Remove(tmp.Name())
-			b := make([]byte, 256)
-			buf := bytes.NewBuffer(b)
-			lifecycle, err := mirrorLog(tmp.Name(), buf)
+			count := 0
+			lifecycle, err := mirrorLog(tmp.Name(), func(msg string) {
+				count++
+			})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -57,18 +56,6 @@ func TestMirrorLogWithoutRotation(t *testing.T) {
 			lifecycle <- true
 			<-lifecycle
 
-			// Read the buffer back and count the lines
-			r := strings.NewReader(buf.String())
-			scanner := bufio.NewScanner(r)
-			count := 0
-			for scanner.Scan() {
-				count++
-				t.Logf("Received entry: %v", scanner.Text())
-			}
-			err = scanner.Err()
-			if err != nil {
-				t.Fatal(err)
-			}
 			if count != 3 {
 				t.Fatalf("Expected 3 log entries; got %v", count)
 			}
@@ -90,9 +77,10 @@ func TestMirrorLogWithRotation(t *testing.T) {
 				t.Log("Removing file")
 				os.Remove(tmp.Name())
 			}()
-			b := make([]byte, 512)
-			buf := bytes.NewBuffer(b)
-			lifecycle, err := mirrorLog(tmp.Name(), buf)
+			count := 0
+			lifecycle, err := mirrorLog(tmp.Name(), func(msg string) {
+				count++
+			})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -125,18 +113,6 @@ func TestMirrorLogWithRotation(t *testing.T) {
 			// Wait until it's finished
 			<-lifecycle
 
-			// Read the buffer back and count the lines
-			r := strings.NewReader(buf.String())
-			scanner := bufio.NewScanner(r)
-			count := 0
-			for scanner.Scan() {
-				count++
-				t.Logf("Received entry: %v", scanner.Text())
-			}
-			err = scanner.Err()
-			if err != nil {
-				t.Fatal(err)
-			}
 			if count != 5 {
 				t.Fatalf("Expected 5 log entries; got %v", count)
 			}

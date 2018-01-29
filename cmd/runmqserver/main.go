@@ -19,6 +19,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -220,10 +221,17 @@ func doMain() error {
 		f := "/var/mqm/qmgrs/" + name + "/errors/AMQERR01"
 		if jsonLogs() {
 			f = f + ".json"
+			mirrorLifecycle, err = mirrorLog(f, func(msg string) {
+				// Print the message straight to stdout
+				fmt.Println(msg)
+			})
 		} else {
 			f = f + ".LOG"
+			mirrorLifecycle, err = mirrorLog(f, func(msg string) {
+				// Log the message, so we get a timestamp etc.
+				log.Println(msg)
+			})
 		}
-		mirrorLifecycle, err = mirrorLog(f, os.Stdout)
 		if err != nil {
 			return err
 		}

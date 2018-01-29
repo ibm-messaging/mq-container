@@ -18,9 +18,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -47,19 +45,23 @@ func waitForFile(path string) (os.FileInfo, error) {
 	return fi, nil
 }
 
+type mirrorFunc func(msg string)
+
 // mirrorAvailableMessages prints lines from the file, until no more are available
-func mirrorAvailableMessages(f *os.File, w io.Writer) {
+func mirrorAvailableMessages(f *os.File, mf mirrorFunc) {
 	scanner := bufio.NewScanner(f)
 	count := 0
 	for scanner.Scan() {
 		t := scanner.Text()
-		if strings.HasPrefix(t, "{") {
-			// Assume JSON, so just print it
-			fmt.Fprintln(w, t)
-		} else if strings.HasPrefix(t, "AMQ") {
-			// Only print MQ messages with AMQnnnn codes
-			fmt.Fprintln(w, t)
-		}
+		mf(t)
+		// if strings.HasPrefix(t, "{") {
+		// 	// Assume JSON, so just print it
+		// 	fmt.Fprintln(w, t)
+		// } else if strings.HasPrefix(t, "AMQ") {
+		// 	// Only print MQ messages with AMQnnnn codes
+		// 	log.Println(t)
+		// 	//fmt.Fprintln(w, t)
+		// }
 		count++
 	}
 	log.Debugf("Mirrored %v log entries", count)
@@ -73,7 +75,7 @@ func mirrorAvailableMessages(f *os.File, w io.Writer) {
 // mirrorLog tails the specified file, and logs each line to stdout.
 // This is useful for usability, as the container console log can show
 // messages from the MQ error logs.
-func mirrorLog(path string, w io.Writer) (chan bool, error) {
+func mirrorLog(path string, mf mirrorFunc) (chan bool, error) {
 	lifecycle := make(chan bool)
 	var offset int64 = -1
 	var f *os.File
@@ -134,7 +136,7 @@ func mirrorLog(path string, w io.Writer) (chan bool, error) {
 		for {
 			log.Debugln("Start of loop")
 			// If there's already data there, mirror it now.
-			mirrorAvailableMessages(f, w)
+			mirrorAvailableMessages(f, mf)
 			log.Debugf("Stat %v", path)
 			newFI, err := os.Stat(path)
 			if err != nil {
@@ -148,7 +150,7 @@ func mirrorLog(path string, w io.Writer) (chan bool, error) {
 				// log rotation happens before we can open the new file, then we
 				// could skip all those messages.  This could happen with a very small
 				// MQ error log size.
-				mirrorAvailableMessages(f, w)
+				mirrorAvailableMessages(f, mf)
 				f.Close()
 				// Re-open file
 				log.Debugln("Re-opening error log file")
@@ -160,7 +162,7 @@ func mirrorLog(path string, w io.Writer) (chan bool, error) {
 				}
 				fi = newFI
 				// Don't seek this time, because we know it's a new file
-				mirrorAvailableMessages(f, w)
+				mirrorAvailableMessages(f, mf)
 			}
 			log.Debugln("Check for lifecycle event")
 			select {
