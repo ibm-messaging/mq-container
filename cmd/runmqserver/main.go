@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,13 +19,14 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/name"
@@ -35,13 +36,13 @@ var debug = false
 
 func logDebug(msg string) {
 	if debug {
-		log.Printf("DEBUG: %v", msg)
+		log.Debug(msg)
 	}
 }
 
 func logDebugf(format string, args ...interface{}) {
 	if debug {
-		log.Printf("DEBUG: %v", fmt.Sprintf(format, args...))
+		log.Debugf(format, args...)
 	}
 }
 
@@ -74,6 +75,7 @@ func createQueueManager(name string) error {
 func updateCommandLevel() error {
 	level, ok := os.LookupEnv("MQ_CMDLEVEL")
 	if ok && level != "" {
+		log.Printf("Setting CMDLEVEL to %v", level)
 		out, rc, err := command.Run("strmqm", "-e", "CMDLEVEL="+level)
 		if err != nil {
 			log.Printf("Error %v setting CMDLEVEL: %v", rc, string(out))
@@ -141,23 +143,62 @@ func stopQueueManager(name string) error {
 	return nil
 }
 
+func jsonLogs() bool {
+	e := os.Getenv("MQ_ALPHA_JSON_LOGS")
+	if e == "true" || e == "1" {
+		return true
+	}
+	return false
+}
+
+func mirrorLogs() bool {
+	e := os.Getenv("MQ_ALPHA_MIRROR_ERROR_LOGS")
+	if e == "true" || e == "1" {
+		return true
+	}
+	return false
+}
+
+func configureLogger(name string) {
+	if jsonLogs() {
+		formatter := logrus.JSONFormatter{
+			FieldMap: logrus.FieldMap{
+				logrus.FieldKeyMsg:   "message",
+				logrus.FieldKeyLevel: "ibm_level",
+				logrus.FieldKeyTime:  "ibm_datetime",
+			},
+			// Match time stamp format used by MQ messages (includes milliseconds)
+			TimestampFormat: "2006-01-02T15:04:05.000Z07:00",
+		}
+		logrus.SetFormatter(&formatter)
+	} else {
+		formatter := logrus.TextFormatter{
+			FullTimestamp: true,
+		}
+		logrus.SetFormatter(&formatter)
+	}
+	if debug {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+}
+
 func doMain() error {
 	debugEnv, ok := os.LookupEnv("DEBUG")
 	if ok && (debugEnv == "true" || debugEnv == "1") {
 		debug = true
 	}
+	name, err := name.GetQueueManagerName()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	configureLogger(name)
 	accepted, err := checkLicense()
 	if err != nil {
 		return err
 	}
 	if !accepted {
 		return errors.New("License not accepted")
-	}
-
-	name, err := name.GetQueueManagerName()
-	if err != nil {
-		log.Println(err)
-		return err
 	}
 	log.Printf("Using queue manager name: %v", name)
 
@@ -173,6 +214,19 @@ func doMain() error {
 	err = createDirStructure()
 	if err != nil {
 		return err
+	}
+	var mirrorLifecycle chan bool
+	if mirrorLogs() {
+		f := "/var/mqm/qmgrs/" + name + "/errors/AMQERR01"
+		if jsonLogs() {
+			f = f + ".json"
+		} else {
+			f = f + ".LOG"
+		}
+		mirrorLifecycle, err = mirrorLog(f, os.Stdout)
+		if err != nil {
+			return err
+		}
 	}
 	err = createQueueManager(name)
 	if err != nil {
@@ -195,6 +249,12 @@ func doMain() error {
 	signalControl <- reapNow
 	// Wait for terminate signal
 	<-signalControl
+	if mirrorLogs() {
+		// Tell the mirroring goroutine to shutdown
+		mirrorLifecycle <- true
+		// Wait for the mirroring goroutine to finish cleanly
+		<-mirrorLifecycle
+	}
 	return nil
 }
 

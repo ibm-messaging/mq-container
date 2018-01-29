@@ -1,19 +1,15 @@
-hash: 170f17bb34eaa2c23733b3919e76a268654e50a21e70b45e1b7b2dd2161efc67
-updated: 2017-09-25T16:58:43.624633314+01:00
+hash: 9bf1a2f2fecdcf4fd6ded16766793cb12bb891291470db4a376fd502d7c75d52
+updated: 2018-01-29T10:24:45.113427Z
 imports:
-- name: github.com/hpcloud/tail
-  version: a30252cb686a21eb2d0b98132633053ec2f7f1e5
+- name: github.com/sirupsen/logrus
+  version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
+- name: golang.org/x/crypto
+  version: 81e90905daefcd6fd217b62423c0908922eadb30
   subpackages:
-  - ratelimiter
-  - util
-  - watch
-  - winfile
+  - ssh/terminal
 - name: golang.org/x/sys
   version: 7a4fde3fda8ef580a89dbae8138c26041be14299
   subpackages:
   - unix
-- name: gopkg.in/fsnotify.v1
-  version: 7be54206639f256967dd82fa767397ba5f8f48f5
-- name: gopkg.in/tomb.v1
-  version: c131134a1947e9afd9cecfe11f4c6dff0732ae58
+  - windows
 testImports: []

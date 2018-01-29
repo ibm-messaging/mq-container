@@ -16,8 +16,14 @@ limitations under the License.
 package main
 
 import (
+	"archive/tar"
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -359,5 +365,124 @@ func TestMQSC(t *testing.T) {
 	rc := execContainerWithExitCode(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
 	if rc != 0 {
 		t.Fatalf("Expected runmqsc to exit with rc=0, got %v", rc)
+	}
+}
+
+func countLines(t *testing.T, r io.Reader) int {
+	scanner := bufio.NewScanner(r)
+	count := 0
+	for scanner.Scan() {
+		// if scanner.Text() != "" {
+		count++
+		// fmt.Printf("%v: %v\n", count, scanner.Text())
+		// }
+	}
+	err := scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return count
+}
+
+func countTarLines(t *testing.T, b []byte) int {
+	r := bytes.NewReader(b)
+	tr := tar.NewReader(r)
+	// totals := make([]int, 3)
+	total := 0
+	for {
+		_, err := tr.Next()
+		if err == io.EOF {
+			// End of TAR
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		total += countLines(t, tr)
+		// totals = append(totals, countLines(t, tr))
+	}
+	return total
+}
+
+func TestErrorLogRotation(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	qmName := "qm1"
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=" + qmName,
+			"MQMAXERRORLOGSIZE=65536",
+			"MQ_ALPHA_JSON_LOGS=true",
+			"MQ_ALPHA_MIRROR_ERROR_LOGS=true",
+			//"DEBUG=true",
+		},
+		ExposedPorts: nat.PortSet{
+			"1414/tcp": struct{}{},
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	dir := "/var/mqm/qmgrs/" + qmName + "/errors"
+	// Generate some content for the error logs, by trying to put messages under an unauthorized user
+	// execContainerWithOutput(t, cli, id, "fred", []string{"bash", "-c", "for i in {1..30} ; do /opt/mqm/samp/bin/amqsput FAKE; done"})
+	execContainerWithOutput(t, cli, id, "root", []string{"useradd", "fred"})
+	for {
+		execContainerWithOutput(t, cli, id, "fred", []string{"bash", "-c", "/opt/mqm/samp/bin/amqsput FAKE"})
+		amqerr02size, err := strconv.Atoi(execContainerWithOutput(t, cli, id, "mqm", []string{"bash", "-c", "wc -c < " + filepath.Join(dir, "AMQERR02.json")}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if amqerr02size > 0 {
+			// We've done enough to cause log rotation
+			break
+		}
+	}
+	out := execContainerWithOutput(t, cli, id, "root", []string{"ls", "-l", dir})
+	t.Log(out)
+	stopContainer(t, cli, id)
+	// Wait to allow the logs to be mirrored
+	//time.Sleep(5 * time.Second)
+	b := copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR01.json"))
+	amqerr01 := countTarLines(t, b)
+	b = copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR02.json"))
+	amqerr02 := countTarLines(t, b)
+	b = copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR03.json"))
+	amqerr03 := countTarLines(t, b)
+	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
+	totalMirrored := 0
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), "\"message\":\"AMQ") {
+			totalMirrored++
+		}
+	}
+	err = scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// log := strings.Split(inspectLogs(t, cli, id), "\n")
+	// total := 0
+	// for _, v := range totals {
+	// 	total += v
+	// }
+	//log := countLines(t, []byte(inspectLogs(t, cli, id)))
+	total := amqerr01 + amqerr02 + amqerr03
+	//total := len(amqerr01) + len(amqerr02) + len(amqerr03)
+	// totalMirrored := 0
+	// for _, line := range log {
+	// 	// Look for something which is only in the MQ log lines, and not those from runmqserver
+	// 	if strings.Contains(line, "ibm_threadId") {
+	// 		totalMirrored++
+	// 	}
+	// }
+	if totalMirrored != total {
+		t.Fatalf("Expected %v (%v + %v + %v) mirrored log entries; got %v", total, amqerr01, amqerr02, amqerr03, totalMirrored)
+		//t.Fatalf("Expected %v mirrored log entries; got %v (AMQERR01=%v entries; AMQERR02=%v entries; AMQERR03=%v entries)", total, totalMirrored, totals[0], totals[1], totals[2])
+	} else {
+		t.Logf("Found %v (%v + %v + %v) mirrored log entries", totalMirrored, amqerr01, amqerr02, amqerr03)
 	}
 }

@@ -17,9 +17,11 @@ package main
 
 import (
 	"archive/tar"
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -92,7 +94,7 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	// If a code coverage file has been generated, then rename it to match the test name
 	os.Rename(filepath.Join(coverageDir(t), "container.cov"), filepath.Join(coverageDir(t), t.Name()+".cov"))
 	// Log the container output for any container we're about to delete
-	t.Logf("Console log from container %v:\n%v", ID, inspectLogs(t, cli, ID))
+	t.Logf("Console log from container %v:\n%v", ID, inspectTextLogs(t, cli, ID))
 
 	t.Logf("Removing container: %s", ID)
 	opts := types.ContainerRemoveOptions{
@@ -339,6 +341,29 @@ func removeVolume(t *testing.T, cli *client.Client, name string) {
 	}
 }
 
+func inspectTextLogs(t *testing.T, cli *client.Client, ID string) string {
+	jsonLogs := inspectLogs(t, cli, ID)
+	scanner := bufio.NewScanner(strings.NewReader(jsonLogs))
+	b := make([]byte, 64*1024)
+	scanner.Buffer(b, 1024*1024)
+	buf := bytes.NewBuffer(b)
+	for scanner.Scan() {
+		t := scanner.Text()
+		if strings.HasPrefix(t, "{") {
+			var e map[string]interface{}
+			json.Unmarshal([]byte(scanner.Text()), &e)
+			fmt.Fprintf(buf, "{\"message\": \"%v\"}\n", e["message"])
+		} else {
+			fmt.Fprintln(buf, t)
+		}
+	}
+	err := scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return buf.String()
+}
+
 func inspectLogs(t *testing.T, cli *client.Client, ID string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -420,4 +445,17 @@ func deleteImage(t *testing.T, cli *client.Client, id string) {
 	cli.ImageRemove(context.Background(), id, types.ImageRemoveOptions{
 		Force: true,
 	})
+}
+
+func copyFromContainer(t *testing.T, cli *client.Client, id string, file string) []byte {
+	reader, _, err := cli.CopyFromContainer(context.Background(), id, file)
+	defer reader.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := ioutil.ReadAll(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
 }
