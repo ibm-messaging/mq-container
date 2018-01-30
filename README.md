@@ -8,15 +8,7 @@ Run [IBM® MQ](http://www-03.ibm.com/software/products/en/ibm-mq) in a container
 MQ Advanced for Developers image - [![Build Status](https://travis-ci.org/ibm-messaging/mq-container.svg?branch=master)](https://travis-ci.org/ibm-messaging/mq-container)
 
 # Build
-After extracting the code from this repository, you can build an image with the latest version of MQ using the following command:
-
-## Building MQ Advanced
-You can build an image for MQ Advanced, follow these steps:
-
-1. Clone this repository into the correct location in your [`GOPATH`](https://github.com/golang/go/wiki/GOPATH)
-2. Create a directory called `downloads` under the cloned directory tree
-3. Download the MQ Advanced for Ubuntu (debs) installer package file `CNLE4ML.tar.gz` into the `downloads` directory
-4. Run `make build-advancedserver`
+After extracting the code from this repository, you can build an image by following the instructions [here](docs/building.md)
 
 # Usage
 In order to use the image, it is necessary to accept the terms of the IBM MQ license.  This is achieved by specifying the environment variable `LICENSE` equal to `accept` when running the image.  You can also view the license terms by setting this variable to `view`. Failure to set the variable will result in the termination of the container with a usage statement.  You can view the license in a different language by also setting the `LANG` environment variable.
