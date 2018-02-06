@@ -228,8 +228,10 @@ func doMain() error {
 		} else {
 			f = f + ".LOG"
 			mirrorLifecycle, err = mirrorLog(f, func(msg string) {
-				// Log the message, so we get a timestamp etc.
-				log.Println(msg)
+				if strings.HasPrefix(msg, "AMQ") {
+					// Log the message, so we get a timestamp etc.
+					log.Println(msg)
+				}
 			})
 		}
 		if err != nil {
