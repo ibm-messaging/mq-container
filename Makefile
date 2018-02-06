@@ -49,6 +49,7 @@ BUILD_SERVER_CONTAINER=build-server
 NUM_CPU=$(shell docker info --format "{{ .NCPU }}")
 # BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
 BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
+MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 
 # Try to figure out which archive to use from the BASE_IMAGE
 ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
@@ -220,8 +221,9 @@ build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version
 .PHONY: build-devserver
 build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version
 	@test "$(shell uname -m)" = "x86_64" || (echo "Error: MQ Advanced for Developers is only available for x86_64 architecture" && exit 1)
-	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER)"$(END)))
-	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE)"$(END)))
+	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER_BASE),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
+	docker build --tag $(MQ_IMAGE_DEVSERVER) incubating/mqadvanced-server-dev
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: docker-version
