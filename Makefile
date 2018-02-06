@@ -140,7 +140,7 @@ test-advancedserver: test/docker/vendor
 .PHONY: test-devserver
 test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER) on Docker"$(END)))
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) go test -parallel $(NUM_CPU)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
 .PHONY: test-advancedserver-cover
 test-advancedserver-cover: test/docker/vendor
