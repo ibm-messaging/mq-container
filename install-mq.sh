@@ -29,6 +29,12 @@ fi
 
 if ($UBUNTU); then
   export DEBIAN_FRONTEND=noninteractive
+  # Use a reduced set of apt repositories.
+  # This ensures no unsupported code gets installed, and makes the build faster
+  source /etc/os-release
+  echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME} main restricted" > /etc/apt/sources.list
+  echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-updates main restricted" >> /etc/apt/sources.list
+  echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-security main restricted" >> /etc/apt/sources.list
   # Install additional packages required by MQ, this install process and the runtime scripts
   apt-get update
   apt-get install -y --no-install-recommends \
