@@ -22,7 +22,7 @@ MQ_VERSION=9.0.4.0 make build-advancedserver
 If you have an MQ archive file with a different file name, you can specify a particular file (which must be in the `downloads` directory).  You should also specify the MQ version, so that the resulting image is tagged correctly, for example:
 
 ```bash
-MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 build-advancedserver
+MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 ```
 
 ## Building a developer image
