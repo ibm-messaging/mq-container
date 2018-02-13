@@ -160,7 +160,19 @@ func mirrorLogs() bool {
 	return false
 }
 
-func configureLogger(name string) {
+type simpleTextFormatter struct {
+}
+
+func (f *simpleTextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+	// If debugging, and a prefix, but only for this formatter.
+	if entry.Level == logrus.DebugLevel {
+		entry.Message = "DEBUG: " + entry.Message
+	}
+	// Use a simple, human-readable format, with a timestamp
+	return []byte(fmt.Sprintf("%s %s\n", entry.Time.Format("2006-01-02 15:04:05"), entry.Message)), nil
+}
+
+func configureLogger() {
 	if jsonLogs() {
 		formatter := logrus.JSONFormatter{
 			FieldMap: logrus.FieldMap{
@@ -173,27 +185,28 @@ func configureLogger(name string) {
 		}
 		logrus.SetFormatter(&formatter)
 	} else {
-		formatter := logrus.TextFormatter{
-			FullTimestamp: true,
-		}
-		logrus.SetFormatter(&formatter)
-	}
-	if debug {
-		logrus.SetLevel(logrus.DebugLevel)
+		log.SetFormatter(new(simpleTextFormatter))
+
+		// formatter := logrus.TextFormatter{
+		// 	FullTimestamp: true,
+		// }
+		// logrus.SetFormatter(&formatter)
 	}
 }
 
 func doMain() error {
+	configureLogger()
 	debugEnv, ok := os.LookupEnv("DEBUG")
 	if ok && (debugEnv == "true" || debugEnv == "1") {
 		debug = true
+		logrus.SetLevel(logrus.DebugLevel)
+		logDebug("Debug mode enabled")
 	}
 	name, err := name.GetQueueManagerName()
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	configureLogger(name)
 	accepted, err := checkLicense()
 	if err != nil {
 		return err
@@ -257,6 +270,7 @@ func doMain() error {
 	signalControl <- startReaping
 	// Reap zombies now, just in case we've already got some
 	signalControl <- reapNow
+
 	// Wait for terminate signal
 	<-signalControl
 	if mirrorLogs() {
