@@ -190,10 +190,9 @@ define docker-build-mq
 	  --volume "$(realpath ./downloads/)":/usr/share/nginx/html:ro \
 	  --detach \
 	  nginx:alpine
-	# Make sure we have the latest base image
-	$(DOCKER) pull $(BASE_IMAGE)
-	# Build the new image
+	# Build the new image (use --pull to make sure we have the latest base image)
 	$(DOCKER) build \
+	  --pull \
 	  --tag $1 \
 	  --file $2 \
 	  --network build \

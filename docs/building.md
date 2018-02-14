@@ -2,7 +2,7 @@
 
 ## Prerequisites
 You need to ensure you have the following tools installed:
-* [Docker](https://www.docker.com/) V17.05 or later
+* [Docker](https://www.docker.com/) V17.06.1 or later
 * [GNU make](https://www.gnu.org/software/make/)
 
 ## Building a production image
