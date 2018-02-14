@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -349,7 +349,7 @@ func TestMQSC(t *testing.T) {
 	var files = []struct {
 		Name, Body string
 	}{
-		{"Dockerfile", fmt.Sprintf("FROM %v\nADD test.mqsc /etc/mqm/", imageName())},
+		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD test.mqsc /etc/mqm/", imageName())},
 		{"test.mqsc", "DEFINE QLOCAL(test)"},
 	}
 	tag := createImage(t, cli, files)
@@ -365,6 +365,57 @@ func TestMQSC(t *testing.T) {
 	rc := execContainerWithExitCode(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
 	if rc != 0 {
 		t.Fatalf("Expected runmqsc to exit with rc=0, got %v", rc)
+	}
+}
+
+// TestReadiness creates a new image with large amounts of MQSC in, to
+// ensure that the readiness check doesn't pass until configuration has finished.
+// WARNING: This test is sensitive to the speed of the machine it's running on.
+func TestReadiness(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const numQueues = 3
+	var buf bytes.Buffer
+	// fmt.Fprintf(&b, "world!")
+
+	// b := make([]byte, 32768)
+	// buf := bytes.NewBuffer(b)
+	for i := 1; i <= numQueues; i++ {
+		fmt.Fprintf(&buf, "* Defining queue test %v\nDEFINE QLOCAL(test%v)\n", i, i)
+	}
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD test.mqsc /etc/mqm/", imageName())},
+		{"test.mqsc", buf.String()},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	queueCheckCommand := fmt.Sprintf("echo 'DISPLAY QLOCAL(test%v)' | runmqsc", numQueues)
+	t.Log(execContainerWithOutput(t, cli, id, "root", []string{"cat", "/etc/mqm/test.mqsc"}))
+	for {
+		readyRC := execContainerWithExitCode(t, cli, id, "mqm", []string{"chkmqready"})
+		queueCheckRC := execContainerWithExitCode(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
+		t.Logf("readyRC=%v,queueCheckRC=%v\n", readyRC, queueCheckRC)
+		if readyRC == 0 {
+			if queueCheckRC != 0 {
+				t.Fatalf("chkmqready returned %v when MQSC had not finished", readyRC)
+			} else {
+				// chkmqready says OK, and the last queue exists, so return
+				t.Log(execContainerWithOutput(t, cli, id, "root", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"}))
+				return
+			}
+		}
 	}
 }
 

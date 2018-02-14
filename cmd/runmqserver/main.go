@@ -20,6 +20,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -31,6 +32,7 @@ import (
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/name"
+	"github.com/ibm-messaging/mq-container/internal/ready"
 )
 
 var debug = false
@@ -108,18 +110,23 @@ func configureQueueManager() error {
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".mqsc") {
 			abs := filepath.Join(configDir, file.Name())
-			mqsc, err := ioutil.ReadFile(abs)
-			if err != nil {
-				log.Println(err)
-				return err
-			}
 			cmd := exec.Command("runmqsc")
 			stdin, err := cmd.StdinPipe()
 			if err != nil {
 				log.Println(err)
 				return err
 			}
-			stdin.Write(mqsc)
+			// Open the MQSC file for reading
+			f, err := os.Open(abs)
+			if err != nil {
+				log.Printf("Error opening %v: %v", abs, err)
+			}
+			// Copy the contents to stdin of the runmqsc process
+			_, err = io.Copy(stdin, f)
+			if err != nil {
+				log.Printf("Error reading %v: %v", abs, err)
+			}
+			f.Close()
 			stdin.Close()
 			// Run the command and wait for completion
 			out, err := cmd.CombinedOutput()
@@ -196,6 +203,10 @@ func configureLogger() {
 
 func doMain() error {
 	configureLogger()
+	err := ready.Clear()
+	if err != nil {
+		return err
+	}
 	debugEnv, ok := os.LookupEnv("DEBUG")
 	if ok && (debugEnv == "true" || debugEnv == "1") {
 		debug = true
@@ -270,6 +281,9 @@ func doMain() error {
 	signalControl <- startReaping
 	// Reap zombies now, just in case we've already got some
 	signalControl <- reapNow
+
+	// Write a file to indicate that chkmqready should now work as normal
+	ready.Set()
 
 	// Wait for terminate signal
 	<-signalControl
