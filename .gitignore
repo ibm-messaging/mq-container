@@ -1,4 +1,5 @@
 .DS_Store
+.vscode
 test/docker/coverage
 test/docker/vendor
 test/kubernetes/vendor
