@@ -468,8 +468,6 @@ func TestErrorLogRotation(t *testing.T) {
 			"MQ_QMGR_NAME=" + qmName,
 			"MQMAXERRORLOGSIZE=65536",
 			"MQ_ALPHA_JSON_LOGS=true",
-			"MQ_ALPHA_MIRROR_ERROR_LOGS=true",
-			//"DEBUG=true",
 		},
 		ExposedPorts: nat.PortSet{
 			"1414/tcp": struct{}{},

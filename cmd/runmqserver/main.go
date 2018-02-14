@@ -159,12 +159,22 @@ func jsonLogs() bool {
 	return false
 }
 
-func mirrorLogs() bool {
-	e := os.Getenv("MQ_ALPHA_MIRROR_ERROR_LOGS")
-	if e == "true" || e == "1" {
-		return true
+func mirrorLogs(name string) (chan bool, error) {
+	f := "/var/mqm/qmgrs/" + name + "/errors/AMQERR01"
+	if jsonLogs() {
+		f = f + ".json"
+		return mirrorLog(f, func(msg string) {
+			// Print the message straight to stdout
+			fmt.Println(msg)
+		})
 	}
-	return false
+	f = f + ".LOG"
+	return mirrorLog(f, func(msg string) {
+		if strings.HasPrefix(msg, "AMQ") {
+			// Log the message, so we get a timestamp etc.
+			log.Println(msg)
+		}
+	})
 }
 
 type simpleTextFormatter struct {
@@ -176,7 +186,7 @@ func (f *simpleTextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		entry.Message = "DEBUG: " + entry.Message
 	}
 	// Use a simple, human-readable format, with a timestamp
-	return []byte(fmt.Sprintf("%s %s\n", entry.Time.Format("2006-01-02 15:04:05"), entry.Message)), nil
+	return []byte(fmt.Sprintf("%s %s\n", entry.Time.Format("2006/01/02 15:04:05"), entry.Message)), nil
 }
 
 func configureLogger() {
@@ -240,27 +250,9 @@ func doMain() error {
 	if err != nil {
 		return err
 	}
-	var mirrorLifecycle chan bool
-	if mirrorLogs() {
-		f := "/var/mqm/qmgrs/" + name + "/errors/AMQERR01"
-		if jsonLogs() {
-			f = f + ".json"
-			mirrorLifecycle, err = mirrorLog(f, func(msg string) {
-				// Print the message straight to stdout
-				fmt.Println(msg)
-			})
-		} else {
-			f = f + ".LOG"
-			mirrorLifecycle, err = mirrorLog(f, func(msg string) {
-				if strings.HasPrefix(msg, "AMQ") {
-					// Log the message, so we get a timestamp etc.
-					log.Println(msg)
-				}
-			})
-		}
-		if err != nil {
-			return err
-		}
+	mirrorLifecycle, err := mirrorLogs(name)
+	if err != nil {
+		return err
 	}
 	err = createQueueManager(name)
 	if err != nil {
@@ -281,18 +273,14 @@ func doMain() error {
 	signalControl <- startReaping
 	// Reap zombies now, just in case we've already got some
 	signalControl <- reapNow
-
 	// Write a file to indicate that chkmqready should now work as normal
 	ready.Set()
-
 	// Wait for terminate signal
 	<-signalControl
-	if mirrorLogs() {
-		// Tell the mirroring goroutine to shutdown
-		mirrorLifecycle <- true
-		// Wait for the mirroring goroutine to finish cleanly
-		<-mirrorLifecycle
-	}
+	// Tell the mirroring goroutine to shutdown
+	mirrorLifecycle <- true
+	// Wait for the mirroring goroutine to finish cleanly
+	<-mirrorLifecycle
 	return nil
 }
 
