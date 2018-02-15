@@ -38,7 +38,7 @@ func TestMirrorLogWithoutRotation(t *testing.T) {
 			t.Log(tmp.Name())
 			defer os.Remove(tmp.Name())
 			count := 0
-			lifecycle, err := mirrorLog(tmp.Name(), func(msg string) {
+			lifecycle, err := mirrorLog(tmp.Name(), true, func(msg string) {
 				count++
 			})
 			if err != nil {
@@ -78,7 +78,7 @@ func TestMirrorLogWithRotation(t *testing.T) {
 				os.Remove(tmp.Name())
 			}()
 			count := 0
-			lifecycle, err := mirrorLog(tmp.Name(), func(msg string) {
+			lifecycle, err := mirrorLog(tmp.Name(), true, func(msg string) {
 				count++
 			})
 			if err != nil {
@@ -117,6 +117,53 @@ func TestMirrorLogWithRotation(t *testing.T) {
 				t.Fatalf("Expected 5 log entries; got %v", count)
 			}
 		})
+	}
+}
+
+func testMirrorLogExistingFile(t *testing.T, newQM bool) int {
+	tmp, err := ioutil.TempFile("", t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(tmp.Name())
+	log.Println("Logging 1 message before we start")
+	ioutil.WriteFile(tmp.Name(), []byte("{\"message\"=\"A\"}\n"), 0600)
+	defer os.Remove(tmp.Name())
+	count := 0
+	lifecycle, err := mirrorLog(tmp.Name(), newQM, func(msg string) {
+		count++
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.OpenFile(tmp.Name(), os.O_APPEND|os.O_WRONLY, 0700)
+	if err != nil {
+		t.Fatal(err)
+	}
+	log.Println("Logging 2 new JSON messages")
+	fmt.Fprintln(f, "{\"message\"=\"B\"}")
+	fmt.Fprintln(f, "{\"message\"=\"C\"}")
+	f.Close()
+	lifecycle <- true
+	<-lifecycle
+	return count
+}
+
+// TestMirrorLogExistingFile tests that we only get new log messages, if the
+// log file already exists
+func TestMirrorLogExistingFile(t *testing.T) {
+	count := testMirrorLogExistingFile(t, false)
+	if count != 2 {
+		t.Fatalf("Expected 2 log entries; got %v", count)
+	}
+}
+
+// TestMirrorLogExistingFileButNewQueueManager tests that we only get all log
+// messages, even if the file exists, if we tell it we want all messages
+func TestMirrorLogExistingFileButNewQueueManager(t *testing.T) {
+	count := testMirrorLogExistingFile(t, true)
+	if count != 3 {
+		t.Fatalf("Expected 3 log entries; got %v", count)
 	}
 }
 

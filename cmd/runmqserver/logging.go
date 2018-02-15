@@ -75,7 +75,7 @@ func mirrorAvailableMessages(f *os.File, mf mirrorFunc) {
 // mirrorLog tails the specified file, and logs each line to stdout.
 // This is useful for usability, as the container console log can show
 // messages from the MQ error logs.
-func mirrorLog(path string, mf mirrorFunc) (chan bool, error) {
+func mirrorLog(path string, fromStart bool, mf mirrorFunc) (chan bool, error) {
 	lifecycle := make(chan bool)
 	var offset int64 = -1
 	var f *os.File
@@ -128,7 +128,8 @@ func mirrorLog(path string, mf mirrorFunc) (chan bool, error) {
 			return
 		}
 		// The file now exists.  If it didn't exist before we started, offset=0
-		if offset != 0 {
+		// Always start at the beginning if we've been told to go from the start
+		if offset != 0 && !fromStart {
 			log.Debugf("Seeking %v", offset)
 			f.Seek(offset, 0)
 		}

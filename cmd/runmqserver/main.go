@@ -18,6 +18,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -31,6 +32,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/mqini"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
@@ -60,19 +62,22 @@ func createDirStructure() error {
 	return nil
 }
 
-func createQueueManager(name string) error {
+// createQueueManager creates a queue manager, if it doesn't already exist.
+// It returns true if one was created, or false if one already existed
+func createQueueManager(name string) (bool, error) {
 	log.Printf("Creating queue manager %v", name)
 	out, rc, err := command.Run("crtmqm", "-q", "-p", "1414", name)
 	if err != nil {
 		// 8=Queue manager exists, which is fine
-		if rc != 8 {
-			log.Printf("crtmqm returned %v", rc)
-			log.Println(string(out))
-			return err
+		if rc == 8 {
+			log.Printf("Detected existing queue manager %v", name)
+			return false, nil
 		}
-		log.Printf("Detected existing queue manager %v", name)
+		log.Printf("crtmqm returned %v", rc)
+		log.Println(string(out))
+		return false, err
 	}
-	return nil
+	return true, nil
 }
 
 func updateCommandLevel() error {
@@ -159,34 +164,42 @@ func jsonLogs() bool {
 	return false
 }
 
-func mirrorLogs(name string) (chan bool, error) {
-	f := "/var/mqm/qmgrs/" + name + "/errors/AMQERR01"
+func mirrorLogs(name string, fromStart bool) (chan bool, error) {
+	// Always use the JSON log as the source
+	// Put the queue manager name in quotes to handle cases like name=..
+	qm, err := mqini.GetQueueManager(name)
+	if err != nil {
+		logDebugf("%v", err)
+		return nil, err
+	}
+	f := filepath.Join(mqini.GetErrorLogDirectory(qm), "AMQERR01.json")
+	// f := fmt.Sprintf("/var/mqm/qmgrs/\"%v\"/errors/AMQERR01.json", name)
 	if jsonLogs() {
-		f = f + ".json"
-		return mirrorLog(f, func(msg string) {
+		return mirrorLog(f, fromStart, func(msg string) {
 			// Print the message straight to stdout
 			fmt.Println(msg)
 		})
 	}
-	f = f + ".LOG"
-	return mirrorLog(f, func(msg string) {
-		if strings.HasPrefix(msg, "AMQ") {
-			// Log the message, so we get a timestamp etc.
-			log.Println(msg)
-		}
+	return mirrorLog(f, fromStart, func(msg string) {
+		// Parse the JSON message, and print a simplified version
+		var obj map[string]interface{}
+		json.Unmarshal([]byte(msg), &obj)
+		fmt.Printf("%v %v\n", obj["ibm_datetime"], obj["message"])
 	})
 }
 
 type simpleTextFormatter struct {
 }
 
+const timestampFormat string = "2006-01-02T15:04:05.000Z07:00"
+
 func (f *simpleTextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	// If debugging, and a prefix, but only for this formatter.
 	if entry.Level == logrus.DebugLevel {
 		entry.Message = "DEBUG: " + entry.Message
 	}
-	// Use a simple, human-readable format, with a timestamp
-	return []byte(fmt.Sprintf("%s %s\n", entry.Time.Format("2006/01/02 15:04:05"), entry.Message)), nil
+	// Use a simple format, with a timestamp
+	return []byte(fmt.Sprintf("%v %v\n", entry.Time.Format(timestampFormat), entry.Message)), nil
 }
 
 func configureLogger() {
@@ -198,16 +211,11 @@ func configureLogger() {
 				logrus.FieldKeyTime:  "ibm_datetime",
 			},
 			// Match time stamp format used by MQ messages (includes milliseconds)
-			TimestampFormat: "2006-01-02T15:04:05.000Z07:00",
+			TimestampFormat: timestampFormat,
 		}
 		logrus.SetFormatter(&formatter)
 	} else {
 		log.SetFormatter(new(simpleTextFormatter))
-
-		// formatter := logrus.TextFormatter{
-		// 	FullTimestamp: true,
-		// }
-		// logrus.SetFormatter(&formatter)
 	}
 }
 
@@ -250,11 +258,11 @@ func doMain() error {
 	if err != nil {
 		return err
 	}
-	mirrorLifecycle, err := mirrorLogs(name)
+	newQM, err := createQueueManager(name)
 	if err != nil {
 		return err
 	}
-	err = createQueueManager(name)
+	mirrorLifecycle, err := mirrorLogs(name, newQM)
 	if err != nil {
 		return err
 	}
