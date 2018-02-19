@@ -24,7 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const fileName string = "/tmp/runmqserverReady"
+const fileName string = "/run/runmqserver/ready"
 
 func fileExists() (bool, error) {
 	_, err := os.Stat(fileName)

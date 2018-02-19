@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2017
+# © Copyright IBM Corporation 2015, 2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,6 +47,10 @@ COPY install-mq.sh /usr/local/bin/
 RUN chmod u+x /usr/local/bin/install-mq.sh \
   && sleep 1 \
   && install-mq.sh
+
+# Create a directory for runtime data from runmqserver
+RUN mkdir -p /run/runmqserver \
+  && chown mqm:mqm /run/runmqserver
 
 COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqserver /usr/local/bin/
 COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/chkmq* /usr/local/bin/
