@@ -20,138 +20,21 @@ package main
 import (
 	"context"
 	"errors"
-	"io"
-	"io/ioutil"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
 
-// createDirStructure creates the default MQ directory structure under /var/mqm
-func createDirStructure() error {
-	out, _, err := command.Run("/opt/mqm/bin/crtmqdir", "-f", "-s")
-	if err != nil {
-		log.Printf("Error creating directory structure: %v\n", string(out))
-		return err
-	}
-	log.Println("Created directory structure under /var/mqm")
-	return nil
-}
-
-// createQueueManager creates a queue manager, if it doesn't already exist.
-// It returns true if one was created, or false if one already existed
-func createQueueManager(name string) (bool, error) {
-	log.Printf("Creating queue manager %v", name)
-	out, rc, err := command.Run("crtmqm", "-q", "-p", "1414", name)
-	if err != nil {
-		// 8=Queue manager exists, which is fine
-		if rc == 8 {
-			log.Printf("Detected existing queue manager %v", name)
-			return false, nil
-		}
-		log.Printf("crtmqm returned %v", rc)
-		log.Println(string(out))
-		return false, err
-	}
-	return true, nil
-}
-
-func updateCommandLevel() error {
-	level, ok := os.LookupEnv("MQ_CMDLEVEL")
-	if ok && level != "" {
-		log.Printf("Setting CMDLEVEL to %v", level)
-		out, rc, err := command.Run("strmqm", "-e", "CMDLEVEL="+level)
-		if err != nil {
-			log.Printf("Error %v setting CMDLEVEL: %v", rc, string(out))
-			return err
-		}
-	}
-	return nil
-}
-
-func startQueueManager() error {
-	log.Println("Starting queue manager")
-	out, rc, err := command.Run("strmqm")
-	if err != nil {
-		log.Printf("Error %v starting queue manager: %v", rc, string(out))
-		return err
-	}
-	log.Println("Started queue manager")
-	return nil
-}
-
-func configureQueueManager() error {
-	const configDir string = "/etc/mqm"
-	files, err := ioutil.ReadDir(configDir)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".mqsc") {
-			abs := filepath.Join(configDir, file.Name())
-			cmd := exec.Command("runmqsc")
-			stdin, err := cmd.StdinPipe()
-			if err != nil {
-				log.Println(err)
-				return err
-			}
-			// Open the MQSC file for reading
-			f, err := os.Open(abs)
-			if err != nil {
-				log.Printf("Error opening %v: %v", abs, err)
-			}
-			// Copy the contents to stdin of the runmqsc process
-			_, err = io.Copy(stdin, f)
-			if err != nil {
-				log.Printf("Error reading %v: %v", abs, err)
-			}
-			f.Close()
-			stdin.Close()
-			// Run the command and wait for completion
-			out, err := cmd.CombinedOutput()
-			if err != nil {
-				log.Println(err)
-			}
-			// Print the runmqsc output, adding tab characters to make it more readable as part of the log
-			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
-		}
-	}
-	return nil
-}
-
-func stopQueueManager(name string) error {
-	log.Println("Stopping queue manager")
-	out, _, err := command.Run("endmqm", "-w", name)
-	if err != nil {
-		log.Printf("Error stopping queue manager: %v", string(out))
-		return err
-	}
-	log.Println("Stopped queue manager")
-	return nil
-}
-
 func doMain() error {
 	configureLogger()
+	configureDebugLogger()
 	err := ready.Clear()
 	if err != nil {
 		return err
-	}
-	debugEnv, ok := os.LookupEnv("DEBUG")
-	if ok && (debugEnv == "true" || debugEnv == "1") {
-		debug = true
-		logrus.SetLevel(logrus.DebugLevel)
-		logDebug("Debug mode enabled")
 	}
 	name, err := name.GetQueueManagerName()
 	if err != nil {

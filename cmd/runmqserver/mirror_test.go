@@ -193,7 +193,6 @@ func TestMirrorLogCancelWhileWaiting(t *testing.T) {
 }
 
 func init() {
-	fmt.Println("Setting debug level")
 	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(new(simpleTextFormatter))
 }

@@ -94,6 +94,15 @@ func mirrorLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart 
 	})
 }
 
+func configureDebugLogger() {
+	debugEnv, ok := os.LookupEnv("DEBUG")
+	if ok && (debugEnv == "true" || debugEnv == "1") {
+		debug = true
+		logrus.SetLevel(logrus.DebugLevel)
+		logDebug("Debug mode enabled")
+	}
+}
+
 func configureLogger() {
 	if jsonLogs() {
 		formatter := logrus.JSONFormatter{
