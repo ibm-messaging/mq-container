@@ -17,32 +17,39 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // waitForFile waits until the specified file exists
-func waitForFile(path string) (os.FileInfo, error) {
+func waitForFile(ctx context.Context, path string) (os.FileInfo, error) {
 	var fi os.FileInfo
 	var err error
 	// Wait for file to exist
 	for {
-		fi, err = os.Stat(path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				time.Sleep(500 * time.Millisecond)
-				continue
-			} else {
-				return nil, err
+		select {
+		// Check to see if cancellation has been requested
+		case <-ctx.Done():
+			return nil, nil
+		default:
+			fi, err = os.Stat(path)
+			if err != nil {
+				if os.IsNotExist(err) {
+					time.Sleep(500 * time.Millisecond)
+					continue
+				} else {
+					return nil, err
+				}
 			}
+			log.Debugf("File exists: %v, %v", path, fi.Size())
+			return fi, nil
 		}
-		break
 	}
-	log.Debugf("File exists: %v, %v", path, fi.Size())
-	return fi, nil
 }
 
 type mirrorFunc func(msg string)
@@ -75,8 +82,8 @@ func mirrorAvailableMessages(f *os.File, mf mirrorFunc) {
 // mirrorLog tails the specified file, and logs each line to stdout.
 // This is useful for usability, as the container console log can show
 // messages from the MQ error logs.
-func mirrorLog(path string, fromStart bool, mf mirrorFunc) (chan bool, error) {
-	lifecycle := make(chan bool)
+func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart bool, mf mirrorFunc) (chan error, error) {
+	errorChannel := make(chan error, 1)
 	var offset int64 = -1
 	var f *os.File
 	var err error
@@ -104,19 +111,29 @@ func mirrorLog(path string, fromStart bool, mf mirrorFunc) (chan bool, error) {
 		offset = fi.Size()
 	}
 
+	// Increment wait group counter, only if the goroutine gets started
+	wg.Add(1)
 	go func() {
+		// Notify the wait group when this goroutine ends
+		defer func() {
+			log.Debugf("Finished monitoring %v", path)
+			wg.Done()
+		}()
 		if f == nil {
 			// File didn't exist, so need to wait for it
-			fi, err = waitForFile(path)
+			fi, err = waitForFile(ctx, path)
 			if err != nil {
 				log.Errorln(err)
-				lifecycle <- true
+				errorChannel <- err
+				return
+			}
+			if fi == nil {
 				return
 			}
 			f, err = os.OpenFile(path, os.O_RDONLY, 0)
 			if err != nil {
 				log.Errorln(err)
-				lifecycle <- true
+				errorChannel <- err
 				return
 			}
 		}
@@ -124,7 +141,7 @@ func mirrorLog(path string, fromStart bool, mf mirrorFunc) (chan bool, error) {
 		fi, err = f.Stat()
 		if err != nil {
 			log.Errorln(err)
-			lifecycle <- true
+			errorChannel <- err
 			return
 		}
 		// The file now exists.  If it didn't exist before we started, offset=0
@@ -135,18 +152,16 @@ func mirrorLog(path string, fromStart bool, mf mirrorFunc) (chan bool, error) {
 		}
 		closing := false
 		for {
-			log.Debugln("Start of loop")
 			// If there's already data there, mirror it now.
 			mirrorAvailableMessages(f, mf)
-			log.Debugf("Stat %v", path)
 			newFI, err := os.Stat(path)
 			if err != nil {
 				log.Error(err)
-				lifecycle <- true
+				errorChannel <- err
 				return
 			}
 			if !os.SameFile(fi, newFI) {
-				log.Debugln("Not the same file!")
+				log.Debugln("Detected log rotation")
 				// WARNING: There is a possible race condition here.  If *another*
 				// log rotation happens before we can open the new file, then we
 				// could skip all those messages.  This could happen with a very small
@@ -165,21 +180,19 @@ func mirrorLog(path string, fromStart bool, mf mirrorFunc) (chan bool, error) {
 				// Don't seek this time, because we know it's a new file
 				mirrorAvailableMessages(f, mf)
 			}
-			log.Debugln("Check for lifecycle event")
 			select {
-			// Have we been asked to shut down?
-			case <-lifecycle:
+			case <-ctx.Done():
+				log.Debug("Context cancelled")
+				if closing {
+					log.Debug("Shutting down mirror")
+					return
+				}
 				// Set a flag, to allow one more time through the loop
 				closing = true
 			default:
-				if closing {
-					log.Debugln("Shutting down mirror")
-					lifecycle <- true
-					return
-				}
 				time.Sleep(500 * time.Millisecond)
 			}
 		}
 	}()
-	return lifecycle, nil
+	return errorChannel, nil
 }

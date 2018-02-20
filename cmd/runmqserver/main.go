@@ -18,38 +18,23 @@ limitations under the License.
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	"github.com/ibm-messaging/mq-container/internal/mqini"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
-
-var debug = false
-
-func logDebug(msg string) {
-	if debug {
-		log.Debug(msg)
-	}
-}
-
-func logDebugf(format string, args ...interface{}) {
-	if debug {
-		log.Debugf(format, args...)
-	}
-}
 
 // createDirStructure creates the default MQ directory structure under /var/mqm
 func createDirStructure() error {
@@ -156,69 +141,6 @@ func stopQueueManager(name string) error {
 	return nil
 }
 
-func jsonLogs() bool {
-	e := os.Getenv("MQ_ALPHA_JSON_LOGS")
-	if e == "true" || e == "1" {
-		return true
-	}
-	return false
-}
-
-func mirrorLogs(name string, fromStart bool) (chan bool, error) {
-	// Always use the JSON log as the source
-	// Put the queue manager name in quotes to handle cases like name=..
-	qm, err := mqini.GetQueueManager(name)
-	if err != nil {
-		logDebugf("%v", err)
-		return nil, err
-	}
-	f := filepath.Join(mqini.GetErrorLogDirectory(qm), "AMQERR01.json")
-	// f := fmt.Sprintf("/var/mqm/qmgrs/\"%v\"/errors/AMQERR01.json", name)
-	if jsonLogs() {
-		return mirrorLog(f, fromStart, func(msg string) {
-			// Print the message straight to stdout
-			fmt.Println(msg)
-		})
-	}
-	return mirrorLog(f, fromStart, func(msg string) {
-		// Parse the JSON message, and print a simplified version
-		var obj map[string]interface{}
-		json.Unmarshal([]byte(msg), &obj)
-		fmt.Printf("%v %v\n", obj["ibm_datetime"], obj["message"])
-	})
-}
-
-type simpleTextFormatter struct {
-}
-
-const timestampFormat string = "2006-01-02T15:04:05.000Z07:00"
-
-func (f *simpleTextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	// If debugging, and a prefix, but only for this formatter.
-	if entry.Level == logrus.DebugLevel {
-		entry.Message = "DEBUG: " + entry.Message
-	}
-	// Use a simple format, with a timestamp
-	return []byte(fmt.Sprintf("%v %v\n", entry.Time.Format(timestampFormat), entry.Message)), nil
-}
-
-func configureLogger() {
-	if jsonLogs() {
-		formatter := logrus.JSONFormatter{
-			FieldMap: logrus.FieldMap{
-				logrus.FieldKeyMsg:   "message",
-				logrus.FieldKeyLevel: "ibm_level",
-				logrus.FieldKeyTime:  "ibm_datetime",
-			},
-			// Match time stamp format used by MQ messages (includes milliseconds)
-			TimestampFormat: timestampFormat,
-		}
-		logrus.SetFormatter(&formatter)
-	} else {
-		log.SetFormatter(new(simpleTextFormatter))
-	}
-}
-
 func doMain() error {
 	configureLogger()
 	err := ready.Clear()
@@ -262,10 +184,21 @@ func doMain() error {
 	if err != nil {
 		return err
 	}
-	mirrorLifecycle, err := mirrorLogs(name, newQM)
+	var wg sync.WaitGroup
+	ctx, cancelMirror := context.WithCancel(context.Background())
+	defer func() {
+		log.Debugln("Cancel log mirroring")
+		cancelMirror()
+	}()
+	// TODO: Use the error channel
+	_, err = mirrorLogs(ctx, &wg, name, newQM)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		log.Debugln("Waiting for log mirroring to complete")
+		wg.Wait()
+	}()
 	err = updateCommandLevel()
 	if err != nil {
 		return err
@@ -285,10 +218,6 @@ func doMain() error {
 	ready.Set()
 	// Wait for terminate signal
 	<-signalControl
-	// Tell the mirroring goroutine to shutdown
-	mirrorLifecycle <- true
-	// Wait for the mirroring goroutine to finish cleanly
-	<-mirrorLifecycle
 	return nil
 }
 
