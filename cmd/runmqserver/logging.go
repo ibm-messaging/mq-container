@@ -82,7 +82,6 @@ func mirrorLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart 
 		return nil, err
 	}
 	f := filepath.Join(mqini.GetErrorLogDirectory(qm), "AMQERR01.json")
-	// f := fmt.Sprintf("/var/mqm/qmgrs/\"%v\"/errors/AMQERR01.json", name)
 	if jsonLogs() {
 		return mirrorLog(ctx, wg, f, fromStart, mirrorToStdout)
 	}

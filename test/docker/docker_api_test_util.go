@@ -117,14 +117,6 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	// if coverage
 	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
 	hostConfig := container.HostConfig{
-		// PortBindings: nat.PortMap{
-		// 	"1414/tcp": []nat.PortBinding{
-		// 		{
-		// 			HostIP:   "0.0.0.0",
-		// 			HostPort: "1414",
-		// 		},
-		// 	},
-		// },
 		Binds: []string{
 			coverageBind(t),
 		},
@@ -191,8 +183,6 @@ func getCoverageExitCode(t *testing.T, orig int64) int64 {
 
 // waitForContainer waits until a container has exited
 func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64) int64 {
-	//ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-	//defer cancel()
 	rc, err := cli.ContainerWait(context.Background(), ID)
 
 	if coverage() {
@@ -202,11 +192,9 @@ func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64
 		rc = getCoverageExitCode(t, rc)
 	}
 
-	//	err := <-errC
 	if err != nil {
 		t.Fatal(err)
 	}
-	//	wait := <-waitC
 	return rc
 }
 

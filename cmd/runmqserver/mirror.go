@@ -61,14 +61,6 @@ func mirrorAvailableMessages(f *os.File, mf mirrorFunc) {
 	for scanner.Scan() {
 		t := scanner.Text()
 		mf(t)
-		// if strings.HasPrefix(t, "{") {
-		// 	// Assume JSON, so just print it
-		// 	fmt.Fprintln(w, t)
-		// } else if strings.HasPrefix(t, "AMQ") {
-		// 	// Only print MQ messages with AMQnnnn codes
-		// 	log.Println(t)
-		// 	//fmt.Fprintln(w, t)
-		// }
 		count++
 	}
 	log.Debugf("Mirrored %v log entries", count)

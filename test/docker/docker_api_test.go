@@ -80,9 +80,6 @@ func TestGoldenPath(t *testing.T) {
 	}
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-		// ExposedPorts: nat.PortSet{
-		// 	"1414/tcp": struct{}{},
-		// },
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
@@ -97,15 +94,6 @@ func TestSecurityVulnerabilities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// containerConfig := container.Config{
-	// 	// Override the entrypoint to make "apt" only receive security updates, then check for updates
-	// 	Entrypoint: []string{"bash", "-c", "source /etc/os-release && echo \"deb http://security.ubuntu.com/ubuntu/ ${VERSION_CODENAME}-security main restricted\" > /etc/apt/sources.list && apt-get update 2>&1 >/dev/null && apt-get --simulate -qq upgrade"},
-	// }
-	// id := runContainer(t, cli, &containerConfig)
-	// defer cleanContainer(t, cli, id)
-	// // rc is the return code from apt-get
-	// rc := waitForContainer(t, cli, id, 10)
-
 	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "test -d /etc/apt")
 	if rc != 0 {
 		t.Skip("Skipping test because container is not Ubuntu-based")
@@ -379,10 +367,6 @@ func TestReadiness(t *testing.T) {
 	}
 	const numQueues = 3
 	var buf bytes.Buffer
-	// fmt.Fprintf(&b, "world!")
-
-	// b := make([]byte, 32768)
-	// buf := bytes.NewBuffer(b)
 	for i := 1; i <= numQueues; i++ {
 		fmt.Fprintf(&buf, "* Defining queue test %v\nDEFINE QLOCAL(test%v)\n", i, i)
 	}
@@ -423,10 +407,7 @@ func countLines(t *testing.T, r io.Reader) int {
 	scanner := bufio.NewScanner(r)
 	count := 0
 	for scanner.Scan() {
-		// if scanner.Text() != "" {
 		count++
-		// fmt.Printf("%v: %v\n", count, scanner.Text())
-		// }
 	}
 	err := scanner.Err()
 	if err != nil {
@@ -438,7 +419,6 @@ func countLines(t *testing.T, r io.Reader) int {
 func countTarLines(t *testing.T, b []byte) int {
 	r := bytes.NewReader(b)
 	tr := tar.NewReader(r)
-	// totals := make([]int, 3)
 	total := 0
 	for {
 		_, err := tr.Next()
@@ -450,7 +430,6 @@ func countTarLines(t *testing.T, b []byte) int {
 			t.Fatal(err)
 		}
 		total += countLines(t, tr)
-		// totals = append(totals, countLines(t, tr))
 	}
 	return total
 }
@@ -494,8 +473,6 @@ func TestErrorLogRotation(t *testing.T) {
 	out := execContainerWithOutput(t, cli, id, "root", []string{"ls", "-l", dir})
 	t.Log(out)
 	stopContainer(t, cli, id)
-	// Wait to allow the logs to be mirrored
-	//time.Sleep(5 * time.Second)
 	b := copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR01.json"))
 	amqerr01 := countTarLines(t, b)
 	b = copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR02.json"))
@@ -513,24 +490,9 @@ func TestErrorLogRotation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// log := strings.Split(inspectLogs(t, cli, id), "\n")
-	// total := 0
-	// for _, v := range totals {
-	// 	total += v
-	// }
-	//log := countLines(t, []byte(inspectLogs(t, cli, id)))
 	total := amqerr01 + amqerr02 + amqerr03
-	//total := len(amqerr01) + len(amqerr02) + len(amqerr03)
-	// totalMirrored := 0
-	// for _, line := range log {
-	// 	// Look for something which is only in the MQ log lines, and not those from runmqserver
-	// 	if strings.Contains(line, "ibm_threadId") {
-	// 		totalMirrored++
-	// 	}
-	// }
 	if totalMirrored != total {
 		t.Fatalf("Expected %v (%v + %v + %v) mirrored log entries; got %v", total, amqerr01, amqerr02, amqerr03, totalMirrored)
-		//t.Fatalf("Expected %v mirrored log entries; got %v (AMQERR01=%v entries; AMQERR02=%v entries; AMQERR03=%v entries)", total, totalMirrored, totals[0], totals[1], totals[2])
 	} else {
 		t.Logf("Found %v (%v + %v + %v) mirrored log entries", totalMirrored, amqerr01, amqerr02, amqerr03)
 	}
