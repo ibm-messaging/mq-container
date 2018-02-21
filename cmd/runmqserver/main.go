@@ -68,6 +68,10 @@ func doMain() error {
 		return err
 	}
 	var wg sync.WaitGroup
+	defer func() {
+		log.Debugln("Waiting for log mirroring to complete")
+		wg.Wait()
+	}()
 	ctx, cancelMirror := context.WithCancel(context.Background())
 	defer func() {
 		log.Debugln("Cancel log mirroring")
@@ -78,10 +82,6 @@ func doMain() error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		log.Debugln("Waiting for log mirroring to complete")
-		wg.Wait()
-	}()
 	err = updateCommandLevel()
 	if err != nil {
 		return err

@@ -18,7 +18,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -63,10 +62,10 @@ func mirrorAvailableMessages(f *os.File, mf mirrorFunc) {
 		mf(t)
 		count++
 	}
-	log.Debugf("Mirrored %v log entries", count)
+	log.Debugf("Mirrored %v log entries from %v", count, f.Name())
 	err := scanner.Err()
 	if err != nil {
-		log.Errorf("Error reading file: %v", err)
+		log.Errorf("Error reading file %v: %v", f.Name(), err)
 		return
 	}
 }
@@ -139,7 +138,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 		// The file now exists.  If it didn't exist before we started, offset=0
 		// Always start at the beginning if we've been told to go from the start
 		if offset != 0 && !fromStart {
-			log.Debugf("Seeking %v", offset)
+			log.Debugf("Seeking offset %v in file %v", offset, path)
 			f.Seek(offset, 0)
 		}
 		closing := false
@@ -153,7 +152,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 				return
 			}
 			if !os.SameFile(fi, newFI) {
-				log.Debugln("Detected log rotation")
+				log.Debugf("Detected log rotation in file %v", path)
 				// WARNING: There is a possible race condition here.  If *another*
 				// log rotation happens before we can open the new file, then we
 				// could skip all those messages.  This could happen with a very small
@@ -161,11 +160,11 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 				mirrorAvailableMessages(f, mf)
 				f.Close()
 				// Re-open file
-				log.Debugln("Re-opening error log file")
-				// Used to work with this: f, err = waitForFile2(path)
+				log.Debugf("Re-opening error log file %v", path)
 				f, err = os.OpenFile(path, os.O_RDONLY, 0)
 				if err != nil {
-					fmt.Printf("ERROR: %v", err)
+					log.Error(err)
+					errorChannel <- err
 					return
 				}
 				fi = newFI
@@ -174,9 +173,9 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 			}
 			select {
 			case <-ctx.Done():
-				log.Debug("Context cancelled")
+				log.Debugf("Context cancelled for mirroring %v", path)
 				if closing {
-					log.Debug("Shutting down mirror")
+					log.Debugf("Shutting down mirror for %v", path)
 					return
 				}
 				// Set a flag, to allow one more time through the loop
