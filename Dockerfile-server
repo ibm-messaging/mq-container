@@ -56,8 +56,9 @@ COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqserver /u
 COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/chkmq* /usr/local/bin/
 COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
 
-RUN chmod +x /usr/local/bin/runmqserver \
-  && chmod +x /usr/local/bin/chkmq*
+RUN chmod ug+x /usr/local/bin/runmqserver \
+  && chown mqm:mqm /usr/local/bin/*mq* \
+  && chmod ug+xs /usr/local/bin/chkmq*
 
 # Always use port 1414
 EXPOSE 1414
