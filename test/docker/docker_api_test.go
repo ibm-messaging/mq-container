@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -84,6 +85,8 @@ func TestGoldenPath(t *testing.T) {
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
 }
 
 // TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
@@ -496,4 +499,60 @@ func TestErrorLogRotation(t *testing.T) {
 	} else {
 		t.Logf("Found %v (%v + %v + %v) mirrored log entries", totalMirrored, amqerr01, amqerr02, amqerr03)
 	}
+}
+
+func TestJSONLogs(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_ALPHA_JSON_LOGS=1",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	stopContainer(t, cli, id)
+	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
+	for scanner.Scan() {
+		var obj map[string]interface{}
+		s := scanner.Text()
+		err := json.Unmarshal([]byte(s), &obj)
+		if err != nil {
+			t.Fatalf("Expected all log lines to be valid JSON.  Got error %v for line %v", err, s)
+		}
+	}
+	err = scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestMQJSONDisabled tests the case where MQ's JSON logging feature is
+// specifically disabled (which will disable log mirroring)
+func TestMQJSONDisabled(t *testing.T) {
+	t.SkipNow()
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"AMQ_ADDITIONAL_JSON_LOG=0",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	// Stop the container (which could hang if runmqserver is still waiting for
+	// JSON logs to appear)
+	stopContainer(t, cli, id)
 }
