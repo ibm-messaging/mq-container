@@ -1,6 +1,7 @@
 # Change log
 
 ## master
+* Container's stdout can now be set to JSON format (set LOG_FORMAT=json)
 * MQ error logs (in JSON or plain text) are now mirrored on stdout for the container.
 * `chkmqready` now waits until MQSC scripts in `/etc/mqm` have been applied
 * `chkmqready` and `chkmqhealthy` now run as the "mqm" user

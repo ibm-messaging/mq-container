@@ -102,6 +102,13 @@ func terminationMessage(t *testing.T) string {
 	return string(b)
 }
 
+func expectTerminationMessage(t *testing.T) {
+	m := terminationMessage(t)
+	if m == "" {
+		t.Error("Expected termination message to be set")
+	}
+}
+
 func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	i, err := cli.ContainerInspect(context.Background(), ID)
 	if err == nil {

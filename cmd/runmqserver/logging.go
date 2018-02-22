@@ -74,23 +74,15 @@ func logTermination(args ...interface{}) {
 	log.Error(msg)
 }
 
-func jsonLogs() bool {
-	e := os.Getenv("MQ_ALPHA_JSON_LOGS")
-	if e == "true" || e == "1" {
-		return true
-	}
-	return false
-}
-
-func mirrorToStdout(msg string) {
-	fmt.Println(msg)
+func getLogFormat() string {
+	return os.Getenv("LOG_FORMAT")
 }
 
 func formatSimple(datetime string, message string) string {
 	return fmt.Sprintf("%v %v\n", datetime, message)
 }
 
-func mirrorLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool) (chan error, error) {
+func mirrorLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool, mf mirrorFunc) (chan error, error) {
 	// Always use the JSON log as the source
 	// Put the queue manager name in quotes to handle cases like name=..
 	qm, err := mqini.GetQueueManager(name)
@@ -99,15 +91,7 @@ func mirrorLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart 
 		return nil, err
 	}
 	f := filepath.Join(mqini.GetErrorLogDirectory(qm), "AMQERR01.json")
-	if jsonLogs() {
-		return mirrorLog(ctx, wg, f, fromStart, mirrorToStdout)
-	}
-	return mirrorLog(ctx, wg, f, fromStart, func(msg string) {
-		// Parse the JSON message, and print a simplified version
-		var obj map[string]interface{}
-		json.Unmarshal([]byte(msg), &obj)
-		fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
-	})
+	return mirrorLog(ctx, wg, f, fromStart, mf)
 }
 
 func configureDebugLogger() {
@@ -119,8 +103,12 @@ func configureDebugLogger() {
 	}
 }
 
-func configureLogger() {
-	if jsonLogs() {
+func configureLogger() (mirrorFunc, error) {
+	// Set the simple formatter by default
+	log.SetFormatter(new(simpleTextFormatter))
+	f := getLogFormat()
+	switch f {
+	case "json":
 		formatter := logrus.JSONFormatter{
 			FieldMap: logrus.FieldMap{
 				logrus.FieldKeyMsg:   "message",
@@ -130,7 +118,17 @@ func configureLogger() {
 			TimestampFormat: timestampFormat,
 		}
 		logrus.SetFormatter(&formatter)
-	} else {
-		log.SetFormatter(new(simpleTextFormatter))
+		return func(msg string) {
+			fmt.Println(msg)
+		}, nil
+	case "simple":
+		return func(msg string) {
+			// Parse the JSON message, and print a simplified version
+			var obj map[string]interface{}
+			json.Unmarshal([]byte(msg), &obj)
+			fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
+		}, nil
+	default:
+		return nil, fmt.Errorf("invalid value for LOG_FORMAT: %v", f)
 	}
 }

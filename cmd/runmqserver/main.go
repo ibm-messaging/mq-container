@@ -30,9 +30,13 @@ import (
 )
 
 func doMain() error {
-	configureLogger()
+	mf, err := configureLogger()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
 	configureDebugLogger()
-	err := ready.Clear()
+	err = ready.Clear()
 	if err != nil {
 		logTermination(err)
 		return err
@@ -83,7 +87,7 @@ func doMain() error {
 		cancelMirror()
 	}()
 	// TODO: Use the error channel
-	_, err = mirrorLogs(ctx, &wg, name, newQM)
+	_, err = mirrorLogs(ctx, &wg, name, newQM, mf)
 	if err != nil {
 		logTermination(err)
 		return err

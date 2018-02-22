@@ -48,6 +48,7 @@ func TestLicenseNotSet(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
+	expectTerminationMessage(t)
 }
 
 func TestLicenseView(t *testing.T) {
@@ -222,6 +223,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
+	expectTerminationMessage(t)
 }
 
 // TestStartQueueManagerFail causes a failure of `strmqm`
@@ -234,7 +236,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 	img, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
 	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
 	containerConfig := container.Config{
-		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=1"},
 		// Override the entrypoint to replace `strmqm` with a script which deletes the queue manager.
 		// This will cause `strmqm` to return with an exit code of 72.
 		Entrypoint: []string{"bash", "-c", "echo '#!/bin/bash\ndltmqm $@ && strmqm $@' > /opt/mqm/bin/strmqm && exec " + oldEntrypoint},
@@ -245,10 +247,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
-	m := terminationMessage(t)
-	if m == "" {
-		t.Error("Expected termination message to be set")
-	}
+	expectTerminationMessage(t)
 }
 
 // TestVolumeUnmount runs a queue manager with a volume, and then forces an
@@ -453,7 +452,7 @@ func TestErrorLogRotation(t *testing.T) {
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qmName,
 			"MQMAXERRORLOGSIZE=65536",
-			"MQ_ALPHA_JSON_LOGS=true",
+			"LOG_FORMAT=json",
 		},
 		ExposedPorts: nat.PortSet{
 			"1414/tcp": struct{}{},
@@ -505,7 +504,7 @@ func TestErrorLogRotation(t *testing.T) {
 	}
 }
 
-func TestJSONLogs(t *testing.T) {
+func TestJSONLogFormat(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -514,8 +513,7 @@ func TestJSONLogs(t *testing.T) {
 	containerConfig := container.Config{
 		Env: []string{
 			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
-			"MQ_ALPHA_JSON_LOGS=1",
+			"LOG_FORMAT=json",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -535,6 +533,27 @@ func TestJSONLogs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestBadLogFormat(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"LOG_FORMAT=fake",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	rc := waitForContainer(t, cli, id, 5)
+	if rc != 1 {
+		t.Errorf("Expected rc=1, got rc=%v", rc)
+	}
+	expectTerminationMessage(t)
 }
 
 // TestMQJSONDisabled tests the case where MQ's JSON logging feature is

@@ -26,7 +26,9 @@ RUN go build ./cmd/runmqserver/
 RUN go build ./cmd/chkmqready/
 RUN go build ./cmd/chkmqhealthy/
 # Run all unit tests
-RUN go test -v ./cmd/...
+RUN go test -v ./cmd/runmqserver/
+RUN go test -v ./cmd/chkmqready/
+RUN go test -v ./cmd/chkmqhealthy/
 RUN go test -v ./internal/...
 
 ###############################################################################
@@ -63,6 +65,6 @@ RUN chmod ug+x /usr/local/bin/runmqserver \
 # Always use port 1414
 EXPOSE 1414
 
-ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1
+ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1 LOG_FORMAT=simple
 
 ENTRYPOINT ["runmqserver"]
