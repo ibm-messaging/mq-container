@@ -24,38 +24,19 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/ibm-messaging/mq-container/internal/mqini"
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 )
 
-var debug = false
-
-// timestampFormat matches the format used by MQ messages (includes milliseconds)
-const timestampFormat string = "2006-01-02T15:04:05.000Z07:00"
-
-type simpleTextFormatter struct {
-}
-
-func (f *simpleTextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	// If debugging, and a prefix, but only for this formatter.
-	if entry.Level == logrus.DebugLevel {
-		entry.Message = "DEBUG: " + entry.Message
-	}
-	// Use a simple format, with a timestamp
-	return []byte(formatSimple(entry.Time.Format(timestampFormat), entry.Message)), nil
-}
+// var debug = false
+var log *logger.Logger
 
 func logDebug(args ...interface{}) {
-	if debug {
-		log.Debug(args)
-	}
+	log.Debug(args)
 }
 
 func logDebugf(format string, args ...interface{}) {
-	if debug {
-		log.Debugf(format, args...)
-	}
+	log.Debugf(format, args...)
 }
 
 func logTerminationf(format string, args ...interface{}) {
@@ -94,34 +75,23 @@ func mirrorLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart 
 	return mirrorLog(ctx, wg, f, fromStart, mf)
 }
 
-func configureDebugLogger() {
-	debugEnv, ok := os.LookupEnv("DEBUG")
-	if ok && (debugEnv == "true" || debugEnv == "1") {
-		debug = true
-		logrus.SetLevel(logrus.DebugLevel)
-		logDebug("Debug mode enabled")
+func getDebug() bool {
+	debug := os.Getenv("DEBUG")
+	if debug == "true" || debug == "1" {
+		return true
 	}
+	return false
 }
 
 func configureLogger() (mirrorFunc, error) {
-	// Set the simple formatter by default
-	log.SetFormatter(new(simpleTextFormatter))
 	f := getLogFormat()
+	d := getDebug()
 	switch f {
 	case "json":
-		formatter := logrus.JSONFormatter{
-			FieldMap: logrus.FieldMap{
-				logrus.FieldKeyMsg:   "message",
-				logrus.FieldKeyLevel: "ibm_level",
-				logrus.FieldKeyTime:  "ibm_datetime",
-			},
-			TimestampFormat: timestampFormat,
-		}
-		logrus.SetFormatter(&formatter)
-		return func(msg string) {
-			fmt.Println(msg)
-		}, nil
+		log = logger.NewLogger(os.Stdout, d, true)
+		return log.LogDirect, nil
 	case "simple":
+		log = logger.NewLogger(os.Stdout, d, false)
 		return func(msg string) {
 			// Parse the JSON message, and print a simplified version
 			var obj map[string]interface{}
@@ -129,6 +99,7 @@ func configureLogger() (mirrorFunc, error) {
 			fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
 		}, nil
 	default:
+		log = logger.NewLogger(os.Stdout, d, false)
 		return nil, fmt.Errorf("invalid value for LOG_FORMAT: %v", f)
 	}
 }

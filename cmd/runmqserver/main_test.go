@@ -18,10 +18,11 @@ package main
 import (
 	"flag"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"testing"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/ibm-messaging/mq-container/internal/logger"
 )
 
 var test *bool
@@ -30,6 +31,7 @@ const filename = "/var/coverage/exitCode"
 
 func init() {
 	test = flag.Bool("test", false, "Set to true when running tests for coverage")
+	log = logger.NewLogger(os.Stdout, true, false)
 }
 
 // Test started when the test binary is started. Only calls main.

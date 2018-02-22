@@ -1,15 +1,47 @@
-hash: 9bf1a2f2fecdcf4fd6ded16766793cb12bb891291470db4a376fd502d7c75d52
-updated: 2018-01-29T10:24:45.113427Z
+hash: 4905ad6acf8e593e3c4432f31dd61275b16d0b5b95f438471749ae1943af785d
+updated: 2018-02-22T17:26:13.366677Z
 imports:
-- name: github.com/sirupsen/logrus
-  version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
 - name: golang.org/x/crypto
   version: 81e90905daefcd6fd217b62423c0908922eadb30
   subpackages:
+  - acme
+  - acme/autocert
+  - blowfish
+  - cast5
+  - chacha20poly1305/internal/chacha20
+  - cryptobyte
+  - curve25519
+  - ed25519
+  - ed25519/internal/edwards25519
+  - hkdf
+  - md4
+  - nacl/auth
+  - nacl/box
+  - nacl/secretbox
+  - openpgp
+  - openpgp/armor
+  - openpgp/elgamal
+  - openpgp/errors
+  - openpgp/packet
+  - openpgp/s2k
+  - pbkdf2
+  - pkcs12/internal/rc2
+  - poly1305
+  - ripemd160
+  - salsa20/salsa
+  - ssh
+  - ssh/agent
   - ssh/terminal
+  - ssh/testdata
 - name: golang.org/x/sys
   version: 7a4fde3fda8ef580a89dbae8138c26041be14299
   subpackages:
+  - plan9
   - unix
   - windows
+  - windows/registry
+  - windows/svc
+  - windows/svc/debug
+  - windows/svc/eventlog
+  - windows/svc/mgr
 testImports: []

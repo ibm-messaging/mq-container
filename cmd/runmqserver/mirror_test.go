@@ -25,8 +25,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func TestMirrorLogWithoutRotation(t *testing.T) {
@@ -190,9 +188,4 @@ func TestMirrorLogCancelWhileWaiting(t *testing.T) {
 	cancel()
 	wg.Wait()
 	// No need to assert anything.  If it didn't work, the code would have hung (TODO: not ideal)
-}
-
-func init() {
-	log.SetLevel(log.DebugLevel)
-	log.SetFormatter(new(simpleTextFormatter))
 }

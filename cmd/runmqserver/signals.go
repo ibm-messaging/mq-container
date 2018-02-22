@@ -20,7 +20,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
 

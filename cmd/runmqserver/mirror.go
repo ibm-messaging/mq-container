@@ -22,8 +22,6 @@ import (
 	"os"
 	"sync"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // waitForFile waits until the specified file exists
@@ -114,7 +112,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 			// File didn't exist, so need to wait for it
 			fi, err = waitForFile(ctx, path)
 			if err != nil {
-				log.Errorln(err)
+				log.Error(err)
 				errorChannel <- err
 				return
 			}
@@ -123,7 +121,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 			}
 			f, err = os.OpenFile(path, os.O_RDONLY, 0)
 			if err != nil {
-				log.Errorln(err)
+				log.Error(err)
 				errorChannel <- err
 				return
 			}
@@ -131,7 +129,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 
 		fi, err = f.Stat()
 		if err != nil {
-			log.Errorln(err)
+			log.Error(err)
 			errorChannel <- err
 			return
 		}

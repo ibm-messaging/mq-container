@@ -22,8 +22,6 @@ import (
 	"runtime"
 	"strconv"
 	"syscall"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func lookupMQM() (int, int, error) {

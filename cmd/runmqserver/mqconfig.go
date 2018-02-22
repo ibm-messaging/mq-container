@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/capabilities"
-	log "github.com/sirupsen/logrus"
 )
 
 func logBaseImage() error {
@@ -73,7 +72,7 @@ func readProc(filename string) (value string, err error) {
 func readMounts() error {
 	all, err := readProc("/proc/mounts")
 	if err != nil {
-		log.Println("Error: Couldn't read /proc/mounts")
+		log.Print("Error: Couldn't read /proc/mounts")
 		return err
 	}
 	lines := strings.Split(all, "\n")
@@ -89,7 +88,7 @@ func readMounts() error {
 		}
 	}
 	if !detected {
-		log.Println("No volume detected. Persistent messages may be lost")
+		log.Print("No volume detected. Persistent messages may be lost")
 	} else {
 		checkFS("/mnt/mqm")
 	}
@@ -102,14 +101,14 @@ func logConfig() {
 		var err error
 		osr, err := readProc("/proc/sys/kernel/osrelease")
 		if err != nil {
-			log.Println(err)
+			log.Print(err)
 		} else {
 			log.Printf("Linux kernel version: %v", osr)
 		}
 		logBaseImage()
 		fileMax, err := readProc("/proc/sys/fs/file-max")
 		if err != nil {
-			log.Println(err)
+			log.Print(err)
 		} else {
 			log.Printf("Maximum file handles: %v", fileMax)
 		}

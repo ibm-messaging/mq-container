@@ -21,8 +21,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // resolveLicenseFile returns the file name of the MQ license file, taking into

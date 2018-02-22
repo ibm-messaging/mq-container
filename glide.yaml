@@ -20,5 +20,3 @@ excludeDirs:
 - test
 import:
 - package: golang.org/x/sys/unix
-- package: github.com/sirupsen/logrus
-  version: v1.0.4

@@ -23,8 +23,6 @@ import (
 	"os"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
@@ -35,7 +33,6 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
-	configureDebugLogger()
 	err = ready.Clear()
 	if err != nil {
 		logTermination(err)
@@ -78,12 +75,12 @@ func doMain() error {
 	}
 	var wg sync.WaitGroup
 	defer func() {
-		log.Debugln("Waiting for log mirroring to complete")
+		log.Debug("Waiting for log mirroring to complete")
 		wg.Wait()
 	}()
 	ctx, cancelMirror := context.WithCancel(context.Background())
 	defer func() {
-		log.Debugln("Cancel log mirroring")
+		log.Debug("Cancel log mirroring")
 		cancelMirror()
 	}()
 	// TODO: Use the error channel

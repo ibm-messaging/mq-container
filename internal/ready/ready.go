@@ -20,8 +20,6 @@ package ready
 import (
 	"io/ioutil"
 	"os"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const fileName string = "/run/runmqserver/ready"
@@ -39,7 +37,6 @@ func fileExists() (bool, error) {
 
 // Clear ensures that any readiness state is cleared
 func Clear() error {
-	log.Debug("Clear()")
 	exist, err := fileExists()
 	if err != nil {
 		return err
@@ -53,7 +50,6 @@ func Clear() error {
 // Set lets any subsequent calls to `CheckReady` know that the queue
 // manager has finished its configuration step
 func Set() error {
-	log.Debug("Set()")
 	return ioutil.WriteFile(fileName, []byte("1"), 0770)
 }
 
@@ -62,9 +58,7 @@ func Set() error {
 func Check() (bool, error) {
 	exists, err := fileExists()
 	if err != nil {
-		log.Debug("Check() -> false")
 		return false, err
 	}
-	log.Debugf("Check() -> %v", exists)
 	return exists, nil
 }

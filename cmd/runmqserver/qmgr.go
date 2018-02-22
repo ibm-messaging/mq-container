@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	log "github.com/sirupsen/logrus"
 )
 
 // createDirStructure creates the default MQ directory structure under /var/mqm
