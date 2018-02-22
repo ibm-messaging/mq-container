@@ -18,6 +18,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"net"
 	"os"
 
@@ -33,6 +34,7 @@ func main() {
 	// Check if the queue manager has a running listener
 	conn, err := net.Dial("tcp", "127.0.0.1:1414")
 	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 	conn.Close()

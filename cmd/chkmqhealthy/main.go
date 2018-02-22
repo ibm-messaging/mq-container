@@ -18,6 +18,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -35,8 +36,10 @@ func queueManagerHealthy() (bool, error) {
 	// Run the command and wait for completion
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		fmt.Println(err)
 		return false, err
 	}
+	fmt.Println(out)
 	if !strings.Contains(string(out), "(RUNNING)") {
 		return false, nil
 	}
