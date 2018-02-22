@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
@@ -45,9 +46,9 @@ func (f *simpleTextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return []byte(formatSimple(entry.Time.Format(timestampFormat), entry.Message)), nil
 }
 
-func logDebug(msg string) {
+func logDebug(args ...interface{}) {
 	if debug {
-		log.Debugln(msg)
+		log.Debug(args)
 	}
 }
 
@@ -55,6 +56,22 @@ func logDebugf(format string, args ...interface{}) {
 	if debug {
 		log.Debugf(format, args...)
 	}
+}
+
+func logTerminationf(format string, args ...interface{}) {
+	logTermination(fmt.Sprintf(format, args))
+}
+
+func logTermination(args ...interface{}) {
+	msg := fmt.Sprint(args)
+	// Write the message to the termination log.  This is the default place
+	// that Kubernetes will look for termination information.
+	log.Debugf("Writing termination message: %v", msg)
+	err := ioutil.WriteFile("/dev/termination-log", []byte(msg), 0660)
+	if err != nil {
+		log.Debug(err)
+	}
+	log.Error(msg)
 }
 
 func jsonLogs() bool {
@@ -78,7 +95,7 @@ func mirrorLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart 
 	// Put the queue manager name in quotes to handle cases like name=..
 	qm, err := mqini.GetQueueManager(name)
 	if err != nil {
-		logDebugf("%v", err)
+		logDebug(err)
 		return nil, err
 	}
 	f := filepath.Join(mqini.GetErrorLogDirectory(qm), "AMQERR01.json")

@@ -17,10 +17,10 @@ package mqini
 
 import (
 	"bufio"
-	"bytes"
-	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 // QueueManager describe high-level configuration information for a queue manager
@@ -33,8 +33,8 @@ type QueueManager struct {
 }
 
 // getQueueManagerFromStanza parses a queue manager stanza
-func getQueueManagerFromStanza(stanza []byte) (*QueueManager, error) {
-	scanner := bufio.NewScanner(bytes.NewReader(stanza))
+func getQueueManagerFromStanza(stanza string) (*QueueManager, error) {
+	scanner := bufio.NewScanner(strings.NewReader(stanza))
 	qm := QueueManager{}
 	for scanner.Scan() {
 		l := scanner.Text()
@@ -59,9 +59,7 @@ func getQueueManagerFromStanza(stanza []byte) (*QueueManager, error) {
 // GetQueueManager returns queue manager configuration information
 func GetQueueManager(name string) (*QueueManager, error) {
 	// dspmqinf essentially returns a subset of mqs.ini, but it's simpler to parse
-	cmd := exec.Command("dspmqinf", "-o", "stanza", name)
-	// Run the command and wait for completion
-	out, err := cmd.CombinedOutput()
+	out, _, err := command.Run("dspmqinf", "-o", "stanza", name)
 	if err != nil {
 		return nil, err
 	}

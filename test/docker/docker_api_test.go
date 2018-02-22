@@ -235,15 +235,19 @@ func TestStartQueueManagerFail(t *testing.T) {
 	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-		// Override the entrypoint to replace `crtmqm` with a no-op script.
-		// This will cause `strmqm` to return with an exit code of 16.
-		Entrypoint: []string{"bash", "-c", "echo '#!/bin/bash\n' > /opt/mqm/bin/crtmqm && exec " + oldEntrypoint},
+		// Override the entrypoint to replace `strmqm` with a script which deletes the queue manager.
+		// This will cause `strmqm` to return with an exit code of 72.
+		Entrypoint: []string{"bash", "-c", "echo '#!/bin/bash\ndltmqm $@ && strmqm $@' > /opt/mqm/bin/strmqm && exec " + oldEntrypoint},
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	rc := waitForContainer(t, cli, id, 10)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
+	}
+	m := terminationMessage(t)
+	if m == "" {
+		t.Error("Expected termination message to be set")
 	}
 }
 

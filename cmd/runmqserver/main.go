@@ -34,19 +34,23 @@ func doMain() error {
 	configureDebugLogger()
 	err := ready.Clear()
 	if err != nil {
+		logTermination(err)
 		return err
 	}
 	name, err := name.GetQueueManagerName()
 	if err != nil {
-		log.Println(err)
+		logTermination(err)
 		return err
 	}
 	accepted, err := checkLicense()
 	if err != nil {
+		logTerminationf("Error checking license acceptance: %v", err)
 		return err
 	}
 	if !accepted {
-		return errors.New("License not accepted")
+		err = errors.New("License not accepted")
+		logTermination(err)
+		return err
 	}
 	log.Printf("Using queue manager name: %v", name)
 
@@ -56,7 +60,7 @@ func doMain() error {
 	logConfig()
 	err = createVolume("/mnt/mqm")
 	if err != nil {
-		log.Println(err)
+		logTermination(err)
 		return err
 	}
 	err = createDirStructure()
@@ -65,6 +69,7 @@ func doMain() error {
 	}
 	newQM, err := createQueueManager(name)
 	if err != nil {
+		logTermination(err)
 		return err
 	}
 	var wg sync.WaitGroup
@@ -80,14 +85,17 @@ func doMain() error {
 	// TODO: Use the error channel
 	_, err = mirrorLogs(ctx, &wg, name, newQM)
 	if err != nil {
+		logTermination(err)
 		return err
 	}
 	err = updateCommandLevel()
 	if err != nil {
+		logTermination(err)
 		return err
 	}
 	err = startQueueManager()
 	if err != nil {
+		logTermination(err)
 		return err
 	}
 	configureQueueManager()

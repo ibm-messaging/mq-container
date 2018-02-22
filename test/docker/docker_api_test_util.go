@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -71,6 +71,37 @@ func coverageBind(t *testing.T) string {
 	return coverageDir(t) + ":/var/coverage"
 }
 
+// terminationLog returns the name of the file to use for the termination log message
+func terminationLog(t *testing.T) string {
+	// Warning: this directory must be accessible to the Docker daemon,
+	// in order to enable the bind mount
+	return "/tmp/" + t.Name() + "-termination-log"
+}
+
+// terminationBind returns a string to use to bind-mount a termination log file.
+// This is done using a bind, because you can't copy files from /dev out of the container.
+func terminationBind(t *testing.T) string {
+	n := terminationLog(t)
+	// Remove it if it already exists
+	os.Remove(n)
+	// Create the empty file
+	f, err := os.OpenFile(n, os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	return n + ":/dev/termination-log"
+}
+
+// Returns the termination message, or an empty string if not set
+func terminationMessage(t *testing.T) string {
+	b, err := ioutil.ReadFile(terminationLog(t))
+	if err != nil {
+		t.Log(err)
+	}
+	return string(b)
+}
+
 func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	i, err := cli.ContainerInspect(context.Background(), ID)
 	if err == nil {
@@ -91,10 +122,17 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 		t.Log(err)
 	}
 	t.Log("Container stopped")
+
 	// If a code coverage file has been generated, then rename it to match the test name
 	os.Rename(filepath.Join(coverageDir(t), "container.cov"), filepath.Join(coverageDir(t), t.Name()+".cov"))
 	// Log the container output for any container we're about to delete
 	t.Logf("Console log from container %v:\n%v", ID, inspectTextLogs(t, cli, ID))
+
+	m := terminationMessage(t)
+	if m != "" {
+		t.Logf("Termination message: %v", m)
+	}
+	os.Remove(terminationLog(t))
 
 	t.Logf("Removing container: %s", ID)
 	opts := types.ContainerRemoveOptions{
@@ -119,6 +157,7 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
+			terminationBind(t),
 		},
 	}
 	networkingConfig := network.NetworkingConfig{}
@@ -437,10 +476,10 @@ func deleteImage(t *testing.T, cli *client.Client, id string) {
 
 func copyFromContainer(t *testing.T, cli *client.Client, id string, file string) []byte {
 	reader, _, err := cli.CopyFromContainer(context.Background(), id, file)
-	defer reader.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer reader.Close()
 	b, err := ioutil.ReadAll(reader)
 	if err != nil {
 		t.Fatal(err)

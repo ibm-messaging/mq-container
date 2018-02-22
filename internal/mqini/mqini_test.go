@@ -39,7 +39,7 @@ func TestGetQueueManager(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			qm, err := getQueueManagerFromStanza(b)
+			qm, err := getQueueManagerFromStanza(string(b))
 			if err != nil {
 				t.Fatal(err)
 			}

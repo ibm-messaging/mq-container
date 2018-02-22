@@ -18,6 +18,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -42,7 +43,7 @@ func waitForFile(ctx context.Context, path string) (os.FileInfo, error) {
 					time.Sleep(500 * time.Millisecond)
 					continue
 				} else {
-					return nil, err
+					return nil, fmt.Errorf("mirror: unable to get info on file %v", path)
 				}
 			}
 			log.Debugf("File exists: %v, %v", path, fi.Size())
@@ -101,7 +102,6 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 		// File already exists, so start reading at the end
 		offset = fi.Size()
 	}
-
 	// Increment wait group counter, only if the goroutine gets started
 	wg.Add(1)
 	go func() {

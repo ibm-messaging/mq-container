@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ limitations under the License.
 package command
 
 import (
+	"fmt"
 	"os/exec"
 	"runtime"
 	"syscall"
@@ -38,7 +39,7 @@ func Run(name string, arg ...string) (string, int, error) {
 		if ok && runtime.GOOS == "linux" {
 			status, ok := exiterr.Sys().(syscall.WaitStatus)
 			if ok {
-				return string(out), status.ExitStatus(), err
+				return string(out), status.ExitStatus(), fmt.Errorf("%v: %v", name, err)
 			}
 		}
 		return string(out), -1, err
