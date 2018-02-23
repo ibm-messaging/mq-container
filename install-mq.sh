@@ -71,7 +71,7 @@ $RHEL && yum -y install \
 
 # Download and extract the MQ installation files
 DIR_EXTRACT=/tmp/mq
-mkdir -p ${DIR_EXTRACT} 
+mkdir -p ${DIR_EXTRACT}
 cd ${DIR_EXTRACT}
 curl -LO $MQ_URL
 tar -zxvf ./*.tar.gz
@@ -124,7 +124,7 @@ rm -rf ${DIR_EXTRACT}
 
 # Apply any bug fixes not included in base Ubuntu or MQ image.
 # Don't upgrade everything based on Docker best practices https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run
-
+apt-get install -y systemd gcc-5-base libstdc++6 systemd-sysv libudev1
 # End of bug fixes
 
 # Clean up cached files
