@@ -84,7 +84,12 @@ func doMain() error {
 		cancelMirror()
 	}()
 	// TODO: Use the error channel
-	_, err = mirrorLogs(ctx, &wg, name, newQM, mf)
+	_, err = mirrorSystemErrorLogs(ctx, &wg, mf)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+	_, err = mirrorQueueManagerErrorLogs(ctx, &wg, name, newQM, mf)
 	if err != nil {
 		logTermination(err)
 		return err

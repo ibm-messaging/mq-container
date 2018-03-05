@@ -63,9 +63,15 @@ func formatSimple(datetime string, message string) string {
 	return fmt.Sprintf("%v %v\n", datetime, message)
 }
 
-func mirrorLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool, mf mirrorFunc) (chan error, error) {
+// mirrorSystemErrorLogs starts a goroutine to mirror the contents of the MQ system error logs
+func mirrorSystemErrorLogs(ctx context.Context, wg *sync.WaitGroup, mf mirrorFunc) (chan error, error) {
 	// Always use the JSON log as the source
-	// Put the queue manager name in quotes to handle cases like name=..
+	return mirrorLog(ctx, wg, "/var/mqm/errors/AMQERR01.json", false, mf)
+}
+
+// mirrorQueueManagerErrorLogs starts a goroutine to mirror the contents of the MQ queue manager error logs
+func mirrorQueueManagerErrorLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool, mf mirrorFunc) (chan error, error) {
+	// Always use the JSON log as the source
 	qm, err := mqini.GetQueueManager(name)
 	if err != nil {
 		logDebug(err)
