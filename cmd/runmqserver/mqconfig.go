@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,26 +17,12 @@ package main
 
 import (
 	"io/ioutil"
-	"log"
 	"os/user"
 	"runtime"
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/capabilities"
-	"golang.org/x/sys/unix"
 )
-
-// fsTypes contains file system identifier codes.
-// This code will not compile on some operating systems - Linux only.
-var fsTypes = map[int64]string{
-	0x61756673: "aufs",
-	0xef53:     "ext",
-	0x6969:     "nfs",
-	0x65735546: "fuse",
-	0x9123683e: "btrfs",
-	0x01021994: "tmpfs",
-	0x794c7630: "overlayfs",
-}
 
 func logBaseImage() error {
 	buf, err := ioutil.ReadFile("/etc/os-release")
@@ -86,7 +72,7 @@ func readProc(filename string) (value string, err error) {
 func readMounts() error {
 	all, err := readProc("/proc/mounts")
 	if err != nil {
-		log.Println("Error: Couldn't read /proc/mounts")
+		log.Print("Error: Couldn't read /proc/mounts")
 		return err
 	}
 	lines := strings.Split(all, "\n")
@@ -102,27 +88,11 @@ func readMounts() error {
 		}
 	}
 	if !detected {
-		log.Println("No volume detected. Persistent messages may be lost")
+		log.Print("No volume detected. Persistent messages may be lost")
 	} else {
 		checkFS("/mnt/mqm")
 	}
 	return nil
-}
-
-func checkFS(path string) {
-	statfs := &unix.Statfs_t{}
-	err := unix.Statfs(path, statfs)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	t := fsTypes[statfs.Type]
-	switch t {
-	case "aufs", "overlayfs", "tmpfs":
-		log.Fatalf("Error: %v uses unsupported filesystem type %v", path, t)
-	default:
-		log.Printf("Detected %v has filesystem type '%v'", path, t)
-	}
 }
 
 func logConfig() {
@@ -131,14 +101,14 @@ func logConfig() {
 		var err error
 		osr, err := readProc("/proc/sys/kernel/osrelease")
 		if err != nil {
-			log.Println(err)
+			log.Print(err)
 		} else {
 			log.Printf("Linux kernel version: %v", osr)
 		}
 		logBaseImage()
 		fileMax, err := readProc("/proc/sys/fs/file-max")
 		if err != nil {
-			log.Println(err)
+			log.Print(err)
 		} else {
 			log.Printf("Maximum file handles: %v", fileMax)
 		}

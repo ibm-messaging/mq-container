@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2017
+# © Copyright IBM Corporation 2015, 2018
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,12 @@ fi
 
 if ($UBUNTU); then
   export DEBIAN_FRONTEND=noninteractive
+  # Use a reduced set of apt repositories.
+  # This ensures no unsupported code gets installed, and makes the build faster
+  source /etc/os-release
+  echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME} main restricted" > /etc/apt/sources.list
+  echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-updates main restricted" >> /etc/apt/sources.list
+  echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-security main restricted" >> /etc/apt/sources.list
   # Install additional packages required by MQ, this install process and the runtime scripts
   apt-get update
   apt-get install -y --no-install-recommends \
@@ -124,7 +130,7 @@ rm -rf ${DIR_EXTRACT}
 
 # Apply any bug fixes not included in base Ubuntu or MQ image.
 # Don't upgrade everything based on Docker best practices https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run
-apt-get install -y systemd gcc-5-base libstdc++6 systemd-sysv libudev1
+$UBUNTU && apt-get upgrade -y sensible-utils
 # End of bug fixes
 
 # Clean up cached files

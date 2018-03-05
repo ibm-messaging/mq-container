@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package main
 
 import (
 	"archive/tar"
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -69,6 +71,44 @@ func coverageBind(t *testing.T) string {
 	return coverageDir(t) + ":/var/coverage"
 }
 
+// terminationLog returns the name of the file to use for the termination log message
+func terminationLog(t *testing.T) string {
+	// Warning: this directory must be accessible to the Docker daemon,
+	// in order to enable the bind mount
+	return "/tmp/" + t.Name() + "-termination-log"
+}
+
+// terminationBind returns a string to use to bind-mount a termination log file.
+// This is done using a bind, because you can't copy files from /dev out of the container.
+func terminationBind(t *testing.T) string {
+	n := terminationLog(t)
+	// Remove it if it already exists
+	os.Remove(n)
+	// Create the empty file
+	f, err := os.OpenFile(n, os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	return n + ":/dev/termination-log"
+}
+
+// Returns the termination message, or an empty string if not set
+func terminationMessage(t *testing.T) string {
+	b, err := ioutil.ReadFile(terminationLog(t))
+	if err != nil {
+		t.Log(err)
+	}
+	return string(b)
+}
+
+func expectTerminationMessage(t *testing.T) {
+	m := terminationMessage(t)
+	if m == "" {
+		t.Error("Expected termination message to be set")
+	}
+}
+
 func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	i, err := cli.ContainerInspect(context.Background(), ID)
 	if err == nil {
@@ -89,10 +129,17 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 		t.Log(err)
 	}
 	t.Log("Container stopped")
+
 	// If a code coverage file has been generated, then rename it to match the test name
 	os.Rename(filepath.Join(coverageDir(t), "container.cov"), filepath.Join(coverageDir(t), t.Name()+".cov"))
 	// Log the container output for any container we're about to delete
-	t.Logf("Console log from container %v:\n%v", ID, inspectLogs(t, cli, ID))
+	t.Logf("Console log from container %v:\n%v", ID, inspectTextLogs(t, cli, ID))
+
+	m := terminationMessage(t)
+	if m != "" {
+		t.Logf("Termination message: %v", m)
+	}
+	os.Remove(terminationLog(t))
 
 	t.Logf("Removing container: %s", ID)
 	opts := types.ContainerRemoveOptions{
@@ -115,16 +162,9 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	// if coverage
 	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
 	hostConfig := container.HostConfig{
-		// PortBindings: nat.PortMap{
-		// 	"1414/tcp": []nat.PortBinding{
-		// 		{
-		// 			HostIP:   "0.0.0.0",
-		// 			HostPort: "1414",
-		// 		},
-		// 	},
-		// },
 		Binds: []string{
 			coverageBind(t),
+			terminationBind(t),
 		},
 	}
 	networkingConfig := network.NetworkingConfig{}
@@ -189,8 +229,6 @@ func getCoverageExitCode(t *testing.T, orig int64) int64 {
 
 // waitForContainer waits until a container has exited
 func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64) int64 {
-	//ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-	//defer cancel()
 	rc, err := cli.ContainerWait(context.Background(), ID)
 
 	if coverage() {
@@ -200,11 +238,9 @@ func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64
 		rc = getCoverageExitCode(t, rc)
 	}
 
-	//	err := <-errC
 	if err != nil {
 		t.Fatal(err)
 	}
-	//	wait := <-waitC
 	return rc
 }
 
@@ -339,6 +375,29 @@ func removeVolume(t *testing.T, cli *client.Client, name string) {
 	}
 }
 
+func inspectTextLogs(t *testing.T, cli *client.Client, ID string) string {
+	jsonLogs := inspectLogs(t, cli, ID)
+	scanner := bufio.NewScanner(strings.NewReader(jsonLogs))
+	b := make([]byte, 64*1024)
+	scanner.Buffer(b, 1024*1024)
+	buf := bytes.NewBuffer(b)
+	for scanner.Scan() {
+		t := scanner.Text()
+		if strings.HasPrefix(t, "{") {
+			var e map[string]interface{}
+			json.Unmarshal([]byte(scanner.Text()), &e)
+			fmt.Fprintf(buf, "{\"message\": \"%v\"}\n", e["message"])
+		} else {
+			fmt.Fprintln(buf, t)
+		}
+	}
+	err := scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return buf.String()
+}
+
 func inspectLogs(t *testing.T, cli *client.Client, ID string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -420,4 +479,17 @@ func deleteImage(t *testing.T, cli *client.Client, id string) {
 	cli.ImageRemove(context.Background(), id, types.ImageRemoveOptions{
 		Force: true,
 	})
+}
+
+func copyFromContainer(t *testing.T, cli *client.Client, id string, file string) []byte {
+	reader, _, err := cli.CopyFromContainer(context.Background(), id, file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reader.Close()
+	b, err := ioutil.ReadAll(reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
 }

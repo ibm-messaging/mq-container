@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,15 +16,29 @@ limitations under the License.
 package main
 
 import (
-	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"syscall"
 )
 
-const mqmUID uint32 = 999
-const mqmGID uint32 = 999
+func lookupMQM() (int, int, error) {
+	mqm, err := user.Lookup("mqm")
+	if err != nil {
+		return -1, -1, err
+	}
+	mqmUID, err := strconv.Atoi(mqm.Uid)
+	if err != nil {
+		return -1, -1, err
+	}
+	mqmGID, err := strconv.Atoi(mqm.Gid)
+	if err != nil {
+		return -1, -1, err
+	}
+	return mqmUID, mqmGID, nil
+}
 
 func createVolume(path string) error {
 	dataPath := filepath.Join(path, "data")
@@ -46,8 +60,13 @@ func createVolume(path string) error {
 	sys := fi.Sys()
 	if sys != nil && runtime.GOOS == "linux" {
 		stat := sys.(*syscall.Stat_t)
-		if stat.Uid != mqmUID || stat.Gid != mqmGID {
-			err = os.Chown(dataPath, int(mqmUID), int(mqmGID))
+		mqmUID, mqmGID, err := lookupMQM()
+		if err != nil {
+			return err
+		}
+		log.Debugf("mqm user is %v (%v)", mqmUID, mqmGID)
+		if int(stat.Uid) != mqmUID || int(stat.Gid) != mqmGID {
+			err = os.Chown(dataPath, mqmUID, mqmGID)
 			if err != nil {
 				log.Printf("Error: Unable to change ownership of %v", dataPath)
 				return err

@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2017
+# © Copyright IBM Corporation 2015, 2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,10 @@ RUN go build ./cmd/runmqserver/
 RUN go build ./cmd/chkmqready/
 RUN go build ./cmd/chkmqhealthy/
 # Run all unit tests
-RUN go test -v ./cmd/... ./internal/...
+RUN go test -v ./cmd/runmqserver/
+RUN go test -v ./cmd/chkmqready/
+RUN go test -v ./cmd/chkmqhealthy/
+RUN go test -v ./internal/...
 
 ###############################################################################
 # Main build stage, to build MQ image
@@ -47,16 +50,21 @@ RUN chmod u+x /usr/local/bin/install-mq.sh \
   && sleep 1 \
   && install-mq.sh
 
+# Create a directory for runtime data from runmqserver
+RUN mkdir -p /run/runmqserver \
+  && chown mqm:mqm /run/runmqserver
+
 COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqserver /usr/local/bin/
 COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/chkmq* /usr/local/bin/
 COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
 
-RUN chmod +x /usr/local/bin/runmqserver \
-  && chmod +x /usr/local/bin/chkmq*
+RUN chmod ug+x /usr/local/bin/runmqserver \
+  && chown mqm:mqm /usr/local/bin/*mq* \
+  && chmod ug+xs /usr/local/bin/chkmq*
 
 # Always use port 1414
 EXPOSE 1414
 
-ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1
+ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1 LOG_FORMAT=simple
 
 ENTRYPOINT ["runmqserver"]

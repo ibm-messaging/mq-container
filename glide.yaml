@@ -19,6 +19,4 @@ excludeDirs:
 - coverage
 - test
 import:
-- package: github.com/hpcloud/tail
-  version: v1.0.0
 - package: golang.org/x/sys/unix

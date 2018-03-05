@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,13 +18,23 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"net"
 	"os"
+
+	"github.com/ibm-messaging/mq-container/internal/ready"
 )
 
 func main() {
+	// Check if runmqserver has indicated that it's finished configuration
+	r, err := ready.Check()
+	if !r || err != nil {
+		os.Exit(1)
+	}
+	// Check if the queue manager has a running listener
 	conn, err := net.Dial("tcp", "127.0.0.1:1414")
 	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 	conn.Close()

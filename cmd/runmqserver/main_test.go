@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ package main
 import (
 	"flag"
 	"io/ioutil"
-	"log"
+	"os"
 	"strconv"
 	"testing"
+
+	"github.com/ibm-messaging/mq-container/internal/logger"
 )
 
 var test *bool
@@ -29,6 +31,7 @@ const filename = "/var/coverage/exitCode"
 
 func init() {
 	test = flag.Bool("test", false, "Set to true when running tests for coverage")
+	log = logger.NewLogger(os.Stdout, true, false)
 }
 
 // Test started when the test binary is started. Only calls main.

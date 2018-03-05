@@ -1,19 +1,47 @@
-hash: 170f17bb34eaa2c23733b3919e76a268654e50a21e70b45e1b7b2dd2161efc67
-updated: 2017-09-25T16:58:43.624633314+01:00
+hash: 4905ad6acf8e593e3c4432f31dd61275b16d0b5b95f438471749ae1943af785d
+updated: 2018-02-22T17:26:13.366677Z
 imports:
-- name: github.com/hpcloud/tail
-  version: a30252cb686a21eb2d0b98132633053ec2f7f1e5
+- name: golang.org/x/crypto
+  version: 81e90905daefcd6fd217b62423c0908922eadb30
   subpackages:
-  - ratelimiter
-  - util
-  - watch
-  - winfile
+  - acme
+  - acme/autocert
+  - blowfish
+  - cast5
+  - chacha20poly1305/internal/chacha20
+  - cryptobyte
+  - curve25519
+  - ed25519
+  - ed25519/internal/edwards25519
+  - hkdf
+  - md4
+  - nacl/auth
+  - nacl/box
+  - nacl/secretbox
+  - openpgp
+  - openpgp/armor
+  - openpgp/elgamal
+  - openpgp/errors
+  - openpgp/packet
+  - openpgp/s2k
+  - pbkdf2
+  - pkcs12/internal/rc2
+  - poly1305
+  - ripemd160
+  - salsa20/salsa
+  - ssh
+  - ssh/agent
+  - ssh/terminal
+  - ssh/testdata
 - name: golang.org/x/sys
   version: 7a4fde3fda8ef580a89dbae8138c26041be14299
   subpackages:
+  - plan9
   - unix
-- name: gopkg.in/fsnotify.v1
-  version: 7be54206639f256967dd82fa767397ba5f8f48f5
-- name: gopkg.in/tomb.v1
-  version: c131134a1947e9afd9cecfe11f4c6dff0732ae58
+  - windows
+  - windows/registry
+  - windows/svc
+  - windows/svc/debug
+  - windows/svc/eventlog
+  - windows/svc/mgr
 testImports: []

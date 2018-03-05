@@ -1,4 +1,4 @@
-﻿===============================================================================
+===============================================================================
 THE FOLLOWING SECTIONS IDENTIFY VARIOUS COMPONENTS CONTAINED IN THE PROGRAM, AND SPECIFY CERTAIN NOTICES AND OTHER INFORMATION REGARDING THOSE COMPONENTS THAT IBM IS REQUIRED TO PROVIDE TO YOU. 
 
 NOTWITHSTANDING ANY PROVISION CONTAINED IN ANY OF THE NOTICES AND OTHER INFORMATION SET FORTH BELOW, YOUR USE OF THESE PROGRAM COMPONENTS REMAINS SUBJECT TO THE TERMS AND CONDITIONS SET FORTH IN: 
@@ -15,9 +15,8 @@ Section B. below contains provisions relating to certain other components of the
 
 B.1 MIT license
 Affected Components:
-* github.com/hpcloud/tail
-  Copyright 2015 Hewlett Packard Enterprise Development LP
-  Copyright (c) 2014 ActiveState
+* sirupsen/logrus
+  Copyright (c) 2014 Simon Eskildsen
 
 B.2 BSD 3-Clause license
 Affected Components:
@@ -25,11 +24,6 @@ Affected Components:
   Copyright (c) 2009 The Go Authors. All rights reserved.
 * golang.org/x/sys
   Copyright (c) 2009 The Go Authors. All rights reserved.
-* gopkg.in/fsnotify.v1
-  Copyright (c) 2012 The Go Authors. All rights reserved.
-  Copyright (c) 2012 fsnotify Authors. All rights reserved.
-* gopkg.in/tomb.v1
-  Copyright (c) 2010-2011 - Gustavo Niemeyer <gustavo@niemeyer.net>. All rights reserved.
 
 ===============================================================================
 END OF A. SUMMARY

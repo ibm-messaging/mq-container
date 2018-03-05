@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017
+# © Copyright IBM Corporation 2017, 2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ BUILD_SERVER_CONTAINER=build-server
 NUM_CPU=$(shell docker info --format "{{ .NCPU }}")
 # BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
 BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
+MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 
 # Try to figure out which archive to use from the BASE_IMAGE
 ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
@@ -139,7 +140,7 @@ test-advancedserver: test/docker/vendor
 .PHONY: test-devserver
 test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(DOCKER_FULL_DEVSERVER) on Docker"$(END)))
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) go test -parallel $(NUM_CPU)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
 .PHONY: test-advancedserver-cover
 test-advancedserver-cover: test/docker/vendor
@@ -189,10 +190,9 @@ define docker-build-mq
 	  --volume "$(realpath ./downloads/)":/usr/share/nginx/html:ro \
 	  --detach \
 	  nginx:alpine
-	# Make sure we have the latest base image
-	$(DOCKER) pull $(BASE_IMAGE)
-	# Build the new image
+	# Build the new image (use --pull to make sure we have the latest base image)
 	$(DOCKER) build \
+	  --pull \
 	  --tag $1 \
 	  --file $2 \
 	  --network build \
@@ -220,8 +220,9 @@ build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version
 .PHONY: build-devserver
 build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version
 	@test "$(shell uname -m)" = "x86_64" || (echo "Error: MQ Advanced for Developers is only available for x86_64 architecture" && exit 1)
-	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER)"$(END)))
-	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE)"$(END)))
+	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER_BASE),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
+	docker build --tag $(MQ_IMAGE_DEVSERVER) incubating/mqadvanced-server-dev
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: docker-version

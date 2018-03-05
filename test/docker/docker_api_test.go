@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,8 +16,15 @@ limitations under the License.
 package main
 
 import (
+	"archive/tar"
+	"bufio"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -41,6 +48,7 @@ func TestLicenseNotSet(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
+	expectTerminationMessage(t)
 }
 
 func TestLicenseView(t *testing.T) {
@@ -74,13 +82,12 @@ func TestGoldenPath(t *testing.T) {
 	}
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-		// ExposedPorts: nat.PortSet{
-		// 	"1414/tcp": struct{}{},
-		// },
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
 }
 
 // TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
@@ -91,15 +98,6 @@ func TestSecurityVulnerabilities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// containerConfig := container.Config{
-	// 	// Override the entrypoint to make "apt" only receive security updates, then check for updates
-	// 	Entrypoint: []string{"bash", "-c", "source /etc/os-release && echo \"deb http://security.ubuntu.com/ubuntu/ ${VERSION_CODENAME}-security main restricted\" > /etc/apt/sources.list && apt-get update 2>&1 >/dev/null && apt-get --simulate -qq upgrade"},
-	// }
-	// id := runContainer(t, cli, &containerConfig)
-	// defer cleanContainer(t, cli, id)
-	// // rc is the return code from apt-get
-	// rc := waitForContainer(t, cli, id, 10)
-
 	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "test -d /etc/apt")
 	if rc != 0 {
 		t.Skip("Skipping test because container is not Ubuntu-based")
@@ -225,6 +223,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
+	expectTerminationMessage(t)
 }
 
 // TestStartQueueManagerFail causes a failure of `strmqm`
@@ -237,10 +236,10 @@ func TestStartQueueManagerFail(t *testing.T) {
 	img, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
 	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
 	containerConfig := container.Config{
-		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-		// Override the entrypoint to replace `crtmqm` with a no-op script.
-		// This will cause `strmqm` to return with an exit code of 16.
-		Entrypoint: []string{"bash", "-c", "echo '#!/bin/bash\n' > /opt/mqm/bin/crtmqm && exec " + oldEntrypoint},
+		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=1"},
+		// Override the entrypoint to replace `strmqm` with a script which deletes the queue manager.
+		// This will cause `strmqm` to return with an exit code of 72.
+		Entrypoint: []string{"bash", "-c", "echo '#!/bin/bash\ndltmqm $@ && strmqm $@' > /opt/mqm/bin/strmqm && exec " + oldEntrypoint},
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
@@ -248,6 +247,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
+	expectTerminationMessage(t)
 }
 
 // TestVolumeUnmount runs a queue manager with a volume, and then forces an
@@ -343,7 +343,7 @@ func TestMQSC(t *testing.T) {
 	var files = []struct {
 		Name, Body string
 	}{
-		{"Dockerfile", fmt.Sprintf("FROM %v\nADD test.mqsc /etc/mqm/", imageName())},
+		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD test.mqsc /etc/mqm/", imageName())},
 		{"test.mqsc", "DEFINE QLOCAL(test)"},
 	}
 	tag := createImage(t, cli, files)
@@ -360,4 +360,222 @@ func TestMQSC(t *testing.T) {
 	if rc != 0 {
 		t.Fatalf("Expected runmqsc to exit with rc=0, got %v", rc)
 	}
+}
+
+// TestReadiness creates a new image with large amounts of MQSC in, to
+// ensure that the readiness check doesn't pass until configuration has finished.
+// WARNING: This test is sensitive to the speed of the machine it's running on.
+func TestReadiness(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const numQueues = 3
+	var buf bytes.Buffer
+	for i := 1; i <= numQueues; i++ {
+		fmt.Fprintf(&buf, "* Defining queue test %v\nDEFINE QLOCAL(test%v)\n", i, i)
+	}
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD test.mqsc /etc/mqm/", imageName())},
+		{"test.mqsc", buf.String()},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	queueCheckCommand := fmt.Sprintf("echo 'DISPLAY QLOCAL(test%v)' | runmqsc", numQueues)
+	t.Log(execContainerWithOutput(t, cli, id, "root", []string{"cat", "/etc/mqm/test.mqsc"}))
+	for {
+		readyRC := execContainerWithExitCode(t, cli, id, "mqm", []string{"chkmqready"})
+		queueCheckRC := execContainerWithExitCode(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
+		t.Logf("readyRC=%v,queueCheckRC=%v\n", readyRC, queueCheckRC)
+		if readyRC == 0 {
+			if queueCheckRC != 0 {
+				t.Fatalf("chkmqready returned %v when MQSC had not finished", readyRC)
+			} else {
+				// chkmqready says OK, and the last queue exists, so return
+				t.Log(execContainerWithOutput(t, cli, id, "root", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"}))
+				return
+			}
+		}
+	}
+}
+
+func countLines(t *testing.T, r io.Reader) int {
+	scanner := bufio.NewScanner(r)
+	count := 0
+	for scanner.Scan() {
+		count++
+	}
+	err := scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return count
+}
+
+func countTarLines(t *testing.T, b []byte) int {
+	r := bytes.NewReader(b)
+	tr := tar.NewReader(r)
+	total := 0
+	for {
+		_, err := tr.Next()
+		if err == io.EOF {
+			// End of TAR
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		total += countLines(t, tr)
+	}
+	return total
+}
+
+func TestErrorLogRotation(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	qmName := "qm1"
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=" + qmName,
+			"MQMAXERRORLOGSIZE=65536",
+			"LOG_FORMAT=json",
+		},
+		ExposedPorts: nat.PortSet{
+			"1414/tcp": struct{}{},
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	dir := "/var/mqm/qmgrs/" + qmName + "/errors"
+	// Generate some content for the error logs, by trying to put messages under an unauthorized user
+	// execContainerWithOutput(t, cli, id, "fred", []string{"bash", "-c", "for i in {1..30} ; do /opt/mqm/samp/bin/amqsput FAKE; done"})
+	execContainerWithOutput(t, cli, id, "root", []string{"useradd", "fred"})
+	for {
+		execContainerWithOutput(t, cli, id, "fred", []string{"bash", "-c", "/opt/mqm/samp/bin/amqsput FAKE"})
+		amqerr02size, err := strconv.Atoi(execContainerWithOutput(t, cli, id, "mqm", []string{"bash", "-c", "wc -c < " + filepath.Join(dir, "AMQERR02.json")}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if amqerr02size > 0 {
+			// We've done enough to cause log rotation
+			break
+		}
+	}
+	out := execContainerWithOutput(t, cli, id, "root", []string{"ls", "-l", dir})
+	t.Log(out)
+	stopContainer(t, cli, id)
+	b := copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR01.json"))
+	amqerr01 := countTarLines(t, b)
+	b = copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR02.json"))
+	amqerr02 := countTarLines(t, b)
+	b = copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR03.json"))
+	amqerr03 := countTarLines(t, b)
+	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
+	totalMirrored := 0
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), "\"message\":\"AMQ") {
+			totalMirrored++
+		}
+	}
+	err = scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	total := amqerr01 + amqerr02 + amqerr03
+	if totalMirrored != total {
+		t.Fatalf("Expected %v (%v + %v + %v) mirrored log entries; got %v", total, amqerr01, amqerr02, amqerr03, totalMirrored)
+	} else {
+		t.Logf("Found %v (%v + %v + %v) mirrored log entries", totalMirrored, amqerr01, amqerr02, amqerr03)
+	}
+}
+
+func TestJSONLogFormat(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"LOG_FORMAT=json",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	stopContainer(t, cli, id)
+	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
+	for scanner.Scan() {
+		var obj map[string]interface{}
+		s := scanner.Text()
+		err := json.Unmarshal([]byte(s), &obj)
+		if err != nil {
+			t.Fatalf("Expected all log lines to be valid JSON.  Got error %v for line %v", err, s)
+		}
+	}
+	err = scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestBadLogFormat(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"LOG_FORMAT=fake",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	rc := waitForContainer(t, cli, id, 5)
+	if rc != 1 {
+		t.Errorf("Expected rc=1, got rc=%v", rc)
+	}
+	expectTerminationMessage(t)
+}
+
+// TestMQJSONDisabled tests the case where MQ's JSON logging feature is
+// specifically disabled (which will disable log mirroring)
+func TestMQJSONDisabled(t *testing.T) {
+	t.SkipNow()
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"AMQ_ADDITIONAL_JSON_LOG=0",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	// Stop the container (which could hang if runmqserver is still waiting for
+	// JSON logs to appear)
+	stopContainer(t, cli, id)
 }
