@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -32,6 +33,7 @@ const errorLevel string = "ERROR"
 
 // A Logger is used to log messages to stdout
 type Logger struct {
+	mutex       sync.Mutex
 	writer      io.Writer
 	debug       bool
 	json        bool
@@ -39,8 +41,10 @@ type Logger struct {
 	pid         int
 }
 
+// NewLogger creates a new logger
 func NewLogger(writer io.Writer, debug bool, json bool) *Logger {
 	return &Logger{
+		mutex:       sync.Mutex{},
 		writer:      writer,
 		debug:       debug,
 		json:        json,
@@ -72,6 +76,7 @@ func (l *Logger) log(level string, msg string) {
 		"ibm_processId":   l.pid,
 	}
 	s, err := l.format(entry)
+	l.mutex.Lock()
 	if err != nil {
 		// TODO: Fix this
 		fmt.Println(err)
@@ -81,6 +86,7 @@ func (l *Logger) log(level string, msg string) {
 	} else {
 		fmt.Fprint(l.writer, s)
 	}
+	l.mutex.Unlock()
 }
 
 func (l *Logger) LogDirect(msg string) {
