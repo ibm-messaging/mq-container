@@ -20,5 +20,6 @@ install:
   - echo nothing
 
 script:
+ - make deps
  - make build-devserver
  - make test-devserver

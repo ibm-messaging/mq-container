@@ -77,7 +77,7 @@ $RHEL && yum -y install \
 
 # Download and extract the MQ installation files
 DIR_EXTRACT=/tmp/mq
-mkdir -p ${DIR_EXTRACT} 
+mkdir -p ${DIR_EXTRACT}
 cd ${DIR_EXTRACT}
 curl -LO $MQ_URL
 tar -zxvf ./*.tar.gz
