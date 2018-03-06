@@ -94,10 +94,10 @@ func configureLogger() (mirrorFunc, error) {
 	d := getDebug()
 	switch f {
 	case "json":
-		log = logger.NewLogger(os.Stdout, d, true)
+		log = logger.NewLogger(os.Stderr, d, true)
 		return log.LogDirect, nil
-	case "simple":
-		log = logger.NewLogger(os.Stdout, d, false)
+	case "basic":
+		log = logger.NewLogger(os.Stderr, d, false)
 		return func(msg string) {
 			// Parse the JSON message, and print a simplified version
 			var obj map[string]interface{}
