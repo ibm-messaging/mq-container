@@ -19,7 +19,7 @@ In order to use the image, it is necessary to accept the terms of the IBM MQ lic
 * **LICENSE** - Set this to `accept` to agree to the MQ Advanced for Developers license. If you wish to see the license you can set this to `view`.
 * **LANG** - Set this to the language you would like the license to be printed in.
 * **MQ_QMGR_NAME** - Set this to the name you want your Queue Manager to be created with.
-* **LOG_FORMAT** - Set this to change the format of the logs which are printed on the container's stdout.  Set to "json" to use JSON format (JSON object per line); set to "simple" to use a simple human-readable.  Defaults to "simple".
+* **LOG_FORMAT** - Set this to change the format of the logs which are printed on the container's stdout.  Set to "json" to use JSON format (JSON object per line); set to "basic" to use a simple human-readable.  Defaults to "basic".
 
 
 # Issues and contributions
