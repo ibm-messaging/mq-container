@@ -24,6 +24,7 @@ import (
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/logger"
+	"github.com/ibm-messaging/mq-container/internal/name"
 )
 
 var log *logger.Logger
@@ -57,15 +58,26 @@ func getDebug() bool {
 }
 
 func configureLogger() error {
+	var err error
 	f := getLogFormat()
 	d := getDebug()
+	n, err := name.GetQueueManagerName()
+	if err != nil {
+		return err
+	}
 	switch f {
 	case "json":
-		log = logger.NewLogger(os.Stderr, d, true)
+		log, err = logger.NewLogger(os.Stderr, d, true, n)
+		if err != nil {
+			return err
+		}
 	case "basic":
-		log = logger.NewLogger(os.Stderr, d, false)
+		log, err = logger.NewLogger(os.Stderr, d, false, n)
+		if err != nil {
+			return err
+		}
 	default:
-		log = logger.NewLogger(os.Stdout, d, false)
+		log, err = logger.NewLogger(os.Stdout, d, false, n)
 		return fmt.Errorf("invalid value for LOG_FORMAT: %v", f)
 	}
 	return nil

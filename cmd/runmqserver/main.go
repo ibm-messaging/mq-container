@@ -28,17 +28,17 @@ import (
 )
 
 func doMain() error {
-	mf, err := configureLogger()
+	name, nameErr := name.GetQueueManagerName()
+	mf, err := configureLogger(name)
 	if err != nil {
+		logTermination(err)
+		return err
+	}
+	if nameErr != nil {
 		logTermination(err)
 		return err
 	}
 	err = ready.Clear()
-	if err != nil {
-		logTermination(err)
-		return err
-	}
-	name, err := name.GetQueueManagerName()
 	if err != nil {
 		logTermination(err)
 		return err

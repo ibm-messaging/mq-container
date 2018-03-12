@@ -25,11 +25,14 @@ import (
 
 func TestJSONLogger(t *testing.T) {
 	buf := new(bytes.Buffer)
-	l := NewLogger(buf, true, true)
+	l, err := NewLogger(buf, true, true, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
 	s := "Hello world"
 	l.Print(s)
 	var e map[string]interface{}
-	err := json.Unmarshal([]byte(buf.String()), &e)
+	err = json.Unmarshal([]byte(buf.String()), &e)
 	if err != nil {
 		t.Error(err)
 	}
@@ -40,7 +43,10 @@ func TestJSONLogger(t *testing.T) {
 
 func TestSimpleLogger(t *testing.T) {
 	buf := new(bytes.Buffer)
-	l := NewLogger(buf, true, false)
+	l, err := NewLogger(buf, true, false, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
 	s := "Hello world"
 	l.Print(s)
 	if !strings.Contains(buf.String(), s) {

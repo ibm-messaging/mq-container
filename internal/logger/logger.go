@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
 	"sync"
 	"time"
 )
@@ -39,10 +40,21 @@ type Logger struct {
 	json        bool
 	processName string
 	pid         int
+	serverName  string
+	host        string
+	user        *user.User
 }
 
 // NewLogger creates a new logger
-func NewLogger(writer io.Writer, debug bool, json bool) *Logger {
+func NewLogger(writer io.Writer, debug bool, json bool, serverName string) (*Logger, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+	user, err := user.Current()
+	if err != nil {
+		return nil, err
+	}
 	return &Logger{
 		mutex:       sync.Mutex{},
 		writer:      writer,
@@ -50,7 +62,10 @@ func NewLogger(writer io.Writer, debug bool, json bool) *Logger {
 		json:        json,
 		processName: os.Args[0],
 		pid:         os.Getpid(),
-	}
+		serverName:  serverName,
+		host:        hostname,
+		user:        user,
+	}, nil
 }
 
 func (l *Logger) format(entry map[string]interface{}) (string, error) {
@@ -72,8 +87,12 @@ func (l *Logger) log(level string, msg string) {
 		"message":         fmt.Sprint(msg),
 		"ibm_datetime":    t.Format(timestampFormat),
 		"loglevel":        level,
+		"host":            l.host,
+		"ibm_serverName":  l.serverName,
 		"ibm_processName": l.processName,
 		"ibm_processId":   l.pid,
+		"ibm_userName":    l.user.Username,
+		"type":            "mq_log",
 	}
 	s, err := l.format(entry)
 	l.mutex.Lock()
