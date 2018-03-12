@@ -29,6 +29,8 @@ MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 ## Building a developer image
 Run `make build-devserver`, which will download the latest version of MQ Advanced for Developers from IBM developerWorks.  This is currently only available on the `x86_64` architecture.
 
+You can use the environment variable `MQ_ARCHIVE_DEV` to specify an alternative local file to install from (which must be in the `downloads` directory).
+
 ## Building on a different base image
 By default, the MQ images use Ubuntu as the base layer.  You can build using a Red Hat Enterprise Linux compatible base layer by setting the `BASE_IMAGE` environment variable.  For example:
 

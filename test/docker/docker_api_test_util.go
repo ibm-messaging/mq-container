@@ -39,6 +39,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/go-connections/nat"
 )
 
 func imageName() string {
@@ -165,6 +166,15 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 		Binds: []string{
 			coverageBind(t),
 			terminationBind(t),
+		},
+		// Assign a random port for the web server on the host
+		// TODO: Don't do this for all tests
+		PortBindings: nat.PortMap{
+			"9443/tcp": []nat.PortBinding{
+				{
+					HostIP: "0.0.0.0",
+				},
+			},
 		},
 	}
 	networkingConfig := network.NetworkingConfig{}
@@ -299,12 +309,22 @@ func execContainerWithOutput(t *testing.T, cli *client.Client, ID string, user s
 	if err != nil {
 		t.Fatal(err)
 	}
-	cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
+	err = cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
 		Detach: false,
 		Tty:    false,
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+	// Wait for the command to finish
+	for {
+		inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !inspect.Running {
+			break
+		}
 	}
 	buf := new(bytes.Buffer)
 	// Each output line has a header, which needs to be removed
@@ -492,4 +512,12 @@ func copyFromContainer(t *testing.T, cli *client.Client, id string, file string)
 		t.Fatal(err)
 	}
 	return b
+}
+
+func getWebPort(t *testing.T, cli *client.Client, ID string) string {
+	i, err := cli.ContainerInspect(context.Background(), ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return i.NetworkSettings.Ports["9443/tcp"][0].HostPort
 }

@@ -31,7 +31,7 @@ const filename = "/var/coverage/exitCode"
 
 func init() {
 	test = flag.Bool("test", false, "Set to true when running tests for coverage")
-	log = logger.NewLogger(os.Stdout, true, false)
+	log, _ = logger.NewLogger(os.Stdout, true, false, "test")
 }
 
 // Test started when the test binary is started. Only calls main.

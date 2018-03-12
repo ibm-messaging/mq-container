@@ -89,15 +89,22 @@ func getDebug() bool {
 	return false
 }
 
-func configureLogger() (mirrorFunc, error) {
+func configureLogger(name string) (mirrorFunc, error) {
+	var err error
 	f := getLogFormat()
 	d := getDebug()
 	switch f {
 	case "json":
-		log = logger.NewLogger(os.Stderr, d, true)
+		log, err = logger.NewLogger(os.Stderr, d, true, name)
+		if err != nil {
+			return nil, err
+		}
 		return log.LogDirect, nil
 	case "basic":
-		log = logger.NewLogger(os.Stderr, d, false)
+		log, err = logger.NewLogger(os.Stderr, d, false, name)
+		if err != nil {
+			return nil, err
+		}
 		return func(msg string) {
 			// Parse the JSON message, and print a simplified version
 			var obj map[string]interface{}
@@ -105,7 +112,10 @@ func configureLogger() (mirrorFunc, error) {
 			fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
 		}, nil
 	default:
-		log = logger.NewLogger(os.Stdout, d, false)
+		log, err = logger.NewLogger(os.Stdout, d, false, name)
+		if err != nil {
+			return nil, err
+		}
 		return nil, fmt.Errorf("invalid value for LOG_FORMAT: %v", f)
 	}
 }

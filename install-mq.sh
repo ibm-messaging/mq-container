@@ -22,7 +22,7 @@ test -f /usr/bin/yum && RHEL=true || RHEL=false
 test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
 
 # If MQ_PACKAGES isn't specifically set, then choose a valid set of defaults
-if [ -z $MQ_PACKAGES ]; then
+if [ -z "$MQ_PACKAGES" ]; then
   $UBUNTU && MQ_PACKAGES="ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams"
   $RHEL && MQ_PACKAGES="MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm"
 fi

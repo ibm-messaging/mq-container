@@ -20,16 +20,17 @@ package command
 import (
 	"fmt"
 	"os/exec"
+	"os/user"
 	"runtime"
+	"strconv"
 	"syscall"
 )
 
-// Run runs an OS command.  On Linux it waits for the command to
+// RunCmd runs an OS command.  On Linux it waits for the command to
 // complete and returns the exit status (return code).
 // Do not use this function to run shell built-ins (like "cd"), because
 // the error handling works differently
-func Run(name string, arg ...string) (string, int, error) {
-	cmd := exec.Command(name, arg...)
+func RunCmd(cmd *exec.Cmd) (string, int, error) {
 	// Run the command and wait for completion
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -39,10 +40,47 @@ func Run(name string, arg ...string) (string, int, error) {
 		if ok && runtime.GOOS == "linux" {
 			status, ok := exiterr.Sys().(syscall.WaitStatus)
 			if ok {
-				return string(out), status.ExitStatus(), fmt.Errorf("%v: %v", name, err)
+				return string(out), status.ExitStatus(), fmt.Errorf("%v: %v", cmd.Path, err)
 			}
 		}
 		return string(out), -1, err
 	}
 	return string(out), 0, nil
+}
+
+// Run runs an OS command.  On Linux it waits for the command to
+// complete and returns the exit status (return code).
+// Do not use this function to run shell built-ins (like "cd"), because
+// the error handling works differently
+func Run(name string, arg ...string) (string, int, error) {
+	return RunCmd(exec.Command(name, arg...))
+}
+
+// RunAsMQM runs the specified command as the mqm user
+func RunAsMQM(name string, arg ...string) (string, int, error) {
+	cmd := exec.Command(name, arg...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{}
+	uid, gid, err := lookupMQM()
+	if err != nil {
+		return "", 0, err
+	}
+	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
+	return RunCmd(cmd)
+}
+
+// TODO: Duplicated code
+func lookupMQM() (int, int, error) {
+	mqm, err := user.Lookup("mqm")
+	if err != nil {
+		return -1, -1, err
+	}
+	mqmUID, err := strconv.Atoi(mqm.Uid)
+	if err != nil {
+		return -1, -1, err
+	}
+	mqmGID, err := strconv.Atoi(mqm.Gid)
+	if err != nil {
+		return -1, -1, err
+	}
+	return mqmUID, mqmGID, nil
 }

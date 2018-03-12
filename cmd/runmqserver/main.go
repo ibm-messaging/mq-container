@@ -28,17 +28,17 @@ import (
 )
 
 func doMain() error {
-	mf, err := configureLogger()
+	name, nameErr := name.GetQueueManagerName()
+	mf, err := configureLogger(name)
 	if err != nil {
+		logTermination(err)
+		return err
+	}
+	if nameErr != nil {
 		logTermination(err)
 		return err
 	}
 	err = ready.Clear()
-	if err != nil {
-		logTermination(err)
-		return err
-	}
-	name, err := name.GetQueueManagerName()
 	if err != nil {
 		logTermination(err)
 		return err
@@ -68,6 +68,12 @@ func doMain() error {
 	if err != nil {
 		return err
 	}
+
+	err = postInit(name)
+	if err != nil {
+		return err
+	}
+
 	newQM, err := createQueueManager(name)
 	if err != nil {
 		logTermination(err)

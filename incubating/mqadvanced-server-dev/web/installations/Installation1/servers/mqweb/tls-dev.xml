@@ -1,0 +1,4 @@
+    <keyStore id="MQWebKeyStore" location="/var/mqm/web/installations/Installation1/servers/mqweb/key.jks" type="JKS" password="${env.MQ_TLS_PASSPHRASE}"/>
+    <keyStore id="MQWebTrustStore" location="/var/mqm/web/installations/Installation1/servers/mqweb/trust.jks" type="JKS" password="${env.MQ_TLS_PASSPHRASE}"/>
+    <ssl id="thisSSLConfig" clientAuthenticationSupported="true" keyStoreRef="MQWebKeyStore" trustStoreRef="MQWebTrustStore" sslProtocol="TLSv1.2" serverKeyAlias="webcert"/>
+    <sslDefault sslRef="thisSSLConfig"/>
