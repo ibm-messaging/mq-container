@@ -68,6 +68,12 @@ func doMain() error {
 	if err != nil {
 		return err
 	}
+
+	err = postInit(name)
+	if err != nil {
+		return err
+	}
+
 	newQM, err := createQueueManager(name)
 	if err != nil {
 		logTermination(err)
