@@ -309,12 +309,22 @@ func execContainerWithOutput(t *testing.T, cli *client.Client, ID string, user s
 	if err != nil {
 		t.Fatal(err)
 	}
-	cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
+	err = cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
 		Detach: false,
 		Tty:    false,
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+	// Wait for the command to finish
+	for {
+		inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !inspect.Running {
+			break
+		}
 	}
 	buf := new(bytes.Buffer)
 	// Each output line has a header, which needs to be removed
