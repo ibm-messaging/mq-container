@@ -61,7 +61,9 @@ func mirrorAvailableMessages(f *os.File, mf mirrorFunc) {
 		mf(t)
 		count++
 	}
-	log.Debugf("Mirrored %v log entries from %v", count, f.Name())
+	if count > 0 {
+		log.Debugf("Mirrored %v log entries from %v", count, f.Name())
+	}
 	err := scanner.Err()
 	if err != nil {
 		log.Errorf("Error reading file %v: %v", f.Name(), err)
