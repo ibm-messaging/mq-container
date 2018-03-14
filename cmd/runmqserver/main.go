@@ -66,11 +66,13 @@ func doMain() error {
 	}
 	err = createDirStructure()
 	if err != nil {
+		logTermination(err)
 		return err
 	}
 
 	err = postInit(name)
 	if err != nil {
+		logTermination(err)
 		return err
 	}
 
