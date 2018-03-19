@@ -92,7 +92,7 @@ func (l *Logger) log(level string, msg string) {
 		"ibm_processName": l.processName,
 		"ibm_processId":   l.pid,
 		"ibm_userName":    l.user.Username,
-		"type":            "mq_log",
+		"type":            "mq_containerlog",
 	}
 	s, err := l.format(entry)
 	l.mutex.Lock()
