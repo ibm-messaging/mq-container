@@ -18,13 +18,25 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
+
+const devAdminPassword string = "passw0rd"
+const devAppPassword string = "passw0rd"
 
 func waitForWebReady(t *testing.T, cli *client.Client, ID string) {
 	config := tls.Config{InsecureSkipVerify: true}
@@ -34,9 +46,101 @@ func waitForWebReady(t *testing.T, cli *client.Client, ID string) {
 		if err == nil {
 			conn.Close()
 			// Extra sleep to allow web apps to start
-			time.Sleep(3 * time.Second)
+			time.Sleep(5 * time.Second)
 			t.Log("MQ web server is ready")
 			return
 		}
+		time.Sleep(1 * time.Second)
+	}
+}
+
+// tlsDir returns the host directory where the test certificate(s) are located
+func tlsDir(t *testing.T) string {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return filepath.Join(dir, "../tls")
+}
+
+// runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID
+func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool) {
+	containerConfig := container.Config{
+		// -e MQ_PORT_1414_TCP_ADDR=9.145.14.173 -e MQ_USERNAME=app -e MQ_PASSWORD=passw0rd -e MQ_CHANNEL=DEV.APP.SVRCONN -e MQ_TLS_KEYSTORE=/tls/test.p12 -e MQ_TLS_PASSPHRASE=passw0rd -v /Users/arthurbarr/go/src/github.com/ibm-messaging/mq-container/test/tls:/tls msgtest
+		Env: []string{
+			"MQ_PORT_1414_TCP_ADDR=" + getIPAddress(t, cli, ID),
+			"MQ_USERNAME=app",
+			"MQ_PASSWORD=" + devAppPassword,
+			"MQ_CHANNEL=DEV.APP.SVRCONN",
+		},
+		Image: "msgtest",
+	}
+	if tls {
+		t.Log("Using TLS from JMS client")
+		containerConfig.Env = append(containerConfig.Env, []string{
+			"MQ_TLS_TRUSTSTORE=/var/tls/client-trust.jks",
+			"MQ_TLS_PASSPHRASE=passw0rd",
+		}...)
+	}
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			tlsDir(t) + ":/var/tls",
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, strings.Replace(t.Name(), "/", "", -1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	rc := waitForContainer(t, cli, ctr.ID, 10)
+	if rc != 0 {
+		t.Errorf("JUnit container failed with rc=%v", rc)
+	}
+	defer cleanContainer(t, cli, ctr.ID)
+}
+
+// createTLSConfig creates a tls.Config which trusts the specified certificate
+func createTLSConfig(t *testing.T, certFile, password string) *tls.Config {
+	// Get the SystemCertPool, continue with an empty pool on error
+	certs, err := x509.SystemCertPool()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Read in the cert file
+	cert, err := ioutil.ReadFile(certFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Append our cert to the system pool
+	ok := certs.AppendCertsFromPEM(cert)
+	if !ok {
+		t.Fatal("No certs appended")
+	}
+	// Trust the augmented cert pool in our client
+	return &tls.Config{
+		InsecureSkipVerify: false,
+		RootCAs:            certs,
+	}
+}
+
+func testREST(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config) {
+	httpClient := http.Client{
+		Timeout: time.Duration(30 * time.Second),
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+	}
+
+	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getWebPort(t, cli, ID))
+	req, err := http.NewRequest("GET", url, nil)
+	req.SetBasicAuth("admin", devAdminPassword)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected HTTP status code %v from 'GET installation'; got %v", http.StatusOK, resp.StatusCode)
 	}
 }

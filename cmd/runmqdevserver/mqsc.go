@@ -27,7 +27,7 @@ func updateMQSC(appPasswordRequired bool) error {
 	} else {
 		checkClient = "ASQMGR"
 	}
-	const mqsc string = "/etc/mqm/dev.mqsc"
+	const mqsc string = "/etc/mqm/10-dev.mqsc"
 	if os.Getenv("MQ_DEV") == "true" {
 		const mqscTemplate string = mqsc + ".tpl"
 		// Re-configure channel if app password not set

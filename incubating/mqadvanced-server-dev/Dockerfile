@@ -40,13 +40,17 @@ ENV MQ_ADMIN_PASSWORD=passw0rd
 ## Add admin and app users, and set a default password for admin
 RUN useradd admin -G mqm \
   && groupadd mqclient \
-  && useradd app -G mqclient,mqm \
+  && useradd app -G mqclient \
   && echo admin:$MQ_ADMIN_PASSWORD | chpasswd
+
+# Create a directory for runtime data from runmqserver
+RUN mkdir -p /run/runmqdevserver \
+  && chown mqm:mqm /run/runmqdevserver
 
 COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqserver /usr/local/bin/
 COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqdevserver /usr/local/bin/
 # Copy template MQSC for default developer configuration
-COPY incubating/mqadvanced-server-dev/dev.mqsc.tpl /etc/mqm/
+COPY incubating/mqadvanced-server-dev/10-dev.mqsc.tpl /etc/mqm/
 # Copy web XML files for default developer configuration
 COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
 RUN chmod +x /usr/local/bin/runmq*

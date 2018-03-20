@@ -129,6 +129,19 @@ func doMain() error {
 		return err
 	}
 
+	name, err := name.GetQueueManagerName()
+	if err != nil {
+		logTerminationf("Error getting queue manager name: %v", err)
+	}
+	ks, set := os.LookupEnv("MQ_TLS_KEYSTORE")
+	if set {
+		err = configureTLS(name, ks, os.Getenv("MQ_TLS_PASSPHRASE"))
+		if err != nil {
+			logTerminationf("Error configuring TLS: %v", err)
+			return err
+		}
+	}
+
 	return nil
 }
 

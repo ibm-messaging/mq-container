@@ -18,14 +18,15 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
-	"fmt"
-	"net/http"
+	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 )
 
 func TestDevGoldenPath(t *testing.T) {
@@ -35,7 +36,12 @@ func TestDevGoldenPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	containerConfig := container.Config{
-		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			// TODO: Use default password (not set) here
+			"MQ_APP_PASSWORD=" + devAppPassword,
+		},
 	}
 	id := runContainer(t, cli, &containerConfig)
 
@@ -43,30 +49,74 @@ func TestDevGoldenPath(t *testing.T) {
 	waitForReady(t, cli, id)
 	waitForWebReady(t, cli, id)
 
-	timeout := time.Duration(30 * time.Second)
-	// Disable TLS verification (server uses a self-signed certificate by default,
-	// so verification isn't useful anyway)
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
+	t.Run("REST", func(t *testing.T) {
+		// Disable TLS verification (server uses a self-signed certificate by default,
+		// so verification isn't useful anyway)
+		testREST(t, cli, id, &tls.Config{
 			InsecureSkipVerify: true,
-		},
-	}
-	httpClient := http.Client{
-		Timeout:   timeout,
-		Transport: tr,
-	}
-
-	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getWebPort(t, cli, id))
-	req, err := http.NewRequest("GET", url, nil)
-	req.SetBasicAuth("admin", "passw0rd")
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Expected HTTP status code %v from 'GET installation'; got %v", http.StatusOK, resp.StatusCode)
-	}
+		})
+	})
+	t.Run("JMS", func(t *testing.T) {
+		runJMSTests(t, cli, id, false)
+	})
 
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
+}
+
+func TestDevTLS(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const tlsPassPhrase string = "passw0rd"
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_APP_PASSWORD=" + devAppPassword,
+			"MQ_TLS_KEYSTORE=/var/tls/server.p12",
+			"MQ_TLS_PASSPHRASE=" + tlsPassPhrase,
+			"DEBUG=1",
+		},
+		Image: imageName(),
+	}
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			tlsDir(t) + ":/var/tls",
+		},
+		// Assign a random port for the web server on the host
+		// TODO: Don't do this for all tests
+		PortBindings: nat.PortMap{
+			"9443/tcp": []nat.PortBinding{
+				{
+					HostIP: "0.0.0.0",
+				},
+			},
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer cleanContainer(t, cli, ctr.ID)
+	startContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+	waitForWebReady(t, cli, ctr.ID)
+
+	t.Run("REST", func(t *testing.T) {
+		// Use the correct certificate for the HTTPS connection
+		cert := filepath.Join(tlsDir(t), "server.crt")
+		testREST(t, cli, ctr.ID, createTLSConfig(t, cert, tlsPassPhrase))
+	})
+	t.Run("JMS", func(t *testing.T) {
+		runJMSTests(t, cli, ctr.ID, true)
+	})
+
+	// Stop the container cleanly
+	stopContainer(t, cli, ctr.ID)
 }
