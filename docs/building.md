@@ -9,7 +9,7 @@ You need to ensure you have the following tools installed:
 This procedure works for building the MQ Continuous Delivery release, on `x86_64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from IBM Passport Advantage, and place the downloaded file (for example, `IBM_MQ_9.0.4.0_UBUNTU_X86-64.tar.gz` for MQ V9.0.4 for Ubuntu on x86_64 architecture) in the `downloads` directory
+2. Download MQ from IBM Passport Advantage, and place the downloaded file (for example, `IBM_MQ_9.0.5.0_UBUNTU_X86-64.tar.gz` for MQ V9.0.5 for Ubuntu on x86_64 architecture) in the `downloads` directory
 2. Run `make build-advancedserver`
 
 > **Warning**: Note that MQ offers two different sets of packaging on Linux: one is called "MQ for Linux" and contains RPM files for installing on Red Hat Enterprise Linux and SUSE Linux Enterprise Server.  The other package is called "MQ for Ubuntu", and contains DEB files for installing on Ubuntu.
@@ -38,6 +38,12 @@ By default, the MQ images use Ubuntu as the base layer.  You can build using a R
 BASE_IMAGE=centos:7 make build-advancedserver
 ```
 
-The `make` tool will try and locate the right archive file under the `downloads` directory, based on your platform architecture and your `MQ_VERSION` environment variable, for example `IBM_MQ_9.0.4.0_LINUX_X86_64.tar.gz` for MQ V9.0.4.0 on x86_64.  You can also set the `MQ_ARCHIVE` environment variable to set the specific file name.
+The `make` tool will try and locate the right archive file under the `downloads` directory, based on your platform architecture and your `MQ_VERSION` environment variable, for example `IBM_MQ_9.0.5.0_LINUX_X86_64.tar.gz` for MQ V9.0.5.0 on x86_64.  You can also set the `MQ_ARCHIVE` environment variable to set the specific file name.
 
 Note that if you are using Red Hat Enterprise Linux, you will need to create your own base image layer, with your subscription enabled, as described [here](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_atomic_host/7/html/getting_started_with_containers/get_started_with_docker_formatted_container_images).  The MQ image build needs to install some additional packages, and a subscription is required to access the Red Hat repositories.
+
+
+## Installed components
+
+This image includes the core MQ server, Java, language packs, and GSKit.  This can be configured by setting the `MQ_PACKAGES` argument to `make`, or directly as a [Docker build argument](https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables-build-arg).
+

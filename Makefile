@@ -19,7 +19,7 @@
 # BASE_IMAGE is the base image to use for MQ, for example "ubuntu" or "rhel"
 BASE_IMAGE ?= ubuntu:16.04
 # MQ_VERSION is the fully qualified MQ version number to build
-MQ_VERSION ?= 9.0.4.0
+MQ_VERSION ?= 9.0.5.0
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
@@ -69,8 +69,8 @@ else ifeq "$(ARCH)" "s390x"
 	MQ_ARCHIVE_ARCH=SYSTEM_Z
 endif
 # Archive names for IBM MQ Advanced for Developers for Ubuntu
-MQ_ARCHIVE_DEV_9.0.3.0=mqadv_dev903_ubuntu_x86-64.tar.gz
 MQ_ARCHIVE_DEV_9.0.4.0=mqadv_dev904_ubuntu_x86-64.tar.gz
+MQ_ARCHIVE_DEV_9.0.5.0=mqadv_dev905_ubuntu_x86-64.tar.gz
 
 ###############################################################################
 # Build targets
