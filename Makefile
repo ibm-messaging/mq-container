@@ -91,6 +91,12 @@ default: build-devserver test
 .PHONY: all
 all: build-devserver build-advancedserver
 
+.PHONY: test-all
+test-all: test-devserver test-advancedserver
+
+.PHONY: precommit
+precommit: all test-all
+
 .PHONY: devserver
 devserver: build-devserver test-devserver
 
