@@ -19,7 +19,6 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 )
 
 // postInit is run after /var/mqm is set up
@@ -35,26 +34,5 @@ func postInit(name string) error {
 			startWebServer()
 		}()
 	}
-
-	dir := "/etc/mqm/tls"
-	keyFile := filepath.Join(dir, "key.kdb")
-	stashFile := filepath.Join(dir, "key.sth")
-
-	_, err := os.Stat(keyFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-
-	_, err = os.Stat(stashFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-
 	return nil
 }
