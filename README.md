@@ -2,7 +2,7 @@
 
 # Overview
 
-Run [IBM® MQ](http://www-03.ibm.com/software/products/en/ibm-mq) in a container.  The supplied [Helm](https://helm.sh/) charts can be used to run the container on a [Kubernetes](https://kubernetes.io) cluster, such as [IBM Cloud Private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/) or the [IBM Cloud Container Service](https://www.ibm.com/cloud/container-service).  
+Run [IBM® MQ](http://www-03.ibm.com/software/products/en/ibm-mq) in a container.
 
 # Current status
 MQ Advanced for Developers image - [![Build Status](https://travis-ci.org/ibm-messaging/mq-container.svg?branch=master)](https://travis-ci.org/ibm-messaging/mq-container)
@@ -11,7 +11,7 @@ MQ Advanced for Developers image - [![Build Status](https://travis-ci.org/ibm-me
 After extracting the code from this repository, you can build an image by following the instructions [here](docs/building.md)
 
 # Usage
-In order to use the image, it is necessary to accept the terms of the IBM MQ license.  This is achieved by specifying the environment variable `LICENSE` equal to `accept` when running the image.  You can also view the license terms by setting this variable to `view`. Failure to set the variable will result in the termination of the container with a usage statement.  You can view the license in a different language by also setting the `LANG` environment variable.
+In order to use the image, it is necessary to accept the terms of the [IBM MQ license](#license).  This is achieved by specifying the environment variable `LICENSE` equal to `accept` when running the image.  You can also view the license terms by setting this variable to `view`. Failure to set the variable will result in the termination of the container with a usage statement.  You can view the license in a different language by also setting the `LANG` environment variable.
 
 
 ## List of all Environment variables supported by this image
@@ -21,6 +21,8 @@ In order to use the image, it is necessary to accept the terms of the IBM MQ lic
 * **MQ_QMGR_NAME** - Set this to the name you want your Queue Manager to be created with.
 * **LOG_FORMAT** - Set this to change the format of the logs which are printed on the container's stdout.  Set to "json" to use JSON format (JSON object per line); set to "basic" to use a simple human-readable format.  Defaults to "basic".
 
+## Kubernetes
+If you want to use IBM MQ in [Kubernetes](https://kubernetes.io), you can find an example [Helm](https://helm.sh/) chart here: [IBM charts](https://github.com/IBM/charts).  This can be used to run the container on a cluster, such as [IBM Cloud Private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/) or the [IBM Cloud Container Service](https://www.ibm.com/cloud/container-service).
 
 # Issues and contributions
 

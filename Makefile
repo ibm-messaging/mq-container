@@ -29,8 +29,6 @@ MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION)_$(MQ_ARCHIVE_TYPE)_$(MQ_ARCHIVE_ARCH).tar.gz
 MQ_ARCHIVE_DEV ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
-# Options to `go test` for the Kubernetes tests
-TEST_OPTS_KUBERNETES ?=
 # MQ_IMAGE_ADVANCEDSERVER is the name and tag of the built MQ Advanced image
 MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # MQ_IMAGE_DEVSERVER is the name and tag of the built MQ Advanced for Developers image
@@ -126,10 +124,6 @@ deps:
 test/docker/vendor:
 	cd test/docker && dep ensure -vendor-only
 
-# Vendor Go dependencies for the Kubernetes tests
-test/kubernetes/vendor:
-	cd test/docker && dep ensure -vendor-only
-
 .PHONY: build-cov
 build-cov:
 	mkdir -p build
@@ -177,19 +171,6 @@ test-advancedserver-cover: test/docker/vendor
 	echo 'mode: count' > ./coverage/combined.cov
 	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
 	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
-
-.PHONY: test-kubernetes-devserver
-test-kubernetes-devserver: test/kubernetes/vendor
-	$(call test-kubernetes,$(MQ_IMAGE_DEVSERVER),"../../charts/ibm-mqadvanced-server-dev")
-
-.PHONY: test-kubernetes-advancedserver
-test-kubernetes-advancedserver: test/kubernetes/vendor
-	$(call test-kubernetes,$(MQ_IMAGE_ADVANCEDSERVER),"../../charts/ibm-mqadvanced-server-prod")
-
-define test-kubernetes
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $1 on Kubernetes"$(END)))
-	cd test/kubernetes && TEST_IMAGE=$1 TEST_CHART=$2 go test $(TEST_OPTS_KUBERNETES)
-endef
 
 define docker-build-mq
 	# Create a temporary network to use for the build
