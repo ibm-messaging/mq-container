@@ -38,18 +38,36 @@ import (
 const devAdminPassword string = "passw0rd"
 const devAppPassword string = "passw0rd"
 
-func waitForWebReady(t *testing.T, cli *client.Client, ID string) {
-	config := tls.Config{InsecureSkipVerify: true}
-	a := fmt.Sprintf("localhost:%s", getWebPort(t, cli, ID))
+// Disable TLS verification (server uses a self-signed certificate by default,
+// so verification isn't useful anyway)
+var insecureTLSConfig *tls.Config = &tls.Config{
+	InsecureSkipVerify: true,
+}
+
+func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config) {
+	httpClient := http.Client{
+		Timeout: time.Duration(3 * time.Second),
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+	}
+	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getWebPort(t, cli, ID))
 	for {
-		conn, err := tls.Dial("tcp", a, &config)
-		if err == nil {
-			conn.Close()
-			// Extra sleep to allow web apps to start
-			time.Sleep(5 * time.Second)
+		req, err := http.NewRequest("GET", url, nil)
+		req.SetBasicAuth("admin", devAdminPassword)
+		resp, err := httpClient.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
 			t.Log("MQ web server is ready")
 			return
 		}
+		// conn, err := tls.Dial("tcp", a, &config)
+		// if err == nil {
+		// 	conn.Close()
+		// 	// Extra sleep to allow web apps to start
+		// 	time.Sleep(5 * time.Second)
+		// 	t.Log("MQ web server is ready")
+		// 	return
+		// }
 		time.Sleep(1 * time.Second)
 	}
 }
@@ -64,16 +82,19 @@ func tlsDir(t *testing.T) string {
 }
 
 // runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID
-func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool) {
+func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, password string) {
 	containerConfig := container.Config{
 		// -e MQ_PORT_1414_TCP_ADDR=9.145.14.173 -e MQ_USERNAME=app -e MQ_PASSWORD=passw0rd -e MQ_CHANNEL=DEV.APP.SVRCONN -e MQ_TLS_KEYSTORE=/tls/test.p12 -e MQ_TLS_PASSPHRASE=passw0rd -v /Users/arthurbarr/go/src/github.com/ibm-messaging/mq-container/test/tls:/tls msgtest
 		Env: []string{
 			"MQ_PORT_1414_TCP_ADDR=" + getIPAddress(t, cli, ID),
-			"MQ_USERNAME=app",
-			"MQ_PASSWORD=" + devAppPassword,
+			"MQ_USERNAME=" + user,
 			"MQ_CHANNEL=DEV.APP.SVRCONN",
 		},
 		Image: imageNameDevJMS(),
+	}
+	// Set a password for the client to use, if one is specified
+	if password != "" {
+		containerConfig.Env = append(containerConfig.Env, "MQ_PASSWORD="+password)
 	}
 	if tls {
 		t.Log("Using TLS from JMS client")
@@ -89,7 +110,7 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool) {
 		},
 	}
 	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, strings.Replace(t.Name(), "/", "", -1))
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, strings.Replace(t.Name()+"JMS", "/", "", -1))
 	if err != nil {
 		t.Fatal(err)
 	}
