@@ -29,6 +29,8 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
+// TestDevGoldenPath tests using the default values for the default developer config.
+// Note: This test requires a separate container image to be available for the JMS tests.
 func TestDevGoldenPath(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewEnvClient()
@@ -64,6 +66,8 @@ func TestDevGoldenPath(t *testing.T) {
 	stopContainer(t, cli, id)
 }
 
+// TestDevTLS tests the default developer config using the a custom TLS key store.
+// Note: This test requires a separate container image to be available for the JMS tests
 func TestDevTLS(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewEnvClient()

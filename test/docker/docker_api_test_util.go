@@ -49,6 +49,14 @@ func imageName() string {
 	return image
 }
 
+func imageNameDevJMS() string {
+	image, ok := os.LookupEnv("DEV_JMS_IMAGE")
+	if !ok {
+		image = "mq-dev-jms-test"
+	}
+	return image
+}
+
 func coverage() bool {
 	cover := os.Getenv("TEST_COVER")
 	if cover == "true" || cover == "1" {

@@ -73,7 +73,7 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool) {
 			"MQ_PASSWORD=" + devAppPassword,
 			"MQ_CHANNEL=DEV.APP.SVRCONN",
 		},
-		Image: "msgtest",
+		Image: imageNameDevJMS(),
 	}
 	if tls {
 		t.Log("Using TLS from JMS client")

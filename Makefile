@@ -53,6 +53,8 @@ NUM_CPU=$(shell docker info --format "{{ .NCPU }}")
 # BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
 BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
 MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
+# Docker image name to use for JMS tests
+DEV_JMS_IMAGE=mq-dev-jms-test
 
 # Try to figure out which archive to use from the BASE_IMAGE
 ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
@@ -137,10 +139,15 @@ test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on Docker"$(END)))
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
+.PHONY: build-devjmstest
+build-devjmstest:
+	$(info $(SPACER)$(shell printf $(TITLE)"Build JMS tests for developer config"$(END)))
+	cd test/messaging && docker build --tag $(DEV_JMS_IMAGE) .
+
 .PHONY: test-devserver
-test-devserver: test/docker/vendor
+test-devserver: test/docker/vendor build-devjmstest
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER) on Docker"$(END)))
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
 
 .PHONY: test-advancedserver-cover
 test-advancedserver-cover: test/docker/vendor
