@@ -19,7 +19,7 @@
 # BASE_IMAGE is the base image to use for MQ, for example "ubuntu" or "rhel"
 BASE_IMAGE ?= ubuntu:16.04
 # MQ_VERSION is the fully qualified MQ version number to build
-MQ_VERSION ?= 9.0.4.0
+MQ_VERSION ?= 9.0.5.0
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
@@ -29,8 +29,6 @@ MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION)_$(MQ_ARCHIVE_TYPE)_$(MQ_ARCHIVE_ARCH).tar.gz
 MQ_ARCHIVE_DEV ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
-# Options to `go test` for the Kubernetes tests
-TEST_OPTS_KUBERNETES ?=
 # MQ_IMAGE_ADVANCEDSERVER is the name and tag of the built MQ Advanced image
 MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # MQ_IMAGE_DEVSERVER is the name and tag of the built MQ Advanced for Developers image
@@ -53,6 +51,8 @@ NUM_CPU=$(shell docker info --format "{{ .NCPU }}")
 # BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
 BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
 MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
+# Docker image name to use for JMS tests
+DEV_JMS_IMAGE=mq-dev-jms-test
 
 # Try to figure out which archive to use from the BASE_IMAGE
 ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
@@ -69,8 +69,8 @@ else ifeq "$(ARCH)" "s390x"
 	MQ_ARCHIVE_ARCH=SYSTEM_Z
 endif
 # Archive names for IBM MQ Advanced for Developers for Ubuntu
-MQ_ARCHIVE_DEV_9.0.3.0=mqadv_dev903_ubuntu_x86-64.tar.gz
 MQ_ARCHIVE_DEV_9.0.4.0=mqadv_dev904_ubuntu_x86-64.tar.gz
+MQ_ARCHIVE_DEV_9.0.5.0=mqadv_dev905_ubuntu_x86-64.tar.gz
 
 ###############################################################################
 # Build targets
@@ -88,6 +88,12 @@ default: build-devserver test
 # Build all components (except incubating ones)
 .PHONY: all
 all: build-devserver build-advancedserver
+
+.PHONY: test-all
+test-all: test-devserver test-advancedserver
+
+.PHONY: precommit
+precommit: all test-all
 
 .PHONY: devserver
 devserver: build-devserver test-devserver
@@ -118,10 +124,6 @@ deps:
 test/docker/vendor:
 	cd test/docker && dep ensure -vendor-only
 
-# Vendor Go dependencies for the Kubernetes tests
-test/kubernetes/vendor:
-	cd test/docker && dep ensure -vendor-only
-
 .PHONY: build-cov
 build-cov:
 	mkdir -p build
@@ -137,10 +139,15 @@ test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on Docker"$(END)))
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
+.PHONY: build-devjmstest
+build-devjmstest:
+	$(info $(SPACER)$(shell printf $(TITLE)"Build JMS tests for developer config"$(END)))
+	cd test/messaging && docker build --tag $(DEV_JMS_IMAGE) .
+
 .PHONY: test-devserver
-test-devserver: test/docker/vendor
+test-devserver: test/docker/vendor build-devjmstest
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER) on Docker"$(END)))
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
 
 .PHONY: test-advancedserver-cover
 test-advancedserver-cover: test/docker/vendor
@@ -164,19 +171,6 @@ test-advancedserver-cover: test/docker/vendor
 	echo 'mode: count' > ./coverage/combined.cov
 	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
 	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
-
-.PHONY: test-kubernetes-devserver
-test-kubernetes-devserver: test/kubernetes/vendor
-	$(call test-kubernetes,$(MQ_IMAGE_DEVSERVER),"../../charts/ibm-mqadvanced-server-dev")
-
-.PHONY: test-kubernetes-advancedserver
-test-kubernetes-advancedserver: test/kubernetes/vendor
-	$(call test-kubernetes,$(MQ_IMAGE_ADVANCEDSERVER),"../../charts/ibm-mqadvanced-server-prod")
-
-define test-kubernetes
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $1 on Kubernetes"$(END)))
-	cd test/kubernetes && TEST_IMAGE=$1 TEST_CHART=$2 go test $(TEST_OPTS_KUBERNETES)
-endef
 
 define docker-build-mq
 	# Create a temporary network to use for the build

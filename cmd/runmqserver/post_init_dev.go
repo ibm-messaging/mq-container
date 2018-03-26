@@ -17,7 +17,9 @@ limitations under the License.
 */
 package main
 
-import "os"
+import (
+	"os"
+)
 
 // postInit is run after /var/mqm is set up
 // This version of postInit is only included as part of the MQ Advanced for Developers build

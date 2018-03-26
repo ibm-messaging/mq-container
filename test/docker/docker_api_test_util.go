@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -46,6 +45,14 @@ func imageName() string {
 	image, ok := os.LookupEnv("TEST_IMAGE")
 	if !ok {
 		image = "mq-devserver:latest-x86-64"
+	}
+	return image
+}
+
+func imageNameDevJMS() string {
+	image, ok := os.LookupEnv("DEV_JMS_IMAGE")
+	if !ok {
+		image = "mq-dev-jms-test"
 	}
 	return image
 }
@@ -330,7 +337,7 @@ func execContainerWithOutput(t *testing.T, cli *client.Client, ID string, user s
 	// Each output line has a header, which needs to be removed
 	_, err = stdcopy.StdCopy(buf, buf, hijack.Reader)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	return strings.TrimSpace(buf.String())
 }
@@ -399,16 +406,15 @@ func inspectTextLogs(t *testing.T, cli *client.Client, ID string) string {
 	jsonLogs := inspectLogs(t, cli, ID)
 	scanner := bufio.NewScanner(strings.NewReader(jsonLogs))
 	b := make([]byte, 64*1024)
-	scanner.Buffer(b, 1024*1024)
 	buf := bytes.NewBuffer(b)
 	for scanner.Scan() {
-		t := scanner.Text()
-		if strings.HasPrefix(t, "{") {
+		text := scanner.Text()
+		if strings.HasPrefix(text, "{") {
 			var e map[string]interface{}
-			json.Unmarshal([]byte(scanner.Text()), &e)
+			json.Unmarshal([]byte(text), &e)
 			fmt.Fprintf(buf, "{\"message\": \"%v\"}\n", e["message"])
 		} else {
-			fmt.Fprintln(buf, t)
+			fmt.Fprintln(buf, text)
 		}
 	}
 	err := scanner.Err()
@@ -426,13 +432,13 @@ func inspectLogs(t *testing.T, cli *client.Client, ID string) string {
 		ShowStderr: true,
 	})
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	buf := new(bytes.Buffer)
 	// Each output line has a header, which needs to be removed
 	_, err = stdcopy.StdCopy(buf, buf, reader)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	return buf.String()
 }

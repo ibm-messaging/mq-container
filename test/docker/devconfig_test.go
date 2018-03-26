@@ -18,16 +18,19 @@ limitations under the License.
 package main
 
 import (
-	"crypto/tls"
-	"fmt"
-	"net/http"
+	"context"
+	"path/filepath"
+	"strings"
 	"testing"
-	"time"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 )
 
+// TestDevGoldenPath tests using the default values for the default developer config.
+// Note: This test requires a separate container image to be available for the JMS tests.
 func TestDevGoldenPath(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewEnvClient()
@@ -35,38 +38,124 @@ func TestDevGoldenPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	containerConfig := container.Config{
-		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-	}
-	id := runContainer(t, cli, &containerConfig)
-
-	defer cleanContainer(t, cli, id)
-	waitForReady(t, cli, id)
-	waitForWebReady(t, cli, id)
-
-	timeout := time.Duration(30 * time.Second)
-	// Disable TLS verification (server uses a self-signed certificate by default,
-	// so verification isn't useful anyway)
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
 		},
 	}
-	httpClient := http.Client{
-		Timeout:   timeout,
-		Transport: tr,
-	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	waitForWebReady(t, cli, id, insecureTLSConfig)
+	t.Run("JMS", func(t *testing.T) {
+		// Run the JMS tests, with no password specified
+		runJMSTests(t, cli, id, false, "app", "")
+	})
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
 
-	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getWebPort(t, cli, id))
-	req, err := http.NewRequest("GET", url, nil)
-	req.SetBasicAuth("admin", "passw0rd")
-	resp, err := httpClient.Do(req)
+// TestDevSecure tests the default developer config using the a custom TLS key store and password.
+// Note: This test requires a separate container image to be available for the JMS tests
+func TestDevSecure(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Expected HTTP status code %v from 'GET installation'; got %v", http.StatusOK, resp.StatusCode)
+	const tlsPassPhrase string = "passw0rd"
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_APP_PASSWORD=" + devAppPassword,
+			"MQ_TLS_KEYSTORE=/var/tls/server.p12",
+			"MQ_TLS_PASSPHRASE=" + tlsPassPhrase,
+			"DEBUG=1",
+		},
+		Image: imageName(),
 	}
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			tlsDir(t) + ":/var/tls",
+		},
+		// Assign a random port for the web server on the host
+		// TODO: Don't do this for all tests
+		PortBindings: nat.PortMap{
+			"9443/tcp": []nat.PortBinding{
+				{
+					HostIP: "0.0.0.0",
+				},
+			},
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, ctr.ID)
+	startContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+	cert := filepath.Join(tlsDir(t), "server.crt")
+	waitForWebReady(t, cli, ctr.ID, createTLSConfig(t, cert, tlsPassPhrase))
+	runJMSTests(t, cli, ctr.ID, true, "app", devAppPassword)
+	// Stop the container cleanly
+	stopContainer(t, cli, ctr.ID)
+}
 
+func TestDevWebDisabled(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_DISABLE_WEB_CONSOLE=true",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	t.Run("Web", func(t *testing.T) {
+		dspmqweb := execContainerWithOutput(t, cli, id, "mqm", []string{"dspmqweb"})
+		if !strings.Contains(dspmqweb, "Server mqweb is not running.") {
+			t.Errorf("Expected dspmqweb to say server is not running; got \"%v\"", dspmqweb)
+		}
+	})
+	t.Run("JMS", func(t *testing.T) {
+		// Run the JMS tests, with no password specified
+		runJMSTests(t, cli, id, false, "app", "")
+	})
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+func TestDevConfigDisabled(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_DEV=false",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	waitForWebReady(t, cli, id, insecureTLSConfig)
+	rc := execContainerWithExitCode(t, cli, id, "mqm", []string{"bash", "-c", "echo 'display qlocal(DEV*)' | runmqsc"})
+	if rc == 0 {
+		t.Errorf("Expected DEV queues to be missing")
+	}
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }

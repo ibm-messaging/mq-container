@@ -83,6 +83,11 @@ func configureLogger() error {
 	return nil
 }
 
+func configureWeb(qmName string) error {
+	out := "/etc/mqm/web/installations/Installation1/angular.persistence/admin.json"
+	return processTemplateFile("/etc/mqm/admin.json.tpl", out, map[string]string{"QueueManagerName": qmName})
+}
+
 func logTerminationf(format string, args ...interface{}) {
 	logTermination(fmt.Sprintf(format, args))
 }
@@ -126,6 +131,26 @@ func doMain() error {
 	err = updateMQSC(set)
 	if err != nil {
 		logTerminationf("Error updating MQSC: %v", err)
+		return err
+	}
+
+	name, err := name.GetQueueManagerName()
+	if err != nil {
+		logTerminationf("Error getting queue manager name: %v", err)
+		return err
+	}
+	ks, set := os.LookupEnv("MQ_TLS_KEYSTORE")
+	if set {
+		err = configureTLS(name, ks, os.Getenv("MQ_TLS_PASSPHRASE"))
+		if err != nil {
+			logTerminationf("Error configuring TLS: %v", err)
+			return err
+		}
+	}
+
+	err = configureWeb(name)
+	if err != nil {
+		logTermination("Error configuring admin.json")
 		return err
 	}
 

@@ -1,3 +1,0 @@
-MQ can be accessed via port 1414 on the following DNS name from within your cluster:
-{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
-

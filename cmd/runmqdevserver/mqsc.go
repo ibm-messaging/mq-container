@@ -16,7 +16,6 @@ limitations under the License.
 package main
 
 import (
-	"html/template"
 	"os"
 )
 
@@ -27,29 +26,14 @@ func updateMQSC(appPasswordRequired bool) error {
 	} else {
 		checkClient = "ASQMGR"
 	}
-	const mqsc string = "/etc/mqm/dev.mqsc"
+	const mqsc string = "/etc/mqm/10-dev.mqsc"
 	if os.Getenv("MQ_DEV") == "true" {
 		const mqscTemplate string = mqsc + ".tpl"
 		// Re-configure channel if app password not set
-		t, err := template.ParseFiles(mqscTemplate)
+		err := processTemplateFile(mqsc+".tpl", mqsc, map[string]string{"ChckClnt": checkClient})
 		if err != nil {
-			log.Error(err)
 			return err
 		}
-		f, err := os.OpenFile(mqsc, os.O_CREATE|os.O_WRONLY, 0660)
-		defer f.Close()
-		err = t.Execute(f, map[string]string{"ChckClnt": checkClient})
-		if err != nil {
-			log.Error(err)
-			return err
-		}
-		// TODO: Lookup value for MQM user here?
-		err = os.Chown(mqsc, 999, 999)
-		if err != nil {
-			log.Error(err)
-			return err
-		}
-		// os.Remove(mqscTemplate)
 	} else {
 		os.Remove(mqsc)
 	}

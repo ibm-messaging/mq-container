@@ -18,11 +18,10 @@ make deps
 ```
 
 ## Running the tests
-There are three main sets of tests:
+There are two main sets of tests:
 
 1. Unit tests, which are run during a build
 2. Docker tests, which test a complete Docker image, using the Docker API
-3. Kubernetes tests, which test the Helm charts (and the Docker image) via [Helm](https://helm.sh)
 
 ### Running the Docker tests
 The Docker tests can be run locally on a machine with Docker.  For example:
@@ -35,7 +34,7 @@ make test-advancedserver
 You can specify the image to use directly by using the `MQ_IMAGE_ADVANCEDSERVER` or `MQ_IMAGE_DEVSERVER` variables, for example:
 
 ```
-MQ_IMAGE_ADVANCEDSERVER=mqadvanced-server9.0.4.0-x86_64-ubuntu-16.04 make test-advancedserver
+MQ_IMAGE_ADVANCEDSERVER=mqadvanced-server:9.0.5.0-x86_64-ubuntu-16.04 make test-advancedserver
 ```
 
 You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command::
@@ -44,10 +43,10 @@ You can pass parameters to `go test` with an environment variable.  For example,
 TEST_OPTS_DOCKER="-run TestGoldenPath" make test-advancedserver
 ```
 
-You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `mqadvanced-server9.0.3.0-x86_64-ubuntu-16.04`:
+You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `mqadvanced-server:9.0.4.0-x86_64-ubuntu-16.04`:
 
 ```
-MQ_VERSION=9.0.3.0 make test-advancedserver
+MQ_VERSION=9.0.4.0 make test-advancedserver
 ```
 
 ### Running the Docker tests with code coverage

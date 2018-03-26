@@ -19,6 +19,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -39,6 +40,26 @@ func startWebServer() error {
 	}
 	log.Println("Started web server")
 	return nil
+}
+
+// CopyFile copies the specified file
+func CopyFile(src, dest string) error {
+	log.Debugf("Copying file %v to %v", src, dest)
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY, 0770)
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+	err = out.Close()
+	return err
 }
 
 func configureWebServer() error {
@@ -76,7 +97,6 @@ func configureWebServer() error {
 				return err
 			}
 		}
-
 		if info.IsDir() {
 			if !exists {
 				err := os.MkdirAll(to, 0770)
@@ -84,7 +104,6 @@ func configureWebServer() error {
 					return err
 				}
 			}
-			log.Printf("Directory: %v --> %v", from, to)
 		} else {
 			if exists {
 				err := os.Remove(to)
@@ -92,13 +111,11 @@ func configureWebServer() error {
 					return err
 				}
 			}
-			// TODO: Permissions.  Can't rely on them being set in Dockerfile
-			err := os.Link(from, to)
+			err := CopyFile(from, to)
 			if err != nil {
 				log.Debug(err)
 				return err
 			}
-			log.Printf("File: %v", from)
 		}
 		err = os.Chown(to, uid, gid)
 		if err != nil {
