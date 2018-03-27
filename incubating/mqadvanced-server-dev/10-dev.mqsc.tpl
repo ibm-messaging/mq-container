@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 
-STOP LISTENER('SYSTEM.DEFAULT.LISTENER.TCP')
+STOP LISTENER('SYSTEM.LISTENER.TCP.1')
 
 * Developer queues
 DEFINE QLOCAL('DEV.QUEUE.1') REPLACE
