@@ -25,7 +25,9 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -79,17 +81,56 @@ func coverageBind(t *testing.T) string {
 	return coverageDir(t) + ":/var/coverage"
 }
 
-// terminationLog returns the name of the file to use for the termination log message
-func terminationLog(t *testing.T) string {
+// detect whether we are running in the Windows Subsystem for Linux
+func isWSL(t *testing.T) bool {
+	if (runtime.GOOS == "linux") {
+		var (
+			uname []byte
+			err   error
+		)
+
+		if uname, err = exec.Command("uname", "-r").Output(); err != nil {
+			t.Fatal(err)
+		}
+
+		return strings.Contains(string(uname), "Microsoft")
+
+	} else {
+		return false;
+	}
+}
+
+// get the path of the tmp directory, in UNIX or OS-specific style
+func getTempDir(t *testing.T, unixStylePath bool) string {
+	if (isWSL(t)) {
+		if (unixStylePath) {
+			return "/mnt/c/Temp/"
+		} else {
+			return "C:/Temp/"
+		}
+	} else {
+		return "/tmp/"
+	}
+}
+
+// terminationLogUnix returns the name of the file to use for the termination log message, with a UNIX path
+func terminationLogUnixPath(t *testing.T) string {
 	// Warning: this directory must be accessible to the Docker daemon,
 	// in order to enable the bind mount
-	return "/tmp/" + t.Name() + "-termination-log"
+	return getTempDir(t, true) + t.Name() + "-termination-log"
+}
+
+// terminationLogWindows returns the name of the file to use for the termination log message, with an OS specific path
+func terminationLogOSPath(t *testing.T) string {
+	// Warning: this directory must be accessible to the Docker daemon,
+	// in order to enable the bind mount
+	return getTempDir(t, false) + t.Name() + "-termination-log"
 }
 
 // terminationBind returns a string to use to bind-mount a termination log file.
 // This is done using a bind, because you can't copy files from /dev out of the container.
 func terminationBind(t *testing.T) string {
-	n := terminationLog(t)
+	n := terminationLogUnixPath(t)
 	// Remove it if it already exists
 	os.Remove(n)
 	// Create the empty file
@@ -98,12 +139,12 @@ func terminationBind(t *testing.T) string {
 		t.Fatal(err)
 	}
 	f.Close()
-	return n + ":/dev/termination-log"
+	return terminationLogOSPath(t) + ":/dev/termination-log"
 }
 
 // Returns the termination message, or an empty string if not set
 func terminationMessage(t *testing.T) string {
-	b, err := ioutil.ReadFile(terminationLog(t))
+	b, err := ioutil.ReadFile(terminationLogUnixPath(t))
 	if err != nil {
 		t.Log(err)
 	}
@@ -147,7 +188,7 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	if m != "" {
 		t.Logf("Termination message: %v", m)
 	}
-	os.Remove(terminationLog(t))
+	os.Remove(terminationLogUnixPath(t))
 
 	t.Logf("Removing container: %s", ID)
 	opts := types.ContainerRemoveOptions{
@@ -287,6 +328,9 @@ func execContainerWithExitCode(t *testing.T, cli *client.Client, ID string, user
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	time.Sleep(4*time.Second)
+
 	inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
 	if err != nil {
 		t.Fatal(err)

@@ -54,6 +54,13 @@ MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_
 # Docker image name to use for JMS tests
 DEV_JMS_IMAGE=mq-dev-jms-test
 
+
+ifneq (,$(findstring Microsoft,$(shell uname -r)))
+	DOWNLOADS_DIR=$(patsubst /mnt/c%,C:%,$(realpath ./downloads/))
+else
+	DOWNLOADS_DIR=$(realpath ./downloads/)
+endif
+
 # Try to figure out which archive to use from the BASE_IMAGE
 ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
 	MQ_ARCHIVE_TYPE=UBUNTU
@@ -137,7 +144,7 @@ test-unit:
 .PHONY: test-advancedserver
 test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on Docker"$(END)))
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) go test -timeout 20m -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
 build-devjmstest:
@@ -181,7 +188,7 @@ define docker-build-mq
 	  --name $(BUILD_SERVER_CONTAINER) \
 	  --network build \
 	  --network-alias build \
-	  --volume "$(realpath ./downloads/)":/usr/share/nginx/html:ro \
+	  --volume $(DOWNLOADS_DIR):/usr/share/nginx/html:ro \
 	  --detach \
 	  nginx:alpine
 	# Build the new image (use --pull to make sure we have the latest base image)

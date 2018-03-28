@@ -1,4 +1,4 @@
-# Testing 
+# Testing
 
 ## Prerequisites
 You need to ensure you have the following tools installed:
@@ -7,15 +7,6 @@ You need to ensure you have the following tools installed:
 * [Go](https://golang.org/) - only needed for running the tests
 * [dep](https://github.com/golang/dep) (official Go dependency management tool) - needed to prepare for running the tests
 * [Helm](https://helm.sh) - only needed for running the Kubernetes tests
-
-For running the Kubernetes tests, a Kubernetes environment is needed, for example [Minikube](https://github.com/kubernetes/minikube) or [IBM Cloud Private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/).
-
-## Preparing to run the tests
-The test dependencies are not included with the source code, so you need to download them before you can run them.  This can be done with the following command, which uses the `dep` tool:
-
-```
-make deps
-```
 
 ## Running the tests
 There are two main sets of tests:
@@ -57,7 +48,7 @@ make build-advancedserver-cover
 make test-advancedserver-cover
 ```
 
-In order to generate code coverage metrics from the Docker tests, the build step creates a new Docker image with an instrumented version of the code.  Each test is then run individually, producing a coverage report each under `test/docker/coverage/`.  These individual reports are then combined.  The combined report is written to the `coverage` directory. 
+In order to generate code coverage metrics from the Docker tests, the build step creates a new Docker image with an instrumented version of the code.  Each test is then run individually, producing a coverage report each under `test/docker/coverage/`.  These individual reports are then combined.  The combined report is written to the `coverage` directory.
 
 
 ### Running the Kubernetes tests
