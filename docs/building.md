@@ -1,9 +1,11 @@
-# Building a Docker image 
+# Building a Docker image
 
 ## Prerequisites
 You need to ensure you have the following tools installed:
 * [Docker](https://www.docker.com/) V17.06.1 or later
 * [GNU make](https://www.gnu.org/software/make/)
+
+If you are working in the Linux Subsystem for Windows, follow [this guide by Microsoft to set up Docker](https://blogs.msdn.microsoft.com/commandline/2017/12/08/cross-post-wsl-interoperability-with-docker/) first.
 
 ## Building a production image
 This procedure works for building the MQ Continuous Delivery release, on `x86_64`, `ppc64le` and `s390x` architectures.
@@ -46,4 +48,3 @@ Note that if you are using Red Hat Enterprise Linux, you will need to create you
 ## Installed components
 
 This image includes the core MQ server, Java, language packs, and GSKit.  This can be configured by setting the `MQ_PACKAGES` argument to `make`, or directly as a [Docker build argument](https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables-build-arg).
-
