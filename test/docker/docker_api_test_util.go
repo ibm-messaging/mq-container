@@ -81,29 +81,26 @@ func coverageBind(t *testing.T) string {
 	return coverageDir(t) + ":/var/coverage"
 }
 
-// detect whether we are running in the Windows Subsystem for Linux
+// isWSL return whether we are running in the Windows Subsystem for Linux
 func isWSL(t *testing.T) bool {
-	if (runtime.GOOS == "linux") {
-		var (
-			uname []byte
-			err   error
-		)
+	if runtime.GOOS == "linux" {
 
-		if uname, err = exec.Command("uname", "-r").Output(); err != nil {
+		uname, err := exec.Command("uname", "-r").Output()
+		if (err != nil) {
 			t.Fatal(err)
 		}
 
 		return strings.Contains(string(uname), "Microsoft")
 
 	} else {
-		return false;
+		return false
 	}
 }
 
-// get the path of the tmp directory, in UNIX or OS-specific style
+// getTempDir get the path of the tmp directory, in UNIX or OS-specific style
 func getTempDir(t *testing.T, unixStylePath bool) string {
-	if (isWSL(t)) {
-		if (unixStylePath) {
+	if isWSL(t) {
+		if unixStylePath {
 			return "/mnt/c/Temp/"
 		} else {
 			return "C:/Temp/"
@@ -113,14 +110,14 @@ func getTempDir(t *testing.T, unixStylePath bool) string {
 	}
 }
 
-// terminationLogUnix returns the name of the file to use for the termination log message, with a UNIX path
+// terminationLogUnixPath returns the name of the file to use for the termination log message, with a UNIX path
 func terminationLogUnixPath(t *testing.T) string {
 	// Warning: this directory must be accessible to the Docker daemon,
 	// in order to enable the bind mount
 	return getTempDir(t, true) + t.Name() + "-termination-log"
 }
 
-// terminationLogWindows returns the name of the file to use for the termination log message, with an OS specific path
+// terminationLogOSPath returns the name of the file to use for the termination log message, with an OS specific path
 func terminationLogOSPath(t *testing.T) string {
 	// Warning: this directory must be accessible to the Docker daemon,
 	// in order to enable the bind mount
@@ -142,7 +139,7 @@ func terminationBind(t *testing.T) string {
 	return terminationLogOSPath(t) + ":/dev/termination-log"
 }
 
-// Returns the termination message, or an empty string if not set
+// terminationMessage return the termination message, or an empty string if not set
 func terminationMessage(t *testing.T) string {
 	b, err := ioutil.ReadFile(terminationLogUnixPath(t))
 	if err != nil {
@@ -329,7 +326,7 @@ func execContainerWithExitCode(t *testing.T, cli *client.Client, ID string, user
 		t.Fatal(err)
 	}
 
-	time.Sleep(4*time.Second)
+	time.Sleep(4 * time.Second)
 
 	inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
 	if err != nil {

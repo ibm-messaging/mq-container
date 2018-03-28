@@ -5,7 +5,7 @@ You need to ensure you have the following tools installed:
 * [Docker](https://www.docker.com/) V17.06.1 or later
 * [GNU make](https://www.gnu.org/software/make/)
 
-If you are working in the Linux Subsystem for Windows, follow [this guide by Microsoft to set up Docker](https://blogs.msdn.microsoft.com/commandline/2017/12/08/cross-post-wsl-interoperability-with-docker/) first.
+If you are working in the Windows Subsystem for Linux, follow [this guide by Microsoft to set up Docker](https://blogs.msdn.microsoft.com/commandline/2017/12/08/cross-post-wsl-interoperability-with-docker/) first.
 
 ## Building a production image
 This procedure works for building the MQ Continuous Delivery release, on `x86_64`, `ppc64le` and `s390x` architectures.
