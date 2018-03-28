@@ -126,7 +126,7 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
-	out := execContainerWithOutput(t, cli, id, "mqm", []string{"dspmq"})
+	_, out := execContainer(t, cli, id, "mqm", []string{"dspmq"})
 	if !strings.Contains(out, search) {
 		t.Errorf("Expected result of running dspmq to contain name=%v, got name=%v", search, out)
 	}
@@ -285,16 +285,18 @@ func TestVolumeUnmount(t *testing.T) {
 	defer cleanContainer(t, cli, ctr.ID)
 	waitForReady(t, cli, ctr.ID)
 	// Unmount the volume as root
-	rc := execContainerWithExitCode(t, cli, ctr.ID, "root", []string{"umount", "-l", "-f", "/mnt/mqm"})
+	rc, _ := execContainer(t, cli, ctr.ID, "root", []string{"umount", "-l", "-f", "/mnt/mqm"})
 	if rc != 0 {
 		t.Fatalf("Expected umount to work with rc=0, got %v", rc)
 	}
 	time.Sleep(3 * time.Second)
-	rc = execContainerWithExitCode(t, cli, ctr.ID, "mqm", []string{"chkmqhealthy"})
+	rc, _ = execContainer(t, cli, ctr.ID, "mqm", []string{"chkmqhealthy"})
 	if rc == 0 {
 		t.Errorf("Expected chkmqhealthy to fail")
-		t.Logf(execContainerWithOutput(t, cli, ctr.ID, "mqm", []string{"df"}))
-		t.Logf(execContainerWithOutput(t, cli, ctr.ID, "mqm", []string{"ps", "-ef"}))
+		_, df := execContainer(t, cli, ctr.ID, "mqm", []string{"df"})
+		t.Logf(df)
+		_, ps :=execContainer(t, cli, ctr.ID, "mqm", []string{"ps", "-ef"})
+		t.Logf(ps)
 	}
 }
 
@@ -318,12 +320,12 @@ func TestZombies(t *testing.T) {
 	waitForReady(t, cli, id)
 	// Kill an MQ process with children.  After it is killed, its children
 	// will be adopted by PID 1, and should then be reaped when they die.
-	out := execContainerWithOutput(t, cli, id, "mqm", []string{"pkill", "--signal", "kill", "-c", "amqzxma0"})
+	_, out := execContainer(t, cli, id, "mqm", []string{"pkill", "--signal", "kill", "-c", "amqzxma0"})
 	if out == "0" {
 		t.Fatalf("Expected pkill to kill a process, got %v", out)
 	}
 	time.Sleep(3 * time.Second)
-	out = execContainerWithOutput(t, cli, id, "mqm", []string{"bash", "-c", "ps -lA | grep '^. Z'"})
+	_, out = execContainer(t, cli, id, "mqm", []string{"bash", "-c", "ps -lA | grep '^. Z'"})
 	if out != "" {
 		count := strings.Count(out, "\n") + 1
 		t.Errorf("Expected zombies=0, got %v", count)
@@ -356,7 +358,7 @@ func TestMQSC(t *testing.T) {
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
-	rc := execContainerWithExitCode(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
+	rc, _ := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
 	if rc != 0 {
 		t.Fatalf("Expected runmqsc to exit with rc=0, got %v", rc)
 	}
@@ -392,17 +394,19 @@ func TestReadiness(t *testing.T) {
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	queueCheckCommand := fmt.Sprintf("echo 'DISPLAY QLOCAL(test%v)' | runmqsc", numQueues)
-	t.Log(execContainerWithOutput(t, cli, id, "root", []string{"cat", "/etc/mqm/test.mqsc"}))
+	_, mqsc := execContainer(t, cli, id, "root", []string{"cat", "/etc/mqm/test.mqsc"})
+	t.Log(mqsc)
 	for {
-		readyRC := execContainerWithExitCode(t, cli, id, "mqm", []string{"chkmqready"})
-		queueCheckRC := execContainerWithExitCode(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
+		readyRC, _ := execContainer(t, cli, id, "mqm", []string{"chkmqready"})
+		queueCheckRC, _ := execContainer(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
 		t.Logf("readyRC=%v,queueCheckRC=%v\n", readyRC, queueCheckRC)
 		if readyRC == 0 {
 			if queueCheckRC != 0 {
 				t.Fatalf("chkmqready returned %v when MQSC had not finished", readyRC)
 			} else {
 				// chkmqready says OK, and the last queue exists, so return
-				t.Log(execContainerWithOutput(t, cli, id, "root", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"}))
+				_, runmqsc := execContainer(t, cli, id, "root", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"})
+				t.Log(runmqsc)
 				return
 			}
 		}
@@ -463,20 +467,20 @@ func TestErrorLogRotation(t *testing.T) {
 	waitForReady(t, cli, id)
 	dir := "/var/mqm/qmgrs/" + qmName + "/errors"
 	// Generate some content for the error logs, by trying to put messages under an unauthorized user
-	// execContainerWithOutput(t, cli, id, "fred", []string{"bash", "-c", "for i in {1..30} ; do /opt/mqm/samp/bin/amqsput FAKE; done"})
-	execContainerWithOutput(t, cli, id, "root", []string{"useradd", "fred"})
+	// execContainer(t, cli, id, "fred", []string{"bash", "-c", "for i in {1..30} ; do /opt/mqm/samp/bin/amqsput FAKE; done"})
+	execContainer(t, cli, id, "root", []string{"useradd", "fred"})
 	for {
-		execContainerWithOutput(t, cli, id, "fred", []string{"bash", "-c", "/opt/mqm/samp/bin/amqsput FAKE"})
-		amqerr02size, err := strconv.Atoi(execContainerWithOutput(t, cli, id, "mqm", []string{"bash", "-c", "wc -c < " + filepath.Join(dir, "AMQERR02.json")}))
-		if err != nil {
-			t.Fatal(err)
-		}
+		execContainer(t, cli, id, "fred", []string{"bash", "-c", "/opt/mqm/samp/bin/amqsput FAKE"})
+
+		_, derpaderp := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "wc -c < " + filepath.Join(dir, "AMQERR02.json")})
+		amqerr02size, _ := strconv.Atoi(derpaderp)
+
 		if amqerr02size > 0 {
 			// We've done enough to cause log rotation
 			break
 		}
 	}
-	out := execContainerWithOutput(t, cli, id, "root", []string{"ls", "-l", dir})
+	_, out := execContainer(t, cli, id, "root", []string{"ls", "-l", dir})
 	t.Log(out)
 	stopContainer(t, cli, id)
 	b := copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR01.json"))
