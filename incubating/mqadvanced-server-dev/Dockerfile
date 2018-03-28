@@ -29,7 +29,7 @@ RUN go test -v ./cmd/runmqdevserver/...
 ###############################################################################
 # Main build stage
 ###############################################################################
-FROM mqadvanced-server-dev-base:9.0.4.0-x86_64-ubuntu-16.04
+FROM mqadvanced-server-dev-base:9.0.5.0-x86_64-ubuntu-16.04
 
 # Enable MQ developer default configuration
 ENV MQ_DEV=true
