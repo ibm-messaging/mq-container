@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -356,9 +357,11 @@ func TestMQSC(t *testing.T) {
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
-	rc := execContainerWithExitCode(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
-	if rc != 0 {
-		t.Fatalf("Expected runmqsc to exit with rc=0, got %v", rc)
+	mqscOutput := execContainerWithOutput(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
+	r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
+	amqerrCode := r.FindString(mqscOutput)
+	if amqerrCode != "" {
+		t.Fatalf("MQSC command failed with error %v", amqerrCode)
 	}
 }
 
@@ -395,11 +398,13 @@ func TestReadiness(t *testing.T) {
 	t.Log(execContainerWithOutput(t, cli, id, "root", []string{"cat", "/etc/mqm/test.mqsc"}))
 	for {
 		readyRC := execContainerWithExitCode(t, cli, id, "mqm", []string{"chkmqready"})
-		queueCheckRC := execContainerWithExitCode(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
-		t.Logf("readyRC=%v,queueCheckRC=%v\n", readyRC, queueCheckRC)
+		queueCheckOut := execContainerWithOutput(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
+		t.Logf("readyRC=%v", readyRC)
 		if readyRC == 0 {
-			if queueCheckRC != 0 {
-				t.Fatalf("chkmqready returned %v when MQSC had not finished", readyRC)
+			r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
+			amqerrCode := r.FindString(queueCheckOut)
+			if (amqerrCode != "") {
+				t.Fatalf("MQSC failed with error %v. chkmqready returned %v when MQSC had not finished", amqerrCode, readyRC)
 			} else {
 				// chkmqready says OK, and the last queue exists, so return
 				t.Log(execContainerWithOutput(t, cli, id, "root", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"}))
