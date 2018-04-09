@@ -1,0 +1,3 @@
+# Fore LF line endings to prevent errors in Bash on Windows
+*     text=auto
+*.sh  text eol=lf
