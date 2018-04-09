@@ -171,8 +171,8 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 				// Don't seek this time, because we know it's a new file
 				mirrorAvailableMessages(f, mf)
 			}
-			select {
-			case <-ctx.Done():
+
+			if <-ctx.Done() {
 				log.Debugf("Context cancelled for mirroring %v", path)
 				if closing {
 					log.Debugf("Shutting down mirror for %v", path)
@@ -180,9 +180,9 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 				}
 				// Set a flag, to allow one more time through the loop
 				closing = true
-			default:
-				time.Sleep(500 * time.Millisecond)
 			}
+
+			time.Sleep(500 * time.Millisecond)
 		}
 	}()
 	return errorChannel, nil
