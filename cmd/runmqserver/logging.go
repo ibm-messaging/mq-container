@@ -31,14 +31,6 @@ import (
 // var debug = false
 var log *logger.Logger
 
-func logDebug(args ...interface{}) {
-	log.Debug(args)
-}
-
-func logDebugf(format string, args ...interface{}) {
-	log.Debugf(format, args...)
-}
-
 func logTerminationf(format string, args ...interface{}) {
 	logTermination(fmt.Sprintf(format, args))
 }
@@ -74,7 +66,7 @@ func mirrorQueueManagerErrorLogs(ctx context.Context, wg *sync.WaitGroup, name s
 	// Always use the JSON log as the source
 	qm, err := mqini.GetQueueManager(name)
 	if err != nil {
-		logDebug(err)
+		log.Debug(err)
 		return nil, err
 	}
 	f := filepath.Join(mqini.GetErrorLogDirectory(qm), "AMQERR01.json")
