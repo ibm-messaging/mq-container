@@ -18,6 +18,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"golang.org/x/sys/unix"
 )
 
@@ -33,18 +34,19 @@ var fsTypes = map[int64]string{
 	0x794c7630: "overlayfs",
 }
 
-func checkFS(path string) {
+func checkFS(path string) error {
 	statfs := &unix.Statfs_t{}
 	err := unix.Statfs(path, statfs)
 	if err != nil {
 		log.Println(err)
-		return
+		return nil
 	}
 	t := fsTypes[statfs.Type]
 	switch t {
 	case "aufs", "overlayfs", "tmpfs":
-		log.Fatalf("Error: %v uses unsupported filesystem type %v", path, t)
+		return fmt.Errorf("%v uses unsupported filesystem type: %v", path, t)
 	default:
 		log.Printf("Detected %v has filesystem type '%v'", path, t)
+		return nil
 	}
 }

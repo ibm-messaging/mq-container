@@ -58,7 +58,11 @@ func doMain() error {
 	// Start signal handler
 	signalControl := signalHandler(name)
 
-	logConfig()
+	err = logConfig()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
 	err = createVolume("/mnt/mqm")
 	if err != nil {
 		logTermination(err)
