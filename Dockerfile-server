@@ -17,7 +17,7 @@ ARG BASE_IMAGE=ubuntu:16.04
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
-FROM golang:1.9 as builder 
+FROM golang:1.10 as builder 
 WORKDIR /go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
 COPY internal/ ./internal
@@ -34,7 +34,7 @@ RUN go test -v ./internal/...
 ###############################################################################
 # Main build stage, to build MQ image
 ###############################################################################
-FROM $BASE_IMAGE 
+FROM $BASE_IMAGE
 
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ Debian (.deb) install packages
