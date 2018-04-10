@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2017
+# © Copyright IBM Corporation 2015, 2018
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ apt-get install -y --no-install-recommends \
 
 # Download and extract the MQ installation files
 DIR_EXTRACT=/tmp/mq
-mkdir -p ${DIR_EXTRACT} 
+mkdir -p ${DIR_EXTRACT}
 cd ${DIR_EXTRACT}
 curl -LO $MQ_URL
 tar -zxvf ./*.tar.gz
@@ -91,6 +91,8 @@ rm -rf ${DIR_EXTRACT}
 # Don't upgrade everything based on Docker best practices https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run
 apt-get upgrade -y libkrb5-26-heimdal
 apt-get upgrade -y libexpat1
+apt-get upgrade -y sensible-utils
+apt-get upgrade -y libssl1.0.0
 
 # End of bug fixes
 
