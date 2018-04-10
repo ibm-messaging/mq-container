@@ -16,6 +16,8 @@ limitations under the License.
 package main
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os/user"
 	"runtime"
@@ -90,12 +92,12 @@ func readMounts() error {
 	if !detected {
 		log.Print("No volume detected. Persistent messages may be lost")
 	} else {
-		checkFS("/mnt/mqm")
+		return checkFS("/mnt/mqm")
 	}
 	return nil
 }
 
-func logConfig() {
+func logConfig() error {
 	log.Printf("CPU architecture: %v", runtime.GOARCH)
 	if runtime.GOOS == "linux" {
 		var err error
@@ -114,8 +116,12 @@ func logConfig() {
 		}
 		logUser()
 		logCapabilities()
-		readMounts()
+		err = readMounts()
+		if err != nil {
+			return err
+		}
 	} else {
-		log.Fatalf("Unsupported platform: %v", runtime.GOOS)
+		return errors.New(fmt.Sprintf("Unsupported platform: %v", runtime.GOOS))
 	}
+	return nil
 }
