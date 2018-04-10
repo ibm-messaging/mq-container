@@ -127,7 +127,7 @@ func configureTLS(qmName string, inputFile string, passPhrase string) error {
 	const mqsc string = "/etc/mqm/20-dev-tls.mqsc"
 	const mqscTemplate string = mqsc + ".tpl"
 
-	err = processTemplateFile(mqsc+".tpl", mqsc, map[string]string{
+	err = processTemplateFile(mqscTemplate, mqsc, map[string]string{
 		"SSLKeyR":          filepath.Join(dir, "key"),
 		"CertificateLabel": newLabel,
 		"SSLCipherSpec":    sslCipherSpec,
