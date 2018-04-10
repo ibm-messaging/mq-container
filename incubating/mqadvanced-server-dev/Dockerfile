@@ -51,6 +51,8 @@ COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqserver /u
 COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqdevserver /usr/local/bin/
 # Copy template MQSC for default developer configuration
 COPY incubating/mqadvanced-server-dev/10-dev.mqsc.tpl /etc/mqm/
+# Copy template MQSC for default developer TLS configuration
+COPY incubating/mqadvanced-server-dev/20-dev-tls.mqsc.tpl /etc/mqm/
 # Copy template JSON for default web console configuration
 COPY incubating/mqadvanced-server-dev/admin.json.tpl /etc/mqm/
 # Copy web XML files for default developer configuration
