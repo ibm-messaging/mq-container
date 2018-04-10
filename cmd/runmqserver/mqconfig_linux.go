@@ -18,7 +18,6 @@ limitations under the License.
 package main
 
 import (
-	"errors"
 	"fmt"
 	"golang.org/x/sys/unix"
 )
@@ -45,7 +44,7 @@ func checkFS(path string) error {
 	t := fsTypes[statfs.Type]
 	switch t {
 	case "aufs", "overlayfs", "tmpfs":
-		return errors.New(fmt.Sprintf("Error: %v uses unsupported filesystem type %v", path, t))
+		return fmt.Errorf("%v uses unsupported filesystem type: %v", path, t)
 	default:
 		log.Printf("Detected %v has filesystem type '%v'", path, t)
 		return nil

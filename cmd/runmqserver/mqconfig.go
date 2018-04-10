@@ -16,7 +16,6 @@ limitations under the License.
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os/user"
@@ -121,7 +120,7 @@ func logConfig() error {
 			return err
 		}
 	} else {
-		return errors.New(fmt.Sprintf("Unsupported platform: %v", runtime.GOOS))
+		return fmt.Errorf("Unsupported platform: %v", runtime.GOOS)
 	}
 	return nil
 }
