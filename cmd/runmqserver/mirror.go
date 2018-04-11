@@ -33,7 +33,7 @@ func waitForFile(ctx context.Context, path string) (os.FileInfo, error) {
 		select {
 		// Check to see if cancellation has been requested
 		case <-ctx.Done():
-			return nil, nil
+			return os.Stat(path)
 		default:
 			fi, err = os.Stat(path)
 			if err != nil {
@@ -145,7 +145,8 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 		for {
 			// If there's already data there, mirror it now.
 			mirrorAvailableMessages(f, mf)
-			newFI, err := os.Stat(path)
+			// Wait for the new log file (after rotation)
+			newFI, err := waitForFile(ctx, path)
 			if err != nil {
 				log.Error(err)
 				errorChannel <- err
