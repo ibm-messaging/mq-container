@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017
+# © Copyright IBM Corporation 2017, 2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,13 +49,13 @@ clean:
 	rm -rf ./build
 	rm -rf ./deps
 
-downloads/mqadv_dev903_ubuntu_x86-64.tar.gz:
+downloads/mqadv_dev904_ubuntu_x86-64.tar.gz:
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers"$(END)))
 	mkdir -p downloads
-	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev903_ubuntu_x86-64.tar.gz
+	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev904_ubuntu_x86-64.tar.gz
 
 .PHONY: downloads
-downloads: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
+downloads: downloads/mqadv_dev904_ubuntu_x86-64.tar.gz
 
 .PHONY: deps
 deps:
@@ -121,8 +121,8 @@ define docker-build-mq
 	$(DOCKER) network rm build
 endef
 
-# .PHONY: build-advancedserver-903
-# build-advancedserver-903: build downloads/CNJR7ML.tar.gz
+# .PHONY: build-advancedserver-904
+# build-advancedserver-904: build downloads/CNJR7ML.tar.gz
 # 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(DOCKER_FULL_ADVANCEDSERVER)"$(END)))
 # 	$(call docker-build-mq,$(DOCKER_FULL_ADVANCEDSERVER),Dockerfile-server,CNJR7ML.tar.gz,"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced","9.0.3")
 # 	$(DOCKER) tag $(DOCKER_FULL_ADVANCEDSERVER) $(DOCKER_REPO_ADVANCEDSERVER):9.0.3-$(DOCKER_TAG_ARCH)
@@ -137,9 +137,9 @@ build-advancedserver-904: downloads/CNLE4ML.tar.gz
 build-advancedserver: build-advancedserver-904
 
 .PHONY: build-devserver
-build-devserver: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
+build-devserver: downloads/mqadv_dev904_ubuntu_x86-64.tar.gz
 	$(info $(shell printf $(TITLE)"Build $(DOCKER_FULL_DEVSERVER)"$(END)))
-	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
+	$(call docker-build-mq,$(DOCKER_FULL_DEVSERVER),Dockerfile-server,mqadv_dev904_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
 	$(DOCKER) tag $(DOCKER_FULL_DEVSERVER) $(DOCKER_REPO_DEVSERVER):9.0.3-$(DOCKER_TAG_ARCH)
 
 # .PHONY: build-server
@@ -156,7 +156,7 @@ build-advancedserver-cover: build-advanced-server build-cov
 # 	$(call docker-build-mq,mq-web:latest-$(DOCKER_TAG_ARCH),Dockerfile-mq-web)
 
 .PHONY: build-explorer
-build-explorer: downloads/mqadv_dev903_ubuntu_x86-64.tar.gz
-	$(call docker-build-mq,mq-explorer:latest-$(DOCKER_TAG_ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,mqadv_dev903_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
+build-explorer: downloads/mqadv_dev904_ubuntu_x86-64.tar.gz
+	$(call docker-build-mq,mq-explorer:latest-$(DOCKER_TAG_ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,mqadv_dev904_ubuntu_x86-64.tar.gz,"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)","9.0.3")
 
 include formatting.mk
