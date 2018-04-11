@@ -28,4 +28,5 @@ script:
  - make test-devserver
 
 after_success:
+ - go get golang.org/x/lint/golint
  - make lint
