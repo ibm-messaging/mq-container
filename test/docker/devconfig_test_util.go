@@ -73,10 +73,20 @@ func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls
 }
 
 // tlsDir returns the host directory where the test certificate(s) are located
-func tlsDir(t *testing.T) string {
+func tlsDir(t *testing.T, unixPath bool) string {
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
+	}
+	if isWSL(t) {
+		// Check if the cwd is a symlink
+		dir, err = filepath.EvalSymlinks(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !unixPath {
+			dir = strings.Replace(dir, getWindowsRoot(true), getWindowsRoot(false), 1)
+		}
 	}
 	return filepath.Join(dir, "../tls")
 }
@@ -106,7 +116,7 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, pa
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
-			tlsDir(t) + ":/var/tls",
+			tlsDir(t, false) + ":/var/tls",
 		},
 	}
 	networkingConfig := network.NetworkingConfig{}
