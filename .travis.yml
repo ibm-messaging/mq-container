@@ -26,3 +26,6 @@ script:
  - make vet
  - make build-devserver
  - make test-devserver
+
+after_success:
+ - make lint
