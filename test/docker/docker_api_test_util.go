@@ -85,27 +85,29 @@ func coverageBind(t *testing.T) string {
 // isWSL return whether we are running in the Windows Subsystem for Linux
 func isWSL(t *testing.T) bool {
 	if runtime.GOOS == "linux" {
-
 		uname, err := exec.Command("uname", "-r").Output()
 		if (err != nil) {
 			t.Fatal(err)
 		}
-
 		return strings.Contains(string(uname), "Microsoft")
-
 	} else {
 		return false
+	}
+}
+
+// getWindowsRoot get the path of the root directory on Windows, in UNIX or OS-specific style
+func getWindowsRoot(unixStylePath bool) string {
+	if unixStylePath {
+		return "/mnt/c/"
+	} else {
+		return "C:/"
 	}
 }
 
 // getTempDir get the path of the tmp directory, in UNIX or OS-specific style
 func getTempDir(t *testing.T, unixStylePath bool) string {
 	if isWSL(t) {
-		if unixStylePath {
-			return "/mnt/c/Temp/"
-		} else {
-			return "C:/Temp/"
-		}
+		return getWindowsRoot(unixStylePath) + "Temp/"
 	} else {
 		return "/tmp/"
 	}

@@ -78,7 +78,7 @@ func TestDevSecure(t *testing.T) {
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
-			tlsDir(t) + ":/var/tls",
+			tlsDir(t, false) + ":/var/tls",
 		},
 		// Assign a random port for the web server on the host
 		// TODO: Don't do this for all tests
@@ -98,7 +98,7 @@ func TestDevSecure(t *testing.T) {
 	defer cleanContainer(t, cli, ctr.ID)
 	startContainer(t, cli, ctr.ID)
 	waitForReady(t, cli, ctr.ID)
-	cert := filepath.Join(tlsDir(t), "server.crt")
+	cert := filepath.Join(tlsDir(t, true), "server.crt")
 	waitForWebReady(t, cli, ctr.ID, createTLSConfig(t, cert, tlsPassPhrase))
 	runJMSTests(t, cli, ctr.ID, true, "app", devAppPassword)
 	// Stop the container cleanly

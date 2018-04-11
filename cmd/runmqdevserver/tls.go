@@ -117,19 +117,23 @@ func configureTLS(qmName string, inputFile string, passPhrase string) error {
 		return err
 	}
 
-	f, err := os.OpenFile("/etc/mqm/20-dev-tls.mqsc", os.O_WRONLY|os.O_CREATE, 0770)
+	var sslCipherSpec string
+	if os.Getenv("MQ_DEV") == "true" {
+		sslCipherSpec = "TLS_RSA_WITH_AES_128_CBC_SHA256"
+	} else {
+		sslCipherSpec = ""
+	}
+
+	const mqsc string = "/etc/mqm/20-dev-tls.mqsc"
+	const mqscTemplate string = mqsc + ".tpl"
+
+	err = processTemplateFile(mqscTemplate, mqsc, map[string]string{
+		"SSLKeyR":          filepath.Join(dir, "key"),
+		"CertificateLabel": newLabel,
+		"SSLCipherSpec":    sslCipherSpec,
+	})
 	if err != nil {
 		return err
-	}
-	defer f.Close()
-	// Change the Queue Manager's Key Repository to point at the new TLS key store
-	fmt.Fprintf(f, "ALTER QMGR SSLKEYR('%s')\n", filepath.Join(dir, "key"))
-	fmt.Fprintf(f, "ALTER QMGR CERTLABL('%s')\n", newLabel)
-
-	if os.Getenv("MQ_DEV") == "true" {
-		// Alter the DEV channels to use TLS
-		fmt.Fprintln(f, "ALTER CHANNEL('DEV.APP.SVRCONN') CHLTYPE(SVRCONN) SSLCIPH(TLS_RSA_WITH_AES_128_CBC_SHA256) SSLCAUTH(OPTIONAL)")
-		fmt.Fprintln(f, "ALTER CHANNEL('DEV.ADMIN.SVRCONN') CHLTYPE(SVRCONN) SSLCIPH(TLS_RSA_WITH_AES_128_CBC_SHA256) SSLCAUTH(OPTIONAL)")
 	}
 
 	err = configureWebTLS(cms)
