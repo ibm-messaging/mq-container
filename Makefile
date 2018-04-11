@@ -100,7 +100,7 @@ all: build-devserver build-advancedserver
 test-all: test-devserver test-advancedserver
 
 .PHONY: precommit
-precommit: all test-all
+precommit: vet fmt all test-all lint
 
 .PHONY: devserver
 devserver: build-devserver test-devserver
@@ -234,5 +234,27 @@ build-advancedserver-cover: docker-version
 .PHONY: build-explorer
 build-explorer: downloads/$(MQ_ARCHIVE_DEV)
 	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
+
+# Select all go packages inside the test directory
+GO_TEST_PKG = $(sort $(dir $(wildcard ./test/*/*.go)))
+GO_TEST_FILES = $(addsuffix /$(wildcard *.go), $(GO_TEST_PKG))
+
+# Select all go packages inside the internal directory
+GO_INTERNAL_PKG = $(sort $(dir $(wildcard ./internal/*/*.go)))
+GO_INTERNAL_FILES = $(addsuffix /$(wildcard *.go), $(GO_CMD_PKG))
+
+# Select all go packages inside the cmd directory
+GO_CMD_PKG = $(sort $(dir $(wildcard ./cmd/*/*.go)))
+GO_CMD_FILES = $(addsuffix /$(wildcard *.go), $(GO_CMD_PKG))
+
+fmt: $(GO_CMD_FILES) $(GO_TEST_FILES) $(GO_INTERNAL_FILES)
+	go fmt $(GO_TEST_PKG) $(GO_CMD_PKG) $(GO_INTERNAL_PKG)
+
+vet: $(GO_CMD_FILES) $(GO_TEST_FILES) $(GO_INTERNAL_FILES)
+	go vet $(GO_TEST_PKG) $(GO_CMD_PKG) $(GO_INTERNAL_PKG)
+
+lint: $(GO_CMD_FILES) $(GO_TEST_FILES) $(GO_INTERNAL_FILES)
+	echo "\033[0;31m"; golint $(GO_TEST_PKG) $(GO_CMD_PKG) $(GO_INTERNAL_PKG)
+	@echo "\033[0m"
 
 include formatting.mk

@@ -25,6 +25,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
+// KeyStore describes information about a keystore file
 type KeyStore struct {
 	Filename     string
 	Password     string
@@ -72,7 +73,7 @@ func (ks *KeyStore) Create() error {
 	return nil
 }
 
-// Create a key stash, if it doesn't already exist
+// CreateStash creates a key stash, if it doesn't already exist
 func (ks *KeyStore) CreateStash() error {
 	extension := filepath.Ext(ks.Filename)
 	stashFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".sth"
@@ -96,6 +97,7 @@ func (ks *KeyStore) CreateStash() error {
 	return nil
 }
 
+// Import imports a certificate file in the keystore
 func (ks *KeyStore) Import(inputFile, password string) error {
 	_, _, err := command.Run(ks.command, "-cert", "-import", "-file", inputFile, "-pw", password, "-target", ks.Filename, "-target_pw", ks.Password, "-target_type", ks.keyStoreType)
 	if err != nil {

@@ -296,7 +296,7 @@ func TestVolumeUnmount(t *testing.T) {
 		t.Errorf("Expected chkmqhealthy to fail")
 		_, df := execContainer(t, cli, ctr.ID, "mqm", []string{"df"})
 		t.Logf(df)
-		_, ps :=execContainer(t, cli, ctr.ID, "mqm", []string{"ps", "-ef"})
+		_, ps := execContainer(t, cli, ctr.ID, "mqm", []string{"ps", "-ef"})
 		t.Logf(ps)
 	}
 }
@@ -404,7 +404,7 @@ func TestReadiness(t *testing.T) {
 		t.Logf("readyRC=%v,queueCheckRC=%v\n", readyRC, queueCheckRC)
 
 		if readyRC == 0 {
-			if (queueCheckRC != 0) {
+			if queueCheckRC != 0 {
 				r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
 				t.Fatalf("Runmqsc returned %v with error %v. chkmqready returned %v when MQSC had not finished", queueCheckRC, r.FindString(queueCheckOut), readyRC)
 			} else {

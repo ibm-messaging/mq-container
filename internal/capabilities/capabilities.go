@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// capabilities allows querying of information on Linux capabilities
+// Package capabilities allows querying of information on Linux capabilities
 package capabilities
 
 import (

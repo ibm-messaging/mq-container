@@ -21,5 +21,6 @@ install:
 
 script:
  - make deps
+ - make vet
  - make build-devserver
  - make test-devserver
