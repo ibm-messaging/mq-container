@@ -7,7 +7,7 @@ go:
 services:
  - docker
 
-go_import_path: github.com/ibm-messagin/mq-container
+go_import_path: "github.com/ibm-messaging/mq-container"
 
 before_install:
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
