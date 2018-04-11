@@ -100,7 +100,7 @@ all: build-devserver build-advancedserver
 test-all: test-devserver test-advancedserver
 
 .PHONY: precommit
-precommit: vet fmt all test-all lint
+precommit: vet fmt lint all test-all
 
 .PHONY: devserver
 devserver: build-devserver test-devserver
@@ -144,7 +144,7 @@ test-unit:
 .PHONY: test-advancedserver
 test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on Docker"$(END)))
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) go test -timeout 20m -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
 build-devjmstest:
@@ -235,26 +235,17 @@ build-advancedserver-cover: docker-version
 build-explorer: downloads/$(MQ_ARCHIVE_DEV)
 	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 
-# Select all go packages inside the test directory
-GO_TEST_PKG = $(sort $(dir $(wildcard ./test/*/*.go)))
-GO_TEST_FILES = $(addsuffix /$(wildcard *.go), $(GO_TEST_PKG))
+GO_PKG_DIRS = ./cmd ./internal ./test
 
-# Select all go packages inside the internal directory
-GO_INTERNAL_PKG = $(sort $(dir $(wildcard ./internal/*/*.go)))
-GO_INTERNAL_FILES = $(addsuffix /$(wildcard *.go), $(GO_CMD_PKG))
+fmt: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
+	go fmt $(addsuffix /..., $(GO_PKG_DIRS))
 
-# Select all go packages inside the cmd directory
-GO_CMD_PKG = $(sort $(dir $(wildcard ./cmd/*/*.go)))
-GO_CMD_FILES = $(addsuffix /$(wildcard *.go), $(GO_CMD_PKG))
+vet: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS)) test/docker/vendor
+	go vet $(addsuffix /..., $(GO_PKG_DIRS))
 
-fmt: $(GO_CMD_FILES) $(GO_TEST_FILES) $(GO_INTERNAL_FILES)
-	go fmt $(GO_TEST_PKG) $(GO_CMD_PKG) $(GO_INTERNAL_PKG)
-
-vet: test/docker/vendor $(GO_CMD_FILES) $(GO_TEST_FILES) $(GO_INTERNAL_FILES)
-	go vet $(GO_TEST_PKG) $(GO_CMD_PKG) $(GO_INTERNAL_PKG)
-
-lint: $(GO_CMD_FILES) $(GO_TEST_FILES) $(GO_INTERNAL_FILES)
-	echo "\033[0;31m"; golint $(GO_TEST_PKG) $(GO_CMD_PKG) $(GO_INTERNAL_PKG)
-	@echo "\033[0m"
+lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
+	@# This expression is necessary because /... includes the vendor directory in golint
+	@# As of 11/04/2018 there is an open issue to fix it: https://github.com/golang/lint/issues/320
+	golint -set_exit_status $(sort $(dir $(wildcard $(addsuffix /*/*.go, $(GO_PKG_DIRS)))))
 
 include formatting.mk
