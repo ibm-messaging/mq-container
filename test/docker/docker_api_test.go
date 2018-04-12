@@ -407,7 +407,7 @@ func TestReadiness(t *testing.T) {
 	t.Log(output)
 	for {
 		readyRC, _ := execContainer(t, cli, id, "mqm", []string{"chkmqready"})
-		queueCheckRC, queueCheckOut := execContainer(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
+		queueCheckRC, _ := execContainer(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
 		t.Logf("readyRC=%v,queueCheckRC=%v\n", readyRC, queueCheckRC)
 
 		if readyRC == 0 {
