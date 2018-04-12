@@ -31,6 +31,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"regexp"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -254,10 +255,9 @@ func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64
 	return rc
 }
 
-// execContainerWithExitCode runs a command in a running container, and returns the exit code
-// Note: due to a bug in Docker/Moby code, you always get an exit code of 0 if you attach to the
-// container to get output.  This is why these are two separate commands.
-func execContainerWithExitCode(t *testing.T, cli *client.Client, ID string, user string, cmd []string) int {
+// execContainer runs a command in a running container, and returns the exit code and output
+func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd []string) (int, string) {
+	rerun:
 	config := types.ExecConfig{
 		User:        user,
 		Privileged:  false,
@@ -273,56 +273,23 @@ func execContainerWithExitCode(t *testing.T, cli *client.Client, ID string, user
 	if err != nil {
 		t.Fatal(err)
 	}
-	cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
-		Detach: false,
-		Tty:    false,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return inspect.ExitCode
-}
-
-// execContainerWithOutput runs a command in a running container, and returns the output from stdout/stderr
-// Note: due to a bug in Docker/Moby code, you always get an exit code of 0 if you attach to the
-// container to get output.  This is why these are two separate commands.
-func execContainerWithOutput(t *testing.T, cli *client.Client, ID string, user string, cmd []string) string {
-	config := types.ExecConfig{
-		User:         user,
-		Privileged:   false,
-		Tty:          false,
-		AttachStdin:  false,
-		AttachStdout: true,
-		AttachStderr: true,
-		Detach:       false,
-		Cmd:          cmd,
-	}
-	resp, err := cli.ContainerExecCreate(context.Background(), ID, config)
-	if err != nil {
-		t.Fatal(err)
-	}
 	hijack, err := cli.ContainerExecAttach(context.Background(), resp.ID, config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
+	cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
 		Detach: false,
 		Tty:    false,
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
 	// Wait for the command to finish
+	var exitcode int
 	for {
 		inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if !inspect.Running {
+			exitcode = inspect.ExitCode
 			break
 		}
 	}
@@ -332,12 +299,22 @@ func execContainerWithOutput(t *testing.T, cli *client.Client, ID string, user s
 	if err != nil {
 		log.Fatal(err)
 	}
-	return strings.TrimSpace(buf.String())
+
+	outputStr := strings.TrimSpace(buf.String())
+
+	// Before we go let's just double check it did actually run because sometimes we get a "Exec command already running error"
+	alreadyRunningErr := regexp.MustCompile("Error: Exec command .* is already running")
+	if alreadyRunningErr.MatchString(outputStr) {
+		time.Sleep(1 * time.Second)
+		goto rerun
+	}
+
+	return exitcode, outputStr
 }
 
 func waitForReady(t *testing.T, cli *client.Client, ID string) {
 	for {
-		rc := execContainerWithExitCode(t, cli, ID, "mqm", []string{"chkmqready"})
+		rc, _ := execContainer(t, cli, ID, "mqm", []string{"chkmqready"})
 		if rc == 0 {
 			t.Log("MQ is ready")
 			return
