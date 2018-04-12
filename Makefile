@@ -100,7 +100,7 @@ all: build-devserver build-advancedserver
 test-all: test-devserver test-advancedserver
 
 .PHONY: precommit
-precommit: all test-all
+precommit: vet fmt lint all test-all
 
 .PHONY: devserver
 devserver: build-devserver test-devserver
@@ -144,7 +144,7 @@ test-unit:
 .PHONY: test-advancedserver
 test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on Docker"$(END)))
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) go test -timeout 20m -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
 build-devjmstest:
@@ -234,5 +234,18 @@ build-advancedserver-cover: docker-version
 .PHONY: build-explorer
 build-explorer: downloads/$(MQ_ARCHIVE_DEV)
 	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
+
+GO_PKG_DIRS = ./cmd ./internal ./test
+
+fmt: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
+	go fmt $(addsuffix /..., $(GO_PKG_DIRS))
+
+vet: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS)) test/docker/vendor
+	go vet $(addsuffix /..., $(GO_PKG_DIRS))
+
+lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
+	@# This expression is necessary because /... includes the vendor directory in golint
+	@# As of 11/04/2018 there is an open issue to fix it: https://github.com/golang/lint/issues/320
+	golint -set_exit_status $(sort $(dir $(wildcard $(addsuffix /*/*.go, $(GO_PKG_DIRS)))))
 
 include formatting.mk

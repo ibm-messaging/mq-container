@@ -27,12 +27,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
-	"regexp"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -86,31 +86,28 @@ func coverageBind(t *testing.T) string {
 func isWSL(t *testing.T) bool {
 	if runtime.GOOS == "linux" {
 		uname, err := exec.Command("uname", "-r").Output()
-		if (err != nil) {
+		if err != nil {
 			t.Fatal(err)
 		}
 		return strings.Contains(string(uname), "Microsoft")
-	} else {
-		return false
 	}
+	return false
 }
 
 // getWindowsRoot get the path of the root directory on Windows, in UNIX or OS-specific style
 func getWindowsRoot(unixStylePath bool) string {
 	if unixStylePath {
 		return "/mnt/c/"
-	} else {
-		return "C:/"
 	}
+	return "C:/"
 }
 
 // getTempDir get the path of the tmp directory, in UNIX or OS-specific style
 func getTempDir(t *testing.T, unixStylePath bool) string {
 	if isWSL(t) {
 		return getWindowsRoot(unixStylePath) + "Temp/"
-	} else {
-		return "/tmp/"
 	}
+	return "/tmp/"
 }
 
 // terminationLogUnixPath returns the name of the file to use for the termination log message, with a UNIX path
@@ -304,7 +301,7 @@ func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64
 
 // execContainer runs a command in a running container, and returns the exit code and output
 func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd []string) (int, string) {
-	rerun:
+rerun:
 	config := types.ExecConfig{
 		User:        user,
 		Privileged:  false,

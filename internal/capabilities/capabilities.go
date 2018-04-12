@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// capabilities allows querying of information on Linux capabilities
+// Package capabilities allows querying of information on Linux capabilities
 package capabilities
 
 import (

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package logger provides utility functions for logging purposes
 package logger
 
 import (
@@ -108,46 +109,56 @@ func (l *Logger) log(level string, msg string) {
 	l.mutex.Unlock()
 }
 
+// LogDirect logs a message directly to stdout
 func (l *Logger) LogDirect(msg string) {
 	fmt.Println(msg)
 }
 
+// Debug logs a line as debug
 func (l *Logger) Debug(args ...interface{}) {
 	if l.debug {
 		l.log(debugLevel, fmt.Sprint(args...))
 	}
 }
 
+// Debugf logs a line as debug using format specifiers
 func (l *Logger) Debugf(format string, args ...interface{}) {
 	if l.debug {
 		l.log(debugLevel, fmt.Sprintf(format, args...))
 	}
 }
 
+// Print logs a message as info
 func (l *Logger) Print(args ...interface{}) {
 	l.log(infoLevel, fmt.Sprint(args...))
 }
 
+// Println logs a message
 func (l *Logger) Println(args ...interface{}) {
 	l.Print(args...)
 }
 
+// Printf logs a message as info using format specifiers
 func (l *Logger) Printf(format string, args ...interface{}) {
 	l.log(infoLevel, fmt.Sprintf(format, args...))
 }
 
+// PrintString logs a string as info
 func (l *Logger) PrintString(msg string) {
 	l.log(infoLevel, msg)
 }
 
+// Errorf logs a message as error
 func (l *Logger) Error(args ...interface{}) {
 	l.log(errorLevel, fmt.Sprint(args...))
 }
 
+// Errorf logs a message as error using format specifiers
 func (l *Logger) Errorf(format string, args ...interface{}) {
 	l.log(errorLevel, fmt.Sprintf(format, args...))
 }
 
+// Fatalf logs a message as fatal using format specifiers
 // TODO: Remove this
 func (l *Logger) Fatalf(format string, args ...interface{}) {
 	l.log("FATAL", fmt.Sprintf(format, args...))

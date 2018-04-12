@@ -7,6 +7,8 @@ go:
 services:
  - docker
 
+go_import_path: "github.com/ibm-messaging/mq-container"
+
 before_install:
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -21,5 +23,10 @@ install:
 
 script:
  - make deps
+ - make vet
  - make build-devserver
  - make test-devserver
+
+after_success:
+ - go get golang.org/x/lint/golint
+ - make lint
