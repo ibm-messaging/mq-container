@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'com.ibm.mq', name: 'com.ibm.mq.allclient', version: '9.0.4.0'
+    compile group: 'com.ibm.mq', name: 'com.ibm.mq.allclient', version: '9.0.5.0'
     compile "org.junit.jupiter:junit-jupiter-api:5.0.3"
     runtime "org.junit.jupiter:junit-jupiter-engine:5.0.3"
     runtime "org.junit.platform:junit-platform-console-standalone:1.0.3"
