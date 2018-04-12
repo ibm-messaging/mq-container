@@ -301,10 +301,10 @@ func TestVolumeUnmount(t *testing.T) {
 	rc, _ = execContainer(t, cli, ctr.ID, "mqm", []string{"chkmqhealthy"})
 	if rc == 0 {
 		t.Errorf("Expected chkmqhealthy to fail")
-		_, df := execContainer(t, cli, ctr.ID, "mqm", []string{"df"})
-		t.Logf(df)
-		_, ps := execContainer(t, cli, ctr.ID, "mqm", []string{"ps", "-ef"})
-		t.Logf(ps)
+		_, output := execContainer(t, cli, ctr.ID, "mqm", []string{"df"})
+		t.Logf(output)
+		_, output = execContainer(t, cli, ctr.ID, "mqm", []string{"ps", "-ef"})
+		t.Logf(output)
 	}
 }
 
@@ -403,11 +403,11 @@ func TestReadiness(t *testing.T) {
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	queueCheckCommand := fmt.Sprintf("echo 'DISPLAY QLOCAL(test%v)' | runmqsc", numQueues)
-	_, mqsc := execContainer(t, cli, id, "root", []string{"cat", "/etc/mqm/test.mqsc"})
-	t.Log(mqsc)
+	_, output := execContainer(t, cli, id, "root", []string{"cat", "/etc/mqm/test.mqsc"})
+	t.Log(output)
 	for {
 		readyRC, _ := execContainer(t, cli, id, "mqm", []string{"chkmqready"})
-		queueCheckRC, queueCheckOut := execContainer(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
+		queueCheckRC, _ := execContainer(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
 		t.Logf("readyRC=%v,queueCheckRC=%v\n", readyRC, queueCheckRC)
 
 		if readyRC == 0 {
