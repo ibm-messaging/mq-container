@@ -18,11 +18,7 @@ limitations under the License.
 package main
 
 import (
-	"crypto/tls"
-	"fmt"
-	"net/http"
 	"testing"
-	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -41,31 +37,7 @@ func TestDevGoldenPath(t *testing.T) {
 
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
-	waitForWebReady(t, cli, id)
-
-	timeout := time.Duration(30 * time.Second)
-	// Disable TLS verification (server uses a self-signed certificate by default,
-	// so verification isn't useful anyway)
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-	httpClient := http.Client{
-		Timeout:   timeout,
-		Transport: tr,
-	}
-
-	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getWebPort(t, cli, id))
-	req, err := http.NewRequest("GET", url, nil)
-	req.SetBasicAuth("admin", "passw0rd")
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Expected HTTP status code %v from 'GET installation'; got %v", http.StatusOK, resp.StatusCode)
-	}
+	waitForWebReady(t, cli, id, insecureTLSConfig)
 
 	// Stop the container cleanly
 	stopContainer(t, cli, id)

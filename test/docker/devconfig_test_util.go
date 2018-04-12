@@ -18,25 +18,49 @@ limitations under the License.
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
 	"testing"
 	"time"
+	"net/http"
+	"crypto/tls"
 
 	"github.com/docker/docker/client"
 )
 
-func waitForWebReady(t *testing.T, cli *client.Client, ID string) {
-	config := tls.Config{InsecureSkipVerify: true}
-	a := fmt.Sprintf("localhost:%s", getWebPort(t, cli, ID))
+
+const devAdminPassword string = "passw0rd"
+const devAppPassword string = "passw0rd"
+
+// Disable TLS verification (server uses a self-signed certificate by default,
+// so verification isn't useful anyway)
+var insecureTLSConfig *tls.Config = &tls.Config{
+	InsecureSkipVerify: true,
+}
+
+func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config) {
+	httpClient := http.Client{
+		Timeout: time.Duration(3 * time.Second),
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+	}
+	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getWebPort(t, cli, ID))
 	for {
-		conn, err := tls.Dial("tcp", a, &config)
-		if err == nil {
-			conn.Close()
-			// Extra sleep to allow web apps to start
-			time.Sleep(3 * time.Second)
+		req, err := http.NewRequest("GET", url, nil)
+		req.SetBasicAuth("admin", devAdminPassword)
+		resp, err := httpClient.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
 			t.Log("MQ web server is ready")
 			return
 		}
+		// conn, err := tls.Dial("tcp", a, &config)
+		// if err == nil {
+		// 	conn.Close()
+		// 	// Extra sleep to allow web apps to start
+		// 	time.Sleep(5 * time.Second)
+		// 	t.Log("MQ web server is ready")
+		// 	return
+		// }
+		time.Sleep(1 * time.Second)
 	}
 }
