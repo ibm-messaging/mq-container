@@ -156,8 +156,11 @@ test-devserver: test/docker/vendor build-devjmstest
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER) on Docker"$(END)))
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
 
+coverage:
+	mkdir coverage
+
 .PHONY: test-advancedserver-cover
-test-advancedserver-cover: test/docker/vendor
+test-advancedserver-cover: test/docker/vendor coverage
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on Docker with code coverage"$(END)))
 	rm -f ./coverage/unit*.cov
 	# Run unit tests with coverage, for each package under 'internal'

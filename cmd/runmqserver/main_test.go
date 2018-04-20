@@ -19,6 +19,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 
@@ -26,8 +27,6 @@ import (
 )
 
 var test *bool
-
-const filename = "/var/coverage/exitCode"
 
 func init() {
 	test = flag.Bool("test", false, "Set to true when running tests for coverage")
@@ -41,6 +40,14 @@ func TestSystem(t *testing.T) {
 		defer func() {
 			osExit = oldExit
 		}()
+
+		filename, ok := os.LookupEnv("EXIT_CODE_FILE")
+		if !ok {
+			filename = "/var/coverage/exitCode"
+		} else {
+			filename = filepath.Join("/var/coverage/", filename)
+		}
+
 		osExit = func(rc int) {
 			// Write the exit code to a file instead
 			log.Printf("Writing exit code %v to file %v", strconv.Itoa(rc), filename)
