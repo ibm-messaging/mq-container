@@ -74,21 +74,7 @@ func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls
 
 // tlsDir returns the host directory where the test certificate(s) are located
 func tlsDir(t *testing.T, unixPath bool) string {
-	dir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if isWSL(t) {
-		// Check if the cwd is a symlink
-		dir, err = filepath.EvalSymlinks(dir)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !unixPath {
-			dir = strings.Replace(dir, getWindowsRoot(true), getWindowsRoot(false), 1)
-		}
-	}
-	return filepath.Join(dir, "../tls")
+	return filepath.Join(getCwd(t, unixPath), "../tls")
 }
 
 // runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID
