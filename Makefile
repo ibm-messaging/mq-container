@@ -47,7 +47,8 @@ ARCH = $(shell uname -m)
 BUILD_SERVER_CONTAINER=build-server
 # NUM_CPU is the number of CPUs available to Docker.  Used to control how many
 # test run in parallel
-NUM_CPU=$(shell docker info --format "{{ .NCPU }}" || 1)
+NUM_CPU = $(shell docker info --format "{{ .NCPU }}")
+NUM_CPU ?= 2
 # BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
 BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
 MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
