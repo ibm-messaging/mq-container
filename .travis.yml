@@ -5,13 +5,21 @@ go:
   - "1.10"
 
 services:
- - docker
+  - docker
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
 cache:
   directories:
     - downloads
+
+env:
+  - DOCKER_DOWNGRADE=echo nothing to be done
+  - DOCKER_DOWNGRADE=sudo apt-get autoremove -y docker-ce &
+    curl -fsSL https://apt.dockerproject.org/gpg | sudo apt-key add - &
+    sudo apt-add-repository "deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main" &
+    sudo apt-get update &
+    sudo apt-get install docker-engine=1.12.6-0~ubuntu-$(lsb_release -cs)
 
 before_install:
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -26,11 +34,13 @@ install:
   - echo nothing
 
 script:
- - make deps
- - make vet
- - make build-devserver
- - make test-devserver
+  - make deps
+  - make vet
+  - make build-devserver
+  - make build-devjmstest
+  - exec $DOCKER_DOWNGRADE
+  - make test-devserver
 
 after_success:
- - go get golang.org/x/lint/golint
- - make lint
+  - go get golang.org/x/lint/golint
+  - make lint
