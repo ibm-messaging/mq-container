@@ -15,7 +15,7 @@ cache:
 
 env:
   - DOCKER_DOWNGRADE="echo nothing to be done"
-  - DOCKER_DOWNGRADE="sudo apt-get autoremove -y docker-ce && curl -fsSL \"https://apt.dockerproject.org/gpg\" | sudo apt-key add - && sudo apt-add-repository \"deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main\" && sudo apt-get update && sudo apt-get install docker-engine=1.12.6-0~ubuntu-$(lsb_release -cs)"
+  - DOCKER_API_VERSION="1.24" DOCKER_DOWNGRADE="docker save -o images.tar mqadvanced-server-dev mq-dev-jms-test && sudo apt-get autoremove -y docker-ce && curl -fsSL \"https://apt.dockerproject.org/gpg\" | sudo apt-key add - && sudo apt-add-repository \"deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main\" && sudo apt-get update && sudo apt-get install docker-engine=1.12.6-0~ubuntu-$(lsb_release -cs) && docker load -q -i mqadvanced-server-dev.tar"
 
 before_install:
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -35,7 +35,6 @@ script:
   - make build-devserver
   - make build-devjmstest
   - eval "$DOCKER_DOWNGRADE"
-  - echo Running $(docker --version)
   - make test-devserver
 
 after_success:
