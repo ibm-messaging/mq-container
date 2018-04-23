@@ -22,7 +22,7 @@ jobs:
         sudo apt-add-repository \"deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main\" &&
         sudo apt-get update &&
         sudo apt-get install docker-engine=1.12.6-0~ubuntu-$(lsb_release -cs) &&
-        docker load -q -i mqadvanced-server-dev.tar &&
+        docker load -q -i images.tar &&
         export DOCKER_API_VERSION=\"1.24\""
     - env: DOCKER_DOWNGRADE="echo nothing to be done"
 
