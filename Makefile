@@ -47,7 +47,7 @@ ARCH = $(shell uname -m)
 BUILD_SERVER_CONTAINER=build-server
 # NUM_CPU is the number of CPUs available to Docker.  Used to control how many
 # test run in parallel
-NUM_CPU=$(shell docker info --format "{{ .NCPU }}")
+NUM_CPU = $(or $(shell docker info --format "{{ .NCPU }}"),2)
 # BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
 BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
 MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
@@ -143,7 +143,7 @@ test-unit:
 
 .PHONY: test-advancedserver
 test-advancedserver: test/docker/vendor
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on Docker"$(END)))
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on $(shell docker --version)"$(END)))
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
@@ -152,13 +152,13 @@ build-devjmstest:
 	cd test/messaging && docker build --tag $(DEV_JMS_IMAGE) .
 
 .PHONY: test-devserver
-test-devserver: test/docker/vendor build-devjmstest
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER) on Docker"$(END)))
+test-devserver: test/docker/vendor
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER) on $(shell docker --version)"$(END)))
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
 
 .PHONY: test-advancedserver-cover
 test-advancedserver-cover: test/docker/vendor
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on Docker with code coverage"$(END)))
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) with code coverage on $(shell docker --version)"$(END)))
 	rm -f ./coverage/unit*.cov
 	# Run unit tests with coverage, for each package under 'internal'
 	go list -f '{{.Name}}' ./internal/... | xargs -I {} go test -cover -covermode count -coverprofile ./coverage/unit-{}.cov ./internal/{}
