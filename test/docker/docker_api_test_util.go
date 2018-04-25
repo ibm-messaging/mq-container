@@ -60,28 +60,6 @@ func imageNameDevJMS() string {
 	return image
 }
 
-func coverage() bool {
-	cover := os.Getenv("TEST_COVER")
-	if cover == "true" || cover == "1" {
-		return true
-	}
-	return false
-}
-
-// coverageDir returns the host directory to use for code coverage data
-func coverageDir(t *testing.T) string {
-	dir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	return filepath.Join(dir, "coverage")
-}
-
-// coverageBind returns a string to use to add a bind-mounted directory for code coverage data
-func coverageBind(t *testing.T) string {
-	return coverageDir(t) + ":/var/coverage"
-}
-
 // isWSL return whether we are running in the Windows Subsystem for Linux
 func isWSL(t *testing.T) bool {
 	if runtime.GOOS == "linux" {
@@ -94,12 +72,49 @@ func isWSL(t *testing.T) bool {
 	return false
 }
 
+// getCwd returns the working directory, in an os-specific or UNIX form
+func getCwd(t *testing.T, unixPath bool) string {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if isWSL(t) {
+		// Check if the cwd is a symlink
+		dir, err = filepath.EvalSymlinks(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !unixPath {
+			dir = strings.Replace(dir, getWindowsRoot(true), getWindowsRoot(false), 1)
+		}
+	}
+	return dir
+}
+
 // getWindowsRoot get the path of the root directory on Windows, in UNIX or OS-specific style
 func getWindowsRoot(unixStylePath bool) string {
 	if unixStylePath {
 		return "/mnt/c/"
 	}
 	return "C:/"
+}
+
+func coverage() bool {
+	cover := os.Getenv("TEST_COVER")
+	if cover == "true" || cover == "1" {
+		return true
+	}
+	return false
+}
+
+// coverageDir returns the host directory to use for code coverage data
+func coverageDir(t *testing.T, unixStylePath bool) string {
+	return filepath.Join(getCwd(t, unixStylePath), "coverage")
+}
+
+// coverageBind returns a string to use to add a bind-mounted directory for code coverage data
+func coverageBind(t *testing.T) string {
+	return coverageDir(t, false) + ":/var/coverage"
 }
 
 // getTempDir get the path of the tmp directory, in UNIX or OS-specific style
@@ -177,7 +192,7 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	t.Log("Container stopped")
 
 	// If a code coverage file has been generated, then rename it to match the test name
-	os.Rename(filepath.Join(coverageDir(t), "container.cov"), filepath.Join(coverageDir(t), t.Name()+".cov"))
+	os.Rename(filepath.Join(coverageDir(t, true), "container.cov"), filepath.Join(coverageDir(t, true), t.Name()+".cov"))
 	// Log the container output for any container we're about to delete
 	t.Logf("Console log from container %v:\n%v", ID, inspectTextLogs(t, cli, ID))
 
@@ -207,6 +222,7 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	}
 	// if coverage
 	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
+	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
@@ -259,8 +275,12 @@ func stopContainer(t *testing.T, cli *client.Client, ID string) {
 	}
 }
 
+func getExitCodeFilename(t *testing.T) string {
+	return t.Name() + "ExitCode"
+}
+
 func getCoverageExitCode(t *testing.T, orig int64) int64 {
-	f := filepath.Join(coverageDir(t), "exitCode")
+	f := filepath.Join(coverageDir(t, true), getExitCodeFilename(t))
 	_, err := os.Stat(f)
 	if err != nil {
 		t.Log(err)
