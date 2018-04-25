@@ -60,7 +60,7 @@ func Run(name string, arg ...string) (string, int, error) {
 func RunAsMQM(name string, arg ...string) (string, int, error) {
 	cmd := exec.Command(name, arg...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{}
-	uid, gid, err := lookupMQM()
+	uid, gid, err := LookupMQM()
 	if err != nil {
 		return "", 0, err
 	}
@@ -68,8 +68,8 @@ func RunAsMQM(name string, arg ...string) (string, int, error) {
 	return RunCmd(cmd)
 }
 
-// TODO: Duplicated code
-func lookupMQM() (int, int, error) {
+// LookupMQM looks up the UID & GID of the mqm user
+func LookupMQM() (int, int, error) {
 	mqm, err := user.Lookup("mqm")
 	if err != nil {
 		return -1, -1, err

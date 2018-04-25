@@ -17,28 +17,12 @@ package main
 
 import (
 	"os"
-	"os/user"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"syscall"
-)
 
-func lookupMQM() (int, int, error) {
-	mqm, err := user.Lookup("mqm")
-	if err != nil {
-		return -1, -1, err
-	}
-	mqmUID, err := strconv.Atoi(mqm.Uid)
-	if err != nil {
-		return -1, -1, err
-	}
-	mqmGID, err := strconv.Atoi(mqm.Gid)
-	if err != nil {
-		return -1, -1, err
-	}
-	return mqmUID, mqmGID, nil
-}
+	"github.com/ibm-messaging/mq-container/internal/command"
+)
 
 func createVolume(path string) error {
 	dataPath := filepath.Join(path, "data")
@@ -60,7 +44,7 @@ func createVolume(path string) error {
 	sys := fi.Sys()
 	if sys != nil && runtime.GOOS == "linux" {
 		stat := sys.(*syscall.Stat_t)
-		mqmUID, mqmGID, err := lookupMQM()
+		mqmUID, mqmGID, err := command.LookupMQM()
 		if err != nil {
 			return err
 		}
