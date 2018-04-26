@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 func configureWebTLS(cms *KeyStore) error {
@@ -76,9 +78,14 @@ func configureTLS(qmName string, inputFile string, passPhrase string) error {
 			if err != nil {
 				return err
 			}
-			err = os.Chown(dir, 999, 999)
+			mqmUID, mqmGID, err := command.LookupMQM()
 			if err != nil {
-				log.Debug(err)
+				log.Error(err)
+				return err
+			}
+			err = os.Chown(dir, mqmUID, mqmGID)
+			if err != nil {
+				log.Error(err)
 				return err
 			}
 		} else {

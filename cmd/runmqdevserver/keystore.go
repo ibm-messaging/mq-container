@@ -64,8 +64,12 @@ func (ks *KeyStore) Create() error {
 			}
 		}
 	}
-	// TODO: Lookup value for MQM user here?
-	err = os.Chown(ks.Filename, 999, 999)
+	mqmUID, mqmGID, err := command.LookupMQM()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	err = os.Chown(ks.Filename, mqmUID, mqmGID)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -88,8 +92,12 @@ func (ks *KeyStore) CreateStash() error {
 		}
 		return err
 	}
-	// TODO: Lookup value for MQM user here?
-	err = os.Chown(stashFile, 999, 999)
+	mqmUID, mqmGID, err := command.LookupMQM()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	err = os.Chown(stashFile, mqmUID, mqmGID)
 	if err != nil {
 		log.Error(err)
 		return err

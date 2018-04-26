@@ -78,7 +78,7 @@ func configureWebServer() error {
 		}
 		return err
 	}
-	uid, gid, err := lookupMQM()
+	uid, gid, err := command.LookupMQM()
 	if err != nil {
 		return err
 	}

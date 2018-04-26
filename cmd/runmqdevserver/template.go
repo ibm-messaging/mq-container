@@ -19,6 +19,8 @@ import (
 	"os"
 	"path"
 	"text/template"
+
+	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 // processTemplateFile takes a Go templateFile, and processes it with the
@@ -35,8 +37,12 @@ func processTemplateFile(templateFile, destFile string, data interface{}) error 
 	if err != nil {
 		if os.IsNotExist(err) {
 			os.MkdirAll(dir, 0660)
-			// TODO: Lookup value for MQM user here?
-			err = os.Chown(dir, 999, 999)
+			mqmUID, mqmGID, err := command.LookupMQM()
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			err = os.Chown(dir, mqmUID, mqmGID)
 			if err != nil {
 				log.Error(err)
 				return err
@@ -52,8 +58,12 @@ func processTemplateFile(templateFile, destFile string, data interface{}) error 
 		log.Error(err)
 		return err
 	}
-	// TODO: Lookup value for MQM user here?
-	err = os.Chown(destFile, 999, 999)
+	mqmUID, mqmGID, err := command.LookupMQM()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	err = os.Chown(destFile, mqmUID, mqmGID)
 	if err != nil {
 		log.Error(err)
 		return err
