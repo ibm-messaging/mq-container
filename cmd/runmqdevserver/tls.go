@@ -51,8 +51,19 @@ func configureWebTLS(cms *KeyStore) error {
 	if err != nil {
 		return err
 	}
-	err = os.Rename(newTLSConfig, tlsConfig)
+	// we symlink here to prevent issues on restart
+	err = os.Symlink(newTLSConfig, tlsConfig)
 	if err != nil {
+		return err
+	}
+	mqmUID, mqmGID, err := command.LookupMQM()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	err = os.Chown(tlsConfig, mqmUID, mqmGID)
+	if err != nil {
+		log.Error(err)
 		return err
 	}
 
@@ -128,7 +139,7 @@ func configureTLS(qmName string, inputFile string, passPhrase string) error {
 	if os.Getenv("MQ_DEV") == "true" {
 		sslCipherSpec = "TLS_RSA_WITH_AES_128_CBC_SHA256"
 	} else {
-		sslCipherSpec = ""
+		sslCipherSpec = "' '"
 	}
 
 	const mqsc string = "/etc/mqm/20-dev-tls.mqsc"

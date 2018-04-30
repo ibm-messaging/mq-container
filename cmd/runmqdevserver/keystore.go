@@ -56,14 +56,31 @@ func NewCMSKeyStore(filename, password string) *KeyStore {
 // Create a key store, if it doesn't already exist
 func (ks *KeyStore) Create() error {
 	_, err := os.Stat(ks.Filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			_, _, err := command.Run(ks.command, "-keydb", "-create", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password, "-stash")
-			if err != nil {
-				return fmt.Errorf("error running \"%v -keydb -create\": %v", ks.command, err)
-			}
+	if err == nil {
+		// Keystore already exists so we should refresh it by deleting it.
+		extension := filepath.Ext(ks.Filename)
+		log.Debugf("Refreshing keystore: %v", ks.Filename)
+		if ks.keyStoreType == "cms" {
+			// Only delete these when we are refreshing the kdb keystore
+			stashFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".sth"
+			rdbFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".rdb"
+			crlFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".crl"
+			os.Remove(stashFile)
+			os.Remove(rdbFile)
+			os.Remove(crlFile)
 		}
+		os.Remove(ks.Filename)
+	} else if !os.IsNotExist(err) {
+		// If the keystore exists but cannot be accessed then return the error
+		return err
 	}
+
+	// Create the keystore now we're sure it doesn't exist
+	out, _, err := command.Run(ks.command, "-keydb", "-create", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password, "-stash")
+	if err != nil {
+		return fmt.Errorf("error running \"%v -keydb -create\": %v %s", ks.command, err, out)
+	}
+
 	mqmUID, mqmGID, err := command.LookupMQM()
 	if err != nil {
 		log.Error(err)
@@ -85,9 +102,9 @@ func (ks *KeyStore) CreateStash() error {
 	_, err := os.Stat(stashFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			_, _, err := command.Run(ks.command, "-keydb", "-stashpw", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
+			out, _, err := command.Run(ks.command, "-keydb", "-stashpw", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
 			if err != nil {
-				return fmt.Errorf("error running \"%v -keydb -stashpw\": %v", ks.command, err)
+				return fmt.Errorf("error running \"%v -keydb -stashpw\": %v %s", ks.command, err, out)
 			}
 		}
 		return err
@@ -107,9 +124,9 @@ func (ks *KeyStore) CreateStash() error {
 
 // Import imports a certificate file in the keystore
 func (ks *KeyStore) Import(inputFile, password string) error {
-	_, _, err := command.Run(ks.command, "-cert", "-import", "-file", inputFile, "-pw", password, "-target", ks.Filename, "-target_pw", ks.Password, "-target_type", ks.keyStoreType)
+	out, _, err := command.Run(ks.command, "-cert", "-import", "-file", inputFile, "-pw", password, "-target", ks.Filename, "-target_pw", ks.Password, "-target_type", ks.keyStoreType)
 	if err != nil {
-		return fmt.Errorf("error running \"%v -cert -import\": %v", ks.command, err)
+		return fmt.Errorf("error running \"%v -cert -import\": %v %s", ks.command, err, out)
 	}
 	return nil
 }
@@ -118,7 +135,7 @@ func (ks *KeyStore) Import(inputFile, password string) error {
 func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
 	out, _, err := command.Run(ks.command, "-cert", "-list", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
 	if err != nil {
-		return nil, fmt.Errorf("error running \"%v -cert -list\": %v", ks.command, err)
+		return nil, fmt.Errorf("error running \"%v -cert -list\": %v %s", ks.command, err, out)
 	}
 	scanner := bufio.NewScanner(strings.NewReader(out))
 	var labels []string
@@ -138,9 +155,9 @@ func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
 
 // RenameCertificate renames the specified certificate
 func (ks *KeyStore) RenameCertificate(from, to string) error {
-	_, _, err := command.Run(ks.command, "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
+	out, _, err := command.Run(ks.command, "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
 	if err != nil {
-		return fmt.Errorf("error running \"%v -cert -rename\": %v", ks.command, err)
+		return fmt.Errorf("error running \"%v -cert -rename\": %v %s", ks.command, err, out)
 	}
 	return nil
 }
