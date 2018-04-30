@@ -128,7 +128,7 @@ func configureTLS(qmName string, inputFile string, passPhrase string) error {
 	if os.Getenv("MQ_DEV") == "true" {
 		sslCipherSpec = "TLS_RSA_WITH_AES_128_CBC_SHA256"
 	} else {
-		sslCipherSpec = ""
+		sslCipherSpec = "' '"
 	}
 
 	const mqsc string = "/etc/mqm/20-dev-tls.mqsc"
