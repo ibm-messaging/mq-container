@@ -26,11 +26,15 @@ import (
 func postInit(name string) error {
 	disable := os.Getenv("MQ_DISABLE_WEB_CONSOLE")
 	if disable != "true" && disable != "1" {
-		// Configure and start the web server, in the background (if installed)
+		// Configure the web server (if installed)
+		err := configureWebServer()
+		if err != nil {
+			return err
+		}
+		// Start the web server, in the background (if installed)
 		// WARNING: No error handling or health checking available for the web server,
 		// which is why it's limited to use with MQ Advanced for Developers only
 		go func() {
-			configureWebServer()
 			startWebServer()
 		}()
 	}
