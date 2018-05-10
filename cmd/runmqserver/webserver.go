@@ -113,7 +113,7 @@ func configureWebServer() error {
 			}
 			err := CopyFile(from, to)
 			if err != nil {
-				log.Debug(err)
+				log.Error(err)
 				return err
 			}
 		}
