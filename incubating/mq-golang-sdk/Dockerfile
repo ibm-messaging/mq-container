@@ -28,6 +28,10 @@ RUN export DEBIAN_FRONTEND=noninteractive \
   && apt-get install -y --no-install-recommends golang-${GO_VERSION} git ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-ENV PATH="${PATH}:/usr/lib/go-${GO_VERSION}/bin"
-ENV CGO_CFLAGS="-I/opt/mqm/inc/"
-ENV CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
+ENV PATH="${PATH}:/usr/lib/go-${GO_VERSION}/bin:/go/bin" \
+    CGO_CFLAGS="-I/opt/mqm/inc/"                         \
+    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"                     \
+    GOPATH="/go"
+
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+WORKDIR $GOPATH
