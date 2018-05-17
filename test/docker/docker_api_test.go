@@ -211,6 +211,9 @@ func TestCreateQueueManagerFail(t *testing.T) {
 		t.Fatal(err)
 	}
 	img, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
+	if err != nil {
+		t.Fatal(err)
+	}
 	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
@@ -235,6 +238,9 @@ func TestStartQueueManagerFail(t *testing.T) {
 		t.Fatal(err)
 	}
 	img, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
+	if err != nil {
+		t.Fatal(err)
+	}
 	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=1"},
