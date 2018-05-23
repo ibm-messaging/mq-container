@@ -142,7 +142,7 @@ build-cov:
 
 # Shortcut to just run the unit tests
 .PHONY: test-unit
-test-unit:
+test-unit: test/docker/vendor
 	docker build --target builder --file Dockerfile-server .
 
 .PHONY: test-advancedserver
@@ -220,14 +220,14 @@ docker-version:
 	@test "$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
 
 .PHONY: build-advancedserver
-build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version build-golang-sdk
+build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version build-golang-sdk test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_ADVANCEDSERVER),Dockerfile-server,$(MQ_ARCHIVE),"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced",$(MQ_VERSION))
 
 .PHONY: build-devserver
 # Target-specific variable to add web server into devserver image
 build-devserver: MQ_PACKAGES=ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams ibmmq-web
-build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk
+build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk test/docker/vendor
 	@test "$(shell uname -m)" = "x86_64" || (echo "Error: MQ Advanced for Developers is only available for x86_64 architecture" && exit 1)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER_BASE),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
