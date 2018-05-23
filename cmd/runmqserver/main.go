@@ -23,6 +23,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
@@ -117,6 +118,14 @@ func doMain() error {
 		return err
 	}
 	configureQueueManager()
+
+	enableMetrics := os.Getenv("MQ_ENABLE_METRICS")
+	if enableMetrics == "true" || enableMetrics == "1" {
+		go metrics.GatherMetrics(name, log)
+	} else {
+		log.Println("Metrics are disabled")
+	}
+
 	// Start reaping zombies from now on.
 	// Start this here, so that we don't reap any sub-processes created
 	// by this process (e.g. for crtmqm or strmqm)

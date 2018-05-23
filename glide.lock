@@ -1,47 +1,45 @@
-hash: 4905ad6acf8e593e3c4432f31dd61275b16d0b5b95f438471749ae1943af785d
-updated: 2018-02-22T17:26:13.366677Z
+hash: f59997762f179f5e20cadd65e11fcaae47ca0c3f8dee580e77fa4a9ec9d2c7d1
+updated: 2018-05-21T16:41:39.646218+01:00
 imports:
-- name: golang.org/x/crypto
-  version: 81e90905daefcd6fd217b62423c0908922eadb30
+- name: github.com/beorn7/perks
+  version: 3a771d992973f24aa725d07868b467d1ddfceafb
   subpackages:
-  - acme
-  - acme/autocert
-  - blowfish
-  - cast5
-  - chacha20poly1305/internal/chacha20
-  - cryptobyte
-  - curve25519
-  - ed25519
-  - ed25519/internal/edwards25519
-  - hkdf
-  - md4
-  - nacl/auth
-  - nacl/box
-  - nacl/secretbox
-  - openpgp
-  - openpgp/armor
-  - openpgp/elgamal
-  - openpgp/errors
-  - openpgp/packet
-  - openpgp/s2k
-  - pbkdf2
-  - pkcs12/internal/rc2
-  - poly1305
-  - ripemd160
-  - salsa20/salsa
-  - ssh
-  - ssh/agent
-  - ssh/terminal
-  - ssh/testdata
+  - quantile
+- name: github.com/golang/protobuf
+  version: 4bd1920723d7b7c925de087aa32e2187708897f7
+  subpackages:
+  - proto
+- name: github.com/ibm-messaging/mq-golang
+  version: 294f0c9e21f4608cc4749c11d928a36d26c8ace7
+  subpackages:
+  - ibmmq
+  - mqmetric
+- name: github.com/matttproud/golang_protobuf_extensions
+  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
+  subpackages:
+  - pbutil
+- name: github.com/prometheus/client_golang
+  version: 82f5ff156b29e276022b1a958f7d385870fb9814
+  subpackages:
+  - prometheus
+- name: github.com/prometheus/client_model
+  version: 99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c
+  subpackages:
+  - go
+- name: github.com/prometheus/common
+  version: d811d2e9bf898806ecfb6ef6296774b13ffc314c
+  subpackages:
+  - expfmt
+  - internal/bitbucket.org/ww/goautoneg
+  - model
+- name: github.com/prometheus/procfs
+  version: 8b1c2da0d56deffdbb9e48d4414b4e674bd8083e
+  subpackages:
+  - internal/util
+  - nfs
+  - xfs
 - name: golang.org/x/sys
   version: 7a4fde3fda8ef580a89dbae8138c26041be14299
   subpackages:
-  - plan9
   - unix
-  - windows
-  - windows/registry
-  - windows/svc
-  - windows/svc/debug
-  - windows/svc/eventlog
-  - windows/svc/mgr
 testImports: []
