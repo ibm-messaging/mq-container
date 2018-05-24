@@ -15,7 +15,7 @@
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
-FROM golang:1.10 as builder
+FROM mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04 as builder
 WORKDIR /go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
 COPY internal/ ./internal

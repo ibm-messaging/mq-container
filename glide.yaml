@@ -20,3 +20,6 @@ excludeDirs:
 - test
 import:
 - package: golang.org/x/sys/unix
+- package: github.com/prometheus/client_golang
+- package: github.com/ibm-messaging/mq-golang
+  version: dev

@@ -1,0 +1,17 @@
+GREEN="\033[32m"
+RED="\033[31m"
+BLUE="\033[34m"
+PURPLE="\033[35m"
+AQUA="\033[36m"
+
+END="\033[0m"
+
+UNDERLINE="\033[4m"
+BOLD="\033[1m"
+
+TITLE=$(BLUE)$(BOLD)$(UNDERLINE)
+
+define SPACER 
+
+
+endef
