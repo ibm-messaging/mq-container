@@ -137,7 +137,7 @@ rm -rf ${DIR_EXTRACT}
 
 # Apply any bug fixes not included in base Ubuntu or MQ image.
 # Don't upgrade everything based on Docker best practices https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run
-$UBUNTU && apt-get upgrade -y sensible-utils libssl1.0.0
+$UBUNTU && apt-get upgrade -y libprocps4 procps
 # End of bug fixes
 
 # Clean up cached files
