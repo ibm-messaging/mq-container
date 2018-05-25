@@ -295,7 +295,7 @@ func TestSlowPrometheus(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Rapid fire it then check we're still happy
+	// Send a request twice over a long period and check we're still happy
 	for i := 0; i < 2; i++ {
 		time.Sleep(30 * time.Second)
 		metrics, err := getMetricsFromEndpoint(hostname, port)
