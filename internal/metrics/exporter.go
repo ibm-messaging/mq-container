@@ -30,14 +30,16 @@ const (
 )
 
 type exporter struct {
-	qmName   string
-	gaugeMap map[string]*prometheus.GaugeVec
+	qmName       string
+	gaugeMap     map[string]*prometheus.GaugeVec
+	firstCollect bool
 }
 
 func newExporter(qmName string) *exporter {
 	return &exporter{
-		qmName:   qmName,
-		gaugeMap: make(map[string]*prometheus.GaugeVec),
+		qmName:       qmName,
+		gaugeMap:     make(map[string]*prometheus.GaugeVec),
+		firstCollect: true,
 	}
 }
 
@@ -71,16 +73,23 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		gaugeVec.Reset()
 
 		// Populate Prometheus Gauge with metric values
-		for label, value := range metric.values {
-			if label == qmgrLabelValue {
-				gaugeVec.WithLabelValues(e.qmName).Set(value)
-			} else {
-				gaugeVec.WithLabelValues(label, e.qmName).Set(value)
+		// - Skip on first collect to avoid build-up of accumulated values
+		if !e.firstCollect {
+			for label, value := range metric.values {
+				if label == qmgrLabelValue {
+					gaugeVec.WithLabelValues(e.qmName).Set(value)
+				} else {
+					gaugeVec.WithLabelValues(label, e.qmName).Set(value)
+				}
 			}
 		}
 
 		// Collect metric
 		gaugeVec.Collect(ch)
+	}
+
+	if e.firstCollect {
+		e.firstCollect = false
 	}
 }
 

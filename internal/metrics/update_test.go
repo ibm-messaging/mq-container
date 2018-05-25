@@ -55,6 +55,39 @@ func TestInitialiseMetrics(t *testing.T) {
 	}
 }
 
+func TestUpdateMetrics(t *testing.T) {
+
+	teardownTestCase := setupTestCase()
+	defer teardownTestCase()
+
+	metrics := initialiseMetrics()
+	updateMetrics(metrics)
+
+	metric, _ := metrics["ClassName/Type1Name/Element1Name"]
+	actual, ok := metric.values[qmgrLabelValue]
+
+	if !ok {
+		t.Error("No metric values found for queue manager label")
+	} else {
+		if actual != float64(1) {
+			t.Errorf("Expected metric value=%f; actual %f", float64(1), actual)
+		}
+		if len(metric.values) != 1 {
+			t.Errorf("Expected values-size=%d; actual %d", 1, len(metric.values))
+		}
+	}
+
+	if len(mqmetric.Metrics.Classes[0].Types[0].Elements[0].Values) != 0 {
+		t.Error("Unexpected cached value; publication data should have been reset")
+	}
+
+	updateMetrics(metrics)
+
+	if len(metric.values) != 0 {
+		t.Errorf("Unexpected metric value; data should have been cleared")
+	}
+}
+
 func TestMakeKey(t *testing.T) {
 
 	teardownTestCase := setupTestCase()
@@ -68,13 +101,13 @@ func TestMakeKey(t *testing.T) {
 }
 
 func setupTestCase() func() {
-	populateTestMetrics()
+	populateTestMetrics(1)
 	return func() {
 		cleanTestMetrics()
 	}
 }
 
-func populateTestMetrics() {
+func populateTestMetrics(testValue int) {
 
 	metricClass := new(mqmetric.MonClass)
 	metricType1 := new(mqmetric.MonType)
@@ -87,8 +120,11 @@ func populateTestMetrics() {
 	metricType2.Name = "Type2Name"
 	metricElement1.MetricName = "Element1Name"
 	metricElement1.Description = "Element1Description"
+	metricElement1.Values = make(map[string]int64)
+	metricElement1.Values[qmgrLabelValue] = int64(testValue)
 	metricElement2.MetricName = "Element2Name"
 	metricElement2.Description = "Element2Description"
+	metricElement2.Values = make(map[string]int64)
 	metricType1.ObjectTopic = "ObjectTopic"
 	metricType2.ObjectTopic = "%s"
 	metricElement1.Parent = metricType1
