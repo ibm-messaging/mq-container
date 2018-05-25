@@ -1,5 +1,5 @@
 hash: f59997762f179f5e20cadd65e11fcaae47ca0c3f8dee580e77fa4a9ec9d2c7d1
-updated: 2018-05-21T16:41:39.646218+01:00
+updated: 2018-05-25T11:36:22.237379254+01:00
 imports:
 - name: github.com/beorn7/perks
   version: 3a771d992973f24aa725d07868b467d1ddfceafb
@@ -10,7 +10,7 @@ imports:
   subpackages:
   - proto
 - name: github.com/ibm-messaging/mq-golang
-  version: 294f0c9e21f4608cc4749c11d928a36d26c8ace7
+  version: 3541d35ac44bbd4b161a6488a8f96c59ec4bd707
   subpackages:
   - ibmmq
   - mqmetric
