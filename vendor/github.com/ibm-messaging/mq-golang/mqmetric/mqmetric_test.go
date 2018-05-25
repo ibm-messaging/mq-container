@@ -90,36 +90,61 @@ func TestReadPatterns(t *testing.T) {
 	}
 }
 func TestFormatDescription(t *testing.T) {
-	give := [...]string{"hello", "no space", "no/slash", "no-dash", "single___underscore", "single__underscore", "ALLLOWER", "no_count", "this_bytes_written_switch", "this_bytes_max_switch", "this_bytes_in_use_switch", "this messages_expired_switch", "add_free_space", "suffix_byte", "suffix_message", "suffix_file", "this_percentage_move"}
-	expected := [...]string{"hello", "no_space", "no_slash", "no_dash", "single_underscore", "single_underscore", "alllower", "no", "this_written_bytes_switch", "this_max_bytes_switch", "this_in_use_bytes_switch", "this_expired_messages_switch", "add_free_space_percentage", "suffix_bytes", "suffix_messages", "suffix_files", "this_move_percentage"}
+	give := [...]string{"hello", "no space", "no/slash", "no-dash", "single___underscore", "single__underscore__multiplace", "ALLLOWER", "this_bytes_written_switch", "this_byte_max_switch", "this_seconds_in_use_switch", "this messages_expired_switch", "this_seconds_max_switch", "this_count_max_switch", "this_percentage_max_switch"}
+	expected := [...]string{"hello_count", "no_space_count", "no_slash_count", "no_dash_count", "single_underscore_count", "single_underscore_multiplace_count", "alllower_count", "this_written_switch_count", "this_max_switch_count", "this_in_use_switch_count", "this_expired_messages_switch_count", "this_max_switch_count", "this_max_switch_count", "this_max_switch_count"}
 
 	for i, e := range give {
-		back := formatDescription(e)
+		elem := MonElement{
+			Description: e,
+		}
+		back := formatDescription(&elem)
 		if back != expected[i] {
 			t.Logf("Gave %s. Expected: %s, Got: %s", e, expected[i], back)
 			t.Fail()
 		}
 	}
 }
-func TestFormatDescriptionElem(t *testing.T) {
-	test := MonElement{}
-	test.Description = "THIS-should__be/formatted_count"
-	expected := "this_should_be_formatted"
 
-	back := formatDescriptionElem(&test)
-	if back != expected {
-		t.Logf("Gave %s. Expected: %s, Got: %s", test.Description, expected, back)
+func TestSuffixes(t *testing.T) {
+	baseDescription := "test_suffix"
+	types := [...]int32{ibmmq.MQIAMO_MONITOR_MB, ibmmq.MQIAMO_MONITOR_GB, ibmmq.MQIAMO_MONITOR_MICROSEC, ibmmq.MQIAMO_MONITOR_PERCENT, ibmmq.MQIAMO_MONITOR_HUNDREDTHS, 0}
+	expected := [...]string{baseDescription + "_bytes", baseDescription + "_bytes", baseDescription + "_seconds", baseDescription + "_percentage", baseDescription + "_percentage", baseDescription + "_count"}
+
+	for i, ty := range types {
+		elem := MonElement{
+			Description: baseDescription,
+			Datatype:    ty,
+		}
+		back := formatDescription(&elem)
+		if back != expected[i] {
+			t.Logf("Gave %s/%d Expected: %s, Got: %s", baseDescription, ty, expected[i], back)
+			t.Fail()
+		}
+	}
+
+	// special case log_bytes
+	elem := MonElement{
+		Description: "log_test_suffix",
+		Datatype:    0,
+	}
+	back := formatDescription(&elem)
+	if back != "log_test_suffix_bytes" {
+		t.Logf("Gave log_test_suffix/0 Expected: %s, Got: %s", "log_test_suffix_bytes", back)
 		t.Fail()
 	}
 
-	test.Datatype = ibmmq.MQIAMO_MONITOR_MICROSEC
-	expected = "this_should_be_formatted_seconds"
-	back = formatDescriptionElem(&test)
-	if back != expected {
-		t.Logf("Gave %s. Expected: %s, Got: %s", test.Description, expected, back)
+	// special case log_total
+	elem = MonElement{
+		Description: "log_total_suffix",
+		Datatype:    0,
+	}
+	back = formatDescription(&elem)
+	if back != "log_suffix_total" {
+		t.Logf("Gave log_total_suffix/0 Expected: %s, Got: %s", "log_suffix_total", back)
 		t.Fail()
 	}
 }
+
 func TestParsePCFResponse(t *testing.T) {
 	cfh := ibmmq.NewMQCFH()
 	cfh.Type = ibmmq.MQCFT_RESPONSE

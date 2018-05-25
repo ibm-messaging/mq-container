@@ -35,6 +35,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/ibm-messaging/mq-golang/ibmmq"
@@ -263,7 +264,7 @@ func discoverElements(ty *MonType) error {
 				}
 			}
 
-			elem.MetricName = formatDescriptionElem(elem)
+			elem.MetricName = formatDescription(elem)
 			ty.Elements[elementIndex] = elem
 		}
 	}
@@ -631,59 +632,49 @@ bytes etc), and organisation of the elements of the name (units last)
 While we can't change the MQ-generated descriptions for its statistics,
 we can reformat most of them heuristically here.
 */
-func formatDescriptionElem(elem *MonElement) string {
-	s := formatDescription(elem.Description)
-
-	unit := ""
-	switch elem.Datatype {
-	case ibmmq.MQIAMO_MONITOR_MICROSEC:
-		// Although the qmgr captures in us, we convert when
-		// pushing out to the backend, so this label needs to match
-		unit = "_seconds"
-	}
-	s += unit
-
-	return s
-}
-
-func formatDescription(baseName string) string {
-	s := baseName
+func formatDescription(elem *MonElement) string {
+	s := elem.Description
 	s = strings.Replace(s, " ", "_", -1)
 	s = strings.Replace(s, "/", "_", -1)
 	s = strings.Replace(s, "-", "_", -1)
 
-	/* common pattern is "xxx - yyy" leading to 3 ugly adjacent underscores */
-	s = strings.Replace(s, "___", "_", -1)
-	s = strings.Replace(s, "__", "_", -1)
+	/* Make sure we don't have multiple underscores */
+	multiunder := regexp.MustCompile("__*")
+	s = multiunder.ReplaceAllLiteralString(s, "_")
 
 	/* make it all lowercase. Not essential, but looks better */
 	s = strings.ToLower(s)
 
-	// Do not use _count
+	/* Remove all cases of bytes, seconds, count or percentage (we add them back in later) */
 	s = strings.Replace(s, "_count", "", -1)
+	s = strings.Replace(s, "_bytes", "", -1)
+	s = strings.Replace(s, "_byte", "", -1)
+	s = strings.Replace(s, "_seconds", "", -1)
+	s = strings.Replace(s, "_second", "", -1)
+	s = strings.Replace(s, "_percentage", "", -1)
 
 	// Switch round a couple of specific names
-	s = strings.Replace(s, "bytes_written", "written_bytes", -1)
-	s = strings.Replace(s, "bytes_max", "max_bytes", -1)
-	s = strings.Replace(s, "bytes_in_use", "in_use_bytes", -1)
 	s = strings.Replace(s, "messages_expired", "expired_messages", -1)
 
-	if strings.HasSuffix(s, "free_space") {
+	// Add the unit at end
+	switch elem.Datatype {
+	case ibmmq.MQIAMO_MONITOR_PERCENT, ibmmq.MQIAMO_MONITOR_HUNDREDTHS:
 		s = s + "_percentage"
-		s = strings.Replace(s, "__", "_", -1)
-	}
-
-	// Make "byte", "file" and "message" units plural
-	if strings.HasSuffix(s, "byte") ||
-		strings.HasSuffix(s, "message") ||
-		strings.HasSuffix(s, "file") {
-		s = s + "s"
-	}
-
-	// Move % to the end
-	if strings.Contains(s, "_percentage_") {
-		s = strings.Replace(s, "_percentage_", "_", -1)
-		s += "_percentage"
+	case ibmmq.MQIAMO_MONITOR_MB, ibmmq.MQIAMO_MONITOR_GB:
+		s = s + "_bytes"
+	case ibmmq.MQIAMO_MONITOR_MICROSEC:
+		s = s + "_seconds"
+	default:
+		if strings.Contains(s, "_total") {
+			/* If we specify it is a total in description put that at the end */
+			s = strings.Replace(s, "_total", "", -1)
+			s = s + "_total"
+		} else if strings.Contains(s, "log_") {
+			/* Weird case where the log datatype is not MB or GB but should be bytes */
+			s = s + "_bytes"
+		} else {
+			s = s + "_count"
+		}
 	}
 
 	return s

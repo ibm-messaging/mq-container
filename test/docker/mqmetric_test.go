@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ func TestGoldenPathMetric(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_METRICS=true",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -72,7 +73,7 @@ func TestGoldenPathMetric(t *testing.T) {
 func TestMetricNames(t *testing.T) {
 	t.Parallel()
 
-	approvedSuffixes := []string{"bytes", "seconds", "percentage", "count"}
+	approvedSuffixes := []string{"bytes", "seconds", "percentage", "count", "total"}
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -82,6 +83,7 @@ func TestMetricNames(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_METRICS=true",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -112,6 +114,9 @@ func TestMetricNames(t *testing.T) {
 		t.Fail()
 	}
 
+	okMetrics := []string{}
+	badMetrics := []string{}
+
 	for _, metric := range metrics {
 		ok := false
 		for _, e := range approvedSuffixes {
@@ -123,7 +128,10 @@ func TestMetricNames(t *testing.T) {
 
 		if !ok {
 			t.Logf("Metric '%s' does not have an approved suffix", metric.Key)
+			badMetrics = append(badMetrics, metric.Key)
 			t.Fail()
+		} else {
+			okMetrics = append(okMetrics, metric.Key)
 		}
 	}
 
@@ -144,6 +152,7 @@ func TestMetricLabels(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_METRICS=true",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -210,6 +219,7 @@ func TestRapidFirePrometheus(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_METRICS=true",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -266,6 +276,7 @@ func TestSlowPrometheus(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_METRICS=true",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
