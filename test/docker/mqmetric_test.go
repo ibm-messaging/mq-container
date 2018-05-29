@@ -42,7 +42,7 @@ func TestGoldenPathMetric(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 
 	hostname := getIPAddress(t, cli, id)
-	port := DEFAULT_METRIC_PORT
+	port := defaultMetricPort
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(hostname, port)
@@ -90,7 +90,7 @@ func TestMetricNames(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 
 	hostname := getIPAddress(t, cli, id)
-	port := DEFAULT_METRIC_PORT
+	port := defaultMetricPort
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(hostname, port)
@@ -159,7 +159,7 @@ func TestMetricLabels(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 
 	hostname := getIPAddress(t, cli, id)
-	port := DEFAULT_METRIC_PORT
+	port := defaultMetricPort
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(hostname, port)
@@ -226,7 +226,7 @@ func TestRapidFirePrometheus(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 
 	hostname := getIPAddress(t, cli, id)
-	port := DEFAULT_METRIC_PORT
+	port := defaultMetricPort
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(hostname, port)
@@ -283,7 +283,7 @@ func TestSlowPrometheus(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 
 	hostname := getIPAddress(t, cli, id)
-	port := DEFAULT_METRIC_PORT
+	port := defaultMetricPort
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(hostname, port)

@@ -24,25 +24,25 @@ import (
 	"time"
 )
 
-type MQMETRIC struct {
+type mqmetric struct {
 	Key    string
 	Value  string
 	Labels map[string]string
 }
 
-const DEFAULT_METRIC_URL = "/metrics"
-const DEFAULT_METRIC_PORT = 9157
-const DEFAULT_MQ_NAMESPACE = "ibmmq"
+const defaultMetricURL = "/metrics"
+const defaultMetricPort = 9157
+const defaultMQNamespace = "ibmmq"
 
-func getMetricsFromEndpoint(host string, port int) ([]MQMETRIC, error) {
-	returned := []MQMETRIC{}
+func getMetricsFromEndpoint(host string, port int) ([]mqmetric, error) {
+	returned := []mqmetric{}
 	if host == "" {
 		return returned, fmt.Errorf("Test Error - Host was nil")
 	}
 	if port <= 0 {
 		return returned, fmt.Errorf("Test Error - port was not above 0")
 	}
-	urlToUse := fmt.Sprintf("http://%s:%d%s", host, port, DEFAULT_METRIC_URL)
+	urlToUse := fmt.Sprintf("http://%s:%d%s", host, port, defaultMetricURL)
 
 	resp, err := http.Get(urlToUse)
 	if err != nil {
@@ -58,8 +58,8 @@ func getMetricsFromEndpoint(host string, port int) ([]MQMETRIC, error) {
 }
 
 // Also filters out all non "ibmmq" metrics
-func convertRawMetricToMap(input string) ([]MQMETRIC, error) {
-	returnList := []MQMETRIC{}
+func convertRawMetricToMap(input string) ([]mqmetric, error) {
+	returnList := []mqmetric{}
 	if input == "" {
 		return returnList, fmt.Errorf("Test Error - Raw metric output was nil")
 	}
@@ -71,7 +71,7 @@ func convertRawMetricToMap(input string) ([]MQMETRIC, error) {
 			// Comment line of HELP or TYPE. Ignore
 			continue
 		}
-		if !strings.HasPrefix(line, DEFAULT_MQ_NAMESPACE) {
+		if !strings.HasPrefix(line, defaultMQNamespace) {
 			// Not an ibmmq_ metric. Ignore
 			continue
 		}
@@ -81,7 +81,7 @@ func convertRawMetricToMap(input string) ([]MQMETRIC, error) {
 			return returnList, fmt.Errorf("ibmmq_ metric could not be deciphered - %v", err)
 		}
 
-		toAdd := MQMETRIC{
+		toAdd := mqmetric{
 			Key:    key,
 			Value:  value,
 			Labels: labelMap,
