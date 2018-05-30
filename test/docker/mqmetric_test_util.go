@@ -17,11 +17,18 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
+	"testing"
 	"time"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 )
 
 type mqmetric struct {
@@ -34,36 +41,26 @@ const defaultMetricURL = "/metrics"
 const defaultMetricPort = 9157
 const defaultMQNamespace = "ibmmq"
 
-func getMetricsFromEndpoint(host string, port int) ([]mqmetric, error) {
+func getMetrics(t *testing.T, port int) []mqmetric {
 	returned := []mqmetric{}
-	if host == "" {
-		return returned, fmt.Errorf("Test Error - Host was nil")
-	}
-	if port <= 0 {
-		return returned, fmt.Errorf("Test Error - port was not above 0")
-	}
-	urlToUse := fmt.Sprintf("http://%s:%d%s", host, port, defaultMetricURL)
-
+	urlToUse := fmt.Sprintf("http://localhost:%v%v", port, defaultMetricURL)
 	resp, err := http.Get(urlToUse)
 	if err != nil {
-		return returned, err
+		t.Fatalf("Error from HTTP GET for metrics: %v", err)
+		return returned
 	}
 	defer resp.Body.Close()
 	metricsRaw, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return returned, err
+		t.Fatalf("Error reading metrics data: %v", err)
+		return returned
 	}
-
-	return convertRawMetricToMap(string(metricsRaw))
+	return convertRawMetricToMap(t, string(metricsRaw))
 }
 
 // Also filters out all non "ibmmq" metrics
-func convertRawMetricToMap(input string) ([]mqmetric, error) {
+func convertRawMetricToMap(t *testing.T, input string) []mqmetric {
 	returnList := []mqmetric{}
-	if input == "" {
-		return returnList, fmt.Errorf("Test Error - Raw metric output was nil")
-	}
-
 	scanner := bufio.NewScanner(strings.NewReader(input))
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -78,7 +75,7 @@ func convertRawMetricToMap(input string) ([]mqmetric, error) {
 		//It's an IBM MQ metric!
 		key, value, labelMap, err := convertMetricLineToMetric(line)
 		if err != nil {
-			return returnList, fmt.Errorf("ibmmq_ metric could not be deciphered - %v", err)
+			t.Fatalf("ibmmq_ metric could not be deciphered - %v", err)
 		}
 
 		toAdd := mqmetric{
@@ -90,7 +87,7 @@ func convertRawMetricToMap(input string) ([]mqmetric, error) {
 		returnList = append(returnList, toAdd)
 	}
 
-	return returnList, nil
+	return returnList
 }
 
 func convertMetricLineToMetric(input string) (string, string, map[string]string, error) {
@@ -137,24 +134,41 @@ func convertMetricLineToMetric(input string) (string, string, map[string]string,
 	return key, value, labelMap, nil
 }
 
-func waitForMetricReady(host string, port int) error {
-	if host == "" {
-		return fmt.Errorf("Test Error - Host was nil")
-	}
-	if port <= 0 {
-		return fmt.Errorf("Test Error - port was not above 0")
-	}
+func waitForMetricReady(t *testing.T, port int) {
 	timeout := 12 // 12 * 5 = 1 minute
 	for i := 0; i < timeout; i++ {
-		urlToUse := fmt.Sprintf("http://%s:%d", host, port)
+		urlToUse := fmt.Sprintf("http://localhost:%v", port)
 		resp, err := http.Get(urlToUse)
 		if err == nil {
 			resp.Body.Close()
-			return nil
+			return
 		}
 
 		time.Sleep(time.Second * 5)
 	}
+	t.Fatalf("Metric endpoint failed to startup in timely manner")
+}
 
-	return fmt.Errorf("Metric endpoint failed to startup in timely manner")
+func getMetricPort(t *testing.T, cli *client.Client, ID string) int {
+	i, err := cli.ContainerInspect(context.Background(), ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	port := nat.Port(fmt.Sprintf("%v/tcp", defaultMetricPort))
+	portString := i.NetworkSettings.Ports[port][0].HostPort
+	p, err := strconv.Atoi(portString)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return p
+}
+
+func metricsContainerConfig() *container.Config {
+	return &container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_METRICS=true",
+		},
+	}
 }
