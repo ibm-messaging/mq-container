@@ -1,10 +1,14 @@
-hash: f59997762f179f5e20cadd65e11fcaae47ca0c3f8dee580e77fa4a9ec9d2c7d1
-updated: 2018-05-25T11:36:22.237379254+01:00
+hash: cec2ce517533a66eb741a92073827f058d3f82c09ea63735fd658df18b24653a
+updated: 2018-05-30T15:39:50.39084+01:00
 imports:
 - name: github.com/beorn7/perks
   version: 3a771d992973f24aa725d07868b467d1ddfceafb
   subpackages:
   - quantile
+- name: github.com/genuinetools/amicontained
+  version: fcae88544f0212fbb1e20699c41566655b68679b
+  subpackages:
+  - container
 - name: github.com/golang/protobuf
   version: 4bd1920723d7b7c925de087aa32e2187708897f7
   subpackages:
@@ -38,6 +42,10 @@ imports:
   - internal/util
   - nfs
   - xfs
+- name: github.com/syndtr/gocapability
+  version: 33e07d32887e1e06b7c025f27ce52f62c7990bc0
+  subpackages:
+  - capability
 - name: golang.org/x/sys
   version: 7a4fde3fda8ef580a89dbae8138c26041be14299
   subpackages:
