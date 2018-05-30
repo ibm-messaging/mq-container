@@ -20,10 +20,10 @@ package metrics
 import (
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/ibm-messaging/mq-container/internal/logger"
-	"github.com/ibm-messaging/mq-golang/mqmetric"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -35,7 +35,6 @@ const (
 
 // GatherMetrics gathers metrics for the queue manager
 func GatherMetrics(qmName string, log *logger.Logger) {
-
 	for i := 0; i <= retryCount; i++ {
 		err := startMetricsGathering(qmName, log)
 		if err != nil {
@@ -52,6 +51,7 @@ func GatherMetrics(qmName string, log *logger.Logger) {
 
 // startMetricsGathering starts gathering metrics for the queue manager
 func startMetricsGathering(qmName string, log *logger.Logger) error {
+	var wg sync.WaitGroup
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -59,29 +59,12 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 		}
 	}()
 
-	log.Println("Starting metrics gathering")
-
-	// Set connection configuration
-	var connConfig mqmetric.ConnectionConfig
-	connConfig.ClientMode = false
-	connConfig.UserId = ""
-	connConfig.Password = ""
-
-	// Connect to the queue manager - open the command and dynamic reply queues
-	err := mqmetric.InitConnectionStats(qmName, "SYSTEM.DEFAULT.MODEL.QUEUE", "", &connConfig)
-	if err != nil {
-		return fmt.Errorf("Failed to connect to queue manager %s: %v", qmName, err)
-	}
-	defer mqmetric.EndConnection()
-
-	// Discover available metrics for the queue manager and subscribe to them
-	err = mqmetric.DiscoverAndSubscribe("", true, "")
-	if err != nil {
-		return fmt.Errorf("Failed to discover and subscribe to metrics: %v", err)
-	}
-
 	// Start processing metrics
-	go processMetrics(log)
+	wg.Add(1)
+	go processMetrics(log, qmName, &wg)
+
+	// Wait for metrics to be ready before starting the prometheus handler
+	wg.Wait()
 
 	// Register metrics
 	prometheus.MustRegister(newExporter(qmName))
@@ -92,6 +75,11 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 		w.WriteHeader(200)
 		w.Write([]byte("Status: METRICS ACTIVE"))
 	})
-	err = http.ListenAndServe(":"+defaultPort, nil)
-	return fmt.Errorf("Failed to handle metrics request: %v", err)
+
+	err := http.ListenAndServe(":"+defaultPort, nil)
+	if err != nil {
+		return fmt.Errorf("Failed to handle metrics request: %v", err)
+	}
+
+	return nil
 }

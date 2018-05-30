@@ -180,7 +180,6 @@ func getMessage(wait bool) ([]byte, error) {
 func getMessageWithHObj(wait bool, hObj ibmmq.MQObject) ([]byte, error) {
 	var err error
 	var datalen int
-	var mqreturn *ibmmq.MQReturn
 
 	getmqmd := ibmmq.NewMQMD()
 	gmo := ibmmq.NewMQGMO()
@@ -196,18 +195,6 @@ func getMessageWithHObj(wait bool, hObj ibmmq.MQObject) ([]byte, error) {
 	}
 
 	datalen, err = replyQObj.Get(getmqmd, gmo, getBuffer)
-	if err != nil {
-		mqreturn = err.(*ibmmq.MQReturn)
-
-		if mqreturn.MQRC == ibmmq.MQRC_Q_MGR_NOT_AVAILABLE ||
-			mqreturn.MQRC == ibmmq.MQRC_Q_MGR_NAME_ERROR ||
-			mqreturn.MQRC == ibmmq.MQRC_Q_MGR_QUIESCING {
-			return nil, fmt.Errorf("Queue Manager error: %v", err)
-		}
-		if mqreturn.MQCC == ibmmq.MQCC_FAILED && mqreturn.MQRC != ibmmq.MQRC_NO_MSG_AVAILABLE {
-			return nil, fmt.Errorf("Get message error: %v", err)
-		}
-	}
 
 	return getBuffer[0:datalen], err
 }

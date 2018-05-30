@@ -16,13 +16,11 @@ limitations under the License.
 package main
 
 import (
-	"archive/tar"
 	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -74,9 +72,20 @@ func TestLicenseView(t *testing.T) {
 	}
 }
 
-// TestGoldenPath starts a queue manager successfully
-func TestGoldenPath(t *testing.T) {
+// TestGoldenPath starts a queue manager successfully when metrics are enabled
+func TestGoldenPathWithMetrics(t *testing.T) {
 	t.Parallel()
+	goldenPath(t, true)
+}
+
+// TestGoldenPath starts a queue manager successfully when metrics are disabled
+func TestGoldenPathNoMetrics(t *testing.T) {
+	t.Parallel()
+	goldenPath(t, false)
+}
+
+// Actual test function for TestGoldenPathNoMetrics & TestGoldenPathWithMetrics
+func goldenPath(t *testing.T, metric bool) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -84,6 +93,10 @@ func TestGoldenPath(t *testing.T) {
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
+	if metric {
+		containerConfig.Env = append(containerConfig.Env, "MQ_ENABLE_METRICS=true")
+	}
+
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
@@ -143,9 +156,21 @@ func TestNoQueueManagerNameInvalidHostname(t *testing.T) {
 }
 
 // TestWithVolume runs a container with a Docker volume, then removes that
-// container and starts a new one with same volume.
-func TestWithVolume(t *testing.T) {
+// container and starts a new one with same volume. With metrics enabled
+func TestWithVolumeAndMetrics(t *testing.T) {
 	t.Parallel()
+	withVolume(t, true)
+}
+
+// TestWithVolume runs a container with a Docker volume, then removes that
+// container and starts a new one with same volume. With metrics disabled
+func TestWithVolumeNoMetrics(t *testing.T) {
+	t.Parallel()
+	withVolume(t, false)
+}
+
+// Actual test function for TestWithVolumeNoMetrics & TestWithVolumeAndMetrics
+func withVolume(t *testing.T, metric bool) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -156,6 +181,10 @@ func TestWithVolume(t *testing.T) {
 		Image: imageName(),
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
+	if metric {
+		containerConfig.Env = append(containerConfig.Env, "MQ_ENABLE_METRICS=true")
+	}
+
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
@@ -423,37 +452,6 @@ func TestReadiness(t *testing.T) {
 	}
 }
 
-func countLines(t *testing.T, r io.Reader) int {
-	scanner := bufio.NewScanner(r)
-	count := 0
-	for scanner.Scan() {
-		count++
-	}
-	err := scanner.Err()
-	if err != nil {
-		t.Fatal(err)
-	}
-	return count
-}
-
-func countTarLines(t *testing.T, b []byte) int {
-	r := bytes.NewReader(b)
-	tr := tar.NewReader(r)
-	total := 0
-	for {
-		_, err := tr.Next()
-		if err == io.EOF {
-			// End of TAR
-			break
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		total += countLines(t, tr)
-	}
-	return total
-}
-
 func TestErrorLogRotation(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewEnvClient()
@@ -518,8 +516,20 @@ func TestErrorLogRotation(t *testing.T) {
 	}
 }
 
-func TestJSONLogFormat(t *testing.T) {
+// Tests the log comes out in JSON format when JSON format is enabled. With metrics enabled
+func TestJSONLogFormatWithMetrics(t *testing.T) {
 	t.Parallel()
+	jsonLogFormat(t, true)
+}
+
+// Tests the log comes out in JSON format when JSON format is enabled. With metrics disabled
+func TestJSONLogFormatNoMetrics(t *testing.T) {
+	t.Parallel()
+	jsonLogFormat(t, false)
+}
+
+// Actual test function for TestJSONLogFormatWithMetrics & TestJSONLogFormatNoMetrics
+func jsonLogFormat(t *testing.T, metric bool) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -530,6 +540,10 @@ func TestJSONLogFormat(t *testing.T) {
 			"LOG_FORMAT=json",
 		},
 	}
+	if metric {
+		containerConfig.Env = append(containerConfig.Env, "MQ_ENABLE_METRICS=true")
+	}
+
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
