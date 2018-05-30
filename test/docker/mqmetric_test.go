@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
 
@@ -30,85 +29,40 @@ func TestGoldenPathMetric(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	containerConfig := container.Config{
-		Env: []string{
-			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
-			"MQ_ENABLE_METRICS=true",
-		},
-	}
-	id := runContainer(t, cli, &containerConfig)
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-
-	hostname := getIPAddress(t, cli, id)
-	port := defaultMetricPort
-
+	// hostname := getIPAddress(t, cli, id)
+	port := getMetricPort(t, cli, id)
 	// Now the container is ready we prod the prometheus endpoint until it's up.
-	waitForMetricReady(hostname, port)
-
+	waitForMetricReady(t, port)
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	_, err = getMetricsFromEndpoint(hostname, port)
-	if err != nil {
-		t.Logf("Failed to call metric endpoint - %v", err)
-		t.FailNow()
-	}
-
+	getMetrics(t, port)
 	time.Sleep(15 * time.Second)
-	metrics, err := getMetricsFromEndpoint(hostname, port)
-	if err != nil {
-		t.Logf("Failed to call metric endpoint - %v", err)
-		t.FailNow()
-	}
-
+	metrics := getMetrics(t, port)
 	if len(metrics) <= 0 {
 		t.Log("Expected some metrics to be returned but had none...")
 		t.Fail()
 	}
-
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
 
 func TestMetricNames(t *testing.T) {
 	t.Parallel()
-
 	approvedSuffixes := []string{"bytes", "seconds", "percentage", "count", "total"}
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	containerConfig := container.Config{
-		Env: []string{
-			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
-			"MQ_ENABLE_METRICS=true",
-		},
-	}
-	id := runContainer(t, cli, &containerConfig)
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-
-	hostname := getIPAddress(t, cli, id)
-	port := defaultMetricPort
-
+	port := getMetricPort(t, cli, id)
 	// Now the container is ready we prod the prometheus endpoint until it's up.
-	waitForMetricReady(hostname, port)
-
+	waitForMetricReady(t, port)
 	// Call once as mq_prometheus 'ignores' the first call
-	_, err = getMetricsFromEndpoint(hostname, port)
-	if err != nil {
-		t.Logf("Failed to call metric endpoint - %v", err)
-		t.FailNow()
-	}
-
+	getMetrics(t, port)
 	time.Sleep(15 * time.Second)
-	metrics, err := getMetricsFromEndpoint(hostname, port)
-	if err != nil {
-		t.Logf("Failed to call metric endpoint - %v", err)
-		t.FailNow()
-	}
-
+	metrics := getMetrics(t, port)
 	if len(metrics) <= 0 {
 		t.Log("Expected some metrics to be returned but had none...")
 		t.Fail()
@@ -141,46 +95,22 @@ func TestMetricNames(t *testing.T) {
 
 func TestMetricLabels(t *testing.T) {
 	t.Parallel()
-
 	requiredLabels := []string{"qmgr"}
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	containerConfig := container.Config{
-		Env: []string{
-			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
-			"MQ_ENABLE_METRICS=true",
-		},
-	}
-	id := runContainer(t, cli, &containerConfig)
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-
-	hostname := getIPAddress(t, cli, id)
-	port := defaultMetricPort
-
+	port := getMetricPort(t, cli, id)
 	// Now the container is ready we prod the prometheus endpoint until it's up.
-	waitForMetricReady(hostname, port)
-
+	waitForMetricReady(t, port)
 	// Call once as mq_prometheus 'ignores' the first call
-	_, err = getMetricsFromEndpoint(hostname, port)
-	if err != nil {
-		t.Logf("Failed to call metric endpoint - %v", err)
-		t.FailNow()
-	}
-
+	getMetrics(t, port)
 	time.Sleep(15 * time.Second)
-	metrics, err := getMetricsFromEndpoint(hostname, port)
-	if err != nil {
-		t.Logf("Failed to call metric endpoint - %v", err)
-		t.FailNow()
-	}
-
+	metrics := getMetrics(t, port)
 	if len(metrics) <= 0 {
-		t.Log("Expected some metrics to be returned but had none...")
-		t.Fail()
+		t.Error("Expected some metrics to be returned but had none")
 	}
 
 	for _, metric := range metrics {
@@ -198,118 +128,63 @@ func TestMetricLabels(t *testing.T) {
 		}
 
 		if !found {
-			t.Logf("Metric '%s' with labels %s does not have one or more required labels - %s", metric.Key, metric.Labels, requiredLabels)
-			t.Fail()
+			t.Errorf("Metric '%s' with labels %s does not have one or more required labels - %s", metric.Key, metric.Labels, requiredLabels)
 		}
 	}
-
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
 
 func TestRapidFirePrometheus(t *testing.T) {
 	t.Parallel()
-
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	containerConfig := container.Config{
-		Env: []string{
-			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
-			"MQ_ENABLE_METRICS=true",
-		},
-	}
-	id := runContainer(t, cli, &containerConfig)
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-
-	hostname := getIPAddress(t, cli, id)
-	port := defaultMetricPort
-
+	port := getMetricPort(t, cli, id)
 	// Now the container is ready we prod the prometheus endpoint until it's up.
-	waitForMetricReady(hostname, port)
-
+	waitForMetricReady(t, port)
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	_, err = getMetricsFromEndpoint(hostname, port)
-	if err != nil {
-		t.Logf("Failed to call metric endpoint - %v", err)
-		t.FailNow()
-	}
-
+	getMetrics(t, port)
 	// Rapid fire it then check we're still happy
 	for i := 0; i < 30; i++ {
-		_, err := getMetricsFromEndpoint(hostname, port)
-		if err != nil {
-			t.Logf("Failed to call metric endpoint - %v", err)
-			t.FailNow()
-		}
+		getMetrics(t, port)
 		time.Sleep(1 * time.Second)
 	}
-
 	time.Sleep(11 * time.Second)
-
-	metrics, err := getMetricsFromEndpoint(hostname, port)
-	if err != nil {
-		t.Logf("Failed to call metric endpoint - %v", err)
-		t.FailNow()
-	}
+	metrics := getMetrics(t, port)
 	if len(metrics) <= 0 {
-		t.Log("Expected some metrics to be returned but had none...")
-		t.Fail()
+		t.Error("Expected some metrics to be returned but had none")
 	}
-
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
 
 func TestSlowPrometheus(t *testing.T) {
 	t.Parallel()
-
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	containerConfig := container.Config{
-		Env: []string{
-			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
-			"MQ_ENABLE_METRICS=true",
-		},
-	}
-	id := runContainer(t, cli, &containerConfig)
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-
-	hostname := getIPAddress(t, cli, id)
-	port := defaultMetricPort
-
+	port := getMetricPort(t, cli, id)
 	// Now the container is ready we prod the prometheus endpoint until it's up.
-	waitForMetricReady(hostname, port)
-
+	waitForMetricReady(t, port)
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	_, err = getMetricsFromEndpoint(hostname, port)
-	if err != nil {
-		t.Logf("Failed to call metric endpoint - %v", err)
-		t.FailNow()
-	}
-
+	getMetrics(t, port)
 	// Send a request twice over a long period and check we're still happy
 	for i := 0; i < 2; i++ {
 		time.Sleep(30 * time.Second)
-		metrics, err := getMetricsFromEndpoint(hostname, port)
-		if err != nil {
-			t.Logf("Failed to call metric endpoint - %v", err)
-			t.FailNow()
-		}
+		metrics := getMetrics(t, port)
 		if len(metrics) <= 0 {
-			t.Log("Expected some metrics to be returned but had none...")
+			t.Log("Expected some metrics to be returned but had none")
 			t.Fail()
 		}
 
 	}
-
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
