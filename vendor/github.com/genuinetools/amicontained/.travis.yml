@@ -1,0 +1,49 @@
+---
+  language: go
+  sudo: false
+  notifications:
+    email: true
+  go:
+    - 1.x
+    - tip
+  env:
+    global:
+      - GO15VENDOREXPERIMENT=1
+  matrix:
+    allow_failures:
+      - go: tip
+    fast_finish: true
+  install:
+    - go get github.com/golang/lint/golint
+    - go get honnef.co/go/tools/cmd/staticcheck
+  script:
+    - go build -v
+    - go vet $(go list ./... | grep -v vendor)
+    - staticcheck $(go list ./... | grep -v vendor)
+    - test -z "$(golint ./... | grep -v vendor | tee /dev/stderr)"
+    - test -z "$(gofmt -s -l . | grep -v vendor | tee /dev/stderr)"
+    - go test $(go list ./... | grep -v vendor)
+    - make cover
+    - make release
+  after_success:
+    - bash <(curl -s https://codecov.io/bash)
+  deploy:
+    provider: releases
+    api_key:
+      secure: "PMnPJQ00zNL2MeTosnC2uL47srkL38PDgHllf7VlEQCjTtAd0LiPuYWXIhRncEXyXQX66uAmz2nDSuR0H+2mB1tIt9gpTMe0bItUHIQhcgJllJWtcMIwE7decMwDRaXVhh/vlzGYTLnT2wZEGFQS57nHZdZd9kXD9w2sepQvgaLmELnAlwXP+TXf7U8WWZ1fw3a4LdotnZRRcy4NkzpsaRep2tTRJTPu01YPMALusucaPGAmlw/pCKvflNR7fqEMKR/dP+hmtk0DFhCNaSSIWHplwFMc4PGOTRjWIdGEvIivqx7HVfF/jFqAZDGr38qcErpW4jUVNBTTrBW22RKLt1vZ/BgdcBYn5siWeytu4YWnZpsxh2u9bcoHhO323SHRdQtDU5N96UV5NqFymYKCl941xRS8mZ1Wu5vetswYYtRG45OEDq3KZFw88QDBjGeNDkXk6hQdu3hQt3CNDNCI/2vzh20/rWErc7jiDy9uNsJdIiruO+3AWt20aZgzw+X7GfbNYGa42RcW6a//4RoN9S7iEaw/xbfHuh08gNCT4Zfg6EY98XU3yX+IJupoqST68kMWIupr0cA9WKwtUHcHquZP1VbkPXkg7xeb6zLCPNDyJ3ly1UFeZ7L+TGUdyNP2NWNAcbgkMgN+TkdbidywSn0GoK1D4rw9vXuqzgRQGK8="
+    file:
+      - cross/amicontained-linux-amd64.md5
+      - cross/amicontained-linux-arm
+      - cross/amicontained-linux-arm64.sha256
+      - cross/amicontained-linux-arm.sha256
+      - cross/amicontained-linux-386.sha256
+      - cross/amicontained-linux-arm64.md5
+      - cross/amicontained-linux-arm64
+      - cross/amicontained-linux-amd64.sha256
+      - cross/amicontained-linux-386.md5
+      - cross/amicontained-linux-arm.md5
+      - cross/amicontained-linux-386
+      - cross/amicontained-linux-amd64
+    skip_cleanup: true
+    on:
+      tags: true
