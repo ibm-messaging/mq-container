@@ -40,7 +40,8 @@ func checkFS(path string) {
 		log.Println(err)
 		return
 	}
-	t := fsTypes[statfs.Type]
+	// Use a type conversion to make type an int64.  On s390x it's a uint32.
+	t := fsTypes[int64(statfs.Type)]
 	switch t {
 	case "aufs", "overlayfs", "tmpfs":
 		log.Fatalf("Error: %v uses unsupported filesystem type %v", path, t)
