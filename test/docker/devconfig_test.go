@@ -43,7 +43,7 @@ func TestDevGoldenPath(t *testing.T) {
 			"MQ_QMGR_NAME=qm1",
 		},
 	}
-	id := runContainer(t, cli, &containerConfig)
+	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	waitForWebReady(t, cli, id, insecureTLSConfig)
@@ -148,7 +148,7 @@ func TestDevConfigDisabled(t *testing.T) {
 			"MQ_DEV=false",
 		},
 	}
-	id := runContainer(t, cli, &containerConfig)
+	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	waitForWebReady(t, cli, id, insecureTLSConfig)

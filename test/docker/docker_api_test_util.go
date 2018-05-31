@@ -213,10 +213,10 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	}
 }
 
-// runContainer creates and starts a container.  If no image is specified in
-// the container config, then the image name is retrieved from the TEST_IMAGE
+// runContainerWithPorts creates and starts a container, exposing the specified ports on the host.
+// If no image is specified in the container config, then the image name is retrieved from the TEST_IMAGE
 // environment variable.
-func runContainer(t *testing.T, cli *client.Client, containerConfig *container.Config) string {
+func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *container.Config, ports []int) string {
 	if containerConfig.Image == "" {
 		containerConfig.Image = imageName()
 	}
@@ -228,15 +228,15 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 			coverageBind(t),
 			terminationBind(t),
 		},
-		// Assign a random port for the web server on the host
-		// TODO: Don't do this for all tests
-		PortBindings: nat.PortMap{
-			"9443/tcp": []nat.PortBinding{
-				{
-					HostIP: "0.0.0.0",
-				},
+		PortBindings: nat.PortMap{},
+	}
+	for _, p := range ports {
+		port := nat.Port(fmt.Sprintf("%v/tcp", p))
+		hostConfig.PortBindings[port] = []nat.PortBinding{
+			{
+				HostIP: "0.0.0.0",
 			},
-		},
+		}
 	}
 	networkingConfig := network.NetworkingConfig{}
 	t.Logf("Running container (%s)", containerConfig.Image)
@@ -246,6 +246,13 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	}
 	startContainer(t, cli, ctr.ID)
 	return ctr.ID
+}
+
+// runContainer creates and starts a container.  If no image is specified in
+// the container config, then the image name is retrieved from the TEST_IMAGE
+// environment variable.
+func runContainer(t *testing.T, cli *client.Client, containerConfig *container.Config) string {
+	return runContainerWithPorts(t, cli, containerConfig, nil)
 }
 
 func runContainerOneShot(t *testing.T, cli *client.Client, command ...string) (int64, string) {
@@ -563,4 +570,35 @@ func getWebPort(t *testing.T, cli *client.Client, ID string) string {
 		t.Fatal(err)
 	}
 	return i.NetworkSettings.Ports["9443/tcp"][0].HostPort
+}
+
+func countLines(t *testing.T, r io.Reader) int {
+	scanner := bufio.NewScanner(r)
+	count := 0
+	for scanner.Scan() {
+		count++
+	}
+	err := scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return count
+}
+
+func countTarLines(t *testing.T, b []byte) int {
+	r := bytes.NewReader(b)
+	tr := tar.NewReader(r)
+	total := 0
+	for {
+		_, err := tr.Next()
+		if err == io.EOF {
+			// End of TAR
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		total += countLines(t, tr)
+	}
+	return total
 }
