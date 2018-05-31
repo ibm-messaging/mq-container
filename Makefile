@@ -156,7 +156,7 @@ build-devjmstest:
 	cd test/messaging && docker build --tag $(DEV_JMS_IMAGE) .
 
 .PHONY: test-devserver
-test-devserver: test/docker/vendor build-devjmstest
+test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER) on $(shell docker --version)"$(END)))
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
 
