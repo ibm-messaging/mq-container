@@ -40,7 +40,6 @@ install:
 
 script:
   - make deps
-  - make vet
   - make build-devserver
   - make build-devjmstest
   - eval "$DOCKER_DOWNGRADE"

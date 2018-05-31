@@ -33,6 +33,10 @@ TEST_OPTS_DOCKER ?=
 MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # MQ_IMAGE_DEVSERVER is the name and tag of the built MQ Advanced for Developers image
 MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
+# MQ_IMAGE_SDK is the name and tag of the built MQ Advanced for Developers SDK image
+MQ_IMAGE_SDK ?=mq-sdk:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
+# MQ_IMAGE_GOLANG_SDK is the name and tag of the built MQ Advanced for Developers SDK image, plus Go tools
+MQ_IMAGE_GOLANG_SDK ?=mq-golang-sdk:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # DOCKER is the Docker command to run
 DOCKER ?= docker
 # MQ_PACKAGES specifies the MQ packages (.deb or .rpm) to install.  Defaults vary on base image.
@@ -100,7 +104,7 @@ all: build-devserver build-advancedserver
 test-all: test-devserver test-advancedserver
 
 .PHONY: precommit
-precommit: vet fmt lint all test-all
+precommit: fmt lint all test-all
 
 .PHONY: devserver
 devserver: build-devserver test-devserver
@@ -138,7 +142,7 @@ build-cov:
 
 # Shortcut to just run the unit tests
 .PHONY: test-unit
-test-unit:
+test-unit: test/docker/vendor
 	docker build --target builder --file Dockerfile-server .
 
 .PHONY: test-advancedserver
@@ -196,7 +200,6 @@ define docker-build-mq
 	  nginx:alpine
 	# Build the new image (use --pull to make sure we have the latest base image)
 	$(DOCKER) build \
-	  --pull \
 	  --tag $1 \
 	  --file $2 \
 	  --network build \
@@ -217,14 +220,14 @@ docker-version:
 	@test "$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
 
 .PHONY: build-advancedserver
-build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version
+build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version build-golang-sdk test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_ADVANCEDSERVER),Dockerfile-server,$(MQ_ARCHIVE),"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced",$(MQ_VERSION))
 
 .PHONY: build-devserver
 # Target-specific variable to add web server into devserver image
 build-devserver: MQ_PACKAGES=ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams ibmmq-web
-build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version
+build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk test/docker/vendor
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER_BASE),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 	docker build --tag $(MQ_IMAGE_DEVSERVER) --file incubating/mqadvanced-server-dev/Dockerfile .
@@ -233,17 +236,24 @@ build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version
 build-advancedserver-cover: docker-version
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_IMAGE_ADVANCEDSERVER)-cover -f Dockerfile-server.cover .
 
-.PHONY: build-explorer
+.PHONY: build-explorer docker-pull
 build-explorer: downloads/$(MQ_ARCHIVE_DEV)
 	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
+
+build-sdk: downloads/$(MQ_ARCHIVE_DEV) docker-version docker-pull
+	$(call docker-build-mq,$(MQ_IMAGE_SDK),incubating/mq-sdk/Dockerfile,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers SDK (Non-Warranted)",$(MQ_VERSION))
+
+build-golang-sdk: build-sdk
+	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_SDK) -t $(MQ_IMAGE_GOLANG_SDK) -f incubating/mq-golang-sdk/Dockerfile .
+#	$(call docker-build-mq,$(MQ_IMAGE_GOLANG_SDK),incubating/mq-golang-sdk/Dockerfile,$(MQ_ARCHIVE),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers SDK (Non-Warranted)",$(MQ_VERSION))
+
+docker-pull:
+	$(DOCKER) pull $(BASE_IMAGE)
 
 GO_PKG_DIRS = ./cmd ./internal ./test
 
 fmt: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
 	go fmt $(addsuffix /..., $(GO_PKG_DIRS))
-
-vet: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS)) test/docker/vendor
-	go vet $(addsuffix /..., $(GO_PKG_DIRS))
 
 lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
 	@# This expression is necessary because /... includes the vendor directory in golint

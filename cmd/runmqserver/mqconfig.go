@@ -22,8 +22,17 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/ibm-messaging/mq-container/internal/capabilities"
+	"github.com/genuinetools/amicontained/container"
 )
+
+func logContainerRuntime() error {
+	r, err := container.DetectRuntime()
+	if err != nil {
+		return err
+	}
+	log.Printf("Container runtime: %v", r)
+	return nil
+}
 
 func logBaseImage() error {
 	buf, err := ioutil.ReadFile("/etc/os-release")
@@ -35,7 +44,7 @@ func logBaseImage() error {
 		if strings.HasPrefix(l, "PRETTY_NAME=") {
 			words := strings.Split(l, "\"")
 			if len(words) >= 2 {
-				log.Printf("Base image detected: %v", words[1])
+				log.Printf("Base image: %v", words[1])
 				return nil
 			}
 		}
@@ -46,20 +55,50 @@ func logBaseImage() error {
 func logUser() {
 	u, err := user.Current()
 	if err == nil {
-		log.Printf("Running as user ID %v (%v) with primary group %v", u.Uid, u.Name, u.Gid)
+		g, err := u.GroupIds()
+		if err != nil {
+			log.Printf("Running as user ID %v (%v) with primary group %v", u.Uid, u.Name, u.Gid)
+		} else {
+			// Look for the primary group in the list of group IDs
+			for i, v := range g {
+				if v == u.Gid {
+					// Remove the element from the slice
+					g = append(g[:i], g[i+1:]...)
+				}
+			}
+			log.Printf("Running as user ID %v (%v) with primary group %v, and supplemental groups %v", u.Uid, u.Name, u.Gid, strings.Join(g, ","))
+		}
 	}
 }
 
-func logCapabilities() {
-	status, err := readProc("/proc/1/status")
+// logCapabilities logs the Linux capabilities (e.g. setuid, setgid).  See https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities
+func logCapabilities() error {
+	caps, err := container.Capabilities()
 	if err != nil {
-		// Ignore
-		return
+		return err
 	}
-	caps, err := capabilities.DetectCapabilities(status)
-	if err == nil {
-		log.Printf("Detected capabilities: %v", strings.Join(caps, ","))
+	for k, v := range caps {
+		if len(v) > 0 {
+			log.Printf("Capabilities (%s set): %v", strings.ToLower(k), strings.Join(v, ","))
+		}
 	}
+	return nil
+}
+
+// logSeccomp logs the seccomp enforcing mode, which affects which kernel calls can be made
+func logSeccomp() error {
+	s, err := container.SeccompEnforcingMode()
+	if err != nil {
+		return err
+	}
+	log.Printf("seccomp enforcing mode: %v", s)
+	return nil
+}
+
+func logAppArmor() error {
+	s := container.AppArmorProfile()
+	log.Printf("AppArmor profile: %v", s)
+	return nil
 }
 
 func readProc(filename string) (value string, err error) {
@@ -106,6 +145,7 @@ func logConfig() error {
 		} else {
 			log.Printf("Linux kernel version: %v", osr)
 		}
+		logContainerRuntime()
 		logBaseImage()
 		fileMax, err := readProc("/proc/sys/fs/file-max")
 		if err != nil {
@@ -115,6 +155,8 @@ func logConfig() error {
 		}
 		logUser()
 		logCapabilities()
+		logSeccomp()
+		logAppArmor()
 		err = readMounts()
 		if err != nil {
 			return err
