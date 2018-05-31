@@ -32,9 +32,18 @@ if ($UBUNTU); then
   # Use a reduced set of apt repositories.
   # This ensures no unsupported code gets installed, and makes the build faster
   source /etc/os-release
-  echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME} main restricted" > /etc/apt/sources.list
-  echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-updates main restricted" >> /etc/apt/sources.list
-  echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-security main restricted" >> /etc/apt/sources.list
+  # Figure out the correct apt URL based on the CPU architecture
+  CPU_ARCH=$(uname -p)
+  if [ ${CPU_ARCH} == "x86_64" ]; then
+     APT_URL="http://archive.ubuntu.com/ubuntu/"
+  else
+     APT_URL="http://ports.ubuntu.com/ubuntu-ports/"
+  fi
+  # Use a reduced set of apt repositories.
+  # This ensures no unsupported code gets installed, and makes the build faster
+  echo "deb ${APT_URL} ${UBUNTU_CODENAME} main restricted" > /etc/apt/sources.list
+  echo "deb ${APT_URL} ${UBUNTU_CODENAME}-updates main restricted" >> /etc/apt/sources.list
+  echo "deb ${APT_URL} ${UBUNTU_CODENAME}-security main restricted" >> /etc/apt/sources.list
   # Install additional packages required by MQ, this install process and the runtime scripts
   apt-get update
   apt-get install -y --no-install-recommends \
