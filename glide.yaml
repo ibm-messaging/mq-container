@@ -21,5 +21,8 @@ excludeDirs:
 import:
 - package: golang.org/x/sys/unix
 - package: github.com/prometheus/client_golang
+  version: 0.8.0
 - package: github.com/ibm-messaging/mq-golang
   version: dev
+- package: github.com/genuinetools/amicontained
+  version: 0.4.0
