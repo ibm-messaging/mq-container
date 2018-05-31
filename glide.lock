@@ -1,5 +1,5 @@
-hash: cec2ce517533a66eb741a92073827f058d3f82c09ea63735fd658df18b24653a
-updated: 2018-05-30T15:39:50.39084+01:00
+hash: 423672ac81beb7742454be77d48142f236e29a4c0a398e8dee4b8505ea7963d8
+updated: 2018-05-31T09:56:53.529569793+01:00
 imports:
 - name: github.com/beorn7/perks
   version: 3a771d992973f24aa725d07868b467d1ddfceafb
@@ -14,7 +14,7 @@ imports:
   subpackages:
   - proto
 - name: github.com/ibm-messaging/mq-golang
-  version: 3541d35ac44bbd4b161a6488a8f96c59ec4bd707
+  version: f15a28755ee0835f1fda161ac60b4146302e1fdb
   subpackages:
   - ibmmq
   - mqmetric
@@ -23,7 +23,7 @@ imports:
   subpackages:
   - pbutil
 - name: github.com/prometheus/client_golang
-  version: 82f5ff156b29e276022b1a958f7d385870fb9814
+  version: c5b7fccd204277076155f10851dad72b76a49317
   subpackages:
   - prometheus
 - name: github.com/prometheus/client_model

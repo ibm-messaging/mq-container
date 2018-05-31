@@ -571,3 +571,34 @@ func getWebPort(t *testing.T, cli *client.Client, ID string) string {
 	}
 	return i.NetworkSettings.Ports["9443/tcp"][0].HostPort
 }
+
+func countLines(t *testing.T, r io.Reader) int {
+	scanner := bufio.NewScanner(r)
+	count := 0
+	for scanner.Scan() {
+		count++
+	}
+	err := scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return count
+}
+
+func countTarLines(t *testing.T, b []byte) int {
+	r := bytes.NewReader(b)
+	tr := tar.NewReader(r)
+	total := 0
+	for {
+		_, err := tr.Next()
+		if err == io.EOF {
+			// End of TAR
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		total += countLines(t, tr)
+	}
+	return total
+}

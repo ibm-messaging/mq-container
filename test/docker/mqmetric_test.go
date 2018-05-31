@@ -35,6 +35,7 @@ func TestGoldenPathMetric(t *testing.T) {
 	port := getMetricPort(t, cli, id)
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
+
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
 	getMetrics(t, port)
 	time.Sleep(15 * time.Second)
@@ -187,4 +188,116 @@ func TestSlowPrometheus(t *testing.T) {
 	}
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
+}
+
+func TestContainerRestart(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
+	defer cleanContainer(t, cli, id)
+	port := getMetricPort(t, cli, id)
+
+	// Now the container is ready we prod the prometheus endpoint until it's up.
+	waitForMetricReady(t, port)
+
+	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
+	getMetrics(t, port)
+
+	time.Sleep(15 * time.Second)
+	metrics := getMetrics(t, port)
+	if len(metrics) <= 0 {
+		t.Log("Expected some metrics to be returned before the restart but had none...")
+		t.FailNow()
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+	// Start the container cleanly
+	startContainer(t, cli, id)
+
+	port = getMetricPort(t, cli, id)
+
+	// Now the container is ready we prod the prometheus endpoint until it's up.
+	waitForMetricReady(t, port)
+
+	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
+	getMetrics(t, port)
+
+	time.Sleep(15 * time.Second)
+	metrics = getMetrics(t, port)
+	if len(metrics) <= 0 {
+		t.Log("Expected some metrics to be returned before the restart but had none...")
+		t.Fail()
+	}
+}
+
+func TestQMRestart(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
+	defer cleanContainer(t, cli, id)
+
+	port := getMetricPort(t, cli, id)
+
+	// Now the container is ready we prod the prometheus endpoint until it's up.
+	waitForMetricReady(t, port)
+
+	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
+	getMetrics(t, port)
+
+	time.Sleep(15 * time.Second)
+	metrics := getMetrics(t, port)
+	if len(metrics) <= 0 {
+		t.Log("Expected some metrics to be returned before the restart but had none...")
+		t.FailNow()
+	}
+
+	// Restart just the QM (to simulate a lost connection)
+	t.Log("Stopping queue manager\n")
+	rc, out := execContainer(t, cli, id, "mqm", []string{"endmqm", "-w", defaultMetricQMName})
+	if rc != 0 {
+		t.Logf("Failed to stop the queue manager. rc=%d, err=%s", rc, out)
+		t.FailNow()
+	}
+	t.Log("starting queue manager\n")
+	rc, out = execContainer(t, cli, id, "mqm", []string{"strmqm", defaultMetricQMName})
+	if rc != 0 {
+		t.Logf("Failed to start the queue manager. rc=%d, err=%s", rc, out)
+		t.FailNow()
+	}
+
+	// Wait for the queue manager to come back up
+	time.Sleep(10 * time.Second)
+
+	// Now the container is ready we prod the prometheus endpoint until it's up.
+	waitForMetricReady(t, port)
+
+	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
+	getMetrics(t, port)
+
+	time.Sleep(15 * time.Second)
+	metrics = getMetrics(t, port)
+	if len(metrics) <= 0 {
+		t.Log("Expected some metrics to be returned before the restart but had none...")
+		t.FailNow()
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+func TestValidValues(t *testing.T) {
+
+}
+
+func TestChangingValues(t *testing.T) {
+
 }

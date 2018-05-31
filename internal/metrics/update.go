@@ -18,7 +18,9 @@ limitations under the License.
 package metrics
 
 import (
+	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ibm-messaging/mq-container/internal/logger"
@@ -42,26 +44,68 @@ type metricData struct {
 	values      map[string]float64
 }
 
+var keepRunning = true
+var first = true
+
+func doConnect(qmName string) error {
+	// Set connection configuration
+	var connConfig mqmetric.ConnectionConfig
+	connConfig.ClientMode = false
+	connConfig.UserId = ""
+	connConfig.Password = ""
+
+	// Connect to the queue manager - open the command and dynamic reply queues
+	err := mqmetric.InitConnectionStats(qmName, "SYSTEM.DEFAULT.MODEL.QUEUE", "", &connConfig)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to queue manager %s: %v", qmName, err)
+	}
+
+	// Discover available metrics for the queue manager and subscribe to them
+	err = mqmetric.DiscoverAndSubscribe("", true, "")
+	if err != nil {
+		return fmt.Errorf("Failed to discover and subscribe to metrics: %v", err)
+	}
+
+	return nil
+}
+
 // processMetrics processes publications of metric data and handles describe/collect requests
-func processMetrics(log *logger.Logger) {
+func processMetrics(log *logger.Logger, qmName string, wg *sync.WaitGroup) {
+	var err error
+	var metrics map[string]*metricData
 
-	// Initialise metrics
-	metrics := initialiseMetrics()
-
-	for {
-		// Process publications of metric data
-		mqmetric.ProcessPublications()
-
-		// Handle describe/collect requests
-		select {
-		case collect := <-requestChannel:
-			if collect {
-				updateMetrics(metrics)
+	for keepRunning {
+		err = doConnect(qmName)
+		if err == nil {
+			if first {
+				first = false
+				wg.Done()
 			}
-			responseChannel <- metrics
-		case <-time.After(requestTimeout * time.Second):
-			log.Debugf("Metrics: No requests received within timeout period (%d seconds)", requestTimeout)
+			metrics = initialiseMetrics()
 		}
+
+		// now loop until something goes wrong
+		for err == nil {
+			// Process publications of metric data
+			err = mqmetric.ProcessPublications()
+
+			// Handle describe/collect requests
+			select {
+			case collect := <-requestChannel:
+				if collect {
+					updateMetrics(metrics)
+				}
+				responseChannel <- metrics
+			case <-time.After(requestTimeout * time.Second):
+				log.Debugf("Metrics: No requests received within timeout period (%d seconds)", requestTimeout)
+			}
+		}
+
+		// Close the connection
+		mqmetric.EndConnection()
+
+		//If we're told to keep runnign sleep for a bit before trying again
+		time.Sleep(10 * time.Second)
 	}
 }
 

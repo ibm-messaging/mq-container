@@ -40,6 +40,7 @@ type mqmetric struct {
 const defaultMetricURL = "/metrics"
 const defaultMetricPort = 9157
 const defaultMQNamespace = "ibmmq"
+const defaultMetricQMName = "qm1"
 
 func getMetrics(t *testing.T, port int) []mqmetric {
 	returned := []mqmetric{}
@@ -144,7 +145,7 @@ func waitForMetricReady(t *testing.T, port int) {
 			return
 		}
 
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 10)
 	}
 	t.Fatalf("Metric endpoint failed to startup in timely manner")
 }
@@ -167,7 +168,7 @@ func metricsContainerConfig() *container.Config {
 	return &container.Config{
 		Env: []string{
 			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
+			"MQ_QMGR_NAME=" + defaultMetricQMName,
 			"MQ_ENABLE_METRICS=true",
 		},
 	}

@@ -472,7 +472,7 @@ cases where multiple pieces of data have to be collated for the same
 gauge. Conversely, there may be times when this is called but there
 are no metrics to update.
 */
-func ProcessPublications() {
+func ProcessPublications() error {
 	var err error
 	var data []byte
 
@@ -568,8 +568,16 @@ func ProcessPublications() {
 					elem.Values[objectName] = value
 				}
 			}
+		} else {
+			// err != nil
+			mqreturn := err.(*ibmmq.MQReturn)
+
+			if mqreturn.MQCC == ibmmq.MQCC_FAILED && mqreturn.MQRC != ibmmq.MQRC_NO_MSG_AVAILABLE {
+				return mqreturn
+			}
 		}
 	}
+	return nil
 }
 
 /*
