@@ -16,6 +16,9 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
+	"net"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -31,18 +34,19 @@ func TestGoldenPathMetric(t *testing.T) {
 	}
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-	// hostname := getIPAddress(t, cli, id)
-	port := getMetricPort(t, cli, id)
+
+	port := getPort(t, cli, id, defaultMetricPort)
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
 	getMetrics(t, port)
 	time.Sleep(15 * time.Second)
+
+	// Now actually get the metrics (after waiting for some to become available)
 	metrics := getMetrics(t, port)
 	if len(metrics) <= 0 {
-		t.Log("Expected some metrics to be returned but had none...")
-		t.Fail()
+		t.Error("Expected some metrics to be returned but had none...")
 	}
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
@@ -57,21 +61,22 @@ func TestMetricNames(t *testing.T) {
 	}
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-	port := getMetricPort(t, cli, id)
+
+	port := getPort(t, cli, id, defaultMetricPort)
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
+
 	// Call once as mq_prometheus 'ignores' the first call
 	getMetrics(t, port)
 	time.Sleep(15 * time.Second)
+
+	// Now actually get the metrics (after waiting for some to become available)
 	metrics := getMetrics(t, port)
 	if len(metrics) <= 0 {
-		t.Log("Expected some metrics to be returned but had none...")
-		t.Fail()
+		t.Error("Expected some metrics to be returned but had none...")
 	}
 
-	okMetrics := []string{}
-	badMetrics := []string{}
-
+	// Check all the metrics have approved suffixes
 	for _, metric := range metrics {
 		ok := false
 		for _, e := range approvedSuffixes {
@@ -82,11 +87,7 @@ func TestMetricNames(t *testing.T) {
 		}
 
 		if !ok {
-			t.Logf("Metric '%s' does not have an approved suffix", metric.Key)
-			badMetrics = append(badMetrics, metric.Key)
-			t.Fail()
-		} else {
-			okMetrics = append(okMetrics, metric.Key)
+			t.Errorf("Metric '%s' does not have an approved suffix", metric.Key)
 		}
 	}
 
@@ -103,17 +104,22 @@ func TestMetricLabels(t *testing.T) {
 	}
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-	port := getMetricPort(t, cli, id)
+	port := getPort(t, cli, id, defaultMetricPort)
+
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
+
 	// Call once as mq_prometheus 'ignores' the first call
 	getMetrics(t, port)
 	time.Sleep(15 * time.Second)
+
+	// Now actually get the metrics (after waiting for some to become available)
 	metrics := getMetrics(t, port)
 	if len(metrics) <= 0 {
 		t.Error("Expected some metrics to be returned but had none")
 	}
 
+	// Check all the metrics have the required labels
 	for _, metric := range metrics {
 		found := false
 		for key := range metric.Labels {
@@ -132,6 +138,7 @@ func TestMetricLabels(t *testing.T) {
 			t.Errorf("Metric '%s' with labels %s does not have one or more required labels - %s", metric.Key, metric.Labels, requiredLabels)
 		}
 	}
+
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
@@ -144,21 +151,27 @@ func TestRapidFirePrometheus(t *testing.T) {
 	}
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-	port := getMetricPort(t, cli, id)
+	port := getPort(t, cli, id, defaultMetricPort)
+
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
+
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
 	getMetrics(t, port)
+
 	// Rapid fire it then check we're still happy
 	for i := 0; i < 30; i++ {
 		getMetrics(t, port)
 		time.Sleep(1 * time.Second)
 	}
 	time.Sleep(11 * time.Second)
+
+	// Now actually get the metrics (after waiting for some to become available)
 	metrics := getMetrics(t, port)
 	if len(metrics) <= 0 {
 		t.Error("Expected some metrics to be returned but had none")
 	}
+
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
@@ -171,21 +184,24 @@ func TestSlowPrometheus(t *testing.T) {
 	}
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-	port := getMetricPort(t, cli, id)
+	port := getPort(t, cli, id, defaultMetricPort)
+
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
+
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
 	getMetrics(t, port)
+
 	// Send a request twice over a long period and check we're still happy
 	for i := 0; i < 2; i++ {
 		time.Sleep(30 * time.Second)
 		metrics := getMetrics(t, port)
 		if len(metrics) <= 0 {
-			t.Log("Expected some metrics to be returned but had none")
-			t.Fail()
+			t.Error("Expected some metrics to be returned but had none")
 		}
 
 	}
+
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
@@ -199,40 +215,42 @@ func TestContainerRestart(t *testing.T) {
 
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
-	port := getMetricPort(t, cli, id)
+	port := getPort(t, cli, id, defaultMetricPort)
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
 	getMetrics(t, port)
-
 	time.Sleep(15 * time.Second)
+
+	// Now actually get the metrics (after waiting for some to become available)
 	metrics := getMetrics(t, port)
 	if len(metrics) <= 0 {
-		t.Log("Expected some metrics to be returned before the restart but had none...")
-		t.FailNow()
+		t.Fatal("Expected some metrics to be returned before the restart but had none...")
 	}
 
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 	// Start the container cleanly
 	startContainer(t, cli, id)
-
-	port = getMetricPort(t, cli, id)
+	port = getPort(t, cli, id, defaultMetricPort)
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
 	getMetrics(t, port)
-
 	time.Sleep(15 * time.Second)
+
+	// Now actually get the metrics (after waiting for some to become available)
 	metrics = getMetrics(t, port)
 	if len(metrics) <= 0 {
-		t.Log("Expected some metrics to be returned before the restart but had none...")
-		t.Fail()
+		t.Error("Expected some metrics to be returned after the restart but had none...")
 	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
 }
 
 func TestQMRestart(t *testing.T) {
@@ -245,33 +263,31 @@ func TestQMRestart(t *testing.T) {
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
 
-	port := getMetricPort(t, cli, id)
+	port := getPort(t, cli, id, defaultMetricPort)
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
 	getMetrics(t, port)
-
 	time.Sleep(15 * time.Second)
+
+	// Now actually get the metrics (after waiting for some to become available)
 	metrics := getMetrics(t, port)
 	if len(metrics) <= 0 {
-		t.Log("Expected some metrics to be returned before the restart but had none...")
-		t.FailNow()
+		t.Fatal("Expected some metrics to be returned before the restart but had none...")
 	}
 
 	// Restart just the QM (to simulate a lost connection)
 	t.Log("Stopping queue manager\n")
 	rc, out := execContainer(t, cli, id, "mqm", []string{"endmqm", "-w", defaultMetricQMName})
 	if rc != 0 {
-		t.Logf("Failed to stop the queue manager. rc=%d, err=%s", rc, out)
-		t.FailNow()
+		t.Fatalf("Failed to stop the queue manager. rc=%d, err=%s", rc, out)
 	}
 	t.Log("starting queue manager\n")
 	rc, out = execContainer(t, cli, id, "mqm", []string{"strmqm", defaultMetricQMName})
 	if rc != 0 {
-		t.Logf("Failed to start the queue manager. rc=%d, err=%s", rc, out)
-		t.FailNow()
+		t.Fatalf("Failed to start the queue manager. rc=%d, err=%s", rc, out)
 	}
 
 	// Wait for the queue manager to come back up
@@ -282,12 +298,12 @@ func TestQMRestart(t *testing.T) {
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
 	getMetrics(t, port)
-
 	time.Sleep(15 * time.Second)
+
+	// Now actually get the metrics (after waiting for some to become available)
 	metrics = getMetrics(t, port)
 	if len(metrics) <= 0 {
-		t.Log("Expected some metrics to be returned before the restart but had none...")
-		t.FailNow()
+		t.Errorf("Expected some metrics to be returned after the restart but had none...")
 	}
 
 	// Stop the container cleanly
@@ -295,9 +311,97 @@ func TestQMRestart(t *testing.T) {
 }
 
 func TestValidValues(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
+	defer cleanContainer(t, cli, id)
+	// hostname := getIPAddress(t, cli, id)
+	port := getPort(t, cli, id, defaultMetricPort)
+	// Now the container is ready we prod the prometheus endpoint until it's up.
+	waitForMetricReady(t, port)
 
+	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
+	getMetrics(t, port)
+	time.Sleep(15 * time.Second)
+
+	// Now actually get the metrics (after waiting for some to become available)
+	metrics := getMetrics(t, port)
+	if len(metrics) <= 0 {
+		t.Fatal("Expected some metrics to be returned but had none...")
+	}
+
+	// Check that the values for each metric are valid numbers
+	// can be either int, float or exponential - all these can be parsed by ParseFloat function
+	for _, e := range metrics {
+		if _, err = strconv.ParseFloat(e.Value, 64); err != nil {
+			t.Errorf("Value (%s) for key (%s) is not a valid number", e.Value, e.Key)
+		}
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
 }
 
 func TestChangingValues(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{1414, defaultMetricPort})
+	defer cleanContainer(t, cli, id)
+	// hostname := getIPAddress(t, cli, id)
+	port := getPort(t, cli, id, defaultMetricPort)
+	// Now the container is ready we prod the prometheus endpoint until it's up.
+	waitForMetricReady(t, port)
 
+	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
+	getMetrics(t, port)
+	time.Sleep(15 * time.Second)
+
+	// Now actually get the metrics (after waiting for some to become available)
+	metrics := getMetrics(t, port)
+	if len(metrics) <= 0 {
+		t.Fatal("Expected some metrics to be returned but had none...")
+	}
+
+	// Check we have no FDC files to start
+	for _, e := range metrics {
+		if e.Key == "ibmmq_qmgr_mq_fdc_file_count" {
+			if e.Value != "0" {
+				t.Fatalf("Expected %s to have a value of 0 but was %s", e.Key, e.Value)
+			}
+		}
+	}
+
+	// Send invalid data to the MQ listener to generate a FDC
+	listener := fmt.Sprintf("localhost:%s", getPort(t, cli, id, 1414))
+	conn, err := net.Dial("tcp", listener)
+	if err != nil {
+		t.Fatalf("Could not connect to the listener - %v", err)
+	}
+	fmt.Fprintf(conn, "THIS WILL GENERATE A FDC!")
+	conn.Close()
+
+	// Now actually get the metrics (after waiting for some to become available)
+	time.Sleep(15 * time.Second)
+	metrics = getMetrics(t, port)
+	if len(metrics) <= 0 {
+		t.Fatal("Expected some metrics to be returned but had none...")
+	}
+
+	// Check that there is now 1 FDC file
+	for _, e := range metrics {
+		if e.Key == "ibmmq_qmgr_mq_fdc_file_count" {
+			if e.Value != "1" {
+				t.Fatalf("Expected %s to have a value of 1 but was %s", e.Key, e.Value)
+			}
+		}
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
 }
