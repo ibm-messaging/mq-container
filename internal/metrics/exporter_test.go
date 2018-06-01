@@ -25,7 +25,7 @@ import (
 
 func TestDescribe(t *testing.T) {
 
-	teardownTestCase := setupTestCase()
+	teardownTestCase := setupTestCase(false)
 	defer teardownTestCase()
 
 	ch := make(chan *prometheus.Desc)
@@ -39,7 +39,7 @@ func TestDescribe(t *testing.T) {
 		t.Errorf("Received unexpected collect request")
 	}
 
-	metrics := initialiseMetrics()
+	metrics, _ := initialiseMetrics(getTestLogger())
 	responseChannel <- metrics
 
 	select {
@@ -56,7 +56,7 @@ func TestDescribe(t *testing.T) {
 
 func TestCollect(t *testing.T) {
 
-	teardownTestCase := setupTestCase()
+	teardownTestCase := setupTestCase(false)
 	defer teardownTestCase()
 
 	exporter := newExporter("qmName")
@@ -75,8 +75,8 @@ func TestCollect(t *testing.T) {
 			t.Errorf("Received unexpected describe request")
 		}
 
-		populateTestMetrics(i)
-		metrics := initialiseMetrics()
+		populateTestMetrics(i, false)
+		metrics, _ := initialiseMetrics(getTestLogger())
 		updateMetrics(metrics)
 		responseChannel <- metrics
 

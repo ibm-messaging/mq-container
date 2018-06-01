@@ -16,19 +16,24 @@ limitations under the License.
 package metrics
 
 import (
+	"os"
 	"testing"
 
+	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 )
 
 func TestInitialiseMetrics(t *testing.T) {
 
-	teardownTestCase := setupTestCase()
+	teardownTestCase := setupTestCase(false)
 	defer teardownTestCase()
 
-	metrics := initialiseMetrics()
+	metrics, err := initialiseMetrics(getTestLogger())
 	metric, ok := metrics["ClassName/Type1Name/Element1Name"]
 
+	if err != nil {
+		t.Errorf("Unexpected error %s", err.Error())
+	}
 	if !ok {
 		t.Error("Expected metric not found in map")
 	} else {
@@ -55,12 +60,24 @@ func TestInitialiseMetrics(t *testing.T) {
 	}
 }
 
-func TestUpdateMetrics(t *testing.T) {
+func TestInitialiseMetrics_DuplicateKeys(t *testing.T) {
 
-	teardownTestCase := setupTestCase()
+	teardownTestCase := setupTestCase(true)
 	defer teardownTestCase()
 
-	metrics := initialiseMetrics()
+	_, err := initialiseMetrics(getTestLogger())
+
+	if err == nil {
+		t.Error("Expected duplicate keys error")
+	}
+}
+
+func TestUpdateMetrics(t *testing.T) {
+
+	teardownTestCase := setupTestCase(false)
+	defer teardownTestCase()
+
+	metrics, _ := initialiseMetrics(getTestLogger())
 	updateMetrics(metrics)
 
 	metric, _ := metrics["ClassName/Type1Name/Element1Name"]
@@ -90,7 +107,7 @@ func TestUpdateMetrics(t *testing.T) {
 
 func TestMakeKey(t *testing.T) {
 
-	teardownTestCase := setupTestCase()
+	teardownTestCase := setupTestCase(false)
 	defer teardownTestCase()
 
 	expected := "ClassName/Type1Name/Element1Name"
@@ -100,14 +117,14 @@ func TestMakeKey(t *testing.T) {
 	}
 }
 
-func setupTestCase() func() {
-	populateTestMetrics(1)
+func setupTestCase(duplicateKey bool) func() {
+	populateTestMetrics(1, duplicateKey)
 	return func() {
 		cleanTestMetrics()
 	}
 }
 
-func populateTestMetrics(testValue int) {
+func populateTestMetrics(testValue int, duplicateKey bool) {
 
 	metricClass := new(mqmetric.MonClass)
 	metricType1 := new(mqmetric.MonType)
@@ -135,6 +152,9 @@ func populateTestMetrics(testValue int) {
 	metricType1.Elements = make(map[int]*mqmetric.MonElement)
 	metricType2.Elements = make(map[int]*mqmetric.MonElement)
 	metricType1.Elements[0] = metricElement1
+	if duplicateKey {
+		metricType1.Elements[1] = metricElement1
+	}
 	metricType2.Elements[0] = metricElement2
 	metricClass.Types = make(map[int]*mqmetric.MonType)
 	metricClass.Types[0] = metricType1
@@ -145,4 +165,9 @@ func populateTestMetrics(testValue int) {
 
 func cleanTestMetrics() {
 	mqmetric.Metrics.Classes = make(map[int]*mqmetric.MonClass)
+}
+
+func getTestLogger() *logger.Logger {
+	log, _ := logger.NewLogger(os.Stdout, false, false, "test")
+	return log
 }

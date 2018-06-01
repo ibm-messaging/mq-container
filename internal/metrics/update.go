@@ -81,11 +81,12 @@ func processMetrics(log *logger.Logger, qmName string, wg *sync.WaitGroup) {
 				first = false
 				wg.Done()
 			}
-			metrics = initialiseMetrics()
+			metrics, _ = initialiseMetrics(log)
 		}
 
-		// now loop until something goes wrong
+		// Now loop until something goes wrong
 		for err == nil {
+
 			// Process publications of metric data
 			err = mqmetric.ProcessPublications()
 
@@ -100,19 +101,21 @@ func processMetrics(log *logger.Logger, qmName string, wg *sync.WaitGroup) {
 				log.Debugf("Metrics: No requests received within timeout period (%d seconds)", requestTimeout)
 			}
 		}
+		log.Errorf("Metrics Error: %s", err.Error())
 
 		// Close the connection
 		mqmetric.EndConnection()
 
-		//If we're told to keep runnign sleep for a bit before trying again
+		// If we're told to keep running sleep for a bit before trying again
 		time.Sleep(10 * time.Second)
 	}
 }
 
 // initialiseMetrics sets initial details for all available metrics
-func initialiseMetrics() map[string]*metricData {
+func initialiseMetrics(log *logger.Logger) (map[string]*metricData, error) {
 
 	metrics := make(map[string]*metricData)
+	validMetrics := true
 
 	for _, metricClass := range mqmetric.Metrics.Classes {
 		for _, metricType := range metricClass.Types {
@@ -123,12 +126,21 @@ func initialiseMetrics() map[string]*metricData {
 						description: metricElement.Description,
 					}
 					key := makeKey(metricElement)
-					metrics[key] = &metric
+					if _, exists := metrics[key]; !exists {
+						metrics[key] = &metric
+					} else {
+						log.Errorf("Metrics Error: Found duplicate metric key %s", key)
+						validMetrics = false
+					}
 				}
 			}
 		}
 	}
-	return metrics
+
+	if !validMetrics {
+		return metrics, fmt.Errorf("Invalid metrics data - found duplicate metric keys")
+	}
+	return metrics, nil
 }
 
 // updateMetrics updates values for all available metrics
