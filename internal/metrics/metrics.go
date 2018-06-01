@@ -59,6 +59,8 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 		}
 	}()
 
+	log.Println("Starting metrics gathering")
+
 	// Start processing metrics
 	wg.Add(1)
 	go processMetrics(log, qmName, &wg)
