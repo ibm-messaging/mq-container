@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -103,7 +104,13 @@ func TestSecurityVulnerabilities(t *testing.T) {
 		t.Skip("Skipping test because container is not Ubuntu-based")
 	}
 	// Override the entrypoint to make "apt" only receive security updates, then check for updates
-	rc, log := runContainerOneShot(t, cli, "bash", "-c", "source /etc/os-release && echo \"deb http://security.ubuntu.com/ubuntu/ ${VERSION_CODENAME}-security main restricted\" > /etc/apt/sources.list && apt-get update 2>&1 >/dev/null && apt-get --simulate -qq upgrade")
+	var url string
+	if runtime.GOARCH == "amd64" {
+		url = "http://security.ubuntu.com/ubuntu/"
+	} else {
+		url = "http://ports.ubuntu.com/ubuntu-ports/"
+	}
+	rc, log := runContainerOneShot(t, cli, "bash", "-c", "source /etc/os-release && echo \"deb "+url+" ${VERSION_CODENAME}-security main restricted\" > /etc/apt/sources.list && apt-get update 2>&1 >/dev/null && apt-get --simulate -qq upgrade")
 	if rc != 0 {
 		t.Fatalf("Expected success, got %v", rc)
 	}
