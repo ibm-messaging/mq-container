@@ -23,6 +23,7 @@ import (
 	"io"
 	"os"
 	"os/user"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -40,7 +41,7 @@ type Logger struct {
 	debug       bool
 	json        bool
 	processName string
-	pid         int
+	pid         string
 	serverName  string
 	host        string
 	user        *user.User
@@ -62,7 +63,7 @@ func NewLogger(writer io.Writer, debug bool, json bool, serverName string) (*Log
 		debug:       debug,
 		json:        json,
 		processName: os.Args[0],
-		pid:         os.Getpid(),
+		pid:         strconv.Itoa(os.Getpid()),
 		serverName:  serverName,
 		host:        hostname,
 		user:        user,
