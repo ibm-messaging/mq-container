@@ -17,18 +17,14 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 )
 
 type mqmetric struct {
@@ -42,9 +38,9 @@ const defaultMetricPort = 9157
 const defaultMQNamespace = "ibmmq"
 const defaultMetricQMName = "qm1"
 
-func getMetrics(t *testing.T, port int) []mqmetric {
+func getMetrics(t *testing.T, port string) []mqmetric {
 	returned := []mqmetric{}
-	urlToUse := fmt.Sprintf("http://localhost:%v%v", port, defaultMetricURL)
+	urlToUse := fmt.Sprintf("http://localhost:%s%s", port, defaultMetricURL)
 	resp, err := http.Get(urlToUse)
 	if err != nil {
 		t.Fatalf("Error from HTTP GET for metrics: %v", err)
@@ -135,10 +131,10 @@ func convertMetricLineToMetric(input string) (string, string, map[string]string,
 	return key, value, labelMap, nil
 }
 
-func waitForMetricReady(t *testing.T, port int) {
+func waitForMetricReady(t *testing.T, port string) {
 	timeout := 12 // 12 * 5 = 1 minute
 	for i := 0; i < timeout; i++ {
-		urlToUse := fmt.Sprintf("http://localhost:%v", port)
+		urlToUse := fmt.Sprintf("http://localhost:%s", port)
 		resp, err := http.Get(urlToUse)
 		if err == nil {
 			resp.Body.Close()
@@ -148,20 +144,6 @@ func waitForMetricReady(t *testing.T, port int) {
 		time.Sleep(time.Second * 10)
 	}
 	t.Fatalf("Metric endpoint failed to startup in timely manner")
-}
-
-func getMetricPort(t *testing.T, cli *client.Client, ID string) int {
-	i, err := cli.ContainerInspect(context.Background(), ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	port := nat.Port(fmt.Sprintf("%v/tcp", defaultMetricPort))
-	portString := i.NetworkSettings.Ports[port][0].HostPort
-	p, err := strconv.Atoi(portString)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return p
 }
 
 func metricsContainerConfig() *container.Config {
