@@ -416,8 +416,8 @@ func TestReadiness(t *testing.T) {
 				t.Fatalf("Runmqsc returned %v with error %v. chkmqready returned %v when MQSC had not finished", queueCheckRC, r.FindString(queueCheckOut), readyRC)
 			} else {
 				// chkmqready says OK, and the last queue exists, so return
-				_, output := execContainer(t, cli, id, "root", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"})
-				t.Log(output)
+				_, runmqsc := execContainer(t, cli, id, "root", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"})
+				t.Log(runmqsc)
 				return
 			}
 		}
