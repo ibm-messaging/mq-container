@@ -25,6 +25,7 @@ import (
 	"io"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -104,7 +105,13 @@ func TestSecurityVulnerabilities(t *testing.T) {
 		t.Skip("Skipping test because container is not Ubuntu-based")
 	}
 	// Override the entrypoint to make "apt" only receive security updates, then check for updates
-	rc, log := runContainerOneShot(t, cli, "bash", "-c", "source /etc/os-release && echo \"deb http://security.ubuntu.com/ubuntu/ ${VERSION_CODENAME}-security main restricted\" > /etc/apt/sources.list && apt-get update 2>&1 >/dev/null && apt-get --simulate -qq upgrade")
+	var url string
+	if runtime.GOARCH == "amd64" {
+		url = "http://security.ubuntu.com/ubuntu/"
+	} else {
+		url = "http://ports.ubuntu.com/ubuntu-ports/"
+	}
+	rc, log := runContainerOneShot(t, cli, "bash", "-c", "source /etc/os-release && echo \"deb "+url+" ${VERSION_CODENAME}-security main restricted\" > /etc/apt/sources.list && apt-get update 2>&1 >/dev/null && apt-get --simulate -qq upgrade")
 	if rc != 0 {
 		t.Fatalf("Expected success, got %v", rc)
 	}
@@ -409,8 +416,8 @@ func TestReadiness(t *testing.T) {
 				t.Fatalf("Runmqsc returned %v with error %v. chkmqready returned %v when MQSC had not finished", queueCheckRC, r.FindString(queueCheckOut), readyRC)
 			} else {
 				// chkmqready says OK, and the last queue exists, so return
-				_, runmqsc := execContainer(t, cli, id, "root", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"})
-				t.Log(runmqsc)
+				_, output := execContainer(t, cli, id, "root", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"})
+				t.Log(output)
 				return
 			}
 		}
@@ -476,9 +483,11 @@ func TestErrorLogRotation(t *testing.T) {
 	for {
 		execContainer(t, cli, id, "fred", []string{"bash", "-c", "/opt/mqm/samp/bin/amqsput FAKE"})
 
-		_, derpaderp := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "wc -c < " + filepath.Join(dir, "AMQERR02.json")})
-		amqerr02size, _ := strconv.Atoi(derpaderp)
-
+		_, atoiStr := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "wc -c < " + filepath.Join(dir, "AMQERR02.json")})
+		amqerr02size, err := strconv.Atoi(atoiStr)
+		if err != nil {
+			t.Fatal(err)
+		}
 		if amqerr02size > 0 {
 			// We've done enough to cause log rotation
 			break

@@ -325,9 +325,6 @@ rerun:
 		Detach: false,
 		Tty:    false,
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
 	// Wait for the command to finish
 	var exitcode int
 	for {
