@@ -50,7 +50,7 @@ func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls
 			TLSClientConfig: tlsConfig,
 		},
 	}
-	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getWebPort(t, cli, ID))
+	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getPort(t, cli, ID, 9443))
 	for {
 		req, err := http.NewRequest("GET", url, nil)
 		req.SetBasicAuth("admin", devAdminPassword)
@@ -149,7 +149,7 @@ func testREST(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config
 		},
 	}
 
-	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getWebPort(t, cli, ID))
+	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getPort(t, cli, ID, 9443))
 	req, err := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth("admin", devAdminPassword)
 	resp, err := httpClient.Do(req)
