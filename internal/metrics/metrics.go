@@ -69,7 +69,12 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 	wg.Wait()
 
 	// Register metrics
-	prometheus.MustRegister(newExporter(qmName))
+	exporter := newExporter(qmName, log)
+	err := prometheus.Register(exporter)
+	if err != nil {
+		return fmt.Errorf("Failed to register metrics: %v", err)
+	}
+	defer prometheus.Unregister(exporter)
 
 	// Setup HTTP server to handle requests from Prometheus
 	http.Handle("/metrics", prometheus.Handler())
@@ -78,7 +83,7 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 		w.Write([]byte("Status: METRICS ACTIVE"))
 	})
 
-	err := http.ListenAndServe(":"+defaultPort, nil)
+	err = http.ListenAndServe(":"+defaultPort, nil)
 	if err != nil {
 		return fmt.Errorf("Failed to handle metrics request: %v", err)
 	}

@@ -18,6 +18,7 @@ limitations under the License.
 package metrics
 
 import (
+	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -33,13 +34,15 @@ type exporter struct {
 	qmName       string
 	gaugeMap     map[string]*prometheus.GaugeVec
 	firstCollect bool
+	log          *logger.Logger
 }
 
-func newExporter(qmName string) *exporter {
+func newExporter(qmName string, log *logger.Logger) *exporter {
 	return &exporter{
 		qmName:       qmName,
 		gaugeMap:     make(map[string]*prometheus.GaugeVec),
 		firstCollect: true,
+		log:          log,
 	}
 }
 
@@ -76,10 +79,18 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		// - Skip on first collect to avoid build-up of accumulated values
 		if !e.firstCollect {
 			for label, value := range metric.values {
+				var err error
+				var gauge prometheus.Gauge
+
 				if label == qmgrLabelValue {
-					gaugeVec.WithLabelValues(e.qmName).Set(value)
+					gauge, err = gaugeVec.GetMetricWithLabelValues(e.qmName)
 				} else {
-					gaugeVec.WithLabelValues(label, e.qmName).Set(value)
+					gauge, err = gaugeVec.GetMetricWithLabelValues(label, e.qmName)
+				}
+				if err == nil {
+					gauge.Set(value)
+				} else {
+					e.log.Errorf("Metrics Error: %s", err.Error())
 				}
 			}
 		}

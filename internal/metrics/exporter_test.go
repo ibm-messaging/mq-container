@@ -27,10 +27,11 @@ func TestDescribe(t *testing.T) {
 
 	teardownTestCase := setupTestCase(false)
 	defer teardownTestCase()
+	log := getTestLogger()
 
 	ch := make(chan *prometheus.Desc)
 	go func() {
-		exporter := newExporter("qmName")
+		exporter := newExporter("qmName", log)
 		exporter.Describe(ch)
 	}()
 
@@ -39,7 +40,7 @@ func TestDescribe(t *testing.T) {
 		t.Errorf("Received unexpected collect request")
 	}
 
-	metrics, _ := initialiseMetrics(getTestLogger())
+	metrics, _ := initialiseMetrics(log)
 	responseChannel <- metrics
 
 	select {
@@ -58,8 +59,9 @@ func TestCollect(t *testing.T) {
 
 	teardownTestCase := setupTestCase(false)
 	defer teardownTestCase()
+	log := getTestLogger()
 
-	exporter := newExporter("qmName")
+	exporter := newExporter("qmName", log)
 	exporter.gaugeMap["ClassName/Type1Name/Element1Name"] = createGaugeVec("Element1Name", "Element1Description", false)
 
 	for i := 1; i <= 3; i++ {
@@ -76,7 +78,7 @@ func TestCollect(t *testing.T) {
 		}
 
 		populateTestMetrics(i, false)
-		metrics, _ := initialiseMetrics(getTestLogger())
+		metrics, _ := initialiseMetrics(log)
 		updateMetrics(metrics)
 		responseChannel <- metrics
 
