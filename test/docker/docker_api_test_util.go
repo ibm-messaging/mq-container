@@ -564,12 +564,13 @@ func copyFromContainer(t *testing.T, cli *client.Client, id string, file string)
 	return b
 }
 
-func getWebPort(t *testing.T, cli *client.Client, ID string) string {
+func getPort(t *testing.T, cli *client.Client, ID string, port int) string {
 	i, err := cli.ContainerInspect(context.Background(), ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return i.NetworkSettings.Ports["9443/tcp"][0].HostPort
+	portNat := nat.Port(fmt.Sprintf("%d/tcp", port))
+	return i.NetworkSettings.Ports[portNat][0].HostPort
 }
 
 func countLines(t *testing.T, r io.Reader) int {
