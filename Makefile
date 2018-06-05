@@ -224,7 +224,7 @@ build-devserver: MQ_PACKAGES=ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq
 build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER_BASE),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
-	docker build --tag $(MQ_IMAGE_DEVSERVER) --file incubating/mqadvanced-server-dev/Dockerfile .
+	docker build --build-arg BASE_IMAGE=$(MQ_IMAGE_DEVSERVER_BASE) --tag $(MQ_IMAGE_DEVSERVER) --file incubating/mqadvanced-server-dev/Dockerfile .
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: docker-version
