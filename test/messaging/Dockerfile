@@ -21,14 +21,26 @@ ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
 # (and therefore gets cached by Docker)
 ENV GRADLE_USER_HOME=/home/gradle/gradle
 RUN mkdir -p $GRADLE_USER_HOME
-COPY --chown=gradle build.gradle /app/
+COPY build.gradle /app/
 WORKDIR /app
+# switch back to root temporarily to allow editing of file ownership
+USER root
+RUN chown -R gradle:gradle /app
+USER gradle
+
 # Download dependencies separately, so Docker caches them
 RUN gradle download
 # Copy source
-COPY --chown=gradle src /app/src
+COPY src /app/src
 # Run the main build
-RUN gradle install
+
+# switch back to root temporarily to allow editing of file ownership
+USER root
+RUN chown -R gradle:gradle /app 
+USER gradle
+
+RUN  gradle install 
+
 
 ###############################################################################
 # Application runtime (JRE only, no build environment)
