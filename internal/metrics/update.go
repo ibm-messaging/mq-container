@@ -20,7 +20,6 @@ package metrics
 import (
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ibm-messaging/mq-container/internal/logger"
@@ -33,6 +32,8 @@ const (
 )
 
 var (
+	startChannel    = make(chan bool)
+	stopChannel     = make(chan bool)
 	requestChannel  = make(chan bool)
 	responseChannel = make(chan map[string]*metricData)
 )
@@ -44,10 +45,66 @@ type metricData struct {
 	values      map[string]float64
 }
 
-var keepRunning = true
-var first = true
+// processMetrics processes publications of metric data and handles describe/collect/stop requests
+func processMetrics(log *logger.Logger, qmName string) {
 
+	var err error
+	var firstConnect = true
+	var metrics map[string]*metricData
+
+	for {
+		// Connect to queue manager and discover available metrics
+		err = doConnect(qmName)
+		if err == nil {
+			if firstConnect {
+				firstConnect = false
+				startChannel <- true
+			}
+			metrics, _ = initialiseMetrics(log)
+		}
+
+		// Now loop until something goes wrong
+		for err == nil {
+
+			// Process publications of metric data
+			err = mqmetric.ProcessPublications()
+
+			// Handle describe/collect/stop requests
+			if err == nil {
+				select {
+				case collect := <-requestChannel:
+					if collect {
+						updateMetrics(metrics)
+					}
+					responseChannel <- metrics
+				case <-stopChannel:
+					log.Println("Stopping metrics gathering")
+					mqmetric.EndConnection()
+					return
+				case <-time.After(requestTimeout * time.Second):
+					log.Debugf("Metrics: No requests received within timeout period (%d seconds)", requestTimeout)
+				}
+			}
+		}
+		log.Errorf("Metrics Error: %s", err.Error())
+
+		// Close the connection
+		mqmetric.EndConnection()
+
+		// Handle stop requests
+		select {
+		case <-stopChannel:
+			log.Println("Stopping metrics gathering")
+			return
+		case <-time.After(requestTimeout * time.Second):
+			log.Println("Retrying metrics gathering")
+		}
+	}
+}
+
+// doConnect connects to the queue manager and discovers available metrics
 func doConnect(qmName string) error {
+
 	// Set connection configuration
 	var connConfig mqmetric.ConnectionConfig
 	connConfig.ClientMode = false
@@ -67,48 +124,6 @@ func doConnect(qmName string) error {
 	}
 
 	return nil
-}
-
-// processMetrics processes publications of metric data and handles describe/collect requests
-func processMetrics(log *logger.Logger, qmName string, wg *sync.WaitGroup) {
-	var err error
-	var metrics map[string]*metricData
-
-	for keepRunning {
-		err = doConnect(qmName)
-		if err == nil {
-			if first {
-				first = false
-				wg.Done()
-			}
-			metrics, _ = initialiseMetrics(log)
-		}
-
-		// Now loop until something goes wrong
-		for err == nil {
-
-			// Process publications of metric data
-			err = mqmetric.ProcessPublications()
-
-			// Handle describe/collect requests
-			select {
-			case collect := <-requestChannel:
-				if collect {
-					updateMetrics(metrics)
-				}
-				responseChannel <- metrics
-			case <-time.After(requestTimeout * time.Second):
-				log.Debugf("Metrics: No requests received within timeout period (%d seconds)", requestTimeout)
-			}
-		}
-		log.Errorf("Metrics Error: %s", err.Error())
-
-		// Close the connection
-		mqmetric.EndConnection()
-
-		// If we're told to keep running sleep for a bit before trying again
-		time.Sleep(10 * time.Second)
-	}
 }
 
 // initialiseMetrics sets initial details for all available metrics

@@ -20,6 +20,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"golang.org/x/sys/unix"
 )
 
@@ -42,6 +43,7 @@ func signalHandler(qmgr string) chan int {
 				log.Printf("Signal received: %v", sig)
 				signal.Stop(reapSignals)
 				signal.Stop(stopSignals)
+				go metrics.StopMetricsGathering()
 				stopQueueManager(qmgr)
 				// One final reap
 				reapZombies()
