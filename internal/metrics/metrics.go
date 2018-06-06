@@ -18,9 +18,9 @@ limitations under the License.
 package metrics
 
 import (
+	"context"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/ibm-messaging/mq-container/internal/logger"
@@ -29,29 +29,27 @@ import (
 
 const (
 	defaultPort = "9157"
-	retryCount  = 3
-	retryWait   = 5
+)
+
+var (
+	metricsEnabled = false
+	metricsServer  = &http.Server{Addr: ":" + defaultPort}
 )
 
 // GatherMetrics gathers metrics for the queue manager
 func GatherMetrics(qmName string, log *logger.Logger) {
-	for i := 0; i <= retryCount; i++ {
-		err := startMetricsGathering(qmName, log)
-		if err != nil {
-			log.Errorf("Metrics Error: %s", err.Error())
-		}
-		if i != retryCount {
-			log.Printf("Waiting %d seconds before retrying metrics gathering", retryWait)
-			time.Sleep(retryWait * time.Second)
-		} else {
-			log.Println("Unable to gather metrics - metrics are now disabled")
-		}
+
+	metricsEnabled = true
+
+	err := startMetricsGathering(qmName, log)
+	if err != nil {
+		log.Errorf("Metrics Error: %s", err.Error())
+		StopMetricsGathering()
 	}
 }
 
 // startMetricsGathering starts gathering metrics for the queue manager
 func startMetricsGathering(qmName string, log *logger.Logger) error {
-	var wg sync.WaitGroup
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -62,19 +60,17 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 	log.Println("Starting metrics gathering")
 
 	// Start processing metrics
-	wg.Add(1)
-	go processMetrics(log, qmName, &wg)
+	go processMetrics(log, qmName)
 
-	// Wait for metrics to be ready before starting the prometheus handler
-	wg.Wait()
+	// Wait for metrics to be ready before starting the Prometheus handler
+	<-startChannel
 
 	// Register metrics
-	exporter := newExporter(qmName, log)
-	err := prometheus.Register(exporter)
+	metricsExporter := newExporter(qmName, log)
+	err := prometheus.Register(metricsExporter)
 	if err != nil {
 		return fmt.Errorf("Failed to register metrics: %v", err)
 	}
-	defer prometheus.Unregister(exporter)
 
 	// Setup HTTP server to handle requests from Prometheus
 	http.Handle("/metrics", prometheus.Handler())
@@ -83,10 +79,28 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 		w.Write([]byte("Status: METRICS ACTIVE"))
 	})
 
-	err = http.ListenAndServe(":"+defaultPort, nil)
-	if err != nil {
-		return fmt.Errorf("Failed to handle metrics request: %v", err)
-	}
+	go func() {
+		err = metricsServer.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			log.Errorf("Metrics Error: Failed to handle metrics request: %v", err)
+			StopMetricsGathering()
+		}
+	}()
 
 	return nil
+}
+
+// StopMetricsGathering stops gathering metrics for the queue manager
+func StopMetricsGathering() {
+
+	if metricsEnabled {
+
+		// Stop processing metrics
+		stopChannel <- true
+
+		// Shutdown HTTP server
+		timeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		metricsServer.Shutdown(timeout)
+	}
 }
