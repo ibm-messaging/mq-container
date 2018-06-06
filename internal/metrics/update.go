@@ -33,7 +33,7 @@ const (
 
 var (
 	startChannel    = make(chan bool)
-	stopChannel     = make(chan bool)
+	stopChannel     = make(chan bool, 2)
 	requestChannel  = make(chan bool)
 	responseChannel = make(chan map[string]*metricData)
 )
@@ -67,6 +67,7 @@ func processMetrics(log *logger.Logger, qmName string) {
 		for err == nil {
 
 			// Process publications of metric data
+			// TODO: If we have a large number of metrics to process, then we could be blocked from responding to stop requests
 			err = mqmetric.ProcessPublications()
 
 			// Handle describe/collect/stop requests
