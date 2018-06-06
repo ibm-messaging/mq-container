@@ -13,38 +13,23 @@
 # limitations under the License.
 
 ###############################################################################
-# Application build environment (Gradle)
+# Application build environment (Maven)
 ###############################################################################
-FROM gradle as builder
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
-# Change where Gradle stores its cache, so that it's not under a volume
-# (and therefore gets cached by Docker)
-ENV GRADLE_USER_HOME=/home/gradle/gradle
-RUN mkdir -p $GRADLE_USER_HOME
-COPY build.gradle /app/
-WORKDIR /app
-# switch back to root temporarily to allow editing of file ownership
-USER root
-RUN chown -R gradle:gradle /app
-USER gradle
-
+FROM maven:3-ibmjava as builder
+COPY pom.xml /usr/src/mymaven/
+WORKDIR /usr/src/mymaven
 # Download dependencies separately, so Docker caches them
-RUN gradle download
+RUN mvn dependency:go-offline install
 # Copy source
-COPY src /app/src
+COPY src /usr/src/mymaven/src
 # Run the main build
-
-# switch back to root temporarily to allow editing of file ownership
-USER root
-RUN chown -R gradle:gradle /app 
-USER gradle
-
-RUN  gradle install 
-
+RUN mvn --offline install
+RUN find /usr/src/mymaven
 
 ###############################################################################
 # Application runtime (JRE only, no build environment)
 ###############################################################################
 FROM ibmjava:sfj
-COPY --from=builder /app/lib/*.jar /opt/app/
+COPY --from=builder /usr/src/mymaven/target/*.jar /opt/app/
+COPY --from=builder /usr/src/mymaven/target/lib/*.jar /opt/app/
 ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]
