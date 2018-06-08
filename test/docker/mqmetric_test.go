@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -54,7 +53,6 @@ func TestGoldenPathMetric(t *testing.T) {
 
 func TestMetricNames(t *testing.T) {
 	t.Parallel()
-	approvedSuffixes := []string{"bytes", "seconds", "percentage", "count", "total"}
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -71,23 +69,25 @@ func TestMetricNames(t *testing.T) {
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
+	// NB: There are currently a total of 93 metrics, but 3 do not generate values (based on the queue manager configuration)
 	metrics := getMetrics(t, port)
-	if len(metrics) <= 0 {
-		t.Error("Expected some metrics to be returned but had none...")
+	if len(metrics) != 90 {
+		t.Errorf("Expected 90 metrics to be returned, received %d", len(metrics))
 	}
 
-	// Check all the metrics have approved suffixes
+	// Check all the metrics have the correct names
+	names := metricNames()
 	for _, metric := range metrics {
 		ok := false
-		for _, e := range approvedSuffixes {
-			if strings.HasSuffix(metric.Key, e) {
+		for _, name := range names {
+			if metric.Key == "ibmmq_qmgr_"+name {
 				ok = true
 				break
 			}
 		}
 
 		if !ok {
-			t.Errorf("Metric '%s' does not have an approved suffix", metric.Key)
+			t.Errorf("Metric '%s' does not have the expected name", metric.Key)
 		}
 	}
 
