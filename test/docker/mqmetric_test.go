@@ -387,7 +387,7 @@ func TestChangingValues(t *testing.T) {
 	conn.Close()
 
 	// Now actually get the metrics (after waiting for some to become available)
-	time.Sleep(15 * time.Second)
+	time.Sleep(25 * time.Second)
 	metrics = getMetrics(t, port)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned but had none...")
