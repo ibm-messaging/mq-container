@@ -69,14 +69,13 @@ func TestMetricNames(t *testing.T) {
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	// NB: There are currently a total of 93 metrics, but 3 do not generate values (based on the queue manager configuration)
 	metrics := getMetrics(t, port)
-	if len(metrics) != 90 {
-		t.Errorf("Expected 90 metrics to be returned, received %d", len(metrics))
+	names := metricNames()
+	if len(metrics) != len(names) {
+		t.Errorf("Expected %d metrics to be returned, received %d", len(names), len(metrics))
 	}
 
 	// Check all the metrics have the correct names
-	names := metricNames()
 	for _, metric := range metrics {
 		ok := false
 		for _, name := range names {

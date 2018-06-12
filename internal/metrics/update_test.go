@@ -141,25 +141,6 @@ func TestMakeKey(t *testing.T) {
 	}
 }
 
-func TestGenerateMetricNamesMap(t *testing.T) {
-
-	metricNamesMap := generateMetricNamesMap()
-
-	if len(metricNamesMap) != 93 {
-		t.Errorf("Expected mapping-size=%d; actual %d", 93, len(metricNamesMap))
-	}
-
-	actual, ok := metricNamesMap[testKey1]
-
-	if !ok {
-		t.Errorf("No metric name mapping found for %s", testKey1)
-	} else {
-		if actual != testElement1Name {
-			t.Errorf("Expected metric name=%s; actual %s", testElement1Name, actual)
-		}
-	}
-}
-
 func setupTestCase(duplicateKey bool) func() {
 	populateTestMetrics(1, duplicateKey)
 	return func() {

@@ -158,6 +158,11 @@ func metricsContainerConfig() *container.Config {
 
 func metricNames() []string {
 
+	// NB: There are currently a total of 93 metrics, but the following 3 do not generate values (based on the queue manager configuration)
+	// - log_occupied_by_reusable_extents_bytes
+	// - log_occupied_by_extents_waiting_to_be_archived_bytes
+	// - log_required_for_media_recovery_bytes
+
 	names := []string{
 		"cpu_load_five_minute_average_percentage",
 		"cpu_load_fifteen_minute_average_percentage",
@@ -176,15 +181,12 @@ func metricNames() []string {
 		"mq_fdc_file_count",
 		"queue_manager_file_system_in_use_bytes",
 		"queue_manager_file_system_free_space_percentage",
-		"log_occupied_by_reusable_extents_bytes",
 		"log_write_size_bytes",
 		"log_in_use_bytes",
 		"log_logical_written_bytes",
 		"log_write_latency_seconds",
-		"log_required_for_media_recovery_bytes",
 		"log_current_primary_space_in_use_percentage",
 		"log_workload_primary_space_utilization_percentage",
-		"log_occupied_by_extents_waiting_to_be_archived_bytes",
 		"log_max_bytes",
 		"log_file_system_in_use_bytes",
 		"log_file_system_max_bytes",
