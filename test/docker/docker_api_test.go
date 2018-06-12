@@ -293,9 +293,9 @@ func TestVolumeUnmount(t *testing.T) {
 	defer cleanContainer(t, cli, ctr.ID)
 	waitForReady(t, cli, ctr.ID)
 	// Unmount the volume as root
-	rc, _ := execContainer(t, cli, ctr.ID, "root", []string{"umount", "-l", "-f", "/mnt/mqm"})
+	rc, out := execContainer(t, cli, ctr.ID, "root", []string{"umount", "-l", "-f", "/mnt/mqm"})
 	if rc != 0 {
-		t.Fatalf("Expected umount to work with rc=0, got %v", rc)
+		t.Fatalf("Expected umount to work with rc=0, got %v. Output was: %s", rc, out)
 	}
 	time.Sleep(3 * time.Second)
 	rc, _ = execContainer(t, cli, ctr.ID, "mqm", []string{"chkmqhealthy"})
