@@ -329,9 +329,9 @@ func TestVolumeUnmount(t *testing.T) {
 	defer cleanContainer(t, cli, ctr.ID)
 	waitForReady(t, cli, ctr.ID)
 	// Unmount the volume as root
-	rc, _ := execContainer(t, cli, ctr.ID, "root", []string{"umount", "-l", "-f", "/mnt/mqm"})
+	rc, out := execContainer(t, cli, ctr.ID, "root", []string{"umount", "-l", "-f", "/mnt/mqm"})
 	if rc != 0 {
-		t.Fatalf("Expected umount to work with rc=0, got %v", rc)
+		t.Fatalf("Expected umount to work with rc=0, got %v. Output was: %s", rc, out)
 	}
 	time.Sleep(3 * time.Second)
 	rc, _ = execContainer(t, cli, ctr.ID, "mqm", []string{"chkmqhealthy"})
@@ -366,7 +366,9 @@ func TestZombies(t *testing.T) {
 	// will be adopted by PID 1, and should then be reaped when they die.
 	_, out := execContainer(t, cli, id, "mqm", []string{"pkill", "--signal", "kill", "-c", "amqzxma0"})
 	if out == "0" {
-		t.Fatalf("Expected pkill to kill a process, got %v", out)
+		t.Log("Failed to kill process 'amqzxma0'")
+		_, out := execContainer(t, cli, id, "root", []string{"ps", "-lA"})
+		t.Fatalf("Here is a list of currently running processes:\n%s", out)
 	}
 	time.Sleep(3 * time.Second)
 	_, out = execContainer(t, cli, id, "mqm", []string{"bash", "-c", "ps -lA | grep '^. Z'"})
