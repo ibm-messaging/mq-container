@@ -132,20 +132,34 @@ func initialiseMetrics(log *logger.Logger) (map[string]*metricData, error) {
 
 	metrics := make(map[string]*metricData)
 	validMetrics := true
+	metricNamesMap := generateMetricNamesMap()
 
 	for _, metricClass := range mqmetric.Metrics.Classes {
 		for _, metricType := range metricClass.Types {
 			if !strings.Contains(metricType.ObjectTopic, "%s") {
 				for _, metricElement := range metricType.Elements {
-					metric := metricData{
-						name:        metricElement.MetricName,
-						description: metricElement.Description,
-					}
+
+					// Get unique metric key
 					key := makeKey(metricElement)
-					if _, exists := metrics[key]; !exists {
-						metrics[key] = &metric
+
+					// Get metric name from mapping
+					if metricName, found := metricNamesMap[key]; found {
+
+						// Set metric details
+						metric := metricData{
+							name:        metricName,
+							description: metricElement.Description,
+						}
+
+						// Add metric
+						if _, exists := metrics[key]; !exists {
+							metrics[key] = &metric
+						} else {
+							log.Errorf("Metrics Error: Found duplicate metric key %s", key)
+							validMetrics = false
+						}
 					} else {
-						log.Errorf("Metrics Error: Found duplicate metric key %s", key)
+						log.Errorf("Metrics Error: Skipping metric, unexpected key %s", key)
 						validMetrics = false
 					}
 				}
@@ -154,7 +168,7 @@ func initialiseMetrics(log *logger.Logger) (map[string]*metricData, error) {
 	}
 
 	if !validMetrics {
-		return metrics, fmt.Errorf("Invalid metrics data - found duplicate metric keys")
+		return metrics, fmt.Errorf("Invalid metrics data")
 	}
 	return metrics, nil
 }
@@ -167,14 +181,20 @@ func updateMetrics(metrics map[string]*metricData) {
 			if !strings.Contains(metricType.ObjectTopic, "%s") {
 				for _, metricElement := range metricType.Elements {
 
-					// Clear existing metric values
-					metric := metrics[makeKey(metricElement)]
-					metric.values = make(map[string]float64)
+					// Unexpected metric elements (with no defined mapping) are handled in 'initialiseMetrics'
+					// - if any exist, they are logged as errors and skipped (they are not added to the metrics map)
+					// Therefore we can ignore handling any unexpected metric elements found here
+					// - this avoids us logging excessive errors, as this function is called frequently
+					metric, ok := metrics[makeKey(metricElement)]
+					if ok {
+						// Clear existing metric values
+						metric.values = make(map[string]float64)
 
-					// Update metric with cached values of publication data
-					for label, value := range metricElement.Values {
-						normalisedValue := mqmetric.Normalise(metricElement, label, value)
-						metric.values[label] = normalisedValue
+						// Update metric with cached values of publication data
+						for label, value := range metricElement.Values {
+							normalisedValue := mqmetric.Normalise(metricElement, label, value)
+							metric.values[label] = normalisedValue
+						}
 					}
 
 					// Reset cached values of publication data for this metric
@@ -187,5 +207,5 @@ func updateMetrics(metrics map[string]*metricData) {
 
 // makeKey builds a unique key for each metric
 func makeKey(metricElement *mqmetric.MonElement) string {
-	return metricElement.Parent.Parent.Name + "/" + metricElement.Parent.Name + "/" + metricElement.MetricName
+	return metricElement.Parent.Parent.Name + "/" + metricElement.Parent.Name + "/" + metricElement.Description
 }

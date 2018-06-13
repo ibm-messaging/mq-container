@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -54,7 +53,6 @@ func TestGoldenPathMetric(t *testing.T) {
 
 func TestMetricNames(t *testing.T) {
 	t.Parallel()
-	approvedSuffixes := []string{"bytes", "seconds", "percentage", "count", "total"}
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -72,22 +70,23 @@ func TestMetricNames(t *testing.T) {
 
 	// Now actually get the metrics (after waiting for some to become available)
 	metrics := getMetrics(t, port)
-	if len(metrics) <= 0 {
-		t.Error("Expected some metrics to be returned but had none...")
+	names := metricNames()
+	if len(metrics) != len(names) {
+		t.Errorf("Expected %d metrics to be returned, received %d", len(names), len(metrics))
 	}
 
-	// Check all the metrics have approved suffixes
+	// Check all the metrics have the correct names
 	for _, metric := range metrics {
 		ok := false
-		for _, e := range approvedSuffixes {
-			if strings.HasSuffix(metric.Key, e) {
+		for _, name := range names {
+			if metric.Key == "ibmmq_qmgr_"+name {
 				ok = true
 				break
 			}
 		}
 
 		if !ok {
-			t.Errorf("Metric '%s' does not have an approved suffix", metric.Key)
+			t.Errorf("Metric '%s' does not have the expected name", metric.Key)
 		}
 	}
 
@@ -387,7 +386,7 @@ func TestChangingValues(t *testing.T) {
 	conn.Close()
 
 	// Now actually get the metrics (after waiting for some to become available)
-	time.Sleep(15 * time.Second)
+	time.Sleep(25 * time.Second)
 	metrics = getMetrics(t, port)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned but had none...")

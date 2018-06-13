@@ -23,13 +23,24 @@ import (
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 )
 
+const (
+	testClassName           = "CPU"
+	testTypeName            = "SystemSummary"
+	testElement1Name        = "cpu_load_five_minute_average_percentage"
+	testElement2Name        = "cpu_load_fifteen_minute_average_percentage"
+	testElement1Description = "CPU load - five minute average"
+	testElement2Description = "CPU load - fifteen minute average"
+	testKey1                = testClassName + "/" + testTypeName + "/" + testElement1Description
+	testKey2                = testClassName + "/" + testTypeName + "/" + testElement2Description
+)
+
 func TestInitialiseMetrics(t *testing.T) {
 
 	teardownTestCase := setupTestCase(false)
 	defer teardownTestCase()
 
 	metrics, err := initialiseMetrics(getTestLogger())
-	metric, ok := metrics["ClassName/Type1Name/Element1Name"]
+	metric, ok := metrics[testKey1]
 
 	if err != nil {
 		t.Errorf("Unexpected error %s", err.Error())
@@ -37,11 +48,11 @@ func TestInitialiseMetrics(t *testing.T) {
 	if !ok {
 		t.Error("Expected metric not found in map")
 	} else {
-		if metric.name != "Element1Name" {
-			t.Errorf("Expected name=%s; actual %s", "Element1Name", metric.name)
+		if metric.name != testElement1Name {
+			t.Errorf("Expected name=%s; actual %s", testElement1Name, metric.name)
 		}
-		if metric.description != "Element1Description" {
-			t.Errorf("Expected description=%s; actual %s", "Element1Description", metric.description)
+		if metric.description != testElement1Description {
+			t.Errorf("Expected description=%s; actual %s", testElement1Description, metric.description)
 		}
 		if metric.objectType != false {
 			t.Errorf("Expected objectType=%v; actual %v", false, metric.objectType)
@@ -50,13 +61,26 @@ func TestInitialiseMetrics(t *testing.T) {
 			t.Errorf("Expected values-size=%d; actual %d", 0, len(metric.values))
 		}
 	}
-	_, ok = metrics["ClassName/Type2Name/Element2Name"]
+	_, ok = metrics[testKey2]
 	if ok {
 		t.Errorf("Unexpected metric found in map, %%s object topics should be ignored")
 	}
 
 	if len(metrics) != 1 {
 		t.Errorf("Map contains unexpected metrics, map size=%d", len(metrics))
+	}
+}
+
+func TestInitialiseMetrics_UnexpectedKey(t *testing.T) {
+
+	teardownTestCase := setupTestCase(false)
+	defer teardownTestCase()
+
+	mqmetric.Metrics.Classes[0].Types[0].Elements[0].Description = "New Metric"
+	_, err := initialiseMetrics(getTestLogger())
+
+	if err == nil {
+		t.Error("Expected skipping metric error")
 	}
 }
 
@@ -80,7 +104,7 @@ func TestUpdateMetrics(t *testing.T) {
 	metrics, _ := initialiseMetrics(getTestLogger())
 	updateMetrics(metrics)
 
-	metric, _ := metrics["ClassName/Type1Name/Element1Name"]
+	metric, _ := metrics[testKey1]
 	actual, ok := metric.values[qmgrLabelValue]
 
 	if !ok {
@@ -110,7 +134,7 @@ func TestMakeKey(t *testing.T) {
 	teardownTestCase := setupTestCase(false)
 	defer teardownTestCase()
 
-	expected := "ClassName/Type1Name/Element1Name"
+	expected := testKey1
 	actual := makeKey(mqmetric.Metrics.Classes[0].Types[0].Elements[0])
 	if actual != expected {
 		t.Errorf("Expected value=%s; actual %s", expected, actual)
@@ -132,15 +156,15 @@ func populateTestMetrics(testValue int, duplicateKey bool) {
 	metricElement1 := new(mqmetric.MonElement)
 	metricElement2 := new(mqmetric.MonElement)
 
-	metricClass.Name = "ClassName"
-	metricType1.Name = "Type1Name"
-	metricType2.Name = "Type2Name"
+	metricClass.Name = testClassName
+	metricType1.Name = testTypeName
+	metricType2.Name = testTypeName
 	metricElement1.MetricName = "Element1Name"
-	metricElement1.Description = "Element1Description"
+	metricElement1.Description = testElement1Description
 	metricElement1.Values = make(map[string]int64)
 	metricElement1.Values[qmgrLabelValue] = int64(testValue)
 	metricElement2.MetricName = "Element2Name"
-	metricElement2.Description = "Element2Description"
+	metricElement2.Description = testElement2Description
 	metricElement2.Values = make(map[string]int64)
 	metricType1.ObjectTopic = "ObjectTopic"
 	metricType2.ObjectTopic = "%s"

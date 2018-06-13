@@ -45,7 +45,7 @@ func TestDescribe(t *testing.T) {
 
 	select {
 	case prometheusDesc := <-ch:
-		expected := "Desc{fqName: \"ibmmq_qmgr_Element1Name\", help: \"Element1Description\", constLabels: {}, variableLabels: [qmgr]}"
+		expected := "Desc{fqName: \"ibmmq_qmgr_" + testElement1Name + "\", help: \"" + testElement1Description + "\", constLabels: {}, variableLabels: [qmgr]}"
 		actual := prometheusDesc.String()
 		if actual != expected {
 			t.Errorf("Expected value=%s; actual %s", expected, actual)
@@ -62,7 +62,7 @@ func TestCollect(t *testing.T) {
 	log := getTestLogger()
 
 	exporter := newExporter("qmName", log)
-	exporter.gaugeMap["ClassName/Type1Name/Element1Name"] = createGaugeVec("Element1Name", "Element1Description", false)
+	exporter.gaugeMap[testKey1] = createGaugeVec(testElement1Name, testElement1Description, false)
 
 	for i := 1; i <= 3; i++ {
 
@@ -85,7 +85,7 @@ func TestCollect(t *testing.T) {
 		select {
 		case <-ch:
 			prometheusMetric := dto.Metric{}
-			exporter.gaugeMap["ClassName/Type1Name/Element1Name"].WithLabelValues("qmName").Write(&prometheusMetric)
+			exporter.gaugeMap[testKey1].WithLabelValues("qmName").Write(&prometheusMetric)
 			actual := prometheusMetric.GetGauge().GetValue()
 
 			if i == 1 {
