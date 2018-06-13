@@ -51,23 +51,22 @@ func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls
 		},
 	}
 	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getPort(t, cli, ID, 9443))
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
 	for {
-		req, err := http.NewRequest("GET", url, nil)
-		req.SetBasicAuth("admin", devAdminPassword)
-		resp, err := httpClient.Do(req)
-		if err == nil && resp.StatusCode == http.StatusOK {
-			t.Log("MQ web server is ready")
-			return
+		select {
+		case <-time.After(1 * time.Second):
+			req, err := http.NewRequest("GET", url, nil)
+			req.SetBasicAuth("admin", devAdminPassword)
+			resp, err := httpClient.Do(req.WithContext(ctx))
+			if err == nil && resp.StatusCode == http.StatusOK {
+				t.Log("MQ web server is ready")
+				return
+			}
+		case <-ctx.Done():
+			t.Fatal("Timed out waiting for web server to become ready")
 		}
-		// conn, err := tls.Dial("tcp", a, &config)
-		// if err == nil {
-		// 	conn.Close()
-		// 	// Extra sleep to allow web apps to start
-		// 	time.Sleep(5 * time.Second)
-		// 	t.Log("MQ web server is ready")
-		// 	return
-		// }
-		time.Sleep(1 * time.Second)
 	}
 }
 
