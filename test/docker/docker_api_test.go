@@ -330,7 +330,9 @@ func TestZombies(t *testing.T) {
 	// will be adopted by PID 1, and should then be reaped when they die.
 	_, out := execContainer(t, cli, id, "mqm", []string{"pkill", "--signal", "kill", "-c", "amqzxma0"})
 	if out == "0" {
-		t.Fatalf("Expected pkill to kill a process, got %v", out)
+		t.Log("Failed to kill process 'amqzxma0'")
+		_, out := execContainer(t, cli, id, "root", []string{"ps", "-lA"})
+		t.Fatalf("Here is a list of currently running processes:\n%s", out)
 	}
 	time.Sleep(3 * time.Second)
 	_, out = execContainer(t, cli, id, "mqm", []string{"bash", "-c", "ps -lA | grep '^. Z'"})
