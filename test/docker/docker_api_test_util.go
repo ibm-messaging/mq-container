@@ -27,11 +27,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
-	"regexp"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -257,7 +257,6 @@ func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64
 
 // execContainer runs a command in a running container, and returns the exit code and output
 func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd []string) (int, string) {
-	rerun:
 	config := types.ExecConfig{
 		User:        user,
 		Privileged:  false,
@@ -283,30 +282,33 @@ func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd
 	})
 	// Wait for the command to finish
 	var exitcode int
+	var outputStr string
 	for {
 		inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !inspect.Running {
-			exitcode = inspect.ExitCode
-			break
+		if inspect.Running {
+			continue
 		}
-	}
-	buf := new(bytes.Buffer)
-	// Each output line has a header, which needs to be removed
-	_, err = stdcopy.StdCopy(buf, buf, hijack.Reader)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	outputStr := strings.TrimSpace(buf.String())
+		exitcode = inspect.ExitCode
+		buf := new(bytes.Buffer)
+		// Each output line has a header, which needs to be removed
+		_, err = stdcopy.StdCopy(buf, buf, hijack.Reader)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	// Before we go let's just double check it did actually run because sometimes we get a "Exec command already running error"
-	alreadyRunningErr := regexp.MustCompile("Error: Exec command .* is already running")
-	if alreadyRunningErr.MatchString(outputStr) {
-		time.Sleep(1 * time.Second)
-		goto rerun
+		outputStr = strings.TrimSpace(buf.String())
+
+		// Before we go let's just double check it did actually finish running
+		// because sometimes we get a "Exec command already running error"
+		alreadyRunningErr := regexp.MustCompile("Error: Exec command .* is already running")
+		if alreadyRunningErr.MatchString(outputStr) {
+			continue
+		}
+		break
 	}
 
 	return exitcode, outputStr
