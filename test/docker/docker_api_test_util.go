@@ -389,11 +389,19 @@ func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd
 }
 
 func waitForReady(t *testing.T, cli *client.Client, ID string) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
 	for {
-		rc, _ := execContainer(t, cli, ID, "mqm", []string{"chkmqready"})
-		if rc == 0 {
-			t.Log("MQ is ready")
-			return
+		select {
+		case <-time.After(1 * time.Second):
+			rc, _ := execContainer(t, cli, ID, "mqm", []string{"chkmqready"})
+			if rc == 0 {
+				t.Log("MQ is ready")
+				return
+			}
+		case <-ctx.Done():
+			t.Fatal("Timed out waiting for container to become ready")
 		}
 	}
 }
