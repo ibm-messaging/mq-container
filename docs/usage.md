@@ -37,6 +37,21 @@ docker run \
 
 The Docker image always uses `/mnt/mqm` for MQ data, which is correctly linked for you under `/var/mqm` at runtime.  This is to handle problems with file permissions on some platforms.
 
+## Running with the default configuration and Prometheus metrics enabled
+You can run a queue manager with [Prometheus](https://prometheus.io) metrics enabled.  The following command will generate Prometheus metrics for your queue manager on `/metrics` port `9157`:
+
+```
+docker run \
+  --env LICENSE=accept \
+  --env MQ_QMGR_NAME=QM1 \
+  --env MQ_ENABLE_METRICS=true \
+  --publish 1414:1414 \
+  --publish 9443:9443 \
+  --publish 9157:9157 \
+  --detach \
+  ibmcom/mq
+```
+
 ## Customizing the queue manager configuration
 
 You can customize the configuration in several ways:

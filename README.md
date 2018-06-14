@@ -26,6 +26,7 @@ Note that in order to use the image, it is necessary to accept the terms of the 
 - **LANG** - Set this to the language you would like the license to be printed in.
 - **MQ_QMGR_NAME** - Set this to the name you want your Queue Manager to be created with.
 - **LOG_FORMAT** - Set this to change the format of the logs which are printed on the container's stdout.  Set to "json" to use JSON format (JSON object per line); set to "basic" to use a simple human-readable format.  Defaults to "basic".
+- **MQ_ENABLE_METRICS** - Set this to `true` to generate Prometheus metrics for your Queue Manager.
 
 See the [default developer configuration docs](docs/developer-config.md) for the extra environment variables supported by the MQ Advanced for Developers image.
 

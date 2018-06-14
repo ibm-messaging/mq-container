@@ -24,6 +24,7 @@ The `runmqserver` command has the following responsibilities:
     - Works as PID 1, so is responsible for [reaping zombie processes](https://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/)
 * Creating and starting a queue manager
 * Configuring the queue manager, by running any MQSC scripts found under `/etc/mqm`
+* Starting Prometheus metrics generation for the queue manager (if enabled)
 * Indicates to the `chkmqready` command that configuration is complete, and that normal readiness checking can happen.  This is done by writing a file into `/run/runmqserver`
 
 In addition, for MQ Advanced for Developers only, the web server is started.
@@ -36,3 +37,16 @@ The `runmqdevserver` command is added to the MQ Advanced for Developers image on
 3. If requested, it creates TLS key stores under `/run/runmqdevserver`, and configures MQ and the web server to use them
 
 A special version of `runmqserver` is used in the developer image, which performs extra actions like starting the web server.  This is built using the `mqdev` [build constraint](https://golang.org/pkg/go/build/#hdr-Build_Constraints).
+
+## Prometheus metrics
+[Prometheus](https://prometheus.io) metrics are generated for the queue manager as follows:
+
+1. A connection is established with the queue manager
+2. Metrics are discovered by subscribing to topics that provide meta-data on metric classes, types and elements
+3. Subscriptions are then created for each topic that provides this metric data
+4. Metrics are initialised using Prometheus names mapped from their element descriptions
+5. The metrics are then registered with the Prometheus registry as Prometheus Gauges
+6. Publications are processed on a periodic basis to retrieve the metric data
+7. An HTTP server is setup to listen for requests from Prometheus on `/metrics` port `9157`
+8. Prometheus requests are handled by updating the Prometheus Gauges with the latest metric data
+9. These updated Prometheus Gauges are then collected by the Prometheus registry
