@@ -637,6 +637,7 @@ func TestCorrectLicense(t *testing.T) {
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
 
 	rc, license := execContainer(t, cli, id, "mqm", []string{"dspmqver", "-f", "8192", "-b"})
 	if rc != 0 {
