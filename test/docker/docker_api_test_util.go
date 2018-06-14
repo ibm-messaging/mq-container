@@ -27,7 +27,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -328,7 +327,6 @@ func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64
 
 // execContainer runs a command in a running container, and returns the exit code and output
 func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd []string) (int, string) {
-rerun:
 	config := types.ExecConfig{
 		User:        user,
 		Privileged:  false,
@@ -348,7 +346,9 @@ rerun:
 	if err != nil {
 		t.Fatal(err)
 	}
-	cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
+	defer hijack.Close()
+	time.Sleep(time.Millisecond * 10)
+	err = cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
 		Detach: false,
 		Tty:    false,
 	})
@@ -357,30 +357,38 @@ rerun:
 	}
 	// Wait for the command to finish
 	var exitcode int
+	var outputStr string
 	for {
 		inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !inspect.Running {
-			exitcode = inspect.ExitCode
-			break
+		if inspect.Running {
+			continue
 		}
-	}
-	buf := new(bytes.Buffer)
-	// Each output line has a header, which needs to be removed
-	_, err = stdcopy.StdCopy(buf, buf, hijack.Reader)
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	outputStr := strings.TrimSpace(buf.String())
+		exitcode = inspect.ExitCode
+		buf := new(bytes.Buffer)
+		// Each output line has a header, which needs to be removed
+		_, err = stdcopy.StdCopy(buf, buf, hijack.Reader)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	// Before we go let's just double check it did actually run because sometimes we get a "Exec command already running error"
-	alreadyRunningErr := regexp.MustCompile("Error: Exec command .* is already running")
-	if alreadyRunningErr.MatchString(outputStr) {
-		time.Sleep(1 * time.Second)
-		goto rerun
+		outputStr = strings.TrimSpace(buf.String())
+
+		/* Commented out on 14/06/2018 as it might not be needed after adding
+		 * pause between ContainerExecAttach and ContainerExecStart.
+		 * TODO If intermittent failures do not occur, remove and refactor.
+		 *
+		 *   // Before we go let's just double check it did actually finish running
+		 *   // because sometimes we get a "Exec command already running error"
+		 *   alreadyRunningErr := regexp.MustCompile("Error: Exec command .* is already running")
+		 *   if alreadyRunningErr.MatchString(outputStr) {
+		 *   	continue
+		 *   }
+		 */
+		break
 	}
 
 	return exitcode, outputStr
