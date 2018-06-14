@@ -27,7 +27,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -276,10 +275,15 @@ func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd
 	if err != nil {
 		t.Fatal(err)
 	}
-	cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
+	defer hijack.Close()
+	time.Sleep(time.Millisecond * 10)
+	err = cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
 		Detach: false,
 		Tty:    false,
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Wait for the command to finish
 	var exitcode int
 	var outputStr string
@@ -302,12 +306,17 @@ func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd
 
 		outputStr = strings.TrimSpace(buf.String())
 
-		// Before we go let's just double check it did actually finish running
-		// because sometimes we get a "Exec command already running error"
-		alreadyRunningErr := regexp.MustCompile("Error: Exec command .* is already running")
-		if alreadyRunningErr.MatchString(outputStr) {
-			continue
-		}
+		/* Commented out on 14/06/2018 as it might not be needed after adding
+		 * pause between ContainerExecAttach and ContainerExecStart.
+		 * TODO If intermittent failures do not occur, remove and refactor.
+		 *
+		 *   // Before we go let's just double check it did actually finish running
+		 *   // because sometimes we get a "Exec command already running error"
+		 *   alreadyRunningErr := regexp.MustCompile("Error: Exec command .* is already running")
+		 *   if alreadyRunningErr.MatchString(outputStr) {
+		 *   	continue
+		 *   }
+		 */
 		break
 	}
 
