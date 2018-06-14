@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -597,4 +598,34 @@ func TestMQJSONDisabled(t *testing.T) {
 	// Stop the container (which could hang if runmqserver is still waiting for
 	// JSON logs to appear)
 	stopContainer(t, cli, id)
+}
+
+func TestCorrectLicense(t *testing.T) {
+	t.Parallel()
+
+	//Check we have the license set
+	expectedLicense, ok := os.LookupEnv("EXPECTED_LICENSE")
+	if !ok {
+		t.Fatal("Required test environment variable 'EXPECTED_LICENSE' was not set.")
+	}
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Env: []string{"LICENSE=accept"},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+
+	rc, license := execContainer(t, cli, id, "mqm", []string{"dspmqver", "-f", "8192", "-b"})
+	if rc != 0 {
+		t.Fatalf("Failed to get license string. RC=%d. Output=%s", rc, license)
+	}
+
+	if license != expectedLicense {
+		t.Errorf("Expected license to be '%s' but was '%s", expectedLicense, license)
+	}
 }
