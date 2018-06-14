@@ -7,6 +7,10 @@ go:
 services:
  - docker
 
+cache:
+  directories:
+    - downloads
+
 go_import_path: "github.com/ibm-messaging/mq-container"
 
 before_install:
