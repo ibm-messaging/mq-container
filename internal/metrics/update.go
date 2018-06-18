@@ -143,23 +143,29 @@ func initialiseMetrics(log *logger.Logger) (map[string]*metricData, error) {
 					key := makeKey(metricElement)
 
 					// Get metric name from mapping
-					if metricName, found := metricNamesMap[key]; found {
+					if metricLookup, found := metricNamesMap[key]; found {
 
-						// Set metric details
-						metric := metricData{
-							name:        metricName,
-							description: metricElement.Description,
-						}
+						// Check if metric is enabled
+						if metricLookup.enabled {
 
-						// Add metric
-						if _, exists := metrics[key]; !exists {
-							metrics[key] = &metric
+							// Set metric details
+							metric := metricData{
+								name:        metricLookup.name,
+								description: metricElement.Description,
+							}
+
+							// Add metric
+							if _, exists := metrics[key]; !exists {
+								metrics[key] = &metric
+							} else {
+								log.Errorf("Metrics Error: Found duplicate metric key [%s]", key)
+								validMetrics = false
+							}
 						} else {
-							log.Errorf("Metrics Error: Found duplicate metric key %s", key)
-							validMetrics = false
+							log.Debugf("Metrics: Skipping metric, metric is not enabled for key [%s]", key)
 						}
 					} else {
-						log.Errorf("Metrics Error: Skipping metric, unexpected key %s", key)
+						log.Errorf("Metrics Error: Skipping metric, unexpected key [%s]", key)
 						validMetrics = false
 					}
 				}
