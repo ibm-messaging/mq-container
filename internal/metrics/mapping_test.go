@@ -30,8 +30,8 @@ func TestGenerateMetricNamesMap(t *testing.T) {
 	if !ok {
 		t.Errorf("No metric name mapping found for %s", testKey1)
 	} else {
-		if actual != testElement1Name {
-			t.Errorf("Expected metric name=%s; actual %s", testElement1Name, actual)
+		if actual.name != testElement1Name {
+			t.Errorf("Expected metric name=%s; actual %s", testElement1Name, actual.name)
 		}
 	}
 }
