@@ -33,6 +33,7 @@ var fsTypes = map[int64]string{
 	0x9123683e: "btrfs",
 	0x01021994: "tmpfs",
 	0x794c7630: "overlayfs",
+	0x58465342: "xfs",
 }
 
 func checkFS(path string) error {
@@ -43,7 +44,11 @@ func checkFS(path string) error {
 		return nil
 	}
 	// Use a type conversion to make type an int64.  On s390x it's a uint32.
-	t := fsTypes[int64(statfs.Type)]
+	t, ok := fsTypes[int64(statfs.Type)]
+	if !ok {
+		log.Printf("WARNING: detected %v has unknown filesystem type %x", path, statfs.Type)
+		return nil
+	}
 	switch t {
 	case "aufs", "overlayfs", "tmpfs":
 		return fmt.Errorf("%v uses unsupported filesystem type: %v", path, t)
