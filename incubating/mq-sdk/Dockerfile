@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:16.04
+ARG BASE_IMAGE=ubuntu:16.04
+
+FROM $BASE_IMAGE
 
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ Debian (.deb) install packages
 ARG MQ_URL
 
 # The packages to install in install-mq.sh
-ENV MQ_PACKAGES="ibmmq-sdk ibmmq-samples build-essential"
+ARG MQ_PACKAGES
 
 COPY install-mq.sh /usr/local/bin/
 

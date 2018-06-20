@@ -16,22 +16,18 @@ ARG BASE_IMAGE=mq-sdk:9.0.5.0-x86_64-ubuntu-16.04
 
 FROM $BASE_IMAGE
 
+COPY incubating/mq-golang-sdk/install-golang.sh /usr/local/bin
+
 ENV GO_VERSION=1.10
 
-# Install the Go compiler and Git
-RUN export DEBIAN_FRONTEND=noninteractive \
-  && bash -c 'source /etc/os-release; \
-     echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME} main restricted" > /etc/apt/sources.list; \
-     echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-updates main restricted" >> /etc/apt/sources.list; \
-     echo "deb http://archive.ubuntu.com/ubuntu/ ${UBUNTU_CODENAME}-backports main restricted universe" >> /etc/apt/sources.list;' \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends golang-${GO_VERSION} git ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
-
-ENV PATH="${PATH}:/usr/lib/go-${GO_VERSION}/bin:/go/bin" \
-    CGO_CFLAGS="-I/opt/mqm/inc/"                         \
-    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"                     \
+ENV PATH="${PATH}:/usr/lib/go-${GO_VERSION}/bin:/go/bin:/usr/local/go/bin" \
+    CGO_CFLAGS="-I/opt/mqm/inc/"                                           \
+    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"                                       \
     GOPATH="/go"
 
-RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+# Install the Go compiler and Git
+RUN chmod +x /usr/local/bin/install-golang.sh \
+    && sleep 1 \
+    && install-golang.sh 
+
 WORKDIR $GOPATH
