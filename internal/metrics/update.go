@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/ibm-messaging/mq-container/internal/logger"
+	"github.com/ibm-messaging/mq-golang/ibmmq"
 	"github.com/ibm-messaging/mq-golang/mqmetric"
 )
 
@@ -43,6 +44,7 @@ type metricData struct {
 	description string
 	objectType  bool
 	values      map[string]float64
+	isDelta     bool
 }
 
 // processMetrics processes publications of metric data and handles describe/collect/stop requests
@@ -148,10 +150,17 @@ func initialiseMetrics(log *logger.Logger) (map[string]*metricData, error) {
 						// Check if metric is enabled
 						if metricLookup.enabled {
 
+							// Check if metric is a delta type
+							isDelta := false
+							if metricElement.Datatype == ibmmq.MQIAMO_MONITOR_DELTA {
+								isDelta = true
+							}
+
 							// Set metric details
 							metric := metricData{
 								name:        metricLookup.name,
 								description: metricElement.Description,
+								isDelta:     isDelta,
 							}
 
 							// Add metric

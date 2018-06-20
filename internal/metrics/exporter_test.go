@@ -19,11 +19,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ibm-messaging/mq-golang/ibmmq"
+	"github.com/ibm-messaging/mq-golang/mqmetric"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 )
 
-func TestDescribe(t *testing.T) {
+func TestDescribe_Counter(t *testing.T) {
+	testDescribe(t, true)
+}
+
+func TestDescribe_Gauge(t *testing.T) {
+	testDescribe(t, false)
+}
+
+func testDescribe(t *testing.T, isDelta bool) {
 
 	teardownTestCase := setupTestCase(false)
 	defer teardownTestCase()
@@ -40,6 +50,9 @@ func TestDescribe(t *testing.T) {
 		t.Errorf("Received unexpected collect request")
 	}
 
+	if isDelta {
+		mqmetric.Metrics.Classes[0].Types[0].Elements[0].Datatype = ibmmq.MQIAMO_MONITOR_DELTA
+	}
 	metrics, _ := initialiseMetrics(log)
 	responseChannel <- metrics
 
@@ -55,14 +68,26 @@ func TestDescribe(t *testing.T) {
 	}
 }
 
-func TestCollect(t *testing.T) {
+func TestCollect_Counter(t *testing.T) {
+	testCollect(t, true)
+}
+
+func TestCollect_Gauge(t *testing.T) {
+	testCollect(t, false)
+}
+
+func testCollect(t *testing.T, isDelta bool) {
 
 	teardownTestCase := setupTestCase(false)
 	defer teardownTestCase()
 	log := getTestLogger()
 
 	exporter := newExporter("qmName", log)
-	exporter.gaugeMap[testKey1] = createGaugeVec(testElement1Name, testElement1Description, false)
+	if isDelta {
+		exporter.counterMap[testKey1] = createCounterVec(testElement1Name, testElement1Description, false)
+	} else {
+		exporter.gaugeMap[testKey1] = createGaugeVec(testElement1Name, testElement1Description, false)
+	}
 
 	for i := 1; i <= 3; i++ {
 
@@ -78,19 +103,32 @@ func TestCollect(t *testing.T) {
 		}
 
 		populateTestMetrics(i, false)
+		if isDelta {
+			mqmetric.Metrics.Classes[0].Types[0].Elements[0].Datatype = ibmmq.MQIAMO_MONITOR_DELTA
+		}
 		metrics, _ := initialiseMetrics(log)
 		updateMetrics(metrics)
 		responseChannel <- metrics
 
 		select {
 		case <-ch:
+			var actual float64
 			prometheusMetric := dto.Metric{}
-			exporter.gaugeMap[testKey1].WithLabelValues("qmName").Write(&prometheusMetric)
-			actual := prometheusMetric.GetGauge().GetValue()
+			if isDelta {
+				exporter.counterMap[testKey1].WithLabelValues("qmName").Write(&prometheusMetric)
+				actual = prometheusMetric.GetCounter().GetValue()
+			} else {
+				exporter.gaugeMap[testKey1].WithLabelValues("qmName").Write(&prometheusMetric)
+				actual = prometheusMetric.GetGauge().GetValue()
+			}
 
 			if i == 1 {
 				if actual != float64(0) {
 					t.Errorf("Expected values to be zero on first collect; actual %f", actual)
+				}
+			} else if isDelta && i != 2 {
+				if actual != float64(i+(i-1)) {
+					t.Errorf("Expected value=%f; actual %f", float64(i+(i-1)), actual)
 				}
 			} else if actual != float64(i) {
 				t.Errorf("Expected value=%f; actual %f", float64(i), actual)
@@ -98,6 +136,38 @@ func TestCollect(t *testing.T) {
 		case <-time.After(1 * time.Second):
 			t.Error("Did not receive channel response from collect")
 		}
+	}
+}
+
+func TestCreateCounterVec(t *testing.T) {
+
+	ch := make(chan *prometheus.Desc)
+	counterVec := createCounterVec("MetricName", "MetricDescription", false)
+	go func() {
+		counterVec.Describe(ch)
+	}()
+	description := <-ch
+
+	expected := "Desc{fqName: \"ibmmq_qmgr_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [qmgr]}"
+	actual := description.String()
+	if actual != expected {
+		t.Errorf("Expected value=%s; actual %s", expected, actual)
+	}
+}
+
+func TestCreateCounterVec_ObjectLabel(t *testing.T) {
+
+	ch := make(chan *prometheus.Desc)
+	counterVec := createCounterVec("MetricName", "MetricDescription", true)
+	go func() {
+		counterVec.Describe(ch)
+	}()
+	description := <-ch
+
+	expected := "Desc{fqName: \"ibmmq_object_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [object qmgr]}"
+	actual := description.String()
+	if actual != expected {
+		t.Errorf("Expected value=%s; actual %s", expected, actual)
 	}
 }
 
