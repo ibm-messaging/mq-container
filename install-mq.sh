@@ -139,7 +139,7 @@ rm -rf ${DIR_EXTRACT}
 
 # Apply any bug fixes not included in base Ubuntu or MQ image.
 # Don't upgrade everything based on Docker best practices https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run
-$UBUNTU && apt-get upgrade -y libgcrypt20
+$UBUNTU && apt-get install -y gnupg gpgv libgcrypt20 perl-base --only-upgrade
 # End of bug fixes
 
 # Clean up cached files
