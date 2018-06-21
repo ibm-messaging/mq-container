@@ -33,6 +33,7 @@ const (
 type exporter struct {
 	qmName       string
 	gaugeMap     map[string]*prometheus.GaugeVec
+	counterMap   map[string]*prometheus.CounterVec
 	firstCollect bool
 	log          *logger.Logger
 }
@@ -41,6 +42,7 @@ func newExporter(qmName string, log *logger.Logger) *exporter {
 	return &exporter{
 		qmName:       qmName,
 		gaugeMap:     make(map[string]*prometheus.GaugeVec),
+		counterMap:   make(map[string]*prometheus.CounterVec),
 		firstCollect: true,
 		log:          log,
 	}
@@ -54,12 +56,22 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 
 	for key, metric := range response {
 
-		// Allocate a Prometheus Gauge for each available metric
-		gaugeVec := createGaugeVec(metric.name, metric.description, metric.objectType)
-		e.gaugeMap[key] = gaugeVec
+		if metric.isDelta {
+			// For delta type metrics - allocate a Prometheus Counter
+			counterVec := createCounterVec(metric.name, metric.description, metric.objectType)
+			e.counterMap[key] = counterVec
 
-		// Describe metric
-		gaugeVec.Describe(ch)
+			// Describe metric
+			counterVec.Describe(ch)
+
+		} else {
+			// For non-delta type metrics - allocate a Prometheus Gauge
+			gaugeVec := createGaugeVec(metric.name, metric.description, metric.objectType)
+			e.gaugeMap[key] = gaugeVec
+
+			// Describe metric
+			gaugeVec.Describe(ch)
+		}
 	}
 }
 
@@ -71,32 +83,61 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 
 	for key, metric := range response {
 
-		// Reset Prometheus Gauge
-		gaugeVec := e.gaugeMap[key]
-		gaugeVec.Reset()
+		if metric.isDelta {
+			// For delta type metrics - update their Prometheus Counter
+			counterVec := e.counterMap[key]
 
-		// Populate Prometheus Gauge with metric values
-		// - Skip on first collect to avoid build-up of accumulated values
-		if !e.firstCollect {
-			for label, value := range metric.values {
-				var err error
-				var gauge prometheus.Gauge
+			// Populate Prometheus Counter with metric values
+			// - Skip on first collect to avoid build-up of accumulated values
+			if !e.firstCollect {
+				for label, value := range metric.values {
+					var err error
+					var counter prometheus.Counter
 
-				if label == qmgrLabelValue {
-					gauge, err = gaugeVec.GetMetricWithLabelValues(e.qmName)
-				} else {
-					gauge, err = gaugeVec.GetMetricWithLabelValues(label, e.qmName)
-				}
-				if err == nil {
-					gauge.Set(value)
-				} else {
-					e.log.Errorf("Metrics Error: %s", err.Error())
+					if label == qmgrLabelValue {
+						counter, err = counterVec.GetMetricWithLabelValues(e.qmName)
+					} else {
+						counter, err = counterVec.GetMetricWithLabelValues(label, e.qmName)
+					}
+					if err == nil {
+						counter.Add(value)
+					} else {
+						e.log.Errorf("Metrics Error: %s", err.Error())
+					}
 				}
 			}
-		}
 
-		// Collect metric
-		gaugeVec.Collect(ch)
+			// Collect metric
+			counterVec.Collect(ch)
+
+		} else {
+			// For non-delta type metrics - reset their Prometheus Gauge
+			gaugeVec := e.gaugeMap[key]
+			gaugeVec.Reset()
+
+			// Populate Prometheus Gauge with metric values
+			// - Skip on first collect to avoid build-up of accumulated values
+			if !e.firstCollect {
+				for label, value := range metric.values {
+					var err error
+					var gauge prometheus.Gauge
+
+					if label == qmgrLabelValue {
+						gauge, err = gaugeVec.GetMetricWithLabelValues(e.qmName)
+					} else {
+						gauge, err = gaugeVec.GetMetricWithLabelValues(label, e.qmName)
+					}
+					if err == nil {
+						gauge.Set(value)
+					} else {
+						e.log.Errorf("Metrics Error: %s", err.Error())
+					}
+				}
+			}
+
+			// Collect metric
+			gaugeVec.Collect(ch)
+		}
 	}
 
 	if e.firstCollect {
@@ -104,16 +145,26 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	}
 }
 
+// createCounterVec returns a Prometheus CounterVec populated with metric details
+func createCounterVec(name, description string, objectType bool) *prometheus.CounterVec {
+
+	prefix, labels := getVecDetails(objectType)
+
+	counterVec := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      prefix + "_" + name,
+			Help:      description,
+		},
+		labels,
+	)
+	return counterVec
+}
+
 // createGaugeVec returns a Prometheus GaugeVec populated with metric details
 func createGaugeVec(name, description string, objectType bool) *prometheus.GaugeVec {
 
-	prefix := qmgrPrefix
-	labels := []string{qmgrLabel}
-
-	if objectType {
-		prefix = objectPrefix
-		labels = []string{objectLabel, qmgrLabel}
-	}
+	prefix, labels := getVecDetails(objectType)
 
 	gaugeVec := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -124,4 +175,17 @@ func createGaugeVec(name, description string, objectType bool) *prometheus.Gauge
 		labels,
 	)
 	return gaugeVec
+}
+
+// getVecDetails returns the required prefix and labels for a metric
+func getVecDetails(objectType bool) (prefix string, labels []string) {
+
+	prefix = qmgrPrefix
+	labels = []string{qmgrLabel}
+
+	if objectType {
+		prefix = objectPrefix
+		labels = []string{objectLabel, qmgrLabel}
+	}
+	return prefix, labels
 }
