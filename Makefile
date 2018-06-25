@@ -81,7 +81,7 @@ else ifeq "$(ARCH)" "ppc64le"
 else ifeq "$(ARCH)" "s390x"
 	MQ_ARCHIVE_ARCH=SYSTEM_Z
 endif
-# Archive names for IBM MQ Advanced for Developers for Ubuntu
+# Archive names for IBM MQ Advanced for Developers
 MQ_ARCHIVE_DEV_9.0.4.0=mqadv_dev904_$(MQ_ARCHIVE_DEV_PLATFORM)_x86-64.tar.gz
 MQ_ARCHIVE_DEV_9.0.5.0=mqadv_dev905_$(MQ_ARCHIVE_DEV_PLATFORM)_x86-64.tar.gz
 
