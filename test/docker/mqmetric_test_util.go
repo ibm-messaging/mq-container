@@ -170,7 +170,7 @@ func metricNames() []string {
 		"system_cpu_time_percentage",
 		"user_cpu_time_percentage",
 		"ram_free_percentage",
-		"system_ram_size_bytes",
+		// disabled : "system_ram_size_bytes",
 		"system_cpu_time_estimate_for_queue_manager_percentage",
 		"user_cpu_time_estimate_for_queue_manager_percentage",
 		"ram_usage_estimate_for_queue_manager_bytes",
