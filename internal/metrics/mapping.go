@@ -32,7 +32,7 @@ func generateMetricNamesMap() map[string]metricLookup {
 		"CPU/SystemSummary/System CPU time percentage":                            metricLookup{"system_cpu_time_percentage", true},
 		"CPU/SystemSummary/User CPU time percentage":                              metricLookup{"user_cpu_time_percentage", true},
 		"CPU/SystemSummary/RAM free percentage":                                   metricLookup{"ram_free_percentage", true},
-		"CPU/SystemSummary/RAM total bytes":                                       metricLookup{"system_ram_size_bytes", true},
+		"CPU/SystemSummary/RAM total bytes":                                       metricLookup{"system_ram_size_bytes", false},
 		"CPU/QMgrSummary/System CPU time - percentage estimate for queue manager": metricLookup{"system_cpu_time_estimate_for_queue_manager_percentage", true},
 		"CPU/QMgrSummary/User CPU time - percentage estimate for queue manager":   metricLookup{"user_cpu_time_estimate_for_queue_manager_percentage", true},
 		"CPU/QMgrSummary/RAM total bytes - estimate for queue manager":            metricLookup{"ram_usage_estimate_for_queue_manager_bytes", true},
