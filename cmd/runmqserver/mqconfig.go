@@ -95,9 +95,18 @@ func logSeccomp() error {
 	return nil
 }
 
-func logAppArmor() error {
-	s := container.AppArmorProfile()
-	log.Printf("AppArmor profile: %v", s)
+// logSecurityAttributes logs the security attributes of the current process.
+// The security attributes indicate whether AppArmor or SELinux are being used,
+// and what the level of confinement is.
+func logSecurityAttributes() error {
+	a, err := readProc("/proc/self/attr/current")
+	// On some systems, if AppArmor or SELinux are not installed, you get an
+	// error when you try and read `/proc/self/attr/current`, even though the
+	// file exists.
+	if err != nil || a == "" {
+		a = "none"
+	}
+	log.Printf("Process security attributes: %v", a)
 	return nil
 }
 
@@ -156,7 +165,7 @@ func logConfig() error {
 		logUser()
 		logCapabilities()
 		logSeccomp()
-		logAppArmor()
+		logSecurityAttributes()
 		err = readMounts()
 		if err != nil {
 			return err
