@@ -13,11 +13,12 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=ubuntu:16.04
+ARG BUILDER_IMAGE=mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04
 
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
-FROM mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04 as builder
+FROM $BUILDER_IMAGE as builder
 WORKDIR /go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
 COPY internal/ ./internal

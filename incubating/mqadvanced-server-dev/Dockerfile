@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ARG BASE_IMAGE=mqadvanced-server-dev-base:9.0.5.0-x86_64-ubuntu-16.04
+ARG BUILDER_IMAGE=mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04
+
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
-FROM mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04 as builder
+FROM $BUILDER_IMAGE as builder
 WORKDIR /go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
 COPY internal/ ./internal
@@ -29,7 +32,7 @@ RUN go test -v ./cmd/runmqdevserver/...
 ###############################################################################
 # Main build stage
 ###############################################################################
-FROM mqadvanced-server-dev-base:9.0.5.0-x86_64-ubuntu-16.04
+FROM $BASE_IMAGE
 
 # Enable MQ developer default configuration
 ENV MQ_DEV=true

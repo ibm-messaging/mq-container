@@ -68,8 +68,10 @@ endif
 # Try to figure out which archive to use from the BASE_IMAGE
 ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
 	MQ_ARCHIVE_TYPE=UBUNTU
+	MQ_ARCHIVE_DEV_PLATFORM=ubuntu
 else
 	MQ_ARCHIVE_TYPE=LINUX
+	MQ_ARCHIVE_DEV_PLATFORM=linux
 endif
 # Try to figure out which archive to use from the architecture
 ifeq "$(ARCH)" "x86_64"
@@ -79,9 +81,9 @@ else ifeq "$(ARCH)" "ppc64le"
 else ifeq "$(ARCH)" "s390x"
 	MQ_ARCHIVE_ARCH=SYSTEM_Z
 endif
-# Archive names for IBM MQ Advanced for Developers for Ubuntu
-MQ_ARCHIVE_DEV_9.0.4.0=mqadv_dev904_ubuntu_x86-64.tar.gz
-MQ_ARCHIVE_DEV_9.0.5.0=mqadv_dev905_ubuntu_x86-64.tar.gz
+# Archive names for IBM MQ Advanced for Developers
+MQ_ARCHIVE_DEV_9.0.4.0=mqadv_dev904_$(MQ_ARCHIVE_DEV_PLATFORM)_x86-64.tar.gz
+MQ_ARCHIVE_DEV_9.0.5.0=mqadv_dev905_$(MQ_ARCHIVE_DEV_PLATFORM)_x86-64.tar.gz
 
 ###############################################################################
 # Build targets
@@ -205,6 +207,7 @@ define docker-build-mq
 	  --network build \
 	  --build-arg MQ_URL=http://build:80/$3 \
 	  --build-arg BASE_IMAGE=$(BASE_IMAGE) \
+	  --build-arg BUILDER_IMAGE=$(MQ_IMAGE_GOLANG_SDK) \
 	  --label IBM_PRODUCT_ID=$4 \
 	  --label IBM_PRODUCT_NAME=$5 \
 	  --label IBM_PRODUCT_VERSION=$6 \
@@ -226,11 +229,15 @@ build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version build-golang-sdk
 
 .PHONY: build-devserver
 # Target-specific variable to add web server into devserver image
+ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
 build-devserver: MQ_PACKAGES=ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams ibmmq-web
+else 
+build-devserver: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm MQSeriesWeb-*.rpm
+endif
 build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER_BASE),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
-	docker build --tag $(MQ_IMAGE_DEVSERVER) --file incubating/mqadvanced-server-dev/Dockerfile .
+	$(DOCKER) build --tag $(MQ_IMAGE_DEVSERVER) --build-arg BASE_IMAGE=$(MQ_IMAGE_DEVSERVER_BASE) --build-arg BUILDER_IMAGE=$(MQ_IMAGE_GOLANG_SDK) --file incubating/mqadvanced-server-dev/Dockerfile .
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: docker-version
@@ -240,10 +247,15 @@ build-advancedserver-cover: docker-version
 build-explorer: downloads/$(MQ_ARCHIVE_DEV)
 	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 
+ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
+build-sdk: MQ_PACKAGES=ibmmq-sdk ibmmq-samples build-essential
+else 
+build-sdk: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesSDK-*.rpm MQSeriesSamples*.rpm
+endif
 build-sdk: downloads/$(MQ_ARCHIVE_DEV) docker-version docker-pull
 	$(call docker-build-mq,$(MQ_IMAGE_SDK),incubating/mq-sdk/Dockerfile,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers SDK (Non-Warranted)",$(MQ_VERSION))
 
-build-golang-sdk: build-sdk
+build-golang-sdk: downloads/$(MQ_ARCHIVE_DEV) docker-version build-sdk
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_SDK) -t $(MQ_IMAGE_GOLANG_SDK) -f incubating/mq-golang-sdk/Dockerfile .
 #	$(call docker-build-mq,$(MQ_IMAGE_GOLANG_SDK),incubating/mq-golang-sdk/Dockerfile,$(MQ_ARCHIVE),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers SDK (Non-Warranted)",$(MQ_VERSION))
 
