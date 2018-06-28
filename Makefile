@@ -20,6 +20,7 @@
 BASE_IMAGE ?= ubuntu:16.04
 # MQ_VERSION is the fully qualified MQ version number to build
 MQ_VERSION ?= 9.0.5.0
+MQ_SDK_VERSION ?= 9.0.5.0
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
@@ -27,6 +28,7 @@ MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION)_$(MQ_ARCHIVE_TYPE)_$(MQ_ARCHIVE_ARCH).tar.gz
 # MQ_ARCHIVE_DEV is the name of the file, under the downloads directory, from which MQ Advanced
 # for Developers can be installed
 MQ_ARCHIVE_DEV ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
+MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_SDK_VERSION))
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
 # MQ_IMAGE_ADVANCEDSERVER is the name and tag of the built MQ Advanced image
@@ -34,9 +36,9 @@ MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_T
 # MQ_IMAGE_DEVSERVER is the name and tag of the built MQ Advanced for Developers image
 MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # MQ_IMAGE_SDK is the name and tag of the built MQ Advanced for Developers SDK image
-MQ_IMAGE_SDK ?=mq-sdk:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
+MQ_IMAGE_SDK ?=mq-sdk:$(MQ_SDK_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # MQ_IMAGE_GOLANG_SDK is the name and tag of the built MQ Advanced for Developers SDK image, plus Go tools
-MQ_IMAGE_GOLANG_SDK ?=mq-golang-sdk:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
+MQ_IMAGE_GOLANG_SDK ?=mq-golang-sdk:$(MQ_SDK_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # DOCKER is the Docker command to run
 DOCKER ?= docker
 # MQ_PACKAGES specifies the MQ packages (.deb or .rpm) to install.  Defaults vary on base image.
@@ -252,12 +254,12 @@ build-sdk: MQ_PACKAGES=ibmmq-sdk ibmmq-samples build-essential
 else 
 build-sdk: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesSDK-*.rpm MQSeriesSamples*.rpm
 endif
-build-sdk: downloads/$(MQ_ARCHIVE_DEV) docker-version docker-pull
-	$(call docker-build-mq,$(MQ_IMAGE_SDK),incubating/mq-sdk/Dockerfile,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers SDK (Non-Warranted)",$(MQ_VERSION))
+build-sdk: downloads/$(MQ_SDK_ARCHIVE) docker-version docker-pull
+	$(call docker-build-mq,$(MQ_IMAGE_SDK),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers SDK (Non-Warranted)",$(MQ_SDK_VERSION))
 
-build-golang-sdk: downloads/$(MQ_ARCHIVE_DEV) docker-version build-sdk
+build-golang-sdk: downloads/$(MQ_SDK_ARCHIVE) docker-version build-sdk
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_SDK) -t $(MQ_IMAGE_GOLANG_SDK) -f incubating/mq-golang-sdk/Dockerfile .
-#	$(call docker-build-mq,$(MQ_IMAGE_GOLANG_SDK),incubating/mq-golang-sdk/Dockerfile,$(MQ_ARCHIVE),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers SDK (Non-Warranted)",$(MQ_VERSION))
+#	$(call docker-build-mq,$(MQ_IMAGE_GOLANG_SDK),incubating/mq-golang-sdk/Dockerfile,$(MQ_IMAGE_SDK),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers SDK (Non-Warranted)",$(MQ_SDK_VERSION))
 
 docker-pull:
 	$(DOCKER) pull $(BASE_IMAGE)
