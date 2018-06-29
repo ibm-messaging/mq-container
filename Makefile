@@ -124,12 +124,17 @@ clean:
 	rm -rf ./deps
 
 downloads/$(MQ_ARCHIVE_DEV):
-	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers"$(END)))
+	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
 	mkdir -p downloads
 	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV)
 
+downloads/$(MQ_SDK_ARCHIVE):
+	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_SDK_VERSION)$(END)))
+	mkdir -p downloads
+	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_SDK_ARCHIVE) 
+
 .PHONY: downloads
-downloads: downloads/$(MQ_ARCHIVE_DEV)
+downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
 
 .PHONY: deps
 deps:
