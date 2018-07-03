@@ -123,8 +123,8 @@ func TestDevWebDisabled(t *testing.T) {
 	waitForReady(t, cli, id)
 	t.Run("Web", func(t *testing.T) {
 		_, dspmqweb := execContainer(t, cli, id, "mqm", []string{"dspmqweb"})
-		if !strings.Contains(dspmqweb, "Server mqweb is not running.") {
-			t.Errorf("Expected dspmqweb to say server is not running; got \"%v\"", dspmqweb)
+		if !strings.Contains(dspmqweb, "Server mqweb is not running.") && !strings.Contains(dspmqweb, "MQWB1125I") {
+			t.Errorf("Expected dspmqweb to say 'Server is not running' or 'MQWB1125I'; got \"%v\"", dspmqweb)
 		}
 	})
 	t.Run("JMS", func(t *testing.T) {
