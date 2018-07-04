@@ -648,3 +648,40 @@ func TestCorrectLicense(t *testing.T) {
 		t.Errorf("Expected license to be '%s' but was '%s", expectedLicense, license)
 	}
 }
+
+func TestVersioningSet(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Env: []string{"LICENSE=accept"},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	// Get whole logs and check for existence of failure messages or no version error message
+	const Failbuildstamp string = "No date value provided"
+	const Failbuildgitcommit string = "No commit value provided"
+	const Failbuildgitrepo string = "No git repo value provided"
+	const Failmqversion string = "Error Getting MQ "
+
+	l := inspectLogs(t, cli, id)
+	if strings.Contains(l, Failbuildstamp) {
+		t.Fatalf("Build Date Stamp Failure string \"%v\" was found in the logs: %v", Failbuildstamp, l)
+	}
+	if strings.Contains(l, Failbuildgitcommit) {
+		t.Fatalf("Build commit Failure string \"%v\" was found in the logs: %v", Failbuildgitcommit, l)
+	}
+	if strings.Contains(l, Failbuildgitrepo) {
+		t.Fatalf("Build repo Failure string \"%v\" was found in the logs: %v", Failbuildgitrepo, l)
+	}
+	if strings.Contains(l, Failmqversion) {
+		t.Fatalf("Build MQ versioning Failure string \"%v\" was found in the logs: %v", Failmqversion, l)
+	}
+
+}

@@ -23,9 +23,9 @@ import (
 )
 
 var (
-	Buildstamp     = "No Timestamp available"
-	Buildgitcommit = "No Git Commit available"
-	Buildgitrepo   = "No Git repo available"
+	Buildstamp     = "No date value provided"
+	Buildgitcommit = "No commit value provided"
+	Buildgitrepo   = "No git repo value provided"
 )
 
 func PrintDateStamp() {

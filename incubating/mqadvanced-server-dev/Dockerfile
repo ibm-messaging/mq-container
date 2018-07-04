@@ -15,7 +15,6 @@
 ARG BASE_IMAGE=mqadvanced-server-dev-base:9.0.5.0-x86_64-ubuntu-16.04
 ARG BUILDER_IMAGE=mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04
 
-
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
