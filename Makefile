@@ -59,6 +59,10 @@ BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
 MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # Docker image name to use for JMS tests
 DEV_JMS_IMAGE=mq-dev-jms-test
+# Variables for versioning
+BUILD_GIT_COMMIT=$(shell git rev-parse HEAD)
+BUILD_GIT_REPO=$(shell git remote get-url origin)
+BUILD_DATE=$(shell date -u -Iseconds)
 
 
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
@@ -218,6 +222,9 @@ define docker-build-mq
 	  --build-arg MQ_URL=http://build:80/$3 \
 	  --build-arg BASE_IMAGE=$(BASE_IMAGE) \
 	  --build-arg BUILDER_IMAGE=$(MQ_IMAGE_GOLANG_SDK) \
+	  --build-arg BUILD_GIT_COMMIT=$(BUILD_GIT_COMMIT) \
+	  --build-arg BUILD_DATE=$(BUILD_DATE) \
+	  --build-arg BUILD_GIT_REPO=$(BUILD_GIT_REPO) \
 	  --label IBM_PRODUCT_ID=$4 \
 	  --label IBM_PRODUCT_NAME=$5 \
 	  --label IBM_PRODUCT_VERSION=$6 \
@@ -248,7 +255,7 @@ endif
 build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER_BASE),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
-	$(DOCKER) build --tag $(MQ_IMAGE_DEVSERVER) --build-arg BASE_IMAGE=$(MQ_IMAGE_DEVSERVER_BASE) --build-arg BUILDER_IMAGE=$(MQ_IMAGE_GOLANG_SDK) --file incubating/mqadvanced-server-dev/Dockerfile .
+	$(DOCKER) build --tag $(MQ_IMAGE_DEVSERVER) --build-arg BUILD_GIT_REPO=$(BUILD_GIT_REPO) --build-arg BUILD_GIT_COMMIT=$(BUILD_GIT_COMMIT) --build-arg BUILD_DATE=$(BUILD_DATE) --build-arg BASE_IMAGE=$(MQ_IMAGE_DEVSERVER_BASE) --build-arg BUILDER_IMAGE=$(MQ_IMAGE_GOLANG_SDK) --file incubating/mqadvanced-server-dev/Dockerfile .
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: docker-version

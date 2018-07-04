@@ -15,16 +15,20 @@
 ARG BASE_IMAGE=mqadvanced-server-dev-base:9.0.5.0-x86_64-ubuntu-16.04
 ARG BUILDER_IMAGE=mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04
 
+
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
 FROM $BUILDER_IMAGE as builder
+ARG BUILD_GIT_COMMIT="No commit value provided"
+ARG BUILD_DATE="No date value provided"
+ARG BUILD_GIT_REPO="No git repo value provided"
 WORKDIR /go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
 COPY internal/ ./internal
 COPY vendor/ ./vendor
 # Re-build runmqserver, with code tagged with 'mqdev' enabled
-RUN go build --tags 'mqdev' ./cmd/runmqserver
+RUN go build -ldflags "-X main.Buildstamp=$BUILD_DATE -X main.Buildgitcommit=$BUILD_GIT_COMMIT -X main.Buildgitrepo=$BUILD_GIT_REPO" --tags 'mqdev'  ./cmd/runmqserver
 RUN go build ./cmd/runmqdevserver/
 # Run all unit tests
 RUN go test -v ./cmd/runmqdevserver/...
