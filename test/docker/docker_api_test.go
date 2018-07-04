@@ -649,7 +649,7 @@ func TestCorrectLicense(t *testing.T) {
 	}
 }
 
-func TestVersioningSet(t *testing.T) {
+func TestVersioning(t *testing.T) {
 	t.Parallel()
 
 	cli, err := client.NewEnvClient()
@@ -664,24 +664,103 @@ func TestVersioningSet(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 
-	// Get whole logs and check for existence of failure messages or no version error message
-	const Failbuildstamp string = "No date value provided"
-	const Failbuildgitcommit string = "No commit value provided"
-	const Failbuildgitrepo string = "No git repo value provided"
-	const Failmqversion string = "Error Getting MQ "
-
+	// Get whole logs and check versioning system
 	l := inspectLogs(t, cli, id)
-	if strings.Contains(l, Failbuildstamp) {
-		t.Fatalf("Build Date Stamp Failure string \"%v\" was found in the logs: %v", Failbuildstamp, l)
-	}
-	if strings.Contains(l, Failbuildgitcommit) {
-		t.Fatalf("Build commit Failure string \"%v\" was found in the logs: %v", Failbuildgitcommit, l)
-	}
-	if strings.Contains(l, Failbuildgitrepo) {
-		t.Fatalf("Build repo Failure string \"%v\" was found in the logs: %v", Failbuildgitrepo, l)
-	}
-	if strings.Contains(l, Failmqversion) {
-		t.Fatalf("Build MQ versioning Failure string \"%v\" was found in the logs: %v", Failmqversion, l)
+	scanner := bufio.NewScanner(strings.NewReader(l))
+
+	total := 6
+	foundCreated := false
+	foundRevision := false
+	foundSource := false
+	foundMQVersion := false
+	foundMQLevel := false
+	foundMQLicense := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "Image created:") && !foundCreated {
+			total--
+			foundCreated = true
+			dataAr := strings.Split(line, " ")
+			data := dataAr[len(dataAr)-1]
+
+			// Verify created
+			_, err := time.Parse(time.RFC3339, data)
+			if err != nil {
+				t.Errorf("Failed to validate Image created (%v) - %v", data, err)
+			}
+		}
+
+		if strings.Contains(line, "Image revision:") && !foundRevision {
+			total--
+			foundRevision = true
+			dataAr := strings.Split(line, " ")
+			data := dataAr[len(dataAr)-1]
+
+			// Verify revision
+			pattern := regexp.MustCompile("^[a-fA-F0-9]{40}$")
+			if !pattern.MatchString(data) {
+				t.Errorf("Failed to validate revision (%v)", data)
+			}
+		}
+
+		if strings.Contains(line, "Image source:") && !foundSource {
+			total--
+			foundSource = true
+			dataAr := strings.Split(line, " ")
+			data := dataAr[len(dataAr)-1]
+
+			// Verify source
+			if !strings.Contains(data, "github") {
+				t.Errorf("Failed to validate source (%v)", data)
+			}
+		}
+
+		if strings.Contains(line, "MQ version:") && !foundMQVersion {
+			total--
+			foundMQVersion = true
+			dataAr := strings.Split(line, " ")
+			data := dataAr[len(dataAr)-1]
+
+			// Verify MQ version
+			pattern := regexp.MustCompile("^\\d+\\.\\d+\\.\\d+\\.\\d+$")
+			if !pattern.MatchString(data) {
+				t.Errorf("Failed to validate mq version (%v)", data)
+			}
+		}
+
+		if strings.Contains(line, "MQ level:") && !foundMQLevel {
+			total--
+			foundMQLevel = true
+			dataAr := strings.Split(line, " ")
+			data := dataAr[len(dataAr)-1]
+
+			// Verify MQ version
+			pattern := regexp.MustCompile("^p\\d{3}-.+$")
+			if !pattern.MatchString(data) {
+				t.Errorf("Failed to validate mq level (%v)", data)
+			}
+		}
+
+		if strings.Contains(line, "MQ license:") && !foundMQLicense {
+			total--
+			foundMQLicense = true
+			dataAr := strings.Split(line, " ")
+			data := dataAr[len(dataAr)-1]
+
+			// Verify MQ version
+			if data != "Developer" && data != "Production" {
+				t.Errorf("Failed to validate mq license (%v)", data)
+			}
+		}
+
+		// end loop early
+		if total == 0 {
+			break
+		}
 	}
 
+	if !foundCreated || !foundRevision || !foundSource || !foundMQVersion || !foundMQLevel || !foundMQLicense {
+		t.Errorf("Failed to find one or more version strings: created(%v) revision(%v) source(%v) mqversion(%v) mqlevel(%v) mqlicense(%v)", foundCreated, foundRevision, foundSource, foundMQVersion, foundMQLevel, foundMQLicense)
+	}
 }

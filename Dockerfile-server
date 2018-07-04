@@ -20,13 +20,13 @@ ARG BUILDER_IMAGE=mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04
 ###############################################################################
 FROM $BUILDER_IMAGE as builder
 WORKDIR /go/src/github.com/ibm-messaging/mq-container/
-ARG BUILD_GIT_COMMIT="No commit value provided"
-ARG BUILD_DATE="No date value provided"
-ARG BUILD_GIT_REPO="No git repo value provided"
+ARG IMAGE_REVISION="Not specified"
+ARG IMAGE_CREATED="Not specified"
+ARG IMAGE_SOURCE="Not specified"
 COPY cmd/ ./cmd
 COPY internal/ ./internal
 COPY vendor/ ./vendor
-RUN go build -ldflags "-X main.Buildstamp=$BUILD_DATE -X main.Buildgitcommit=$BUILD_GIT_COMMIT -X main.Buildgitrepo=$BUILD_GIT_REPO" ./cmd/runmqserver/
+RUN go build -ldflags "-X \"main.ImageCreated=$IMAGE_CREATED\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\"" ./cmd/runmqserver/
 RUN go build ./cmd/chkmqready/
 RUN go build ./cmd/chkmqhealthy/
 # Run all unit tests

@@ -76,7 +76,7 @@ func doMain() error {
 	}
 
 	// Print out versioning information
-	PrintVersionInfo()
+	logVersionInfo()
 
 	err = postInit(name)
 	if err != nil {

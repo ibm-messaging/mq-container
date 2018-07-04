@@ -23,66 +23,46 @@ import (
 )
 
 var (
-	Buildstamp     = "No date value provided"
-	Buildgitcommit = "No commit value provided"
-	Buildgitrepo   = "No git repo value provided"
+	ImageCreated  = "Not specified"
+	ImageRevision = "Not specified"
+	ImageSource   = "Not specified"
 )
 
-func PrintDateStamp() {
-	log.Printf("Build Date Stamp: %v", Buildstamp)
+func logDateStamp() {
+	log.Printf("Image created: %v", ImageCreated)
 }
 
-func PrintGitCommit() {
-	log.Printf("Build Git Commit Hash: %v", Buildgitcommit)
+func logGitRepo() {
+	log.Printf("Image revision: %v", ImageRevision)
 }
 
-func PrintGitRepo() {
-	log.Printf("Build Git repository: %v", Buildgitrepo)
+func logGitCommit() {
+	log.Printf("Image source: %v", ImageSource)
 }
 
-func PrintMQVersion() {
+func logMQVersion() {
 	mqVersion, _, err := command.Run("dspmqver", "-b", "-f", "2")
 	if err != nil {
-		log.Printf("Error Getting MQ Version: %v", strings.TrimSuffix(string(mqVersion), "\n"))
+		log.Printf("Error Getting MQ version: %v", strings.TrimSuffix(string(mqVersion), "\n"))
 	}
 
 	mqBuild, _, err := command.Run("dspmqver", "-b", "-f", "4")
 	if err != nil {
-		log.Printf("Error Getting MQ Build: %v", strings.TrimSuffix(string(mqBuild), "\n"))
+		log.Printf("Error Getting MQ build: %v", strings.TrimSuffix(string(mqBuild), "\n"))
 	}
 	mqLicense, _, err := command.Run("dspmqver", "-b", "-f", "8192")
 	if err != nil {
-		log.Printf("Error Getting MQ License: %v", strings.TrimSuffix(string(mqLicense), "\n"))
-	}
-	mqCmdLevel, _, err := command.Run("dspmqver", "-b", "-f", "1024")
-	if err != nil {
-		log.Printf("Error Getting MQ Cmdlevel: %v", strings.TrimSuffix(string(mqCmdLevel), "\n"))
-	}
-	mqOS, _, err := command.Run("dspmqver", "-b", "-f", "64")
-	if err != nil {
-		log.Printf("Error Getting MQ OS: %v", strings.TrimSuffix(string(mqOS), "\n"))
-	}
-	mqMode, _, err := command.Run("dspmqver", "-b", "-f", "32")
-	if err != nil {
-		log.Printf("Error Getting MQ Mode: %v", strings.TrimSuffix(string(mqMode), "\n"))
-	}
-	mqPlatform, _, err := command.Run("dspmqver", "-b", "-f", "16")
-	if err != nil {
-		log.Printf("Error Getting MQ Platform: %v", strings.TrimSuffix(string(mqPlatform), "\n"))
+		log.Printf("Error Getting MQ license: %v", strings.TrimSuffix(string(mqLicense), "\n"))
 	}
 
-	log.Printf("MQ Version: %v", strings.TrimSuffix(mqVersion, "\n"))
-	log.Printf("MQ Build: %v", strings.TrimSuffix(mqBuild, "\n"))
-	log.Printf("MQ License: %v", strings.TrimSuffix(mqLicense, "\n"))
-	log.Printf("MQ Cmdlevel: %v", strings.TrimSuffix(mqCmdLevel, "\n"))
-	log.Printf("MQ OS: %v", strings.TrimSuffix(mqOS, "\n"))
-	log.Printf("MQ Mode: %v", strings.TrimSuffix(mqMode, "\n"))
-	log.Printf("MQ Platform: %v", strings.TrimSuffix(mqPlatform, "\n"))
+	log.Printf("MQ version: %v", strings.TrimSuffix(mqVersion, "\n"))
+	log.Printf("MQ level: %v", strings.TrimSuffix(mqBuild, "\n"))
+	log.Printf("MQ license: %v", strings.TrimSuffix(mqLicense, "\n"))
 }
 
-func PrintVersionInfo() {
-	PrintDateStamp()
-	PrintGitRepo()
-	PrintGitCommit()
-	PrintMQVersion()
+func logVersionInfo() {
+	logDateStamp()
+	logGitRepo()
+	logGitCommit()
+	logMQVersion()
 }
