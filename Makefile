@@ -61,7 +61,7 @@ MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_
 DEV_JMS_IMAGE=mq-dev-jms-test
 # Variables for versioning
 IMAGE_REVISION=$(shell git rev-parse HEAD)
-IMAGE_SOURCE=$(shell git remote get-url origin)
+IMAGE_SOURCE=$(shell git config --get remote.origin.url)
 IMAGE_CREATED=$(shell date -u +%Y-%m-%dT%H:%M:%S%:z)
 
 
