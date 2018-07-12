@@ -252,6 +252,7 @@ build-devserver: MQ_PACKAGES=ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq
 else 
 build-devserver: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm MQSeriesWeb-*.rpm
 endif
+build-devserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE_DEV)
 build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER_BASE),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
