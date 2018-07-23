@@ -29,7 +29,8 @@ cache:
 
 env:
   - BASE_IMAGE=ubuntu:16.04
-  - BASE_IMAGE=centos:latest
+# Commented out temporarily until Issue 166 is resolved
+#  - BASE_IMAGE=centos:latest
 
 jobs:
   include:
