@@ -3,15 +3,15 @@
 ## 9.1.0.0 (2018-07-23)
 
 * Updated to MQ version 9.1.0.0
-* Added docker 1.12 tests
-* Added MQ SDK docker image sample
-* Added MQ Golang SDK docker image sample
-* Addded prometheus metric gathering implementation
-* Added MQ Internet Pass-Thru (MS81) docker image sample
-* Added POWER PPCLE & Z Linux image builds
+* Added Docker 1.12 tests
+* Added MQ SDK Docker image sample
+* Added MQ Golang SDK Docker image sample
+* Added Prometheus metric gathering implementation
+* Added MQ Internet Pass-Thru (MS81) Docker image sample
+* Added POWER & z/Linux image builds
 * `devjmstest` image now built with Maven instead of gradle
-* Added FAT manifests for dockerhub/dockerstore
-* Added RHEL image build
+* Added FAT manifests for Docker Hub/Docker Store
+* Added Red Hat Enterprise Linux image build
 * Added basic versioning debug information into golang programs
 * Removed 9.0.4
 
