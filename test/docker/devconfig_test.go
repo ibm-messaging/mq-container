@@ -37,10 +37,11 @@ func TestDevGoldenPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	qm := "qm1"
 	containerConfig := container.Config{
 		Env: []string{
 			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
+			"MQ_QMGR_NAME=" + qm,
 		},
 	}
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
@@ -51,6 +52,13 @@ func TestDevGoldenPath(t *testing.T) {
 		// Run the JMS tests, with no password specified
 		runJMSTests(t, cli, id, false, "app", "")
 	})
+	t.Run("REST admin", func(t *testing.T) {
+		testRESTAdmin(t, cli, id, insecureTLSConfig)
+	})
+	t.Run("REST messaging as admin", func(t *testing.T) {
+		testRESTMessaging(t, cli, id, insecureTLSConfig, qm, "admin", devAdminPassword)
+	})
+	// Can't run the messaging tests as "app" with the defaults, because you can't have an empty password
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
@@ -64,10 +72,11 @@ func TestDevSecure(t *testing.T) {
 		t.Fatal(err)
 	}
 	const tlsPassPhrase string = "passw0rd"
+	qm := "qm1"
 	containerConfig := container.Config{
 		Env: []string{
 			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
+			"MQ_QMGR_NAME=", qm,
 			"MQ_APP_PASSWORD=" + devAppPassword,
 			"MQ_TLS_KEYSTORE=/var/tls/server.p12",
 			"MQ_TLS_PASSPHRASE=" + tlsPassPhrase,
@@ -100,7 +109,21 @@ func TestDevSecure(t *testing.T) {
 	waitForReady(t, cli, ctr.ID)
 	cert := filepath.Join(tlsDir(t, true), "server.crt")
 	waitForWebReady(t, cli, ctr.ID, createTLSConfig(t, cert, tlsPassPhrase))
-	runJMSTests(t, cli, ctr.ID, true, "app", devAppPassword)
+
+	t.Run("JMS", func(t *testing.T) {
+		// Run the JMS tests, with no password specified
+		runJMSTests(t, cli, ctr.ID, true, "app", devAppPassword)
+	})
+	t.Run("REST admin", func(t *testing.T) {
+		testRESTAdmin(t, cli, ctr.ID, insecureTLSConfig)
+	})
+	t.Run("REST messaging as admin", func(t *testing.T) {
+		testRESTMessaging(t, cli, ctr.ID, insecureTLSConfig, qm, "admin", devAdminPassword)
+	})
+	t.Run("REST messaging as app", func(t *testing.T) {
+		testRESTMessaging(t, cli, ctr.ID, insecureTLSConfig, qm, "app", devAppPassword)
+	})
+
 	// Stop the container cleanly
 	stopContainer(t, cli, ctr.ID)
 }

@@ -18,12 +18,14 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -140,14 +142,13 @@ func createTLSConfig(t *testing.T, certFile, password string) *tls.Config {
 	}
 }
 
-func testREST(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config) {
+func testRESTAdmin(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config) {
 	httpClient := http.Client{
 		Timeout: time.Duration(30 * time.Second),
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
 		},
 	}
-
 	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getPort(t, cli, ID, 9443))
 	req, err := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth("admin", devAdminPassword)
@@ -157,5 +158,72 @@ func testREST(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config
 	}
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected HTTP status code %v from 'GET installation'; got %v", http.StatusOK, resp.StatusCode)
+	}
+}
+
+// curl -i -k https://localhost:1234/ibmmq/rest/v1/messaging/qmgr/qm1/queue/DEV.QUEUE.1/message -X POST -u app -H “ibm-mq-rest-csrf-token: N/A” -H “Content-Type: text/plain;charset=utf-8" -d “Hello World”
+
+func logHTTPRequest(t *testing.T, req *http.Request) {
+	d, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("HTTP request: %v", string(d))
+}
+
+func logHTTPResponse(t *testing.T, resp *http.Response) {
+	d, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("HTTP response: %v", string(d))
+}
+
+func testRESTMessaging(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config, qmName string, user string, password string) {
+	httpClient := http.Client{
+		Timeout: time.Duration(30 * time.Second),
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+	}
+	q := "DEV.QUEUE.1"
+	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/messaging/qmgr/%s/queue/%s/message", getPort(t, cli, ID, 9443), qmName, q)
+	putMessage := []byte("Hello")
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(putMessage))
+	req.SetBasicAuth(user, password)
+	req.Header.Add("ibm-mq-rest-csrf-token", "n/a")
+	req.Header.Add("Content-Type", "text/plain;charset=utf-8")
+	logHTTPRequest(t, req)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logHTTPResponse(t, resp)
+	if resp.StatusCode != http.StatusCreated {
+		t.Errorf("Expected HTTP status code %v from 'POST to queue'; got %v", http.StatusOK, resp.StatusCode)
+		t.Logf("HTTP response: %+v", resp)
+		t.Fail()
+	}
+
+	req, err = http.NewRequest("DELETE", url, nil)
+	req.Header.Add("ibm-mq-rest-csrf-token", "n/a")
+	req.SetBasicAuth(user, password)
+	logHTTPRequest(t, req)
+	resp, err = httpClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logHTTPResponse(t, resp)
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected HTTP status code %v from 'DELETE from queue'; got %v", http.StatusOK, resp.StatusCode)
+		t.Logf("HTTP response: %+v", resp)
+		t.Fail()
+	}
+	gotMessage, err := ioutil.ReadAll(resp.Body)
+	//gotMessage := string(b)
+	if string(gotMessage) != string(putMessage) {
+		t.Errorf("Expected payload to be \"%s\"; got \"%s\"", putMessage, gotMessage)
 	}
 }
