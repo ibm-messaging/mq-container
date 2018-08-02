@@ -16,11 +16,19 @@
             <security-role name="MQWebAdmin">
                 <group name="MQWebUI" realm="defaultRealm"/>
             </security-role>
+            <security-role name="MQWebUser">
+                <group name="MQWebMessaging" realm="defaultRealm"/>
+            </security-role>
         </application-bnd>
     </enterpriseApplication>
     <basicRegistry id="basic" realm="defaultRealm">
         <user name="admin" password="${env.MQ_ADMIN_PASSWORD}"/>
+        <user name="app" password="${env.MQ_APP_PASSWORD}"/>
         <group name="MQWebUI">
+            <member name="admin"/>
+        </group>
+        <group name="MQWebMessaging">
+            <member name="app"/>
             <member name="admin"/>
         </group>
     </basicRegistry>
