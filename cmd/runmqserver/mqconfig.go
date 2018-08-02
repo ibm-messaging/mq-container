@@ -131,7 +131,7 @@ func readMounts() error {
 		//dev := parts[0]
 		mountPoint := parts[1]
 		fsType := parts[2]
-		if strings.Contains(mountPoint, "/mnt") {
+		if strings.Contains(mountPoint, "/mnt/mqm") {
 			log.Printf("Detected '%v' volume mounted to %v", fsType, mountPoint)
 			detected = true
 		}
