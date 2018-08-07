@@ -20,7 +20,6 @@ ARG BUILDER_IMAGE=mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04
 ###############################################################################
 FROM $BUILDER_IMAGE as builder
 ARG IMAGE_REVISION="Not specified"
-ARG IMAGE_CREATED="Not specified"
 ARG IMAGE_SOURCE="Not specified"
 WORKDIR /go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
