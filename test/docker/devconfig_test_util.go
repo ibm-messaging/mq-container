@@ -36,8 +36,9 @@ import (
 	"github.com/docker/docker/client"
 )
 
-const devAdminPassword string = "passw0rd"
-const devAppPassword string = "passw0rd"
+const defaultAdminPassword string = "passw0rd"
+const defaultAppPasswordOS string = ""
+const defaultAppPasswordWeb string = "passw0rd"
 
 // Disable TLS verification (server uses a self-signed certificate by default,
 // so verification isn't useful anyway)
@@ -60,7 +61,7 @@ func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls
 		select {
 		case <-time.After(1 * time.Second):
 			req, err := http.NewRequest("GET", url, nil)
-			req.SetBasicAuth("admin", devAdminPassword)
+			req.SetBasicAuth("admin", defaultAdminPassword)
 			resp, err := httpClient.Do(req.WithContext(ctx))
 			if err == nil && resp.StatusCode == http.StatusOK {
 				t.Log("MQ web server is ready")
@@ -151,7 +152,7 @@ func testRESTAdmin(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.C
 	}
 	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getPort(t, cli, ID, 9443))
 	req, err := http.NewRequest("GET", url, nil)
-	req.SetBasicAuth("admin", devAdminPassword)
+	req.SetBasicAuth("admin", defaultAdminPassword)
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		t.Fatal(err)

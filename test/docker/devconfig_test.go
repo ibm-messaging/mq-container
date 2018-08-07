@@ -50,15 +50,14 @@ func TestDevGoldenPath(t *testing.T) {
 	waitForWebReady(t, cli, id, insecureTLSConfig)
 	t.Run("JMS", func(t *testing.T) {
 		// Run the JMS tests, with no password specified
-		runJMSTests(t, cli, id, false, "app", "")
+		runJMSTests(t, cli, id, false, "app", defaultAppPasswordOS)
 	})
 	t.Run("REST admin", func(t *testing.T) {
 		testRESTAdmin(t, cli, id, insecureTLSConfig)
 	})
-	t.Run("REST messaging as admin", func(t *testing.T) {
-		testRESTMessaging(t, cli, id, insecureTLSConfig, qm, "admin", devAdminPassword)
+	t.Run("REST messaging", func(t *testing.T) {
+		testRESTMessaging(t, cli, id, insecureTLSConfig, qm, "app", defaultAppPasswordWeb)
 	})
-	// Can't run the messaging tests as "app" with the defaults, because you can't have an empty password
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
@@ -73,11 +72,12 @@ func TestDevSecure(t *testing.T) {
 	}
 	const tlsPassPhrase string = "passw0rd"
 	qm := "qm1"
+	appPassword := "differentPassw0rd"
 	containerConfig := container.Config{
 		Env: []string{
 			"LICENSE=accept",
-			"MQ_QMGR_NAME=", qm,
-			"MQ_APP_PASSWORD=" + devAppPassword,
+			"MQ_QMGR_NAME=" + qm,
+			"MQ_APP_PASSWORD=" + appPassword,
 			"MQ_TLS_KEYSTORE=/var/tls/server.p12",
 			"MQ_TLS_PASSPHRASE=" + tlsPassPhrase,
 			"DEBUG=1",
@@ -111,17 +111,13 @@ func TestDevSecure(t *testing.T) {
 	waitForWebReady(t, cli, ctr.ID, createTLSConfig(t, cert, tlsPassPhrase))
 
 	t.Run("JMS", func(t *testing.T) {
-		// Run the JMS tests, with no password specified
-		runJMSTests(t, cli, ctr.ID, true, "app", devAppPassword)
+		runJMSTests(t, cli, ctr.ID, true, "app", appPassword)
 	})
 	t.Run("REST admin", func(t *testing.T) {
 		testRESTAdmin(t, cli, ctr.ID, insecureTLSConfig)
 	})
-	t.Run("REST messaging as admin", func(t *testing.T) {
-		testRESTMessaging(t, cli, ctr.ID, insecureTLSConfig, qm, "admin", devAdminPassword)
-	})
-	t.Run("REST messaging as app", func(t *testing.T) {
-		testRESTMessaging(t, cli, ctr.ID, insecureTLSConfig, qm, "app", devAppPassword)
+	t.Run("REST messaging", func(t *testing.T) {
+		testRESTMessaging(t, cli, ctr.ID, insecureTLSConfig, qm, "app", appPassword)
 	})
 
 	// Stop the container cleanly
@@ -152,7 +148,7 @@ func TestDevWebDisabled(t *testing.T) {
 	})
 	t.Run("JMS", func(t *testing.T) {
 		// Run the JMS tests, with no password specified
-		runJMSTests(t, cli, id, false, "app", "")
+		runJMSTests(t, cli, id, false, "app", defaultAppPasswordOS)
 	})
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
