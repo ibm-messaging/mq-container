@@ -23,13 +23,15 @@
     </enterpriseApplication>
     <basicRegistry id="basic" realm="defaultRealm">
         <user name="admin" password="${env.MQ_ADMIN_PASSWORD}"/>
+        <!-- The app user will always get a default password of "passw0rd",
+             even if you don't set the environment variable.
+             See `webserver.go` -->
         <user name="app" password="${env.MQ_APP_PASSWORD}"/>
         <group name="MQWebUI">
             <member name="admin"/>
         </group>
         <group name="MQWebMessaging">
             <member name="app"/>
-            <member name="admin"/>
         </group>
     </basicRegistry>
     <variable name="httpHost" value="*"/>
