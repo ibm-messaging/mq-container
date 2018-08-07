@@ -32,9 +32,9 @@ fi
 
 groupadd --root $scratchmnt --system --gid 888 mqm
 useradd --root $scratchmnt --system --uid 888 --gid mqm mqm
-usermod --root $scratchmnt -G root mqm
+usermod --root $scratchmnt -aG root mqm
 
-if [ ! -d ${dir_extract} ]; then
+if [ ! -d ${dir_extract}/MQServer ]; then
   mkdir -p ${dir_extract}
   tar -zxvf $archive -C ${dir_extract}
 fi
