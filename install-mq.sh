@@ -107,7 +107,7 @@ $UBUNTU && groupadd --system --gid 999 mqm
 $UBUNTU && useradd --system --uid 999 --gid mqm mqm
 $RHEL && groupadd --system --gid 888 mqm
 $RHEL && useradd --system --uid 888 --gid mqm mqm
-usermod -G mqm root
+usermod -aG mqm root
 
 # Find directory containing .deb files
 $UBUNTU && DIR_DEB=$(find ${DIR_EXTRACT} -name "*.deb" -printf "%h\n" | sort -u | head -1)
