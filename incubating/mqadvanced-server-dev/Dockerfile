@@ -27,7 +27,7 @@ COPY cmd/ ./cmd
 COPY internal/ ./internal
 COPY vendor/ ./vendor
 # Re-build runmqserver, with code tagged with 'mqdev' enabled
-RUN go build -ldflags "-X \"main.ImageCreated=$IMAGE_CREATED\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\"" --tags 'mqdev'  ./cmd/runmqserver
+RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\"" --tags 'mqdev'  ./cmd/runmqserver
 RUN go build ./cmd/runmqdevserver/
 # Run all unit tests
 RUN go test -v ./cmd/runmqdevserver/...

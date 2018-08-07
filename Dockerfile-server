@@ -26,7 +26,7 @@ ARG IMAGE_SOURCE="Not specified"
 COPY cmd/ ./cmd
 COPY internal/ ./internal
 COPY vendor/ ./vendor
-RUN go build -ldflags "-X \"main.ImageCreated=$IMAGE_CREATED\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\"" ./cmd/runmqserver/
+RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\"" ./cmd/runmqserver/
 RUN go build ./cmd/chkmqready/
 RUN go build ./cmd/chkmqhealthy/
 # Run all unit tests
