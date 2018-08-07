@@ -1,19 +1,17 @@
 # IBM MQ container
 
+[![Build Status](https://travis-ci.org/ibm-messaging/mq-container.svg?branch=master)](https://travis-ci.org/ibm-messaging/mq-container)
+
 **Note**: The `master` branch may be in an *unstable or even broken state* during development.
 To get a stable version, please use the correct [branch](https://github.com/ibm-messaging/mq-container/branches) for your MQ version, instead of the `master` branch.
 
-![IBM MQ logo](https://raw.githubusercontent.com/IBM/charts/master/logo/ibm-mq-icon.svg)
+<img src="https://raw.githubusercontent.com/IBM/charts/master/logo/ibm-mq-icon.svg?sanitize=true" width="100" alt="IBM MQ logo" />
 
 ## Overview
 
 Run [IBM® MQ](http://www-03.ibm.com/software/products/en/ibm-mq) in a container.
 
 You can build an image containing either IBM MQ Advanced, or IBM MQ Advanced for Developers.  The developer image includes a [default developer configuration](docs/developer-config.md), to make it easier to get started.  There is also an [incubating](incubating) folder for additional images for other MQ components, which you might find useful.
-
-## Current status
-
-MQ Advanced for Developers image [![Build Status](https://travis-ci.org/ibm-messaging/mq-container.svg?branch=master)](https://travis-ci.org/ibm-messaging/mq-container)
 
 ## Build
 
