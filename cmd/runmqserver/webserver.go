@@ -38,12 +38,10 @@ func startWebServer() error {
 	cmd := exec.Command("strmqweb")
 	// Set a default app password for the web server, if one isn't already set
 	_, set := os.LookupEnv("MQ_APP_PASSWORD")
-	log.Println(cmd.Env)
 	if !set {
 		// Take all current environment variables, and add the app password
 		cmd.Env = append(os.Environ(), "MQ_APP_PASSWORD=passw0rd")
 	}
-	log.Println(cmd.Env)
 	cmd.SysProcAttr = &syscall.SysProcAttr{}
 	uid, gid, err := command.LookupMQM()
 	if err != nil {
