@@ -21,7 +21,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 )
@@ -33,7 +35,20 @@ func startWebServer() error {
 		return nil
 	}
 	log.Println("Starting web server")
-	out, rc, err := command.RunAsMQM("strmqweb")
+	cmd := exec.Command("strmqweb")
+	// Set a default app password for the web server, if one isn't already set
+	_, set := os.LookupEnv("MQ_APP_PASSWORD")
+	if !set {
+		// Take all current environment variables, and add the app password
+		cmd.Env = append(os.Environ(), "MQ_APP_PASSWORD=passw0rd")
+	}
+	cmd.SysProcAttr = &syscall.SysProcAttr{}
+	uid, gid, err := command.LookupMQM()
+	if err != nil {
+		return err
+	}
+	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
+	out, rc, err := command.RunCmd(cmd)
 	if err != nil {
 		log.Printf("Error %v starting web server: %v", rc, string(out))
 		return err

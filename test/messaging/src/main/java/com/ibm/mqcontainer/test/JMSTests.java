@@ -73,6 +73,10 @@ class JMSTests {
         factory.setTransportType(WMQConstants.WMQ_CM_CLIENT);
         factory.setChannel(channel);
         factory.setConnectionNameList(String.format("%s(1414)", addr));
+        // If a password is set, make sure it gets sent to the queue manager for authentication
+        if (password != null) {
+            factory.setBooleanProperty(WMQConstants.USER_AUTHENTICATION_MQCSP, true);
+        }
         // factory.setClientReconnectOptions(WMQConstants.WMQ_CLIENT_RECONNECT);
         if (TRUSTSTORE == null) {
             LOGGER.info("Not using TLS");
