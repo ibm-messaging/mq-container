@@ -23,9 +23,12 @@ import (
 )
 
 var (
-	ImageCreated  = "Not specified"
+	// ImageCreated is the date the image was built
+	ImageCreated = "Not specified"
+	// ImageRevision is the source control revision identifier
 	ImageRevision = "Not specified"
-	ImageSource   = "Not specified"
+	// ImageSource is the URL to get source code for building the image
+	ImageSource = "Not specified"
 )
 
 func logDateStamp() {
