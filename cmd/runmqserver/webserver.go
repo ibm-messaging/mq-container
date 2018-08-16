@@ -1,7 +1,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
+	"strconv"
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
@@ -42,12 +44,23 @@ func startWebServer() error {
 		// Take all current environment variables, and add the app password
 		cmd.Env = append(os.Environ(), "MQ_APP_PASSWORD=passw0rd")
 	}
-	cmd.SysProcAttr = &syscall.SysProcAttr{}
 	uid, gid, err := command.LookupMQM()
 	if err != nil {
 		return err
 	}
-	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
+	u, err := user.Current()
+	if err != nil {
+		return err
+	}
+	currentUID, err := strconv.Atoi(u.Uid)
+	if err != nil {
+		return fmt.Errorf("Error converting UID to string: %v", err)
+	}
+	// Add credentials to run as 'mqm', only if we aren't already 'mqm'
+	if currentUID != uid {
+		cmd.SysProcAttr = &syscall.SysProcAttr{}
+		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
+	}
 	out, rc, err := command.RunCmd(cmd)
 	if err != nil {
 		log.Printf("Error %v starting web server: %v", rc, string(out))

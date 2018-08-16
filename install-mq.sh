@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2018
+# © Copyright IBM Corporation 2015, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -153,18 +153,26 @@ $UBUNTU && echo "mq:$(dspmqver -b -f 2)" > /etc/debian_chroot
 # Remove the directory structure under /var/mqm which was created by the installer
 rm -rf /var/mqm
 
-# Create the mount point for volumes
-mkdir -p /mnt/mqm
+# Create the mount point for volumes, ensuring MQ has permissions to all directories
+install --directory --mode 0775 --owner mqm --group root /mnt
+install --directory --mode 0775 --owner mqm --group root /mnt/mqm
+install --directory --mode 0775 --owner mqm --group root /mnt/mqm/data
 
 # Create the directory for MQ configuration files
-mkdir -p /etc/mqm
+install --directory --mode 0775 --owner mqm --group root /etc/mqm
 
 # Create a symlink for /var/mqm -> /mnt/mqm/data
 ln -s /mnt/mqm/data /var/mqm
 
-# Optional: Set these values for the Bluemix Vulnerability Report
+# Optional: Ensure any passwords expire in a timely manner
 sed -i 's/PASS_MAX_DAYS\t99999/PASS_MAX_DAYS\t90/' /etc/login.defs
 sed -i 's/PASS_MIN_DAYS\t0/PASS_MIN_DAYS\t1/' /etc/login.defs
+
+# Enable editing the list of users and groups by members of the "root" group
+# If the container runtime dynamically inserts an unknown UID/GID, these
+# permissions mean that `runmqserver` can make them known.
+chmod -R g=u /etc/passwd
+chmod -R g=u /etc/group
 
 $UBUNTU && PAM_FILE=/etc/pam.d/common-password
 $RHEL && PAM_FILE=/etc/pam.d/password-auth
