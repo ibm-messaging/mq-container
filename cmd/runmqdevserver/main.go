@@ -31,7 +31,7 @@ var log *logger.Logger
 
 func setPassword(user string, password string) error {
 	// #nosec G204
-	cmd := exec.Command("chpasswd")
+	cmd := exec.Command("sudo", "chpasswd")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return err

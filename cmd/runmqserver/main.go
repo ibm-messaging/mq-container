@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@ import (
 )
 
 func doMain() error {
+	var initFlag = flag.Bool("i", false, "initialize volume only, then exit")
 	var infoFlag = flag.Bool("info", false, "Display debug info, then exit")
 	flag.Parse()
 
-	// Configure the logger so we can output messages
 	name, nameErr := name.GetQueueManagerName()
 	mf, err := configureLogger(name)
 	if err != nil {
@@ -103,6 +103,14 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
+	// If init flag is set, exit now
+	if *initFlag {
+		return nil
+	}
+
+	// Start signal handler
+	signalControl := signalHandler(name)
 
 	// Print out versioning information
 	logVersionInfo()

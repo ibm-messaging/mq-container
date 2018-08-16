@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import (
 	"text/template"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/prometheus/common/log"
 )
 
 // processTemplateFile takes a Go templateFile, and processes it with the
