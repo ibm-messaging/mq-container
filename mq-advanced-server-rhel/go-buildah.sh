@@ -15,21 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-readonly tag=$1
-
-if [[ $* < 1 ]]; then
-  printf "Usage: $0 TAG\n" >&2
-  printf "Where:\n" >&2
-  printf "  TAG\tTag for image containing MQ SDK and Go compiler\n" >&2
-  exit 1
-fi
-
-# Copy the go-build.sh script into the Go builder image
-install --mode 0755 go-build.sh $mnt/usr/local/bin/
 # Run the Go build script inside the Go container, mounting the source
 # directory in
+
+readonly tag=$1
+readonly dev=$2
+
+IMAGE_REVISION=${IMAGE_REVISION:="Not Applicable"}
+IMAGE_SOURCE=${IMAGE_SOURCE:="Not Applicable"}
+
 podman run \
-  --volume ${PWD}/../..:/go/src/github.com/ibm-messaging/mq-container/ \
+  --volume ${PWD}:/go/src/github.com/ibm-messaging/mq-container/ \
   --env GOPATH=/go \
+  --env IMAGE_REVISION="$IMAGE_REVISION" \
+  --env IMAGE_SOURCE="$IMAGE_SOURCE" \
+  --env MQDEV=${dev} \
   ${tag} \
-  bash -c "cd /go/src/github.com/ibm-messaging/mq-container/ && ./incubating/mq-advanced-server-rhel/go-build.sh"
+  bash -c "cd /go/src/github.com/ibm-messaging/mq-container/ && ./mq-advanced-server-rhel/go-build.sh"

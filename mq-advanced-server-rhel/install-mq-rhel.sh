@@ -25,33 +25,27 @@ readonly archive=$3
 readonly mq_packages=$4
 readonly dir_extract=/tmp/extract
 
-if [[ $* < 3 ]]; then
-  printf "Usage: $0 container mount-dir mq-archive mq-packages\n" >&2
-  exit 1
-fi
-
 groupadd --root $scratchmnt --system --gid 888 mqm
 useradd --root $scratchmnt --system --uid 888 --gid mqm mqm
 usermod --root $scratchmnt -aG root mqm
+usermod --root $scratchmnt -aG mqm root
 
 if [ ! -d ${dir_extract}/MQServer ]; then
   mkdir -p ${dir_extract}
-  tar -zxvf $archive -C ${dir_extract}
+  echo Extracting $archive
+  tar -zxf $archive -C ${dir_extract}
+  echo Extracting finished
 fi
-#DIR_RPM=$(find ${dir_extract} -name "*.rpm" -printf "%h\n" | sort -u | head -1)
-#DIR_RPM=${DIR_RPM#$dir_extract}
-#DIR_RPM=$(buildah run $ctr -- find ${dir_extract} -name "*.rpm" -printf "%h\n" | sort -u | head -1)
-# Find location of mqlicense.sh
-#MQLICENSE=$(buildah run $ctr -- find ${dir_extract} -name "mqlicense.sh")
-#MQLICENSE=$(find ${dir_extract} -name "mqlicense.sh")
-#MQLICENSE=${MQLICENSE#dir_extract}
+
+# If MQ_PACKAGES isn't specifically set, then choose a valid set of defaults
+
 
 # Accept the MQ license
 buildah run --volume ${dir_extract}:/mnt/mq-download $ctr -- /mnt/mq-download/MQServer/mqlicense.sh -text_only -accept
 
 buildah run --volume ${dir_extract}:/mnt/mq-download $ctr -- bash -c "cd /mnt/mq-download/MQServer && rpm -ivh $mq_packages"
 
-#rm -rf ${dir_extract}
+rm -rf ${dir_extract}/MQServer
 
 # Remove 32-bit libraries from 64-bit container
 find $scratchmnt/opt/mqm $scratchmnt/var/mqm -type f -exec file {} \; | awk -F: '/ELF 32-bit/{print $1}' | xargs --no-run-if-empty rm -f
