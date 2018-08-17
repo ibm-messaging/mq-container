@@ -29,6 +29,11 @@ test-devserver: test-devserver-ubuntu
 .PHONY: test-advancedserver
 test-advancedserver: test-advancedserver-ubuntu
 
+.PHONY: deps
+deps: deps-ubuntu
+
+.PHONY: lint
+lint: lint-ubuntu
 
 # UBUNTU building targets
 .PHONY: build-devserver-ubuntu
@@ -53,6 +58,14 @@ build-advancedserver-ubuntu:
 .PHONY: test-advancedserver-ubuntu
 test-advancedserver-ubuntu: 
 	$(MAKE) -f Makefile-UBUNTU test-advancedserver
+
+.PHONY: deps-ubuntu
+deps-ubuntu: 
+	$(MAKE) -f Makefile-UBUNTU deps
+
+.PHONY: lint-ubuntu
+lint-ubuntu: 
+	$(MAKE) -f Makefile-UBUNTU lint
 
 # RHEL building targets
 .PHONY: build-devserver-rhel
