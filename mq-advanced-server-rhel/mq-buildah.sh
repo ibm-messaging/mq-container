@@ -16,11 +16,11 @@
 # limitations under the License.
 
 # Build a RHEL image, using the buildah tool
+# Usage
+# mq-buildah.sh ARCHIVEFILE PACKAGES
 
 set -x
 set -e
-
-MQ_ARCHIVE=downloads/mqadv_dev910_linux_x86-64.tar.gz
 
 ###############################################################################
 # Setup MQ server working container
@@ -30,12 +30,15 @@ MQ_ARCHIVE=downloads/mqadv_dev910_linux_x86-64.tar.gz
 # Resulting image won't have yum, for example
 readonly ctr_mq=$(buildah from scratch)
 readonly mnt_mq=$(buildah mount $ctr_mq)
+readonly archive=downloads/$1
+readonly packages=$2
+readonly tag=$3
+readonly version=$4
+readonly mqdev=$5
 
 # Initialize yum for use with the scratch container
 rpm --root $mnt_mq --initdb
 
-# TODO: eek
-yum install yum-utils
 yumdownloader --destdir=/tmp redhat-release-server
 rpm --root $mnt_mq -ihv /tmp/redhat-release-server*.rpm || true
 
@@ -44,7 +47,7 @@ rpm --root $mnt_mq -ihv /tmp/redhat-release-server*.rpm || true
 ###############################################################################
 
 # Install the packages required by MQ
-yum install -y --installroot=${mnt_mq} --releasever 7 --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
+yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
   bash \
   bc \
   coreutils \
@@ -60,57 +63,53 @@ yum install -y --installroot=${mnt_mq} --releasever 7 --setopt install_weak_deps
   util-linux
 
 # Clean up cached files
-yum clean all --installroot=${mnt_mq} --releasever 7
+yum clean all --installroot=${mnt_mq}
 rm -rf ${mnt_mq}/var/cache/yum/*
 
 # Install MQ server packages into the MQ builder image
-./install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${MQ_ARCHIVE}" "MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm"
+./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
 
 # Remove the directory structure under /var/mqm which was created by the installer
 rm -rf ${mnt_mq}/var/mqm
 
-# Create the mount point for volumes
-mkdir -p ${mnt_mq}/mnt/mqm
-
 # Create the directory for MQ configuration files
 mkdir -p ${mnt_mq}/etc/mqm
-
-# Create a symlink for /var/mqm -> /mnt/mqm/data
-buildah run $ctr ln -s /mnt/mqm/data /var/mqm
+chown 888:888 ${mnt_mq}/etc/mqm
 
 # Install the Go binaries into the image
-install --mode 0750 --owner 888 --group 888 ../../runmqserver ${mnt_mq}/usr/local/bin/
-install --mode 6750 --owner 888 --group 888 ../../chk* ${mnt_mq}/usr/local/bin/
-install --mode 0750 --owner 888 --group 888 ../../NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
-# cp runmqserver $mnt_mq/usr/local/bin/
-# cp chkmq* $mnt_mq/usr/local/bin/
-# cp NOTICES.txt $mnt_mq/opt/mqm/licenses/notices-container.txt
-# chmod ug+x $mnt_mq/usr/local/bin/runmqserver
-# chown mqm:mqm $mnt_mq/usr/local/bin/*mq*
-# chmod ug+xs $mnt_mq/usr/local/bin/chkmq*
+install --mode 0750 --owner 888 --group 888 ./build/runmqserver ${mnt_mq}/usr/local/bin/
+install --mode 6750 --owner 888 --group 888 ./build/chk* ${mnt_mq}/usr/local/bin/
+install --mode 0750 --owner 888 --group 888 ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
 
 ###############################################################################
 # Final Buildah commands
 ###############################################################################
+
+if [ "$mqdev" = "TRUE" ]; then
+  OSTAG="mq messaging developer"
+  DISNAME="IBM MQ Advanced Server Developer Edition"
+else
+  OSTAG="mq messaging"
+  DISNAME="IBM MQ Advanced Server"
+fi
+
+
 
 buildah config \
   --port 1414/tcp \
   --port 9157/tcp \
   --os linux \
   --label architecture=x86_64 \
-  --label io.openshift.tags="mq messaging" \
-  --label io.k8s.display-name="IBM MQ Advanced Server" \
+  --label io.openshift.tags="$OSTAG" \
+  --label io.k8s.display-name="$DISNAME" \
   --label io.k8s.description="IBM MQ is messaging middleware that simplifies and accelerates the integration of diverse applications and business data across multiple platforms.  It uses message queues to facilitate the exchanges of information and offers a single messaging solution for cloud, mobile, Internet of Things (IoT) and on-premises environments." \
-  --label name="mqadvanced-server" \
+  --label name="${tag%:*}" \
   --label vendor="IBM" \
-  --label version="9.1.0.0" \
+  --label version="$version" \
   --env AMQ_ADDITIONAL_JSON_LOG=1 \
   --env LANG=en_US.UTF-8 \
   --env LOG_FORMAT=basic \
   --entrypoint runmqserver \
-  --user 888 \
   $ctr_mq
 buildah unmount $ctr_mq
-buildah commit $ctr_mq mymq
-
-# TODO: Leaves the working container lying around.  Good for dev.
+buildah commit $ctr_mq $tag
