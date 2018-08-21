@@ -54,7 +54,7 @@ NUM_CPU = $(or $(shell docker info --format "{{ .NCPU }}"),2)
 BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
 MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # Docker image name to use for JMS tests
-DEV_JMS_IMAGE=mq-dev-jms-test
+DEV_JMS_IMAGE=mq-dev-jms-test:latest
 # Variables for versioning
 IMAGE_REVISION=$(shell git rev-parse HEAD)
 IMAGE_SOURCE=$(shell git config --get remote.origin.url)
