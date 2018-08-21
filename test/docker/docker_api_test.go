@@ -684,10 +684,11 @@ func TestVersioning(t *testing.T) {
 			dataAr := strings.Split(line, " ")
 			data := dataAr[len(dataAr)-1]
 
-			// Verify created
+			// Verify created is in a known timestamp format
 			_, err := time.Parse(time.RFC3339, data)
-			if err != nil {
-				t.Errorf("Failed to validate Image created (%v) - %v", data, err)
+			_, err2 := time.Parse("2006-01-02T15:04:05-0700", data)
+			if err != nil && err2 != nil {
+				t.Errorf("Failed to validate Image created stamp (%v) - %v or %v", data, time.RFC3339, "2006-01-02T15:04:05-0700")
 			}
 		}
 

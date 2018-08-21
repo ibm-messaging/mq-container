@@ -56,6 +56,9 @@ find $scratchmnt/opt/mqm -name '*.tar.gz' -delete
 # Recommended: Set the default MQ installation (makes the MQ commands available on the PATH)
 buildah run $ctr -- /opt/mqm/bin/setmqinst -p /opt/mqm -i
 
+mkdir -p $scratchmnt/run/runmqserver
+chown 888:888 $scratchmnt/run/runmqserver
+
 # Optional: Set these values for the IBM Cloud Vulnerability Report
 sed -i 's/PASS_MAX_DAYS\t99999/PASS_MAX_DAYS\t90/' $scratchmnt/etc/login.defs
 sed -i 's/PASS_MIN_DAYS\t0/PASS_MIN_DAYS\t1/' $scratchmnt/etc/login.defs
