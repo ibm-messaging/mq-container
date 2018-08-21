@@ -107,12 +107,12 @@ check-prereqs:
 
 
 .PHONY: test-advancedserver
-test-advancedserver:
+test-advancedserver: 
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on $(shell docker --version)"$(END)))
 
 
 .PHONY: test-devserver
-test-devserver:
+test-devserver: 
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER) on $(shell docker --version)"$(END)))
 
 

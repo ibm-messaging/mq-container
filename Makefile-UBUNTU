@@ -110,23 +110,14 @@ default: build-devserver test
 all: build-devserver build-advancedserver
 
 .PHONY: test-all
-test-all: test-devserver test-advancedserver
-
-.PHONY: precommit
-precommit: fmt lint all test-all
+test-all: build-devjmstest test-devserver test-advancedserver
 
 .PHONY: devserver
-devserver: build-devserver test-devserver
+devserver: build-devserver build-devjmstest test-devserver
 
 # Build incubating components
 .PHONY: incubating
 incubating: build-explorer
-
-.PHONY: clean
-clean:
-	rm -rf ./coverage
-	rm -rf ./build
-	rm -rf ./deps
 
 downloads/$(MQ_ARCHIVE_DEV):
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
@@ -141,18 +132,9 @@ downloads/$(MQ_SDK_ARCHIVE):
 .PHONY: downloads
 downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
 
-.PHONY: deps
-deps:
-	glide install --strip-vendor
-
 # Vendor Go dependencies for the Docker tests
 test/docker/vendor:
 	cd test/docker && dep ensure -vendor-only
-
-.PHONY: build-cov
-build-cov:
-	mkdir -p build
-	cd build; go test -c -covermode=count ../cmd/runmqserver
 
 # Shortcut to just run the unit tests
 .PHONY: test-unit
@@ -259,8 +241,8 @@ build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk-ex
 build-advancedserver-cover: docker-version
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_IMAGE_ADVANCEDSERVER)-cover -f Dockerfile-server.cover .
 
-.PHONY: build-explorer docker-pull
-build-explorer: downloads/$(MQ_ARCHIVE_DEV)
+.PHONY: build-explorer 
+build-explorer: downloads/$(MQ_ARCHIVE_DEV) docker-pull
 	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 
 .PHONY: build-sdk
@@ -283,17 +265,8 @@ build-golang-sdk-ex: docker-version build-sdk-ex
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_SDK) -t $(MQ_IMAGE_GOLANG_SDK) -f incubating/mq-golang-sdk/Dockerfile .
 #	$(call docker-build-mq,$(MQ_IMAGE_GOLANG_SDK),incubating/mq-golang-sdk/Dockerfile,$(MQ_IMAGE_SDK),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers SDK (Non-Warranted)",$(MQ_VERSION))
 
+.PHONY: docker-pull
 docker-pull:
 	$(DOCKER) pull $(BASE_IMAGE)
-
-GO_PKG_DIRS = ./cmd ./internal ./test
-
-fmt: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
-	go fmt $(addsuffix /..., $(GO_PKG_DIRS))
-
-lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
-	@# This expression is necessary because /... includes the vendor directory in golint
-	@# As of 11/04/2018 there is an open issue to fix it: https://github.com/golang/lint/issues/320
-	golint -set_exit_status $(sort $(dir $(wildcard $(addsuffix /*/*.go, $(GO_PKG_DIRS)))))
 
 include formatting.mk
