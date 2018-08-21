@@ -69,9 +69,6 @@ rm -rf ${mnt_mq}/var/cache/yum/*
 # Install MQ server packages into the MQ builder image
 ./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
 
-# Remove the directory structure under /var/mqm which was created by the installer
-rm -rf ${mnt_mq}/var/mqm
-
 # Create the directory for MQ configuration files
 mkdir -p ${mnt_mq}/etc/mqm
 chown 888:888 ${mnt_mq}/etc/mqm
