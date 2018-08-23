@@ -22,17 +22,11 @@ set -e
 
 # Use a "scratch" container, so the resulting image has minimal files
 # Resulting image won't have yum, for example
-readonly ctr_mq=$(buildah from scratch)
+readonly ctr_mq=$(buildah from rhel7)
 readonly mnt_mq=$(buildah mount $ctr_mq)
 readonly imagename=$1
 
-# Initialize yum for use with the scratch container
-rpm --root $mnt_mq --initdb
-
-yumdownloader --destdir=/tmp redhat-release-server
-rpm --root $mnt_mq -ihv /tmp/redhat-release-server*.rpm || true
-
-yum --installroot $mnt_mq install -y \
+buildah run $ctr_mq -- yum install -y \
     java-1.7.0-openjdk-devel \
     java \
     which \
@@ -59,9 +53,13 @@ cp $mnt_mq/usr/src/mymaven/target/lib/*.jar $mnt_mq/opt/app/
 rm -rf $mnt_mq/tmp/*
 rm -rf $mnt_mq/usr/src/mymaven
 
-# We can't uninstall tar or gzip because 
-yum --installroot $mnt_mq remove -y \
-    wget 
+# We can't uninstall tar or gzip because they are required
+buildah run $ctr_mq -- yum remove -y \
+    wget
+
+# Clean up cached files
+buildah run $ctr_mq -- yum clean all
+rm -rf ${mnt_mq}/var/cache/yum/*
 
 ###############################################################################
 # Contain image finalization

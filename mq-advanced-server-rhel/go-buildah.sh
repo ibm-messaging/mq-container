@@ -30,5 +30,6 @@ podman run \
   --env IMAGE_REVISION="$IMAGE_REVISION" \
   --env IMAGE_SOURCE="$IMAGE_SOURCE" \
   --env MQDEV=${dev} \
+  --rm \
   ${tag} \
   bash -c "cd /go/src/github.com/ibm-messaging/mq-container/ && ./mq-advanced-server-rhel/go-build.sh"

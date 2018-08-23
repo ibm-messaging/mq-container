@@ -43,3 +43,5 @@ buildah config \
   --env CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
   ${ctr}
 buildah commit ${ctr} ${tag}
+
+buildah rm ${ctr}
