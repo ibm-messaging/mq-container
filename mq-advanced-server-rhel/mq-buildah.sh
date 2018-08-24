@@ -28,7 +28,7 @@ set -e
 
 # Use a "scratch" container, so the resulting image has minimal files
 # Resulting image won't have yum, for example
-readonly ctr_mq=$(buildah from scratch)
+readonly ctr_mq=$(buildah from rhel7)
 readonly mnt_mq=$(buildah mount $ctr_mq)
 readonly archive=downloads/$1
 readonly packages=$2
@@ -36,18 +36,12 @@ readonly tag=$3
 readonly version=$4
 readonly mqdev=$5
 
-# Initialize yum for use with the scratch container
-rpm --root $mnt_mq --initdb
-
-yumdownloader --destdir=/tmp redhat-release-server
-rpm --root $mnt_mq -ihv /tmp/redhat-release-server*.rpm || true
-
 ###############################################################################
 # Install MQ server
 ###############################################################################
 
 # Install the packages required by MQ
-yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
+buildah run $ctr_mq -- yum install -y --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
   bash \
   bc \
   coreutils \
@@ -63,14 +57,11 @@ yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt
   util-linux
 
 # Clean up cached files
-yum clean all --installroot=${mnt_mq}
+buildah run $ctr_mq -- yum clean all
 rm -rf ${mnt_mq}/var/cache/yum/*
 
 # Install MQ server packages into the MQ builder image
 ./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
-
-# Remove the directory structure under /var/mqm which was created by the installer
-rm -rf ${mnt_mq}/var/mqm
 
 # Create the directory for MQ configuration files
 mkdir -p ${mnt_mq}/etc/mqm
@@ -113,3 +104,5 @@ buildah config \
   $ctr_mq
 buildah unmount $ctr_mq
 buildah commit $ctr_mq $tag
+
+buildah rm $ctr_mq

@@ -37,7 +37,7 @@ readonly version=$3
 
 useradd --root $mnt_mq --system --uid 889 --gid mqm admin
 groupadd --root $mnt_mq --system --gid 890 mqclient
-useradd --root $mnt_mq --system --uid 890 --gid mqclient mqclient
+useradd --root $mnt_mq --system --uid 890 --gid mqclient app
 
 buildah run $ctr -- echo admin:passw0rd | chpasswd
 
@@ -79,3 +79,4 @@ buildah config \
 buildah unmount $ctr_mq
 buildah commit $ctr_mq $tag
 
+buildah rm $ctr_mq

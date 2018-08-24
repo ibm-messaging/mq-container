@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -86,6 +87,7 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, pa
 			"MQ_PORT_1414_TCP_ADDR=" + getIPAddress(t, cli, ID),
 			"MQ_USERNAME=" + user,
 			"MQ_CHANNEL=DEV.APP.SVRCONN",
+			"IBMJRE=" + os.Getenv("IBMJRE"),
 		},
 		Image: imageNameDevJMS(),
 	}
