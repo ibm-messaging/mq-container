@@ -84,9 +84,15 @@ class JMSTests {
         else {
             LOGGER.info(String.format("Using TLS.  Trust store=%s", TRUSTSTORE));
             SSLSocketFactory ssl = createSSLSocketFactory();
-            factory.setSSLSocketFactory(ssl);
-            factory.setSSLCipherSuite("SSL_RSA_WITH_AES_128_CBC_SHA256");
-            // LOGGER.info(Arrays.toString(ssl.getSupportedCipherSuites()));
+            factory.setSSLSocketFactory(ssl); 
+            boolean ibmjre = System.getenv("IBMJRE").equals("true");
+            if (ibmjre){
+                System.setProperty("com.ibm.mq.cfg.useIBMCipherMappings", "true");
+                factory.setSSLCipherSuite("SSL_RSA_WITH_AES_128_CBC_SHA256");
+            } else {
+                 System.setProperty("com.ibm.mq.cfg.useIBMCipherMappings", "false");
+                 factory.setSSLCipherSuite("TLS_RSA_WITH_AES_128_CBC_SHA256");
+            }
         }
         // Give up if unable to reconnect for 10 minutes
         // factory.setClientReconnectTimeout(600);

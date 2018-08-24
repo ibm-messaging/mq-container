@@ -70,6 +70,7 @@ func TestDevSecure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	const tlsPassPhrase string = "passw0rd"
 	qm := "qm1"
 	appPassword := "differentPassw0rd"
