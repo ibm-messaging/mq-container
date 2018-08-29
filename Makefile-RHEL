@@ -47,9 +47,6 @@ MQ_PACKAGES ?= MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSe
 ###############################################################################
 # ARCH is the platform architecture (e.g. x86_64, ppc64le or s390x)
 ARCH = $(shell uname -m)
-# NUM_CPU is the number of CPUs available to Docker.  Used to control how many
-# test run in parallel
-NUM_CPU = $(or $(shell docker info --format "{{ .NCPU }}"),2)
 # BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
 BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
 MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
@@ -116,7 +113,7 @@ test-advancedserver: check-test-prereqs test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on $(shell docker --version)"$(END)))
 	buildah push $(MQ_IMAGE_ADVANCEDSERVER) docker-daemon:$(MQ_IMAGE_ADVANCEDSERVER)
 	docker tag docker.io/$(MQ_IMAGE_ADVANCEDSERVER) $(MQ_IMAGE_ADVANCEDSERVER)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) EXPECTED_LICENSE=Production go test $(TEST_OPTS_DOCKER)
 
 
 .PHONY: test-devserver
@@ -124,7 +121,7 @@ test-devserver: check-test-prereqs test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER) on $(shell docker --version)"$(END)))
 	buildah push $(MQ_IMAGE_DEVSERVER) docker-daemon:$(MQ_IMAGE_DEVSERVER)
 	docker tag docker.io/$(MQ_IMAGE_DEVSERVER) $(MQ_IMAGE_DEVSERVER)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) go test -tags mqdev $(TEST_OPTS_DOCKER)
 
 
 .PHONY: build-advancedserver

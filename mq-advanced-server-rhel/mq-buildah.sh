@@ -26,8 +26,6 @@ set -e
 # Setup MQ server working container
 ###############################################################################
 
-# Use a "scratch" container, so the resulting image has minimal files
-# Resulting image won't have yum, for example
 readonly ctr_mq=$(buildah from rhel7)
 readonly mnt_mq=$(buildah mount $ctr_mq)
 readonly archive=downloads/$1
@@ -39,6 +37,11 @@ readonly mqdev=$5
 ###############################################################################
 # Install MQ server
 ###############################################################################
+
+groupadd --root ${mnt_mq} --system --gid 888 mqm
+useradd --root ${mnt_mq} --system --uid 888 --gid mqm mqm
+usermod --root ${mnt_mq} -aG root mqm
+usermod --root ${mnt_mq} -aG mqm root
 
 # Install the packages required by MQ
 buildah run $ctr_mq -- yum install -y --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
@@ -84,8 +87,6 @@ else
   DISNAME="IBM MQ Advanced Server"
 fi
 
-
-
 buildah config \
   --port 1414/tcp \
   --port 9157/tcp \
@@ -97,6 +98,10 @@ buildah config \
   --label name="${tag%:*}" \
   --label vendor="IBM" \
   --label version="$version" \
+  --label release="1" \
+  --label run="docker run -d -e LICENSE=accept --name ibm-mq ${tag%:*}" \
+  --label summary="$DISNAME" \
+  --label description="IBM MQ is messaging middleware that simplifies and accelerates the integration of diverse applications and business data across multiple platforms.  It uses message queues to facilitate the exchanges of information and offers a single messaging solution for cloud, mobile, Internet of Things (IoT) and on-premises environments." \
   --env AMQ_ADDITIONAL_JSON_LOG=1 \
   --env LANG=en_US.UTF-8 \
   --env LOG_FORMAT=basic \

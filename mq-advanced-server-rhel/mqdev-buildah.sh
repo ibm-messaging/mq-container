@@ -35,11 +35,12 @@ readonly tag=$2
 readonly version=$3
 
 
-useradd --root $mnt_mq --system --uid 889 --gid mqm admin
-groupadd --root $mnt_mq --system --gid 890 mqclient
-useradd --root $mnt_mq --system --uid 890 --gid mqclient app
+useradd --root $mnt_mq --gid mqm admin
+groupadd --root $mnt_mq --system mqclient
+useradd --root $mnt_mq --gid mqclient app
 
-buildah run $ctr -- echo admin:passw0rd | chpasswd
+buildah run $ctr_mq -- id admin
+buildah run $ctr_mq -- sh -c "echo admin:passw0rd | chpasswd"
 
 mkdir -p $mnt_mq/run/runmqdevserver
 chown 888:888 $mnt_mq/run/runmqdevserver
@@ -69,6 +70,10 @@ buildah config \
   --label name="${tag%:*}" \
   --label vendor="IBM" \
   --label version="$version" \
+  --label release="1" \
+  --label run="docker run -d -e LICENSE=accept --name ibm-mq-dev ${tag%:*}" \
+  --label summary="IBM MQ Advanced Server Developer Edition" \
+  --label description="IBM MQ is messaging middleware that simplifies and accelerates the integration of diverse applications and business data across multiple platforms.  It uses message queues to facilitate the exchanges of information and offers a single messaging solution for cloud, mobile, Internet of Things (IoT) and on-premises environments." \
   --env AMQ_ADDITIONAL_JSON_LOG=1 \
   --env LANG=en_US.UTF-8 \
   --env LOG_FORMAT=basic \
