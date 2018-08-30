@@ -23,25 +23,32 @@ readonly tag=$2
 # Use plain RHEL 7 container
 # Note: Red Hat's devtools/go-toolset-7-rhel7 image doesn't allow use of 'root'
 # user required for installing the MQ SDK
-readonly ctr=$(buildah from rhel7)
-readonly mnt=$(buildah mount $ctr)
+readonly ctr_mq=$(buildah from rhel7)
+readonly mnt_mq=$(buildah mount $ctr_mq)
+
+# Add mqm user
+groupadd --root $mnt_mq --system --gid 888 mqm
+useradd --root $mnt_mq --system --uid 888 --gid mqm mqm
+usermod --root $mnt_mq -aG root mqm
+usermod --root $mnt_mq -aG mqm root
 
 # Enable Yum repository for "optional" RPMs, which is needed for "golang"
-buildah run ${ctr} -- yum-config-manager --enable rhel-7-server-optional-rpms
+buildah run ${ctr_mq} -- yum-config-manager --enable rhel-7-server-optional-rpms
 # Install Go compiler
-buildah run ${ctr} -- yum install -y golang git gcc
+buildah run ${ctr_mq} -- yum install -y golang git gcc
+
 # Install the MQ SDK into the Go builder image
-./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr} "${mnt}" "${mq_archive}" "MQSeriesRuntime-*.rpm MQSeriesSDK-*.rpm MQSeriesSamples*.rpm"
+./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${mq_archive}" "MQSeriesRuntime-*.rpm MQSeriesSDK-*.rpm MQSeriesSamples*.rpm"
 # Clean up Yum files
-buildah run ${ctr} -- yum clean all --releasever 7
-rm -rf ${mnt}/var/cache/yum/*
-buildah unmount ${ctr}
+buildah run ${ctr_mq} -- yum clean all --releasever 7
+rm -rf ${mnt_mq}/var/cache/yum/*
+buildah unmount ${ctr_mq}
 # Set environment variables for MQ/Go compilation
 buildah config \
   --os linux \
   --env CGO_CFLAGS="-I/opt/mqm/inc/" \
   --env CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
-  ${ctr}
-buildah commit ${ctr} ${tag}
+  ${ctr_mq}
+buildah commit ${ctr_mq} ${tag}
 
-buildah rm ${ctr}
+buildah rm ${ctr_mq}

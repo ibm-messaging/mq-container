@@ -19,16 +19,11 @@
 
 set -ex
 
-readonly ctr=$1
-readonly scratchmnt=$2
+readonly ctr_mq=$1
+readonly mnt_mq=$2
 readonly archive=$3
 readonly mq_packages=$4
 readonly dir_extract=/tmp/extract
-
-groupadd --root $scratchmnt --system --gid 888 mqm
-useradd --root $scratchmnt --system --uid 888 --gid mqm mqm
-usermod --root $scratchmnt -aG root mqm
-usermod --root $scratchmnt -aG mqm root
 
 if [ ! -d ${dir_extract}/MQServer ]; then
   mkdir -p ${dir_extract}
@@ -41,34 +36,36 @@ fi
 
 
 # Accept the MQ license
-buildah run --volume ${dir_extract}:/mnt/mq-download $ctr -- /mnt/mq-download/MQServer/mqlicense.sh -text_only -accept
+buildah run --volume ${dir_extract}:/mnt/mq-download $ctr_mq -- /mnt/mq-download/MQServer/mqlicense.sh -text_only -accept
 
-buildah run --volume ${dir_extract}:/mnt/mq-download $ctr -- bash -c "cd /mnt/mq-download/MQServer && rpm -ivh $mq_packages"
+buildah run --volume ${dir_extract}:/mnt/mq-download $ctr_mq -- bash -c "cd /mnt/mq-download/MQServer && rpm -ivh $mq_packages"
 
 rm -rf ${dir_extract}/MQServer
 
 # Remove 32-bit libraries from 64-bit container
-find $scratchmnt/opt/mqm $scratchmnt/var/mqm -type f -exec file {} \; | awk -F: '/ELF 32-bit/{print $1}' | xargs --no-run-if-empty rm -f
+find $mnt_mq/opt/mqm $mnt_mq/var/mqm -type f -exec file {} \; | awk -F: '/ELF 32-bit/{print $1}' | xargs --no-run-if-empty rm -f
 
 # Remove tar.gz files unpacked by RPM postinst scripts
-find $scratchmnt/opt/mqm -name '*.tar.gz' -delete
+find $mnt_mq/opt/mqm -name '*.tar.gz' -delete
 
 # Recommended: Set the default MQ installation (makes the MQ commands available on the PATH)
-buildah run $ctr -- /opt/mqm/bin/setmqinst -p /opt/mqm -i
+buildah run $ctr_mq -- /opt/mqm/bin/setmqinst -p /opt/mqm -i
 
-mkdir -p $scratchmnt/run/runmqserver
-chown 888:888 $scratchmnt/run/runmqserver
+mkdir -p $mnt_mq/run/runmqserver
+chown 888:888 $mnt_mq/run/runmqserver
 
 # Remove the directory structure under /var/mqm which was created by the installer
-rm -rf $scratchmnt/var/mqm
+rm -rf $mnt_mq/var/mqm
 
 # Create the mount point for volumes
-mkdir -p $scratchmnt/mnt/mqm
+mkdir -p $mnt_mq/mnt/mqm
 
 # Create a symlink for /var/mqm -> /mnt/mqm/data
-buildah run $ctr -- ln -s /mnt/mqm/data /var/mqm
+buildah run $ctr_mq -- ln -s /mnt/mqm/data /var/mqm
 
 # Optional: Set these values for the IBM Cloud Vulnerability Report
-sed -i 's/PASS_MAX_DAYS\t99999/PASS_MAX_DAYS\t90/' $scratchmnt/etc/login.defs
-sed -i 's/PASS_MIN_DAYS\t0/PASS_MIN_DAYS\t1/' $scratchmnt/etc/login.defs
-sed -i 's/password\t\[success=1 default=ignore\]\tpam_unix\.so obscure sha512/password\t[success=1 default=ignore]\tpam_unix.so obscure sha512 minlen=8/' $scratchmnt/etc/pam.d/password-auth
+sed -i 's/PASS_MAX_DAYS\t99999/PASS_MAX_DAYS\t90/' $mnt_mq/etc/login.defs
+sed -i 's/PASS_MIN_DAYS\t0/PASS_MIN_DAYS\t1/' $mnt_mq/etc/login.defs
+sed -i 's/password\t\[success=1 default=ignore\]\tpam_unix\.so obscure sha512/password\t[success=1 default=ignore]\tpam_unix.so obscure sha512 minlen=8/' $mnt_mq/etc/pam.d/password-auth
+
+buildah run $ctr_mq -- cp -rs /opt/mqm/licenses/ /
