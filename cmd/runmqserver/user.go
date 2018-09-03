@@ -107,7 +107,6 @@ func getCurrentUserGroups() ([]string, error) {
 		log.Debug("Unable to get current user groups")
 		return nilArray, err
 	}
-	log.Debug(out)
 
 	out = strings.TrimSpace(out)
 	if out == "" {
