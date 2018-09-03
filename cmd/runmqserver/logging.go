@@ -21,15 +21,19 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sync"
 
+	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/ibm-messaging/mq-container/internal/mqini"
 )
 
 // var debug = false
 var log *logger.Logger
+
+var collectDiagOnFail bool = false
 
 func logTerminationf(format string, args ...interface{}) {
 	logTermination(fmt.Sprintf(format, args))
@@ -45,6 +49,10 @@ func logTermination(args ...interface{}) {
 		log.Debug(err)
 	}
 	log.Error(msg)
+
+	if collectDiagOnFail {
+		logDiagnostics()
+	}
 }
 
 func getLogFormat() string {
@@ -110,4 +118,28 @@ func configureLogger(name string) (mirrorFunc, error) {
 		}
 		return nil, fmt.Errorf("invalid value for LOG_FORMAT: %v", f)
 	}
+}
+
+func logDiagnostics() {
+	log.Debug("--- Start Diagnostics ---")
+
+	// show the directory ownership/permissions
+	out, _, _ := command.Run("ls", "-l", "/mnt/")
+	log.Debugf("/mnt/:\n%s", out)
+	out, _, _ = command.Run("ls", "-l", "/mnt/mqm")
+	log.Debugf("/mnt/mqm:\n%s", out)
+	out, _, _ = command.Run("ls", "-l", "/mnt/mqm/data")
+	log.Debugf("/mnt/mqm/data:\n%s", out)
+	out, _, _ = command.Run("ls", "-l", "/var/mqm")
+	log.Debugf("/var/mqm:\n%s", out)
+	out, _, _ = command.Run("ls", "-l", "/var/mqm/errors")
+	log.Debugf("/var/mqm/errors:\n%s", out)
+
+	// Print out summary of any FDCs
+	cmd := exec.Command("/opt/mqm/bin/ffstsummary")
+	cmd.Dir = "/var/mqm/errors"
+	outB, _ := cmd.CombinedOutput()
+	log.Debugf("ffstsummary:\n%s", string(outB))
+
+	log.Debug("---  End Diagnostics  ---")
 }
