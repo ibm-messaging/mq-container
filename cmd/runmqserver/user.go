@@ -38,7 +38,7 @@ func verifyCurrentUser() error {
 	} else if curUser.Username == "root" {
 		// We're running as root so need to check for supplementary groups.
 		// We can't use the golang User.GroupIDs as it doesn't seem to detect container supplementary groups..
-		groups, err := getCurrentGroups(curUser)
+		groups, err := getCurrentUserGroups()
 		for _, e := range groups {
 			_, _, testGroup := command.Run("getent", "group", e)
 			if testGroup != nil {
@@ -64,9 +64,9 @@ func verifyCurrentUser() error {
 }
 
 func logUser() {
-	u, err := user.Current()
-	if err == nil {
-		g, err := getCurrentGroups(u)
+	u, usererr := user.Current()
+	if usererr == nil {
+		g, err := getCurrentUserGroups()
 		if err != nil && len(g) == 0 {
 			log.Printf("Running as user ID %v (%v) with primary group %v", u.Uid, u.Name, u.Gid)
 		} else {
@@ -81,12 +81,12 @@ func logUser() {
 		}
 	}
 
-	if err != nil && u.Username != "mqm" {
+	if usererr == nil && u.Username != "mqm" {
 		mqm, err := user.Lookup("mqm")
 		// Need to print out mqm user details as well.
-		g, err := getCurrentGroups(mqm)
+		g, err := getUserGroups(mqm)
 		if err != nil && len(g) == 0 {
-			log.Printf("MQM user ID %v (%v) has primary group %v", mqm.Uid, mqm.Name, mqm.Gid)
+			log.Printf("MQM user ID %v (%v) has primary group %v", mqm.Uid, "mqm", mqm.Gid)
 		} else {
 			// Look for the primary group in the list of group IDs
 			for i, v := range g {
@@ -100,18 +100,37 @@ func logUser() {
 	}
 }
 
-func getCurrentGroups(usr *user.User) ([]string, error) {
+func getCurrentUserGroups() ([]string, error) {
 	var nilArray []string
-	out, _, err := command.Run("id", "--groups", usr.Name)
+	out, _, err := command.Run("id", "--groups")
 	if err != nil {
-		log.Debugf("Unable to get user %s groups", usr.Name)
+		log.Debug("Unable to get current user groups")
+		return nilArray, err
+	}
+	log.Debug(out)
+
+	out = strings.TrimSpace(out)
+	if out == "" {
+		// we don't have any groups?
+		return nilArray, fmt.Errorf("Unable to determine groups for current user")
+	}
+
+	groups := strings.Split(out, " ")
+	return groups, nil
+}
+
+func getUserGroups(usr *user.User) ([]string, error) {
+	var nilArray []string
+	out, _, err := command.Run("id", "--groups", usr.Uid)
+	if err != nil {
+		log.Debugf("Unable to get user %s groups", usr.Uid)
 		return nilArray, err
 	}
 
 	out = strings.TrimSpace(out)
 	if out == "" {
 		// we don't have any groups?
-		return nilArray, fmt.Errorf("Unable to determine groups for user %s", usr.Name)
+		return nilArray, fmt.Errorf("Unable to determine groups for user %s", usr.Uid)
 	}
 
 	groups := strings.Split(out, " ")
