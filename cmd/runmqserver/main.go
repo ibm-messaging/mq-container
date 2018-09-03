@@ -58,14 +58,16 @@ func doMain() error {
 
 	// Start signal handler
 	signalControl := signalHandler(name)
+	// Enable diagnostic collecting on failure
+	collectDiagOnFail = true
 
-	err = logConfig()
+	err = verifyCurrentUser()
 	if err != nil {
 		logTermination(err)
 		return err
 	}
 
-	err = verifyCurrentUser()
+	err = logConfig()
 	if err != nil {
 		logTermination(err)
 		return err

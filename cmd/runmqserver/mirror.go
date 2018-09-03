@@ -44,7 +44,6 @@ func waitForFile(ctx context.Context, path string) (os.FileInfo, error) {
 					return nil, fmt.Errorf("mirror: unable to get info on file %v", path)
 				}
 			}
-			log.Debugf("File exists: %v, %v", path, fi.Size())
 			return fi, nil
 		}
 	}
@@ -121,6 +120,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 			if fi == nil {
 				return
 			}
+			log.Debugf("File exists: %v, %v", path, fi.Size())
 			f, err = os.OpenFile(path, os.O_RDONLY, 0)
 			if err != nil {
 				log.Error(err)

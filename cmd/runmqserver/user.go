@@ -23,7 +23,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
-const groupName string = "suplgroup"
+const groupName string = "supplgrp"
 
 func verifyCurrentUser() error {
 	log.Debug("Verifying current user information")
@@ -36,9 +36,9 @@ func verifyCurrentUser() error {
 		// Not supported yet
 		return fmt.Errorf("Container is running as mqm user which is not supported. Please run this container as root")
 	} else if curUser.Username == "root" {
-		// We're running as root so need to check for suplimentary groups.
-		// We can't use the golang User.GroupIDs as it doesn't seem to detect container supplimentary groups..
-		groups, err := getCurrentGroups()
+		// We're running as root so need to check for supplementary groups.
+		// We can't use the golang User.GroupIDs as it doesn't seem to detect container supplementary groups..
+		groups, err := getCurrentUserGroups()
 		for _, e := range groups {
 			_, _, testGroup := command.Run("getent", "group", e)
 			if testGroup != nil {
@@ -64,9 +64,9 @@ func verifyCurrentUser() error {
 }
 
 func logUser() {
-	u, err := user.Current()
-	if err == nil {
-		g, err := getCurrentGroups()
+	u, usererr := user.Current()
+	if usererr == nil {
+		g, err := getCurrentUserGroups()
 		if err != nil && len(g) == 0 {
 			log.Printf("Running as user ID %v (%v) with primary group %v", u.Uid, u.Name, u.Gid)
 		} else {
@@ -77,12 +77,30 @@ func logUser() {
 					g = append(g[:i], g[i+1:]...)
 				}
 			}
-			log.Printf("Running as user ID %v (%v) with primary group %v, and supplemental groups %v", u.Uid, u.Name, u.Gid, strings.Join(g, ","))
+			log.Printf("Running as user ID %v (%v) with primary group %v, and supplementary groups %v", u.Uid, u.Name, u.Gid, strings.Join(g, ","))
+		}
+	}
+
+	if usererr == nil && u.Username != "mqm" {
+		mqm, err := user.Lookup("mqm")
+		// Need to print out mqm user details as well.
+		g, err := getUserGroups(mqm)
+		if err != nil && len(g) == 0 {
+			log.Printf("MQM user ID %v (%v) has primary group %v", mqm.Uid, "mqm", mqm.Gid)
+		} else {
+			// Look for the primary group in the list of group IDs
+			for i, v := range g {
+				if v == mqm.Gid {
+					// Remove the element from the slice
+					g = append(g[:i], g[i+1:]...)
+				}
+			}
+			log.Printf("MQM user ID %v (%v) has primary group %v, and supplementary groups %v", mqm.Uid, "mqm", mqm.Gid, strings.Join(g, ","))
 		}
 	}
 }
 
-func getCurrentGroups() ([]string, error) {
+func getCurrentUserGroups() ([]string, error) {
 	var nilArray []string
 	out, _, err := command.Run("id", "--groups")
 	if err != nil {
@@ -94,6 +112,24 @@ func getCurrentGroups() ([]string, error) {
 	if out == "" {
 		// we don't have any groups?
 		return nilArray, fmt.Errorf("Unable to determine groups for current user")
+	}
+
+	groups := strings.Split(out, " ")
+	return groups, nil
+}
+
+func getUserGroups(usr *user.User) ([]string, error) {
+	var nilArray []string
+	out, _, err := command.Run("id", "--groups", usr.Uid)
+	if err != nil {
+		log.Debugf("Unable to get user %s groups", usr.Uid)
+		return nilArray, err
+	}
+
+	out = strings.TrimSpace(out)
+	if out == "" {
+		// we don't have any groups?
+		return nilArray, fmt.Errorf("Unable to determine groups for user %s", usr.Uid)
 	}
 
 	groups := strings.Split(out, " ")
