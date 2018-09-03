@@ -64,6 +64,13 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
+	err = verifyCurrentUser()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
 	err = createVolume("/mnt/mqm")
 	if err != nil {
 		logTermination(err)

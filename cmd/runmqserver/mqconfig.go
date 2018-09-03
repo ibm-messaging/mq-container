@@ -18,7 +18,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"os/user"
 	"runtime"
 	"strings"
 
@@ -50,25 +49,6 @@ func logBaseImage() error {
 		}
 	}
 	return nil
-}
-
-func logUser() {
-	u, err := user.Current()
-	if err == nil {
-		g, err := u.GroupIds()
-		if err != nil {
-			log.Printf("Running as user ID %v (%v) with primary group %v", u.Uid, u.Name, u.Gid)
-		} else {
-			// Look for the primary group in the list of group IDs
-			for i, v := range g {
-				if v == u.Gid {
-					// Remove the element from the slice
-					g = append(g[:i], g[i+1:]...)
-				}
-			}
-			log.Printf("Running as user ID %v (%v) with primary group %v, and supplemental groups %v", u.Uid, u.Name, u.Gid, strings.Join(g, ","))
-		}
-	}
 }
 
 // logCapabilities logs the Linux capabilities (e.g. setuid, setgid).  See https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities
