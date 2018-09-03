@@ -95,7 +95,7 @@ func logUser() {
 					g = append(g[:i], g[i+1:]...)
 				}
 			}
-			log.Printf("MQM user ID %v (%v) has primary group %v, and supplementary groups %v", mqm.Uid, mqm.Name, mqm.Gid, strings.Join(g, ","))
+			log.Printf("MQM user ID %v (%v) has primary group %v, and supplementary groups %v", mqm.Uid, "mqm", mqm.Gid, strings.Join(g, ","))
 		}
 	}
 }
