@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018
+﻿# © Copyright IBM Corporation 2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ FROM maven:3-ibmjava as builder
 COPY pom.xml /usr/src/mymaven/
 WORKDIR /usr/src/mymaven
 # Download dependencies separately, so Docker caches them
-RUN mvn dependency:go-offline install
+RUN mvn -V dependency:go-offline install
 # Copy source
 COPY src /usr/src/mymaven/src
 # Run the main build
-RUN mvn --offline install
+RUN mvn -V --offline install
 # Print a list of all the files (useful for debugging)
 RUN find /usr/src/mymaven
 
