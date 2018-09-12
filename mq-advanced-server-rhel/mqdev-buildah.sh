@@ -80,6 +80,7 @@ buildah config \
   --env MQ_ADMIN_PASSWORD=passw0rd \
   --env MQ_DEV=true \
   --entrypoint runmqdevserver \
+  --user root \
   $ctr_mq
 buildah unmount $ctr_mq
 buildah commit $ctr_mq $tag

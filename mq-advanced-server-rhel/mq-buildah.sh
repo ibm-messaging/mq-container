@@ -106,6 +106,7 @@ buildah config \
   --env LANG=en_US.UTF-8 \
   --env LOG_FORMAT=basic \
   --entrypoint runmqserver \
+  --user root \
   $ctr_mq
 buildah unmount $ctr_mq
 buildah commit $ctr_mq $tag
