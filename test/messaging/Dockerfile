@@ -30,7 +30,7 @@ RUN find /usr/src/mymaven
 ###############################################################################
 # Application runtime (JRE only, no build environment)
 ###############################################################################
-FROM ibmjava:sfj
+FROM ibmjava:8-jre
 COPY --from=builder /usr/src/mymaven/target/*.jar /opt/app/
 COPY --from=builder /usr/src/mymaven/target/lib/*.jar /opt/app/
 ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]
