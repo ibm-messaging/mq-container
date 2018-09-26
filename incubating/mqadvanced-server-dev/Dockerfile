@@ -60,6 +60,4 @@ COPY incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
 COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
 RUN chmod +x /usr/local/bin/runmq*
 
-EXPOSE 9443
-
 ENTRYPOINT ["runmqdevserver"]

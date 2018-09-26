@@ -1,5 +1,3 @@
-// +build !mqdev
-
 /*
 © Copyright IBM Corporation 2018
 
@@ -17,6 +15,26 @@ limitations under the License.
 */
 package main
 
+import (
+	"os"
+)
+
+// postInit is run after /var/mqm is set up
+// This version of postInit is only included as part of the MQ Advanced for Developers build
 func postInit(name string) error {
+	disable := os.Getenv("MQ_DISABLE_WEB_CONSOLE")
+	if disable != "true" && disable != "1" {
+		// Configure the web server (if installed)
+		err := configureWebServer()
+		if err != nil {
+			return err
+		}
+		// Start the web server, in the background (if installed)
+		// WARNING: No error handling or health checking available for the web server,
+		// which is why it's limited to use with MQ Advanced for Developers only
+		go func() {
+			startWebServer()
+		}()
+	}
 	return nil
 }
