@@ -75,6 +75,9 @@ install --mode 0750 --owner 888 --group 888 ./build/runmqserver ${mnt_mq}/usr/lo
 install --mode 6750 --owner 888 --group 888 ./build/chk* ${mnt_mq}/usr/local/bin/
 install --mode 0750 --owner 888 --group 888 ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
 
+# Copy web XML files
+cp -R web ${mnt_mq}/etc/mqm/web
+
 ###############################################################################
 # Final Buildah commands
 ###############################################################################
@@ -90,6 +93,7 @@ fi
 buildah config \
   --port 1414/tcp \
   --port 9157/tcp \
+  --port 9443/tcp \
   --os linux \
   --label architecture=x86_64 \
   --label io.openshift.tags="$OSTAG" \

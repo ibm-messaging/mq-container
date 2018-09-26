@@ -40,7 +40,7 @@ MQ_IMAGE_SDK ?=mq-sdk:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # MQ_IMAGE_GOLANG_SDK is the name and tag of the built MQ Advanced for Developers SDK image, plus Go tools
 MQ_IMAGE_GOLANG_SDK ?=mq-golang-sdk:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # MQ_PACKAGES specifies the MQ packages to install.  Defaults vary on base image.
-MQ_PACKAGES ?= MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm
+MQ_PACKAGES ?= MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm MQSeriesWeb-*.rpm
 
 ###############################################################################
 # Other variables
@@ -134,7 +134,6 @@ build-advancedserver: check-prereqs downloads/$(MQ_ARCHIVE) build-go-programs
 .PHONY: build-devserver
 build-devserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE_DEV)
 build-devserver: MQDEV=TRUE
-build-devserver: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm MQSeriesWeb-*.rpm
 build-devserver: check-prereqs downloads/$(MQ_ARCHIVE_DEV) build-go-programs
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER)"$(END)))
 	mq-advanced-server-rhel/mq-buildah.sh "$(MQ_ARCHIVE_DEV)" "$(MQ_PACKAGES)" "$(MQ_IMAGE_DEVSERVER_BASE)" "$(MQ_VERSION)" "$(MQDEV)"

@@ -66,8 +66,11 @@ RUN chmod ug+x /usr/local/bin/runmqserver \
   && chown mqm:mqm /usr/local/bin/*mq* \
   && chmod ug+xs /usr/local/bin/chkmq*
 
-# Always use port 1414 for MQ & 9157 for the metrics
-EXPOSE 1414 9157
+# Always use port 1414 for MQ, 9157 for the metrics & 9443 for the web console
+EXPOSE 1414 9157 9443
+
+# Copy web XML files
+COPY web /etc/mqm/web
 
 ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1 LOG_FORMAT=basic
 

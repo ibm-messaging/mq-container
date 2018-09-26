@@ -52,7 +52,7 @@ install --mode 0750 --owner 888 --group 888 ./build/runmqdevserver ${mnt_mq}/usr
 cp incubating/mqadvanced-server-dev/*.tpl ${mnt_mq}/etc/mqm/
 
 # Copy web XML files for default developer configuration
-cp -R incubating/mqadvanced-server-dev/web ${mnt_mq}/etc/mqm/web
+cp -R incubating/mqadvanced-server-dev/web/ ${mnt_mq}/etc/mqm/web
 
 ###############################################################################
 # Final Buildah commands
