@@ -1,5 +1,3 @@
-// +build mqdev
-
 /*
 © Copyright IBM Corporation 2018, 2019
 
