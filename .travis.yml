@@ -46,7 +46,7 @@ jobs:
     - env: DOCKER_DOWNGRADE="echo nothing to be done"
 
 before_install:
-  - install-build-deps-ubuntu.sh
+  - ./install-build-deps-ubuntu.sh
 
 install:
   - echo nothing
