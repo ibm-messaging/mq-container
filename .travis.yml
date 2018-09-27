@@ -61,11 +61,12 @@ script:
   - echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
   - make build-devjmstest
   - echo -en 'travis_fold:end:build-devjmstest\\r'
+  - echo 'Downgrading Docker (if necessary)...' && echo -en 'travis_fold:start:docker-downgrade\\r'
   - eval "$DOCKER_DOWNGRADE"
+  - echo -en 'travis_fold:end:docker-downgrade\\r'
   - echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
   - make test-devserver
   - echo -en 'travis_fold:end:test-devserver\\r'
 
 after_success:
-  - go get golang.org/x/lint/golint
   - make lint
