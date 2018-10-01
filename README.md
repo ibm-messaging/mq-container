@@ -2,8 +2,8 @@
 
 [![Build Status](https://travis-ci.org/ibm-messaging/mq-container.svg?branch=master)](https://travis-ci.org/ibm-messaging/mq-container)
 
-**Note**: The `master` branch may be in an *unstable or even broken state* during development.
-To get a stable version, please use the correct [branch](https://github.com/ibm-messaging/mq-container/branches) for your MQ version, instead of the `master` branch.
+**Note**: The `singularity` branch may be in an *unstable or even broken state* during development.
+To get a stable version, please use the correct [branch](https://github.com/ibm-messaging/mq-container/branches) for your MQ version, instead of the `singularity` branch.
 
 <img src="https://raw.githubusercontent.com/IBM/charts/master/logo/ibm-mq-icon.svg?sanitize=true" width="100" alt="IBM MQ logo" />
 
