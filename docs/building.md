@@ -5,7 +5,6 @@
 ### Prerequisites for building an Ubuntu image
 If you want to build a container image with Ubuntu Linux as the base OS, then you need to have the following tools installed:
 
-You need to ensure you have the following tools installed:
 * [Docker](https://www.docker.com/) V17.06.1 or later
 * [GNU make](https://www.gnu.org/software/make/)
 
@@ -14,8 +13,8 @@ If you are working in the Windows Subsystem for Linux, follow [this guide by Mic
 ### Prerequisites for building a Red Hat Enterprise Linux image
 If you want to build a container image with Red Hat Enterprise Linux as the base OS, then you need to use a host server with Red Hat Enterprise Linux.  You must also have the following tools installed:
 
-* `[buildah](https://buildah.io)` (available in `rhel-7-server-extras`)
-* `[podman](https://podman.io)` (available in `rhel-7-server-extras`)
+* [`buildah`](https://buildah.io) (available in `rhel-7-server-extras`)
+* [`podman`](https://podman.io) (available in `rhel-7-server-extras`)
 
 In addition, you need the following commonly installed tools:
 
@@ -31,10 +30,12 @@ In addition, you need the following commonly installed tools:
 This procedure works for building the MQ Continuous Delivery release, on `x86_64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from IBM Passport Advantage, and place the downloaded file (for example, `IBM_MQ_9.1.0.0_UBUNTU_X86-64.tar.gz` for MQ V9.1.0 for Ubuntu on x86_64 architecture) in the `downloads` directory
-2. Run `make build-advancedserver-ubuntu` or `make build-advancedserver-rhel`
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.1_UBUNTU_X86-64.tar.gz` for MQ V9.1.0 for Ubuntu on x86_64 architecture) in the `downloads` directory
+3. Run `make build-advancedserver`
 
 > **Warning**: Note that MQ offers two different sets of packaging on Linux: one is called "MQ for Linux" and contains RPM files for installing on Red Hat Enterprise Linux and SUSE Linux Enterprise Server.  The other package is called "MQ for Ubuntu", and contains DEB files for installing on Ubuntu.
+
+On a Red Hat Enterprise Linux host, the command `make build-advancedserver` will build a container image using Red Hat Enterprise Linux as the base.  On all other hosts, the base image will be Ubuntu.
 
 You can build a different version of MQ by setting the `MQ_VERSION` environment variable, for example:
 
@@ -49,7 +50,7 @@ MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 ```
 
 ## Building a developer image
-Run `make build-devserver-ubuntu` or `make build-devserver-rhel`, which will download the latest version of MQ Advanced for Developers from IBM developerWorks.  This is currently only available on the `x86_64` architecture.
+Run `make build-devserver`, which will download the latest version of MQ Advanced for Developers from IBM developerWorks.  This is currently only available on the `x86_64` architecture.  On a Red Hat Enterprise Linux host, this command will build a container image using Red Hat Enterprise Linux as the base.  On all other hosts, the base image will be Ubuntu.
 
 You can use the environment variable `MQ_ARCHIVE_DEV` to specify an alternative local file to install from (which must be in the `downloads` directory).
 

@@ -17,66 +17,54 @@
 ###############################################################################
 GO_PKG_DIRS = ./cmd ./internal ./test
 
-BASE_OS = $(shell cat /etc/*-release | grep ID=)
-ifeq "$(findstring ubuntu,$(BASE_OS))" "ubuntu"
-	BASE_OS=UBUNTU
-else ifeq "$(findstring rhel,$(BASE_OS))" "rhel"
-	BASE_OS=RHEL
-else
-	BASE_OS=UNKNOWN
+# Set variable if running on a Red Hat Enterprise Linux host
+ifneq ($(wildcard /etc/redhat-release),)
+REDHAT_RELEASE = $(shell cat /etc/redhat-release)
+ifeq "$(findstring Red Hat,$(REDHAT_RELEASE))" "Red Hat"
+    RHEL_HOST = "true"
 endif
-
-
+endif
 
 ###############################################################################
 # Build targets
 ###############################################################################
 
-# default to building UBUNTU as this was the default for the previous Makefile
+# Targets default to a RHEL image on a RHEL host, or an Ubuntu image everywhere else
+
 .PHONY: build-devserver
-ifeq ($(BASE_OS),UBUNTU)
-build-devserver: build-devserver-ubuntu
-else ifeq ($(BASE_OS),RHEL)
+ifdef RHEL_HOST
 build-devserver: build-devserver-rhel
 else
-build-devserver: unknownos
+build-devserver: build-devserver-ubuntu
 endif
 
 .PHONY: build-advancedserver
-ifeq ($(BASE_OS),UBUNTU)
-build-advancedserver: build-advancedserver-ubuntu
-else ifeq ($(BASE_OS),RHEL)
+ifdef RHEL_HOST
 build-advancedserver: build-advancedserver-rhel
 else
-build-advancedserver: unknownos
+build-advancedserver: build-advancedserver-ubuntu
 endif
 
 
 .PHONY: test-devserver
-ifeq ($(BASE_OS),UBUNTU)
-test-devserver: test-devserver-ubuntu
-else ifeq ($(BASE_OS),RHEL)
+ifdef RHEL_HOST
 test-devserver: test-devserver-rhel
 else
-test-devserver: unknownos
+test-devserver: test-devserver-ubuntu
 endif
 
 .PHONY: test-advancedserver
-ifeq ($(BASE_OS),UBUNTU)
-test-advancedserver: test-advancedserver-ubuntu
-else ifeq ($(BASE_OS),RHEL)
+ifdef RHEL_HOST
 test-advancedserver: test-advancedserver-rhel
 else
-test-advancedserver: unknownos
+test-advancedserver: test-advancedserver-ubuntu
 endif
 
 .PHONY: build-devjmstest
-ifeq ($(BASE_OS),UBUNTU)
-build-devjmstest: build-devjmstest-ubuntu
-else ifeq ($(BASE_OS),RHEL)
+ifdef RHEL_HOST
 build-devjmstest: build-devjmstest-rhel
 else
-build-devjmstest: unknownos
+build-devjmstest: build-devjmstest-ubuntu
 endif
 
 # UBUNTU building targets
