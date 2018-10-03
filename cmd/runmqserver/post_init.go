@@ -20,18 +20,26 @@ import (
 )
 
 // postInit is run after /var/mqm is set up
-// This version of postInit is only included as part of the MQ Advanced for Developers build
 func postInit(name string) error {
 	disable := os.Getenv("MQ_DISABLE_WEB_CONSOLE")
 	if disable != "true" && disable != "1" {
+
+		// Configure Single-Sign-On for the web server (if enabled)
+		enableSSO := os.Getenv("MQ_ENABLE_SSO")
+		if enableSSO == "true" || enableSSO == "1" {
+			err := configureSSO()
+			if err != nil {
+				return err
+			}
+		}
+
 		// Configure the web server (if installed)
 		err := configureWebServer()
 		if err != nil {
 			return err
 		}
 		// Start the web server, in the background (if installed)
-		// WARNING: No error handling or health checking available for the web server,
-		// which is why it's limited to use with MQ Advanced for Developers only
+		// WARNING: No error handling or health checking available for the web server
 		go func() {
 			startWebServer()
 		}()
