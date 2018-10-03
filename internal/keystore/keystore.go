@@ -150,6 +150,24 @@ func (ks *KeyStore) Import(inputFile, password string) error {
 	return nil
 }
 
+// CreateSelfSignedCertificate creates a self-signed certificate in the keystore
+func (ks *KeyStore) CreateSelfSignedCertificate(label, dn string) error {
+	out, _, err := command.Run(ks.command, "-cert", "-create", "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn)
+	if err != nil {
+		return fmt.Errorf("error running \"%v -cert -create\": %v %s", ks.command, err, out)
+	}
+	return nil
+}
+
+// Add adds a CA certificate to the keystore
+func (ks *KeyStore) Add(inputFile, label string) error {
+	out, _, err := command.Run(ks.command, "-cert", "-add", "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile, "-label", label)
+	if err != nil {
+		return fmt.Errorf("error running \"%v -cert -add\": %v %s", ks.command, err, out)
+	}
+	return nil
+}
+
 // GetCertificateLabels returns the labels of all certificates in the key store
 func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
 	out, _, err := command.Run(ks.command, "-cert", "-list", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
