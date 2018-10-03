@@ -21,20 +21,22 @@ import (
 	"path/filepath"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/keystore"
+	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 )
 
-func configureWebTLS(cms *KeyStore) error {
+func configureWebTLS(cms *keystore.KeyStore) error {
 	dir := "/run/runmqdevserver/tls"
-	ks := NewJKSKeyStore(filepath.Join(dir, "key.jks"), cms.Password)
-	ts := NewJKSKeyStore(filepath.Join(dir, "trust.jks"), cms.Password)
+	ks := keystore.NewJKSKeyStore(filepath.Join(dir, "key.jks"), cms.Password)
+	ts := keystore.NewJKSKeyStore(filepath.Join(dir, "trust.jks"), cms.Password)
 
 	log.Debug("Creating key store")
-	err := ks.Create()
+	err := ks.Create(log)
 	if err != nil {
 		return err
 	}
 	log.Debug("Creating trust store")
-	err = ts.Create()
+	err = ts.Create(log)
 	if err != nil {
 		return err
 	}
@@ -105,14 +107,14 @@ func configureTLS(qmName string, inputFile string, passPhrase string) error {
 		}
 	}
 
-	cms := NewCMSKeyStore(keyFile, passPhrase)
+	cms := keystore.NewCMSKeyStore(keyFile, passPhrase)
 
-	err = cms.Create()
+	err = cms.Create(log)
 	if err != nil {
 		return err
 	}
 
-	err = cms.CreateStash()
+	err = cms.CreateStash(log)
 	if err != nil {
 		return err
 	}
@@ -146,11 +148,11 @@ func configureTLS(qmName string, inputFile string, passPhrase string) error {
 	const mqsc string = "/etc/mqm/20-dev-tls.mqsc"
 	const mqscTemplate string = mqsc + ".tpl"
 
-	err = processTemplateFile(mqscTemplate, mqsc, map[string]string{
+	err = mqtemplate.ProcessTemplateFile(mqscTemplate, mqsc, map[string]string{
 		"SSLKeyR":          filepath.Join(dir, "key"),
 		"CertificateLabel": newLabel,
 		"SSLCipherSpec":    sslCipherSpec,
-	})
+	}, log)
 	if err != nil {
 		return err
 	}

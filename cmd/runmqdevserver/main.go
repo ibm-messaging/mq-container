@@ -24,6 +24,7 @@ import (
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/logger"
+	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/name"
 )
 
@@ -90,7 +91,7 @@ func configureLogger() error {
 
 func configureWeb(qmName string) error {
 	out := "/etc/mqm/web/installations/Installation1/angular.persistence/admin.json"
-	return processTemplateFile("/etc/mqm/admin.json.tpl", out, map[string]string{"QueueManagerName": qmName})
+	return mqtemplate.ProcessTemplateFile("/etc/mqm/admin.json.tpl", out, map[string]string{"QueueManagerName": qmName}, log)
 }
 
 func logTerminationf(format string, args ...interface{}) {

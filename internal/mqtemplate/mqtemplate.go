@@ -13,7 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+
+// Package mqtemplate contains code to process template files
+package mqtemplate
 
 import (
 	"os"
@@ -21,12 +23,12 @@ import (
 	"text/template"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/logger"
 )
 
-// processTemplateFile takes a Go templateFile, and processes it with the
+// ProcessTemplateFile takes a Go templateFile, and processes it with the
 // supplied data, writing to destFile
-func processTemplateFile(templateFile, destFile string, data interface{}) error {
-	// Re-configure channel if app password not set
+func ProcessTemplateFile(templateFile, destFile string, data interface{}, log *logger.Logger) error {
 	t, err := template.ParseFiles(templateFile)
 	if err != nil {
 		log.Error(err)
