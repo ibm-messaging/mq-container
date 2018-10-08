@@ -139,7 +139,7 @@ rm -rf ${DIR_EXTRACT}
 
 # Apply any bug fixes not included in base Ubuntu or MQ image.
 # Don't upgrade everything based on Docker best practices https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run
-$UBUNTU && apt-get install -y gcc-5-base gnupg gpgv libgcrypt20 libstdc++6 perl-base --only-upgrade
+$UBUNTU && apt-get install -y libapparmor1 --only-upgrade
 # End of bug fixes
 
 # Clean up cached files
