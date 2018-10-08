@@ -18,6 +18,16 @@
 # Run the Go build script inside the Go container, mounting the source
 # directory in
 
+function usage {
+  echo "Usage: $0 TAG DevModeFlag"
+  exit 20
+}
+
+if [ "$#" -ne 2 ]; then
+  echo "ERROR: Invalid number of parameters"
+  usage
+fi
+
 readonly tag=$1
 readonly dev=$2
 

@@ -22,12 +22,34 @@
 set -x
 set -e
 
+function usage {
+  echo "Usage: $0 ARCHIVENAME PACKAGES TAG VERSION MQDevFlag"
+  exit 20
+}
+
+if [ "$#" -ne 5 ]; then
+  echo "ERROR: Invalid number of parameters"
+  usage
+fi
+
 ###############################################################################
 # Setup MQ server working container
 ###############################################################################
 
 readonly ctr_mq=$(buildah from rhel7)
+if [ -z "$ctr_mq" ]
+then
+  echo "ERROR: ctr_mq is empty. Check above output for errors"
+  exit 50
+fi
+
 readonly mnt_mq=$(buildah mount $ctr_mq)
+if [ -z "$mnt_mq" ]
+then
+  echo "ERROR: mnt_mq is empty. Check above output for errors"
+  exit 50
+fi
+
 readonly archive=downloads/$1
 readonly packages=$2
 readonly tag=$3
@@ -82,9 +104,11 @@ install --mode 0750 --owner 888 --group 888 ./NOTICES.txt ${mnt_mq}/opt/mqm/lice
 if [ "$mqdev" = "TRUE" ]; then
   OSTAG="mq messaging developer"
   DISNAME="IBM MQ Advanced Server Developer Edition"
+  PID="98102d16795c4263ad9ca075190a2d4d"
 else
   OSTAG="mq messaging"
   DISNAME="IBM MQ Advanced Server"
+  PID="4486e8c4cc9146fd9b3ce1f14a2dfc5b"
 fi
 
 buildah config \
@@ -102,6 +126,9 @@ buildah config \
   --label run="docker run -d -e LICENSE=accept --name ibm-mq ${tag%:*}" \
   --label summary="$DISNAME" \
   --label description="IBM MQ is messaging middleware that simplifies and accelerates the integration of diverse applications and business data across multiple platforms.  It uses message queues to facilitate the exchanges of information and offers a single messaging solution for cloud, mobile, Internet of Things (IoT) and on-premises environments." \
+  --label IBM_PRODUCT_ID="$PID" \
+  --label IBM_PRODUCT_NAME="$DISNAME" \
+  --label IBM_PRODUCT_VERSION="$version" \
   --env AMQ_ADDITIONAL_JSON_LOG=1 \
   --env LANG=en_US.UTF-8 \
   --env LOG_FORMAT=basic \
