@@ -22,6 +22,16 @@
 set -x
 set -e
 
+function usage {
+  echo "Usage: $0 BASETAG TAG VERSION"
+  exit 20
+}
+
+if [ "$#" -ne 3 ]; then
+  echo "ERROR: Invalid number of parameters"
+  usage
+fi
+
 ###############################################################################
 # Setup MQ server working container
 ###############################################################################
@@ -30,7 +40,19 @@ set -e
 # Resulting image won't have yum, for example
 readonly basetag=$1
 readonly ctr_mq=$(buildah from $basetag)
+if [ -z "$ctr_mq" ]
+then
+  echo "ERROR: ctr_mq is empty. Check above output for errors"
+  exit 50
+fi
+
 readonly mnt_mq=$(buildah mount $ctr_mq)
+if [ -z "$mnt_mq" ]
+then
+  echo "ERROR: mnt_mq is empty. Check above output for errors"
+  exit 50
+fi
+
 readonly tag=$2
 readonly version=$3
 
@@ -74,6 +96,9 @@ buildah config \
   --label run="docker run -d -e LICENSE=accept --name ibm-mq-dev ${tag%:*}" \
   --label summary="IBM MQ Advanced Server Developer Edition" \
   --label description="IBM MQ is messaging middleware that simplifies and accelerates the integration of diverse applications and business data across multiple platforms.  It uses message queues to facilitate the exchanges of information and offers a single messaging solution for cloud, mobile, Internet of Things (IoT) and on-premises environments." \
+  --label IBM_PRODUCT_ID="98102d16795c4263ad9ca075190a2d4d" \
+  --label IBM_PRODUCT_NAME="IBM MQ Advanced Server Developer Edition" \
+  --label IBM_PRODUCT_VERSION="$version" \
   --env AMQ_ADDITIONAL_JSON_LOG=1 \
   --env LANG=en_US.UTF-8 \
   --env LOG_FORMAT=basic \

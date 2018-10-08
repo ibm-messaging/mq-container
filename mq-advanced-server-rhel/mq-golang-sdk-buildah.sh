@@ -18,13 +18,35 @@
 # Build a RHEL image for building Go programs which use MQ
 
 set -ex
+
+function usage {
+  echo "Usage: $0 ARCHIVENAME TAG"
+  exit 20
+}
+
+if [ "$#" -ne 2 ]; then
+  echo "ERROR: Invalid number of parameters"
+  usage
+fi
+
 readonly mq_archive=downloads/$1
 readonly tag=$2
 # Use plain RHEL 7 container
 # Note: Red Hat's devtools/go-toolset-7-rhel7 image doesn't allow use of 'root'
 # user required for installing the MQ SDK
 readonly ctr_mq=$(buildah from rhel7)
+if [ -z "$ctr_mq" ]
+then
+  echo "ERROR: ctr_mq is empty. Check above output for errors"
+  exit 50
+fi
+
 readonly mnt_mq=$(buildah mount $ctr_mq)
+if [ -z "$mnt_mq" ]
+then
+  echo "ERROR: mnt_mq is empty. Check above output for errors"
+  exit 50
+fi
 
 # Add mqm user
 groupadd --root $mnt_mq --system --gid 888 mqm
