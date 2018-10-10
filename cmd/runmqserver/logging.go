@@ -33,7 +33,7 @@ import (
 // var debug = false
 var log *logger.Logger
 
-var collectDiagOnFail bool = false
+var collectDiagOnFail = false
 
 func logTerminationf(format string, args ...interface{}) {
 	logTermination(fmt.Sprintf(format, args))
