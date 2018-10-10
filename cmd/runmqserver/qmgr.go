@@ -106,15 +106,15 @@ func configureQueueManager() error {
 			// Copy the contents to stdin of the runmqsc process
 			_, err = io.Copy(stdin, f)
 			if err != nil {
-				log.Printf("Error reading %v: %v", abs, err)
+				log.Errorf("Error reading %v: %v", abs, err)
 			}
 			err = f.Close()
 			if err != nil {
-				log.Debugf("Failed to close MQSC file handle: %v", err)
+				log.Errorf("Failed to close MQSC file handle: %v", err)
 			}
 			err = stdin.Close()
 			if err != nil {
-				log.Debugf("Failed to close MQSC stdin: %v", err)
+				log.Errorf("Failed to close MQSC stdin: %v", err)
 			}
 			// Run the command and wait for completion
 			out, err := cmd.CombinedOutput()

@@ -25,7 +25,6 @@ import (
 
 	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/log"
 )
 
 const (
@@ -45,7 +44,7 @@ func GatherMetrics(qmName string, log *logger.Logger) {
 	err := startMetricsGathering(qmName, log)
 	if err != nil {
 		log.Errorf("Metrics Error: %s", err.Error())
-		StopMetricsGathering()
+		StopMetricsGathering(log)
 	}
 }
 
@@ -85,7 +84,7 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 		err = metricsServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			log.Errorf("Metrics Error: Failed to handle metrics request: %v", err)
-			StopMetricsGathering()
+			StopMetricsGathering(log)
 		}
 	}()
 
@@ -93,7 +92,7 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 }
 
 // StopMetricsGathering stops gathering metrics for the queue manager
-func StopMetricsGathering() {
+func StopMetricsGathering(log *logger.Logger) {
 
 	if metricsEnabled {
 

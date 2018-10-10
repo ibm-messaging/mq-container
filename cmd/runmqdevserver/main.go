@@ -39,7 +39,7 @@ func setPassword(user string, password string) error {
 	fmt.Fprintf(stdin, "%s:%s", user, password)
 	err = stdin.Close()
 	if err != nil {
-		log.Debugf("Error closing password stdin: %v", err)
+		log.Errorf("Error closing password stdin: %v", err)
 	}
 	_, _, err = command.RunCmd(cmd)
 	if err != nil {
@@ -172,7 +172,7 @@ func main() {
 		// #nosec G204
 		err = syscall.Exec("/usr/local/bin/runmqserver", []string{"runmqserver"}, os.Environ())
 		if err != nil {
-			log.Debugf("Error replacing this process with runmqserver: %v", err)
+			log.Errorf("Error replacing this process with runmqserver: %v", err)
 		}
 	}
 }

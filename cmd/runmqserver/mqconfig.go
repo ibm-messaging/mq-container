@@ -28,6 +28,7 @@ func logContainerRuntime() {
 	r, err := container.DetectRuntime()
 	if err != nil {
 		log.Printf("Failed to get container runtime: %v", err)
+		return
 	}
 	log.Printf("Container runtime: %v", r)
 }
@@ -36,6 +37,7 @@ func logBaseImage() {
 	buf, err := ioutil.ReadFile("/etc/os-release")
 	if err != nil {
 		log.Printf("Failed to read /etc/os-release: %v", err)
+		return
 	}
 	lines := strings.Split(string(buf), "\n")
 	for _, l := range lines {
@@ -54,6 +56,7 @@ func logCapabilities() {
 	caps, err := container.Capabilities()
 	if err != nil {
 		log.Printf("Failed to get container capabilities: %v", err)
+		return
 	}
 	for k, v := range caps {
 		if len(v) > 0 {
@@ -67,9 +70,9 @@ func logSeccomp() {
 	s, err := container.SeccompEnforcingMode()
 	if err != nil {
 		log.Printf("Failed to get container SeccompEnforcingMode: %v", err)
+		return
 	}
 	log.Printf("seccomp enforcing mode: %v", s)
-	return nil
 }
 
 // logSecurityAttributes logs the security attributes of the current process.

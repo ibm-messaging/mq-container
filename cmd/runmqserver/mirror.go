@@ -164,7 +164,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 				mirrorAvailableMessages(f, mf)
 				err = f.Close()
 				if err != nil {
-					log.Debugf("Unable to close mirror file handle: %v", err)
+					log.Errorf("Unable to close mirror file handle: %v", err)
 				}
 				// Re-open file
 				log.Debugf("Re-opening error log file %v", path)
