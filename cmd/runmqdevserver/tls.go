@@ -85,6 +85,7 @@ func configureTLS(qmName string, inputFile string, passPhrase string) error {
 	_, err = os.Stat(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
+			// #nosec G301
 			err = os.MkdirAll(dir, 0770)
 			if err != nil {
 				return err

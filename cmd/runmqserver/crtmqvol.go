@@ -29,6 +29,7 @@ func createVolume(path string) error {
 	fi, err := os.Stat(dataPath)
 	if err != nil {
 		if os.IsNotExist(err) {
+			// #nosec G301
 			err = os.MkdirAll(dataPath, 0755)
 			if err != nil {
 				return err

@@ -30,13 +30,17 @@ import (
 var log *logger.Logger
 
 func setPassword(user string, password string) error {
+	// #nosec G204
 	cmd := exec.Command("chpasswd")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return err
 	}
 	fmt.Fprintf(stdin, "%s:%s", user, password)
-	stdin.Close()
+	err = stdin.Close()
+	if err != nil {
+		log.Debugf("Error closing password stdin: %v", err)
+	}
 	_, _, err = command.RunCmd(cmd)
 	if err != nil {
 		return err
@@ -165,6 +169,10 @@ func main() {
 		osExit(1)
 	} else {
 		// Replace this process with runmqserver
-		syscall.Exec("/usr/local/bin/runmqserver", []string{"runmqserver"}, os.Environ())
+		// #nosec G204
+		err = syscall.Exec("/usr/local/bin/runmqserver", []string{"runmqserver"}, os.Environ())
+		if err != nil {
+			log.Debugf("Error replacing this process with runmqserver: %v", err)
+		}
 	}
 }

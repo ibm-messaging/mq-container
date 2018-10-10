@@ -65,11 +65,23 @@ func (ks *KeyStore) Create() error {
 			stashFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".sth"
 			rdbFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".rdb"
 			crlFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".crl"
-			os.Remove(stashFile)
-			os.Remove(rdbFile)
-			os.Remove(crlFile)
+			err = os.Remove(stashFile)
+			if err != nil {
+				log.Debugf("Error removing %s: %v", stashFile, err)
+			}
+			err = os.Remove(rdbFile)
+			if err != nil {
+				log.Debugf("Error removing %s: %v", rdbFile, err)
+			}
+			err = os.Remove(crlFile)
+			if err != nil {
+				log.Debugf("Error removing %s: %v", crlFile, err)
+			}
 		}
-		os.Remove(ks.Filename)
+		err = os.Remove(ks.Filename)
+		if err != nil {
+			log.Debugf("Error removing %s: %v", ks.Filename, err)
+		}
 	} else if !os.IsNotExist(err) {
 		// If the keystore exists but cannot be accessed then return the error
 		return err

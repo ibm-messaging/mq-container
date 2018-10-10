@@ -25,6 +25,7 @@ import (
 
 	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/log"
 )
 
 const (
@@ -76,6 +77,7 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 	http.Handle("/metrics", prometheus.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
+		// #nosec G104
 		w.Write([]byte("Status: METRICS ACTIVE"))
 	})
 
@@ -101,6 +103,9 @@ func StopMetricsGathering() {
 		// Shutdown HTTP server
 		timeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		metricsServer.Shutdown(timeout)
+		err := metricsServer.Shutdown(timeout)
+		if err != nil {
+			log.Errorf("Failed to shutdown metrics server: %v", err)
+		}
 	}
 }
