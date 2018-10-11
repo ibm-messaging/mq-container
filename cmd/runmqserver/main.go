@@ -129,7 +129,11 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
-	configureQueueManager()
+	err = configureQueueManager()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
 
 	enableMetrics := os.Getenv("MQ_ENABLE_METRICS")
 	if enableMetrics == "true" || enableMetrics == "1" {
@@ -145,7 +149,11 @@ func doMain() error {
 	// Reap zombies now, just in case we've already got some
 	signalControl <- reapNow
 	// Write a file to indicate that chkmqready should now work as normal
-	ready.Set()
+	err = ready.Set()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
 	// Wait for terminate signal
 	<-signalControl
 	return nil

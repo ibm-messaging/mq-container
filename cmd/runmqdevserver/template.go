@@ -36,7 +36,11 @@ func processTemplateFile(templateFile, destFile string, data interface{}) error 
 	_, err = os.Stat(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			os.MkdirAll(dir, 0660)
+			err = os.MkdirAll(dir, 0660)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
 			mqmUID, mqmGID, err := command.LookupMQM()
 			if err != nil {
 				log.Error(err)
@@ -51,6 +55,7 @@ func processTemplateFile(templateFile, destFile string, data interface{}) error 
 			return err
 		}
 	}
+	// #nosec G302
 	f, err := os.OpenFile(destFile, os.O_CREATE|os.O_WRONLY, 0660)
 	defer f.Close()
 	err = t.Execute(f, data)

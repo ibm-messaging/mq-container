@@ -24,19 +24,20 @@ import (
 	"github.com/genuinetools/amicontained/container"
 )
 
-func logContainerRuntime() error {
+func logContainerRuntime() {
 	r, err := container.DetectRuntime()
 	if err != nil {
-		return err
+		log.Printf("Failed to get container runtime: %v", err)
+		return
 	}
 	log.Printf("Container runtime: %v", r)
-	return nil
 }
 
-func logBaseImage() error {
+func logBaseImage() {
 	buf, err := ioutil.ReadFile("/etc/os-release")
 	if err != nil {
-		return err
+		log.Printf("Failed to read /etc/os-release: %v", err)
+		return
 	}
 	lines := strings.Split(string(buf), "\n")
 	for _, l := range lines {
@@ -44,41 +45,40 @@ func logBaseImage() error {
 			words := strings.Split(l, "\"")
 			if len(words) >= 2 {
 				log.Printf("Base image: %v", words[1])
-				return nil
+				return
 			}
 		}
 	}
-	return nil
 }
 
 // logCapabilities logs the Linux capabilities (e.g. setuid, setgid).  See https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities
-func logCapabilities() error {
+func logCapabilities() {
 	caps, err := container.Capabilities()
 	if err != nil {
-		return err
+		log.Printf("Failed to get container capabilities: %v", err)
+		return
 	}
 	for k, v := range caps {
 		if len(v) > 0 {
 			log.Printf("Capabilities (%s set): %v", strings.ToLower(k), strings.Join(v, ","))
 		}
 	}
-	return nil
 }
 
 // logSeccomp logs the seccomp enforcing mode, which affects which kernel calls can be made
-func logSeccomp() error {
+func logSeccomp() {
 	s, err := container.SeccompEnforcingMode()
 	if err != nil {
-		return err
+		log.Printf("Failed to get container SeccompEnforcingMode: %v", err)
+		return
 	}
 	log.Printf("seccomp enforcing mode: %v", s)
-	return nil
 }
 
 // logSecurityAttributes logs the security attributes of the current process.
 // The security attributes indicate whether AppArmor or SELinux are being used,
 // and what the level of confinement is.
-func logSecurityAttributes() error {
+func logSecurityAttributes() {
 	a, err := readProc("/proc/self/attr/current")
 	// On some systems, if AppArmor or SELinux are not installed, you get an
 	// error when you try and read `/proc/self/attr/current`, even though the
@@ -87,10 +87,10 @@ func logSecurityAttributes() error {
 		a = "none"
 	}
 	log.Printf("Process security attributes: %v", a)
-	return nil
 }
 
 func readProc(filename string) (value string, err error) {
+	// #nosec G304
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return "", err

@@ -62,6 +62,7 @@ func processMetrics(log *logger.Logger, qmName string) {
 				firstConnect = false
 				startChannel <- true
 			}
+			// #nosec G104
 			metrics, _ = initialiseMetrics(log)
 		}
 
