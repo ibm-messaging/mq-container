@@ -35,10 +35,13 @@ func updateMQSC(appPasswordRequired bool) error {
 			return err
 		}
 	} else {
-		err := os.Remove(mqsc)
-		if err != nil {
-			log.Errorf("Error removing file %s: %v", mqsc, err)
-			return err
+		_, err := os.Stat(mqsc)
+		if !os.IsNotExist(err) {
+			err = os.Remove(mqsc)
+			if err != nil {
+				log.Errorf("Error removing file %s: %v", mqsc, err)
+				return err
+			}
 		}
 	}
 	return nil
