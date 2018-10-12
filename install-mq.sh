@@ -63,7 +63,8 @@ if ($UBUNTU); then
     procps \
     sed \
     tar \
-    util-linux
+    util-linux \
+    locales
 fi
 
 # Install additional packages required by MQ, this install process and the runtime scripts

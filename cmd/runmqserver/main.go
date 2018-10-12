@@ -23,10 +23,32 @@ import (
 	"os"
 	"sync"
 
+	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
+
+func setupLocale() error {
+	lang, ok := os.LookupEnv("LANG")
+	if !ok {
+		return nil
+	}
+
+	out, _, err := command.Run("locale-gen", lang)
+	if err != nil {
+		log.Printf("Error running locale-gen: %v\n", string(out))
+		return err
+	}
+
+	out, _, err = command.Run("update-locale")
+	if err != nil {
+		log.Printf("Error running update-locale: %v\n", string(out))
+		return err
+	}
+
+	return nil
+}
 
 func doMain() error {
 	name, nameErr := name.GetQueueManagerName()
@@ -35,6 +57,13 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
+	err = setupLocale()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
 	if nameErr != nil {
 		logTermination(err)
 		return err
