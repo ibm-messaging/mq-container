@@ -121,7 +121,7 @@ func configureSSO() error {
 	}
 
 	// Process SSO template for generating file mqwebuser.xml
-	adminUsers := strings.Split(os.Getenv("MQ_WEB_ADMIN_USERS"), ",")
+	adminUsers := strings.Split(os.Getenv("MQ_WEB_ADMIN_USERS"), "\n")
 	err = mqtemplate.ProcessTemplateFile(mqwebDir+"/mqwebuser.xml.tpl", mqwebDir+"/mqwebuser.xml", map[string][]string{"AdminUser": adminUsers}, log)
 	if err != nil {
 		return err
