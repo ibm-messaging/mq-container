@@ -78,6 +78,7 @@ func checkLicense() (bool, error) {
 		return true, nil
 	case ok && lic == "view":
 		file := filepath.Join("/opt/mqm/licenses", resolveLicenseFile())
+		// #nosec G304
 		buf, err := ioutil.ReadFile(file)
 		if err != nil {
 			log.Println(err)

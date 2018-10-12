@@ -53,11 +53,13 @@ func RunCmd(cmd *exec.Cmd) (string, int, error) {
 // Do not use this function to run shell built-ins (like "cd"), because
 // the error handling works differently
 func Run(name string, arg ...string) (string, int, error) {
+	// #nosec G204
 	return RunCmd(exec.Command(name, arg...))
 }
 
 // RunAsMQM runs the specified command as the mqm user
 func RunAsMQM(name string, arg ...string) (string, int, error) {
+	// #nosec G204
 	cmd := exec.Command(name, arg...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{}
 	uid, gid, err := LookupMQM()

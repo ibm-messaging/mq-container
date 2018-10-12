@@ -141,6 +141,32 @@ lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
 	@# As of 11/04/2018 there is an open issue to fix it: https://github.com/golang/lint/issues/320
 	golint -set_exit_status $(sort $(dir $(wildcard $(addsuffix /*/*.go, $(GO_PKG_DIRS)))))
 
+.PHONY: gosec
+gosec: $(info $(SPACER)$(shell printf "Running gosec test"$(END))) 
+	@gosec -fmt=json -out=gosec_results.json cmd/... internal/... 2> /dev/null ;\
+	cat "gosec_results.json" ;\
+	cat gosec_results.json | grep HIGH | grep severity > /dev/null ;\
+	if [ $$? -eq 0 ]; then \
+		printf "\nFAILURE: gosec found files containing HIGH severity issues - see results.json\n" ;\
+		exit 1 ;\
+	else \
+		printf "\ngosec found no HIGH severity issues\n" ;\
+	fi ;\
+	cat gosec_results.json | grep MEDIUM | grep severity > /dev/null ;\
+	if [ $$? -eq 0 ]; then \
+		printf "\nFAILURE: gosec found files containing MEDIUM severity issues - see results.json\n" ;\
+		exit 1 ;\
+	else \
+		printf "\ngosec found no MEDIUM severity issues\n" ;\
+	fi ;\
+	cat gosec_results.json | grep LOW | grep severity > /dev/null;\
+	if [ $$? -eq 0 ]; then \
+		printf "\nFAILURE: gosec found files containing LOW severity issues - see results.json\n" ;\
+		exit 1;\
+	else \
+		printf "\ngosec found no LOW severity issues\n" ;\
+fi ;\
+
 .PHONY: unknownos
 unknownos:
 	$(info $(SPACER)$(shell printf "ERROR: Unknown OS ("$(BASE_OS)") please run specific make targets"$(END)))
