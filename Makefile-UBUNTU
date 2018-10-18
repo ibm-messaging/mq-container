@@ -32,9 +32,9 @@ MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
 # MQ_IMAGE_ADVANCEDSERVER is the name and tag of the built MQ Advanced image
-MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
+MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server:$(MQ_VERSION)-integration-$(ARCH)
 # MQ_IMAGE_DEVSERVER is the name and tag of the built MQ Advanced for Developers image
-MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
+MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev:$(MQ_VERSION)-integration-$(ARCH)
 # MQ_IMAGE_SDK is the name and tag of the built MQ Advanced for Developers SDK image
 MQ_IMAGE_SDK ?=mq-sdk:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # MQ_IMAGE_GOLANG_SDK is the name and tag of the built MQ Advanced for Developers SDK image, plus Go tools
