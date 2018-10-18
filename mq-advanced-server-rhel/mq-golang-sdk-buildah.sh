@@ -49,10 +49,10 @@ then
 fi
 
 # Add mqm user
-groupadd --root $mnt_mq --system --gid 888 mqm
-useradd --root $mnt_mq --system --uid 888 --gid mqm mqm
-usermod --root $mnt_mq -aG root mqm
-usermod --root $mnt_mq -aG mqm root
+sudo groupadd --root $mnt_mq --system --gid 888 mqm
+sudo useradd --root $mnt_mq --system --uid 888 --gid mqm mqm
+sudo usermod --root $mnt_mq -aG root mqm
+sudo usermod --root $mnt_mq -aG mqm root
 
 # Enable Yum repository for "optional" RPMs, which is needed for "golang"
 buildah run ${ctr_mq} -- yum-config-manager --enable rhel-7-server-optional-rpms
