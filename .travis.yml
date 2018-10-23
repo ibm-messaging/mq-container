@@ -51,7 +51,7 @@ before_install:
 install:
   - echo nothing
 
-script:
+before_script:
   - echo 'Downloading Go dependencies...' && echo -en 'travis_fold:start:deps\\r'
   - make deps
   - echo -en 'travis_fold:end:deps\\r'
@@ -61,6 +61,8 @@ script:
   - echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
   - make build-devjmstest
   - echo -en 'travis_fold:end:build-devjmstest\\r'
+
+script:
   - echo 'Downgrading Docker (if necessary)...' && echo -en 'travis_fold:start:docker-downgrade\\r'
   - eval "$DOCKER_DOWNGRADE"
   - echo -en 'travis_fold:end:docker-downgrade\\r'
