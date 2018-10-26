@@ -27,6 +27,7 @@
     <openidConnectClient id="mqclient"
         clientId="${env.MQ_OIDC_CLIENT_ID}"
         clientSecret="${env.MQ_OIDC_CLIENT_SECRET}"
+        uniqueUserIdentifier="${env.MQ_OIDC_UNIQUE_USER_IDENTIFIER}"
         authorizationEndpointUrl="${env.MQ_OIDC_AUTHORIZATION_ENDPOINT}"
         tokenEndpointUrl="${env.MQ_OIDC_TOKEN_ENDPOINT}"
         scope="openid profile email"
