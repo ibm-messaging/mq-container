@@ -7,3 +7,8 @@ build
 coverage
 downloads
 incubating/mqipt/ms81*
+vendor/github.com/prometheus/client_model/bin/
+vendor/github.com/prometheus/client_model/.classpath
+vendor/github.com/prometheus/client_model/.project
+vendor/github.com/prometheus/client_model/.settings*
+gosec_results.json

@@ -37,5 +37,8 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	conn.Close()
+	err = conn.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
 }

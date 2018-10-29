@@ -17,66 +17,54 @@
 ###############################################################################
 GO_PKG_DIRS = ./cmd ./internal ./test
 
-BASE_OS = $(shell cat /etc/*-release | grep ID=)
-ifeq "$(findstring ubuntu,$(BASE_OS))" "ubuntu"
-	BASE_OS=UBUNTU
-else ifeq "$(findstring rhel,$(BASE_OS))" "rhel"
-	BASE_OS=RHEL
-else
-	BASE_OS=UNKNOWN
+# Set variable if running on a Red Hat Enterprise Linux host
+ifneq ($(wildcard /etc/redhat-release),)
+REDHAT_RELEASE = $(shell cat /etc/redhat-release)
+ifeq "$(findstring Red Hat,$(REDHAT_RELEASE))" "Red Hat"
+    RHEL_HOST = "true"
 endif
-
-
+endif
 
 ###############################################################################
 # Build targets
 ###############################################################################
 
-# default to building UBUNTU as this was the default for the previous Makefile
+# Targets default to a RHEL image on a RHEL host, or an Ubuntu image everywhere else
+
 .PHONY: build-devserver
-ifeq ($(BASE_OS),UBUNTU)
-build-devserver: build-devserver-ubuntu
-else ifeq ($(BASE_OS),RHEL)
+ifdef RHEL_HOST
 build-devserver: build-devserver-rhel
 else
-build-devserver: unknownos
+build-devserver: build-devserver-ubuntu
 endif
 
 .PHONY: build-advancedserver
-ifeq ($(BASE_OS),UBUNTU)
-build-advancedserver: build-advancedserver-ubuntu
-else ifeq ($(BASE_OS),RHEL)
+ifdef RHEL_HOST
 build-advancedserver: build-advancedserver-rhel
 else
-build-advancedserver: unknownos
+build-advancedserver: build-advancedserver-ubuntu
 endif
 
 
 .PHONY: test-devserver
-ifeq ($(BASE_OS),UBUNTU)
-test-devserver: test-devserver-ubuntu
-else ifeq ($(BASE_OS),RHEL)
+ifdef RHEL_HOST
 test-devserver: test-devserver-rhel
 else
-test-devserver: unknownos
+test-devserver: test-devserver-ubuntu
 endif
 
 .PHONY: test-advancedserver
-ifeq ($(BASE_OS),UBUNTU)
-test-advancedserver: test-advancedserver-ubuntu
-else ifeq ($(BASE_OS),RHEL)
+ifdef RHEL_HOST
 test-advancedserver: test-advancedserver-rhel
 else
-test-advancedserver: unknownos
+test-advancedserver: test-advancedserver-ubuntu
 endif
 
 .PHONY: build-devjmstest
-ifeq ($(BASE_OS),UBUNTU)
-build-devjmstest: build-devjmstest-ubuntu
-else ifeq ($(BASE_OS),RHEL)
+ifdef RHEL_HOST
 build-devjmstest: build-devjmstest-rhel
 else
-build-devjmstest: unknownos
+build-devjmstest: build-devjmstest-ubuntu
 endif
 
 # UBUNTU building targets
@@ -152,6 +140,32 @@ lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
 	@# This expression is necessary because /... includes the vendor directory in golint
 	@# As of 11/04/2018 there is an open issue to fix it: https://github.com/golang/lint/issues/320
 	golint -set_exit_status $(sort $(dir $(wildcard $(addsuffix /*/*.go, $(GO_PKG_DIRS)))))
+
+.PHONY: gosec
+gosec: $(info $(SPACER)$(shell printf "Running gosec test"$(END))) 
+	@gosec -fmt=json -out=gosec_results.json cmd/... internal/... 2> /dev/null ;\
+	cat "gosec_results.json" ;\
+	cat gosec_results.json | grep HIGH | grep severity > /dev/null ;\
+	if [ $$? -eq 0 ]; then \
+		printf "\nFAILURE: gosec found files containing HIGH severity issues - see results.json\n" ;\
+		exit 1 ;\
+	else \
+		printf "\ngosec found no HIGH severity issues\n" ;\
+	fi ;\
+	cat gosec_results.json | grep MEDIUM | grep severity > /dev/null ;\
+	if [ $$? -eq 0 ]; then \
+		printf "\nFAILURE: gosec found files containing MEDIUM severity issues - see results.json\n" ;\
+		exit 1 ;\
+	else \
+		printf "\ngosec found no MEDIUM severity issues\n" ;\
+	fi ;\
+	cat gosec_results.json | grep LOW | grep severity > /dev/null;\
+	if [ $$? -eq 0 ]; then \
+		printf "\nFAILURE: gosec found files containing LOW severity issues - see results.json\n" ;\
+		exit 1;\
+	else \
+		printf "\ngosec found no LOW severity issues\n" ;\
+fi ;\
 
 .PHONY: unknownos
 unknownos:

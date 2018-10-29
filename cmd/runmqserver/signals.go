@@ -43,7 +43,8 @@ func signalHandler(qmgr string) chan int {
 				log.Printf("Signal received: %v", sig)
 				signal.Stop(reapSignals)
 				signal.Stop(stopSignals)
-				metrics.StopMetricsGathering()
+				metrics.StopMetricsGathering(log)
+				// #nosec G104
 				stopQueueManager(qmgr)
 				// One final reap
 				reapZombies()

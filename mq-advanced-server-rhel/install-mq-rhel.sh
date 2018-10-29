@@ -19,6 +19,16 @@
 
 set -ex
 
+function usage {
+  echo "Usage: $0 MQContainer MountLocation ARCHIVENAME PACKAGES"
+  exit 20
+}
+
+if [ "$#" -ne 4 ]; then
+  echo "ERROR: Invalid number of parameters"
+  usage
+fi
+
 readonly ctr_mq=$1
 readonly mnt_mq=$2
 readonly archive=$3

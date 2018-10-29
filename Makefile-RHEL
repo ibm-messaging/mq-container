@@ -32,9 +32,9 @@ MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
 # MQ_IMAGE_ADVANCEDSERVER is the name and tag of the built MQ Advanced image
-MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
+MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server:$(MQ_VERSION)-RHEL-$(ARCH)
 # MQ_IMAGE_DEVSERVER is the name and tag of the built MQ Advanced for Developers image
-MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
+MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev:$(MQ_VERSION)-RHEL-$(ARCH)
 # MQ_IMAGE_SDK is the name and tag of the built MQ Advanced for Developers SDK image
 MQ_IMAGE_SDK ?=mq-sdk:$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
 # MQ_IMAGE_GOLANG_SDK is the name and tag of the built MQ Advanced for Developers SDK image, plus Go tools
@@ -82,18 +82,47 @@ MQ_ARCHIVE_DEV_9.1.0.0=mqadv_dev910_linux_$(MQ_DEV_ARCH).tar.gz
 ###############################################################################
 # Build targets
 ###############################################################################
+.PHONY: vars
+vars:
+#ifeq "$(findstring ubuntu,$(BASE_IMAGE))","ubuntu"
+	@echo $(MQ_ARCHIVE_ARCH)
+	@echo $(MQ_ARCHIVE_TYPE)
+	@echo $(MQ_ARCHIVE)
 
-# Vendor Go dependencies for the Docker tests
-test/docker/vendor:
-	cd test/docker && dep ensure -vendor-only
+.PHONY: default
+default: build-devserver test-devserver
+
+# Build all components (except incubating ones)
+.PHONY: all
+all: build-devserver build-advancedserver
+
+.PHONY: test-all
+test-all: build-devjmstest test-devserver test-advancedserver
+
+.PHONY: devserver
+devserver: build-devserver build-devjmstest test-devserver
+
+# Build incubating components
+.PHONY: incubating
+incubating: build-explorer
 
 downloads/$(MQ_ARCHIVE_DEV):
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
 	mkdir -p downloads
 	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV)
 
+downloads/$(MQ_SDK_ARCHIVE):
+	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
+	mkdir -p downloads
+	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_SDK_ARCHIVE)
+
 .PHONY: downloads
-downloads: downloads/$(MQ_ARCHIVE_DEV)
+downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
+
+# Vendor Go dependencies for the Docker tests
+test/docker/vendor:
+	cd test/docker && dep ensure -vendor-only
+
 
 .PHONY: check-prereqs
 check-prereqs:
@@ -111,7 +140,7 @@ check-prereqs:
 .PHONY: test-advancedserver
 test-advancedserver: check-test-prereqs test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on $(shell docker --version)"$(END)))
-	buildah push $(MQ_IMAGE_ADVANCEDSERVER) docker-daemon:$(MQ_IMAGE_ADVANCEDSERVER)
+	sudo buildah push $(MQ_IMAGE_ADVANCEDSERVER) docker-daemon:$(MQ_IMAGE_ADVANCEDSERVER)
 	docker tag docker.io/$(MQ_IMAGE_ADVANCEDSERVER) $(MQ_IMAGE_ADVANCEDSERVER)
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) EXPECTED_LICENSE=Production go test $(TEST_OPTS_DOCKER)
 
@@ -119,44 +148,49 @@ test-advancedserver: check-test-prereqs test/docker/vendor
 .PHONY: test-devserver
 test-devserver: check-test-prereqs test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER) on $(shell docker --version)"$(END)))
-	buildah push $(MQ_IMAGE_DEVSERVER) docker-daemon:$(MQ_IMAGE_DEVSERVER)
+	sudo buildah push $(MQ_IMAGE_DEVSERVER) docker-daemon:$(MQ_IMAGE_DEVSERVER)
 	docker tag docker.io/$(MQ_IMAGE_DEVSERVER) $(MQ_IMAGE_DEVSERVER)
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) go test -tags mqdev $(TEST_OPTS_DOCKER)
 
 
 .PHONY: build-advancedserver
 build-advancedserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE)
-build-advancedserver: check-prereqs downloads/$(MQ_ARCHIVE) build-go-programs
+build-advancedserver: check-prereqs downloads/$(MQ_ARCHIVE) build-go-programs-ex
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER)"$(END)))
-	mq-advanced-server-rhel/mq-buildah.sh "$(MQ_ARCHIVE)" "$(MQ_PACKAGES)" "$(MQ_IMAGE_ADVANCEDSERVER)" "$(MQ_VERSION)" "$(MQDEV)"
+	sudo mq-advanced-server-rhel/mq-buildah.sh "$(MQ_ARCHIVE)" "$(MQ_PACKAGES)" "$(MQ_IMAGE_ADVANCEDSERVER)" "$(MQ_VERSION)" "$(MQDEV)"
 
 
 .PHONY: build-devserver
 build-devserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE_DEV)
 build-devserver: MQDEV=TRUE
 build-devserver: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm MQSeriesWeb-*.rpm
-build-devserver: check-prereqs downloads/$(MQ_ARCHIVE_DEV) build-go-programs
+build-devserver: check-prereqs downloads/$(MQ_ARCHIVE_DEV) build-go-programs-ex
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER)"$(END)))
-	mq-advanced-server-rhel/mq-buildah.sh "$(MQ_ARCHIVE_DEV)" "$(MQ_PACKAGES)" "$(MQ_IMAGE_DEVSERVER_BASE)" "$(MQ_VERSION)" "$(MQDEV)"
-	mq-advanced-server-rhel/mqdev-buildah.sh "$(MQ_IMAGE_DEVSERVER_BASE)" "$(MQ_IMAGE_DEVSERVER)" "$(MQ_VERSION)"
+	sudo mq-advanced-server-rhel/mq-buildah.sh "$(MQ_ARCHIVE_DEV)" "$(MQ_PACKAGES)" "$(MQ_IMAGE_DEVSERVER_BASE)" "$(MQ_VERSION)" "$(MQDEV)"
+	sudo mq-advanced-server-rhel/mqdev-buildah.sh "$(MQ_IMAGE_DEVSERVER_BASE)" "$(MQ_IMAGE_DEVSERVER)" "$(MQ_VERSION)"
 
 
 .PHONY: build-mqgolang-sdk
-build-mqgolang-sdk: check-prereqs downloads/$(MQ_SDK_ARCHIVE)
-	$(info $(SPACER)$(shell printf $(TITLE)"Build mq-golang SDK"$(END)))
-	mq-advanced-server-rhel/mq-golang-sdk-buildah.sh "$(MQ_SDK_ARCHIVE)" "$(MQ_IMAGE_GOLANG_SDK)"
+build-mqgolang-sdk: check-prereqs downloads/$(MQ_SDK_ARCHIVE) build-mqgolang-sdk-ex
 
+.PHONY: build-mqgolang-sdk-ex
+build-mqgolang-sdk-ex: 
+	$(info $(SPACER)$(shell printf $(TITLE)"Build mq-golang SDK"$(END)))
+	sudo mq-advanced-server-rhel/mq-golang-sdk-buildah.sh "$(MQ_SDK_ARCHIVE)" "$(MQ_IMAGE_GOLANG_SDK)"
 
 .PHONY: build-go-programs
-build-go-programs: check-prereqs build-mqgolang-sdk
+build-go-programs: check-prereqs downloads/$(MQ_SDK_ARCHIVE) build-go-programs-ex
+
+.PHONY: build-go-programs-ex
+build-go-programs-ex: build-mqgolang-sdk-ex
 	$(info $(SPACER)$(shell printf $(TITLE)"Build go programs"$(END)))
-	IMAGE_REVISION=$(IMAGE_REVISION) IMAGE_SOURCE=$(IMAGE_SOURCE) mq-advanced-server-rhel/go-buildah.sh "$(MQ_IMAGE_GOLANG_SDK)" "$(MQDEV)"
+	IMAGE_REVISION=$(IMAGE_REVISION) IMAGE_SOURCE=$(IMAGE_SOURCE) sudo mq-advanced-server-rhel/go-buildah.sh "$(MQ_IMAGE_GOLANG_SDK)" "$(MQDEV)"
 
 .PHONY: build-devjmstest
 build-devjmstest: check-test-prereqs
 	$(info $(SPACER)$(shell printf $(TITLE)"Build JMS tests for developer config"$(END)))
-	cd test/messaging && ./buildah.sh $(DEV_JMS_IMAGE)
-	buildah push $(DEV_JMS_IMAGE) docker-daemon:$(DEV_JMS_IMAGE)
+	cd test/messaging && sudo ./buildah.sh $(DEV_JMS_IMAGE)
+	sudo buildah push $(DEV_JMS_IMAGE) docker-daemon:$(DEV_JMS_IMAGE)
 	docker tag docker.io/$(DEV_JMS_IMAGE) $(DEV_JMS_IMAGE)
 
 include formatting.mk

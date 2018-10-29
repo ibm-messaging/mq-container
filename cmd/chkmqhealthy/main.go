@@ -32,6 +32,7 @@ func queueManagerHealthy() (bool, error) {
 		return false, err
 	}
 	// Specify the queue manager name, just in case someone's created a second queue manager
+	// #nosec G204
 	cmd := exec.Command("dspmq", "-n", "-m", name)
 	// Run the command and wait for completion
 	out, err := cmd.CombinedOutput()
