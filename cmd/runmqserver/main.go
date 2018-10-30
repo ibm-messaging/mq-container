@@ -109,9 +109,6 @@ func doMain() error {
 		return nil
 	}
 
-	// Start signal handler
-	signalControl := signalHandler(name)
-
 	// Print out versioning information
 	logVersionInfo()
 
