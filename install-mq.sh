@@ -63,7 +63,8 @@ if ($UBUNTU); then
     procps \
     sed \
     tar \
-    util-linux
+    util-linux \
+    openssl
 fi
 
 # Install additional packages required by MQ, this install process and the runtime scripts
@@ -82,7 +83,8 @@ $RHEL && yum -y install \
   procps-ng \
   sed \
   tar \
-  util-linux
+  util-linux \
+  openssl
 
 # Download and extract the MQ installation files
 DIR_EXTRACT=/tmp/mq

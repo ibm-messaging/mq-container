@@ -57,7 +57,8 @@ buildah run $ctr_mq -- yum install -y --setopt install_weak_deps=false --setopt=
   procps-ng \
   sed \
   tar \
-  util-linux
+  util-linux \
+  openssl
 
 # Clean up cached files
 buildah run $ctr_mq -- yum clean all
