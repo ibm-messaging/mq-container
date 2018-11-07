@@ -125,6 +125,15 @@ func (ks *KeyStore) CreateStash(log *logger.Logger) error {
 	return nil
 }
 
+// GeneratePKCS12 generates a PKCS12 file
+func (ks *KeyStore) GeneratePKCS12(keyFile, crtFile, pkcs12File, label, password string) error {
+	out, _, err := command.Run("openssl", "pkcs12", "-export", "-inkey", keyFile, "-in", crtFile, "-out", pkcs12File, "-name", label, "-passout", "pass:"+password)
+	if err != nil {
+		return fmt.Errorf("error running \"openssl pkcs12 -export\": %v %s", err, out)
+	}
+	return nil
+}
+
 // Import imports a certificate file in the keystore
 func (ks *KeyStore) Import(inputFile, password string) error {
 	out, _, err := command.Run(ks.command, "-cert", "-import", "-file", inputFile, "-pw", password, "-target", ks.Filename, "-target_pw", ks.Password, "-target_type", ks.keyStoreType)
