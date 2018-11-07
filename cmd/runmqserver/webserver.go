@@ -172,17 +172,17 @@ func configureSSO_TLS() error {
 	if err != nil {
 		return err
 	}
-	log.Debug("Creating self-signed certificate in key store")
-	err = ks.CreateSelfSignedCertificate("default", "CN=IBMMQWeb,O=IBM,OU=Platform,C=GB")
+	log.Debug("Generating PKCS12 file")
+	err = ks.GeneratePKCS12("/mnt/tls/tls.key", "/mnt/tls/tls.crt", "/run/tls/tls.p12", "default", "password")
 	if err != nil {
 		return err
 	}
-	log.Debug("Importing self-signed certificate into trust store")
-	err = ts.Import(ks.Filename, ks.Password)
+	log.Debug("Importing certificate into key store")
+	err = ks.Import("/run/tls/tls.p12", "password")
 	if err != nil {
 		return err
 	}
-	log.Debug("Adding OIDC CA certificate to trust store")
+	log.Debug("Adding OIDC certificate to trust store")
 	err = ts.Add(os.Getenv("MQ_OIDC_CERTIFICATE"), "OIDC")
 	return err
 }
