@@ -411,9 +411,9 @@ func TestMQSC(t *testing.T) {
 	}
 }
 
-// TestRepeatingMQSC creates a new image with an 2 MQSC files containing replicated START LISTENER commands in,
-// starts a container based on that image, and checks that the listener is running
-func TestRepeatingMQSC(t *testing.T) {
+// TestInvalidMQSC creates a new image with an MQSC file containing invalid MQSC,
+// tries to start a container based on that image, and checks that container terminates
+func TestInvalidMQSC(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -423,7 +423,7 @@ func TestRepeatingMQSC(t *testing.T) {
 		Name, Body string
 	}{
 		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD mqscTest.mqsc /etc/mqm/", imageName())},
-		{"mqscTest.mqsc", "DEFINE LISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE\nSTART LISTENER('TEST.LISTENER.TCP') IGNSTATE(YES)\nSTART LISTENER('TEST.LISTENER.TCP') IGNSTATE(YES)"},
+		{"mqscTest.mqsc", "DEFINE INVALIDLISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE"},
 	}
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
@@ -438,6 +438,7 @@ func TestRepeatingMQSC(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
+	expectTerminationMessage(t)
 }
 
 // TestReadiness creates a new image with large amounts of MQSC in, to
