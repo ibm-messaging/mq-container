@@ -30,7 +30,7 @@ In addition, you need the following commonly installed tools:
 This procedure works for building the MQ Continuous Delivery release, on `x86_64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.1_UBUNTU_X86-64.tar.gz` for MQ V9.1.0 for Ubuntu on x86_64 architecture) in the `downloads` directory
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.1.1_UBUNTU_X86-64.tar.gz` for MQ V9.1.1 for Ubuntu on x86_64 architecture) in the `downloads` directory
 3. Run `make build-advancedserver`
 
 > **Warning**: Note that MQ offers two different sets of packaging on Linux: one is called "MQ for Linux" and contains RPM files for installing on Red Hat Enterprise Linux and SUSE Linux Enterprise Server.  The other package is called "MQ for Ubuntu", and contains DEB files for installing on Ubuntu.
@@ -40,7 +40,7 @@ On a Red Hat Enterprise Linux host, the command `make build-advancedserver` will
 You can build a different version of MQ by setting the `MQ_VERSION` environment variable, for example:
 
 ```bash
-MQ_VERSION=9.0.5.0 make build-advancedserver
+MQ_VERSION=9.1.0.0 make build-advancedserver
 ```
 
 If you have an MQ archive file with a different file name, you can specify a particular file (which must be in the `downloads` directory).  You should also specify the MQ version, so that the resulting image is tagged correctly, for example:
