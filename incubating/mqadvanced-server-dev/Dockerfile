@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=mqadvanced-server-dev-base:9.0.5.0-x86_64-ubuntu-16.04
-ARG BUILDER_IMAGE=mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04
+ARG BASE_IMAGE=mqadvanced-server-dev-base:9.1.1.0-x86_64-ubuntu-16.04
+ARG BUILDER_IMAGE=mq-golang-sdk:9.1.1.0-x86_64-ubuntu-16.04
 
 ###############################################################################
 # Build stage to build Go code
