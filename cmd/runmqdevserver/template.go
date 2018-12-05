@@ -21,7 +21,6 @@ import (
 	"text/template"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	"github.com/prometheus/common/log"
 )
 
 // processTemplateFile takes a Go templateFile, and processes it with the
@@ -37,7 +36,7 @@ func processTemplateFile(templateFile, destFile string, data interface{}) error 
 	_, err = os.Stat(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = os.MkdirAll(dir, 0660)
+			err = os.MkdirAll(dir, 0770)
 			if err != nil {
 				log.Error(err)
 				return err
