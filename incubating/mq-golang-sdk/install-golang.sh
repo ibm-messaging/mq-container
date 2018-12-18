@@ -42,7 +42,6 @@ if ($UBUNTU); then
   
   apt-get update 
   apt-get install -y --no-install-recommends \
-    golang-${GO_VERSION} \
     git \
     ca-certificates \
     curl \ 
