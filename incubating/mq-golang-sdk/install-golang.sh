@@ -44,7 +44,9 @@ if ($UBUNTU); then
   apt-get install -y --no-install-recommends \
     golang-${GO_VERSION} \
     git \
-    ca-certificates
+    ca-certificates \
+    curl \ 
+    tar
 fi
 
 if ($RHEL); then
@@ -54,11 +56,11 @@ if ($RHEL); then
     curl \
     tar \
     gcc
-
-    cd /tmp
-    curl -LO https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
-    tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
 fi
+
+cd /tmp
+curl -LO https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
+tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
 
 # Remove any orphaned packages
 $UBUNTU && apt-get autoremove -y

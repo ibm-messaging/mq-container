@@ -18,7 +18,7 @@ FROM $BASE_IMAGE
 
 COPY incubating/mq-golang-sdk/install-golang.sh /usr/local/bin
 
-ENV GO_VERSION=1.10
+ENV GO_VERSION=1.10.7
 
 ENV PATH="${PATH}:/usr/lib/go-${GO_VERSION}/bin:/go/bin:/usr/local/go/bin" \
     CGO_CFLAGS="-I/opt/mqm/inc/"                                           \
