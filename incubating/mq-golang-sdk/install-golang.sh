@@ -61,8 +61,6 @@ cd /tmp
 curl -LO https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
 tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
 
-ls -l /usr/local
-
 # Remove any orphaned packages
 $UBUNTU && apt-get autoremove -y
 
