@@ -42,9 +42,10 @@ if ($UBUNTU); then
   
   apt-get update 
   apt-get install -y --no-install-recommends \
-    golang-${GO_VERSION} \
+    curl \
     git \
-    ca-certificates
+    ca-certificates \
+    tar
 fi
 
 if ($RHEL); then
@@ -54,11 +55,13 @@ if ($RHEL); then
     curl \
     tar \
     gcc
-
-    cd /tmp
-    curl -LO https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
-    tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
 fi
+
+cd /tmp
+curl -LO https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
+tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+
+ls -l /usr/local
 
 # Remove any orphaned packages
 $UBUNTU && apt-get autoremove -y
@@ -71,3 +74,4 @@ $RHEL && rm -rf /var/cache/yum/*
 # Make the GOLANG directories 
 mkdir -p $GOPATH/src $GOPATH/bin
 chmod -R 777 $GOPATH
+

@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=mq-sdk:9.0.5.0-x86_64-ubuntu-16.04
+ARG BASE_IMAGE=mq-sdk:9.1.1.0-x86_64-ubuntu-16.04
 
 FROM $BASE_IMAGE
 
 COPY incubating/mq-golang-sdk/install-golang.sh /usr/local/bin
 
-ENV GO_VERSION=1.10
+ENV GO_VERSION=1.10.7
 
 ENV PATH="${PATH}:/usr/lib/go-${GO_VERSION}/bin:/go/bin:/usr/local/go/bin" \
     CGO_CFLAGS="-I/opt/mqm/inc/"                                           \
