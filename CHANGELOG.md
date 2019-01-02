@@ -1,5 +1,21 @@
 # Change log
 
+## 9.1.1.0 (2018-11-30)
+
+* Updated to MQ version 9.1.1.0
+* Created seperate RedHat Makefile for building images on RedHat machines with buildah
+* Enabled REST messaging capability for app user.
+* Added support for container suplimentary groups
+* Removed IBM MQ version 9.0.5 details.
+* Added additional Diagnostics ([#203](https://github.com/ibm-messaging/mq-container/pull/203))
+* Implementted GOSec to perform code scans for security vulnerabilities. (([#227](https://github.com/ibm-messaging/mq-container/pull/227)))
+* Removed Queue manager create option from the MQ Console.
+* Fixes for the following issues:
+    * Check explicitly for `/mnt/mqm` ([#175](https://github.com/ibm-messaging/mq-container/pull/175))
+    * Force string output in chkmqhealthy ([#174](https://github.com/ibm-messaging/mq-container/pull/174))
+    * Use -aG not -G when adding a group for a user
+    * Security fixes for libsystemd0 systemd systemd-sysv & libudev1
+
 ## 9.1.0.0 (2018-07-23)
 
 * Updated to MQ version 9.1.0.0

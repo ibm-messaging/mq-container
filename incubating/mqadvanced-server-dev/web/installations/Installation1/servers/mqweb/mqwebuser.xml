@@ -35,5 +35,6 @@
         </group>
     </basicRegistry>
     <variable name="httpHost" value="*"/>
+    <variable name="managementMode" value="externallyprovisioned"/>
     <include location="tls.xml"/>
 </server>

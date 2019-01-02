@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-image: ibmcom/mq:9
+image: ibmcom/mq:9.1.1.0
 manifests:
-  - image: ibmcom/mq:9.1.0.0-x86_64
+  - image: ibmcom/mq:9.1.1.0-x86_64
     platform:
       architecture: amd64
       os: linux
-  - image: ibmcom/mq:9.1.0.0-ppc64le
+  - image: ibmcom/mq:9.1.1.0-ppc64le
     platform:
       architecture: ppc64le
       os: linux
-  - image: ibmcom/mq:9.1.0.0-s390x
+  - image: ibmcom/mq:9.1.1.0-s390x
     platform:
       architecture: s390x
       os: linux
