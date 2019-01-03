@@ -20,6 +20,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"os"
 	"sync"
 
@@ -29,12 +30,31 @@ import (
 )
 
 func doMain() error {
+	var infoFlag = flag.Bool("info", false, "Display debug info, then exit")
+	flag.Parse()
+
+	// Configure the logger so we can output messages
 	name, nameErr := name.GetQueueManagerName()
 	mf, err := configureLogger(name)
 	if err != nil {
 		logTermination(err)
 		return err
 	}
+
+	// Check whether they only want debug info
+	if *infoFlag {
+		logVersionInfo()
+		logConfig()
+		return nil
+	}
+
+	err = verifySingleProcess()
+	if err != nil {
+		// We don't do the normal termination here as it would create a termination file.
+		log.Error(err)
+		return err
+	}
+
 	if nameErr != nil {
 		logTermination(err)
 		return err

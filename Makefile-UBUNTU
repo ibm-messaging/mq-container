@@ -19,7 +19,7 @@
 # BASE_IMAGE is the base image to use for MQ, for example "ubuntu" or "rhel"
 BASE_IMAGE ?= ubuntu:16.04
 # MQ_VERSION is the fully qualified MQ version number to build
-MQ_VERSION ?= 9.1.0.0
+MQ_VERSION ?= 9.1.1.0
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
@@ -91,6 +91,7 @@ endif
 # Archive names for IBM MQ Advanced for Developers
 MQ_ARCHIVE_DEV_9.0.5.0=mqadv_dev905_$(MQ_ARCHIVE_DEV_PLATFORM)_x86-64.tar.gz
 MQ_ARCHIVE_DEV_9.1.0.0=mqadv_dev910_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
+MQ_ARCHIVE_DEV_9.1.1.0=mqadv_dev911_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 
 ###############################################################################
 # Build targets
@@ -204,6 +205,7 @@ define docker-build-mq
 	  --build-arg BUILDER_IMAGE=$(MQ_IMAGE_GOLANG_SDK) \
 	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
+	  --build-arg IMAGE_TAG="$1" \
 	  --label IBM_PRODUCT_ID=$4 \
 	  --label IBM_PRODUCT_NAME=$5 \
 	  --label IBM_PRODUCT_VERSION=$6 \
@@ -235,7 +237,7 @@ build-devserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE_DEV)
 build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk-ex
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER_BASE),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
-	$(DOCKER) build --tag $(MQ_IMAGE_DEVSERVER) --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" --build-arg BASE_IMAGE=$(MQ_IMAGE_DEVSERVER_BASE) --build-arg BUILDER_IMAGE=$(MQ_IMAGE_GOLANG_SDK) --file incubating/mqadvanced-server-dev/Dockerfile .
+	$(DOCKER) build --tag $(MQ_IMAGE_DEVSERVER) --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" --build-arg IMAGE_TAG="$(MQ_IMAGE_DEVSERVER)" --build-arg BASE_IMAGE=$(MQ_IMAGE_DEVSERVER_BASE) --build-arg BUILDER_IMAGE=$(MQ_IMAGE_GOLANG_SDK) --file incubating/mqadvanced-server-dev/Dockerfile .
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: docker-version

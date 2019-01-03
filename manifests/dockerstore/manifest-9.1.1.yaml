@@ -1,7 +1,4 @@
-#!/bin/bash
-# -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2018
-#
+# © Copyright IBM Corporation 2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Install Docker and dep, required by build (assumes Ubuntu host, as used by Travis build)
+image: ibmcorp/mqadvanced-server-dev:9.1.1.0
+manifests:
+  - image: ibmcorp/mqadvanced-server-dev:9.1.1.0-x86_64
+    platform:
+      architecture: amd64
+      os: linux
+  - image: ibmcorp/mqadvanced-server-dev:9.1.1.0-ppc64le
+    platform:
+      architecture: ppc64le
+      os: linux
+  - image: ibmcorp/mqadvanced-server-dev:9.1.1.0-s390x
+    platform:
+      architecture: s390x
+      os: linux
 
-set -ex
-
-curl https://glide.sh/get | sh
-sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64
-sudo chmod +x /usr/local/bin/dep
-
-go get golang.org/x/lint/golint
