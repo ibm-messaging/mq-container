@@ -56,8 +56,8 @@
     "pkg/term/windows",
     "pkg/tlsconfig"
   ]
-  revision = "f5ec1e2936dcbe7b5001c2b817188b095c700c27"
-  version = "v17.03.2-ce"
+  revision = "7395e3f8aa162843a74ed6d48e79627d9792ac55"
+  version = "0.4.0"
 
 [[projects]]
   name = "github.com/docker/go-connections"
