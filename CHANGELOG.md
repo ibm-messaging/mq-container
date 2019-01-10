@@ -1,11 +1,16 @@
 # Change log
 
+## vNext
+
+* [New IGNSTATE parameter for runmqsc START and STOP commands](https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.pro.doc/q132310_.htm#q132310___ignstateparm) - From MQ version 9.1.1.0, any MQSC scripts included in the image should make use of the `IGNSTATE(YES)` parameter on any `START` and `STOP` commands. This allows for consistency when executing scripts multiple times (e.g. when a container is restarted) 
+
+
 ## 9.1.1.0 (2018-11-30)
 
 * Updated to MQ version 9.1.1.0
 * Created seperate RedHat Makefile for building images on RedHat machines with buildah
 * Enabled REST messaging capability for app user.
-* Added support for container suplimentary groups
+* Added support for container supplementary groups
 * Removed IBM MQ version 9.0.5 details.
 * Added additional Diagnostics ([#203](https://github.com/ibm-messaging/mq-container/pull/203))
 * Implementted GOSec to perform code scans for security vulnerabilities. (([#227](https://github.com/ibm-messaging/mq-container/pull/227)))
