@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -409,6 +409,36 @@ func TestMQSC(t *testing.T) {
 		r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
 		t.Fatalf("Expected runmqsc to exit with rc=0, got %v with error %v", rc, r.FindString(mqscOutput))
 	}
+}
+
+// TestInvalidMQSC creates a new image with an MQSC file containing invalid MQSC,
+// tries to start a container based on that image, and checks that container terminates
+func TestInvalidMQSC(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD mqscTest.mqsc /etc/mqm/", imageName())},
+		{"mqscTest.mqsc", "DEFINE INVALIDLISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE"},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	rc := waitForContainer(t, cli, id, 5)
+	if rc != 1 {
+		t.Errorf("Expected rc=1, got rc=%v", rc)
+	}
+	expectTerminationMessage(t)
 }
 
 // TestReadiness creates a new image with large amounts of MQSC in, to
