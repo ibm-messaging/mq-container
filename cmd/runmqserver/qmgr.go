@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -119,7 +119,8 @@ func configureQueueManager() error {
 			// Run the command and wait for completion
 			out, err := cmd.CombinedOutput()
 			if err != nil {
-				log.Println(err)
+				log.Errorf("Error running MQSC file %v: %v", file.Name(), err)
+				return err
 			}
 			// Print the runmqsc output, adding tab characters to make it more readable as part of the log
 			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
