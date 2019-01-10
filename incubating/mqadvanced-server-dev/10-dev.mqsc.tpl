@@ -1,4 +1,4 @@
-* © Copyright IBM Corporation 2017, 2018
+* © Copyright IBM Corporation 2017, 2019
 *
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 
-STOP LISTENER('SYSTEM.LISTENER.TCP.1')
+STOP LISTENER('SYSTEM.LISTENER.TCP.1') IGNSTATE(YES)
 
 * Developer queues
 DEFINE QLOCAL('DEV.QUEUE.1') REPLACE
@@ -50,4 +50,4 @@ SET AUTHREC PROFILE('DEV.**') GROUP('mqclient') OBJTYPE(TOPIC) AUTHADD(PUB,SUB)
 
 * Developer listener
 DEFINE LISTENER('DEV.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE
-START LISTENER('DEV.LISTENER.TCP')
+START LISTENER('DEV.LISTENER.TCP') IGNSTATE(YES)
