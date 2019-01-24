@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,11 +35,11 @@ IMAGE_REVISION=${IMAGE_REVISION:="Not Applicable"}
 IMAGE_SOURCE=${IMAGE_SOURCE:="Not Applicable"}
 
 podman run \
-  --volume ${PWD}:/go/src/github.com/ibm-messaging/mq-container/ \
-  --env GOPATH=/go \
+  --volume ${PWD}:/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/ \
   --env IMAGE_REVISION="$IMAGE_REVISION" \
   --env IMAGE_SOURCE="$IMAGE_SOURCE" \
   --env MQDEV=${dev} \
+  --user $(id -u) \
   --rm \
   ${tag} \
-  bash -c "cd /go/src/github.com/ibm-messaging/mq-container/ && ./mq-advanced-server-rhel/go-build.sh"
+  bash -c "cd /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/ && ./mq-advanced-server-rhel/go-build.sh"

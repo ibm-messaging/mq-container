@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@
 set -ex
 
 function usage {
-  echo "Usage: $0 ARCHIVENAME TAG"
+  echo "Usage: $0 REDIST-ARCHIVE-NAME TAG"
   exit 20
 }
 
@@ -29,41 +29,30 @@ if [ "$#" -ne 2 ]; then
   usage
 fi
 
-readonly mq_archive=downloads/$1
+readonly mq_redist_archive=downloads/$1
 readonly tag=$2
-# Use plain RHEL 7 container
-# Note: Red Hat's devtools/go-toolset-7-rhel7 image doesn't allow use of 'root'
-# user required for installing the MQ SDK
-readonly ctr_mq=$(buildah from rhel7)
+# Use Red Hat's Go toolset image as the base
+readonly ctr_mq=$(buildah from devtools/go-toolset-7-rhel7)
 if [ -z "$ctr_mq" ]
 then
   echo "ERROR: ctr_mq is empty. Check above output for errors"
   exit 50
 fi
 
-readonly mnt_mq=$(buildah mount $ctr_mq)
-if [ -z "$mnt_mq" ]
+readonly mnt_mq_go=$(buildah mount $ctr_mq)
+if [ -z "$mnt_mq_go" ]
 then
-  echo "ERROR: mnt_mq is empty. Check above output for errors"
+  echo "ERROR: mnt_mq_go is empty. Check above output for errors"
   exit 50
 fi
 
-# Add mqm user
-sudo groupadd --root $mnt_mq --system --gid 888 mqm
-sudo useradd --root $mnt_mq --system --uid 888 --gid mqm mqm
-sudo usermod --root $mnt_mq -aG root mqm
-sudo usermod --root $mnt_mq -aG mqm root
+# Install the MQ redistributable client (including header files) into the Go builder image
+mkdir -p ${mnt_mq_go}/opt/mqm
+tar -xzf ${mq_redist_archive} -C ${mnt_mq_go}/opt/mqm
 
-# Enable Yum repository for "optional" RPMs, which is needed for "golang"
-buildah run ${ctr_mq} -- yum-config-manager --enable rhel-7-server-optional-rpms
-# Install Go compiler
-buildah run ${ctr_mq} -- yum install -y golang git gcc
-
-# Install the MQ SDK into the Go builder image
-./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${mq_archive}" "MQSeriesRuntime-*.rpm MQSeriesSDK-*.rpm MQSeriesSamples*.rpm"
 # Clean up Yum files
-buildah run ${ctr_mq} -- yum clean all --releasever 7
-rm -rf ${mnt_mq}/var/cache/yum/*
+rm -rf ${mnt_mq_go}/etc/yum.repos.d/*
+
 buildah unmount ${ctr_mq}
 # Set environment variables for MQ/Go compilation
 buildah config \
