@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -279,7 +279,7 @@ func TestQMRestart(t *testing.T) {
 
 	// Restart just the QM (to simulate a lost connection)
 	t.Log("Stopping queue manager\n")
-	rc, out := execContainer(t, cli, id, "mqm", []string{"endmqm", "-w", defaultMetricQMName})
+	rc, out := execContainer(t, cli, id, "mqm", []string{"endmqm", "-w", "-r", defaultMetricQMName})
 	if rc != 0 {
 		t.Fatalf("Failed to stop the queue manager. rc=%d, err=%s", rc, out)
 	}
