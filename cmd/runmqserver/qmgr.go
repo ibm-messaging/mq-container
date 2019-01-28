@@ -131,7 +131,7 @@ func configureQueueManager() error {
 
 func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
-	out, _, err := command.Run("endmqm", "-w", name)
+	out, _, err := command.Run("endmqm", "-w", "-r", name)
 	if err != nil {
 		log.Printf("Error stopping queue manager: %v", string(out))
 		return err
