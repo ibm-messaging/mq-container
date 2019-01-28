@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION)_LINUX_$(MQ_ARCHIVE_ARCH).tar.gz
 # MQ_ARCHIVE_DEV is the name of the file, under the downloads directory, from which MQ Advanced
 # for Developers can be installed
 MQ_ARCHIVE_DEV ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
-# MQ_SDK_ARCHIVE specifies the archive to use for building the golang programs.  Defaults vary on developer or advanced.
-MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
+# MQ_SDK_ARCHIVE specifies the archive to use for the MQ redistributable client, which is used for building the golang programs.
+MQ_SDK_ARCHIVE ?= $(MQ_VERSION)-IBM-MQC-Redist-LinuxX64.tar.gz
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
 # MQ_IMAGE_ADVANCEDSERVER is the name and tag of the built MQ Advanced image
@@ -78,7 +78,7 @@ endif
 # Archive names for IBM MQ Advanced for Developers
 MQ_ARCHIVE_DEV_9.0.5.0=mqadv_dev905_linux_x86-64.tar.gz
 MQ_ARCHIVE_DEV_9.1.0.0=mqadv_dev910_linux_$(MQ_DEV_ARCH).tar.gz
-MQ_ARCHIVE_DEV_9.1.1.0=mqadv_dev910_linux_$(MQ_DEV_ARCH).tar.gz
+MQ_ARCHIVE_DEV_9.1.1.0=mqadv_dev911_linux_$(MQ_DEV_ARCH).tar.gz
 
 ###############################################################################
 # Build targets
@@ -113,9 +113,9 @@ downloads/$(MQ_ARCHIVE_DEV):
 	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV)
 
 downloads/$(MQ_SDK_ARCHIVE):
-	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
+	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced redistributable client "$(MQ_VERSION)$(END)))
 	mkdir -p downloads
-	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_SDK_ARCHIVE)
+	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/$(MQ_SDK_ARCHIVE)
 
 .PHONY: downloads
 downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
@@ -133,7 +133,7 @@ check-prereqs:
 	yum list | grep yum-utils || (echo "Missing required package yum-utils" && exit 1)
 
 .PHONY: check-test-prereqs
-check-prereqs:
+check-test-prereqs:
 	$(info $(SPACER)$(shell printf $(TITLE)"Checking for prereqs"$(END)))
 	which buildah || (echo "Missing required program buildah" && exit 1)
 	which docker || (echo "Missing required program docker" && exit 1)
@@ -155,14 +155,12 @@ test-devserver: check-test-prereqs test/docker/vendor
 
 
 .PHONY: build-advancedserver
-build-advancedserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE)
 build-advancedserver: check-prereqs downloads/$(MQ_ARCHIVE) build-go-programs-ex
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER)"$(END)))
 	sudo mq-advanced-server-rhel/mq-buildah.sh "$(MQ_ARCHIVE)" "$(MQ_PACKAGES)" "$(MQ_IMAGE_ADVANCEDSERVER)" "$(MQ_VERSION)" "$(MQDEV)"
 
 
 .PHONY: build-devserver
-build-devserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE_DEV)
 build-devserver: MQDEV=TRUE
 build-devserver: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm MQSeriesWeb-*.rpm
 build-devserver: check-prereqs downloads/$(MQ_ARCHIVE_DEV) build-go-programs-ex

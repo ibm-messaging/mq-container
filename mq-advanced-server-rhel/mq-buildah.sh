@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,13 +17,13 @@
 
 # Build a RHEL image, using the buildah tool
 # Usage
-# mq-buildah.sh ARCHIVEFILE PACKAGES
+# mq-buildah.sh ARCHIVE-NAME PACKAGES
 
 set -x
 set -e
 
 function usage {
-  echo "Usage: $0 ARCHIVENAME PACKAGES TAG VERSION MQDevFlag"
+  echo "Usage: $0 ARCHIVE-NAME PACKAGES TAG VERSION MQDevFlag"
   exit 20
 }
 
@@ -36,7 +36,8 @@ fi
 # Setup MQ server working container
 ###############################################################################
 
-readonly ctr_mq=$(buildah from rhel7)
+# Use RHEL 7 minimal container (which doesn't include things like Python or Yum)
+readonly ctr_mq=$(buildah from rhel7-minimal)
 if [ -z "$ctr_mq" ]
 then
   echo "ERROR: ctr_mq is empty. Check above output for errors"
@@ -60,13 +61,10 @@ readonly mqdev=$5
 # Install MQ server
 ###############################################################################
 
-groupadd --root ${mnt_mq} --system --gid 888 mqm
-useradd --root ${mnt_mq} --system --uid 888 --gid mqm mqm
-usermod --root ${mnt_mq} -aG root mqm
-usermod --root ${mnt_mq} -aG mqm root
-
+# Use the Yum repositories configured on the host
+cp /etc/yum.repos.d/* ${mnt_mq}/etc/yum.repos.d/
 # Install the packages required by MQ
-buildah run $ctr_mq -- yum install -y --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
+yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
   bash \
   bc \
   coreutils \
@@ -78,12 +76,20 @@ buildah run $ctr_mq -- yum install -y --setopt install_weak_deps=false --setopt=
   passwd \
   procps-ng \
   sed \
+  shadow-utils \
   tar \
-  util-linux
+  util-linux \
+  which
+
+groupadd --root ${mnt_mq} --system --gid 888 mqm
+useradd --root ${mnt_mq} --system --uid 888 --gid mqm mqm
+usermod --root ${mnt_mq} -aG root mqm
+usermod --root ${mnt_mq} -aG mqm root
 
 # Clean up cached files
-buildah run $ctr_mq -- yum clean all
+yum clean --installroot=${mnt_mq} all
 rm -rf ${mnt_mq}/var/cache/yum/*
+rm -rf ${mnt_mq}/etc/yum.repos.d/*
 
 # Install MQ server packages into the MQ builder image
 ./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
