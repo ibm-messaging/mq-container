@@ -56,6 +56,8 @@ readonly packages=$2
 readonly tag=$3
 readonly version=$4
 readonly mqdev=$5
+readonly mqm_uid=888
+readonly mqm_gid=888
 
 ###############################################################################
 # Install MQ server
@@ -64,7 +66,12 @@ readonly mqdev=$5
 # Use the Yum repositories configured on the host
 cp /etc/yum.repos.d/* ${mnt_mq}/etc/yum.repos.d/
 # Install the packages required by MQ
-yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
+yum install \
+  --assumeyes \
+  --installroot=${mnt_mq} \
+  --setopt install_weak_deps=false \
+  --setopt=tsflags=nodocs \
+  --setopt=override_install_langs=en_US.utf8 \
   bash \
   bc \
   coreutils \
@@ -81,27 +88,38 @@ yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt
   util-linux \
   which
 
-groupadd --root ${mnt_mq} --system --gid 888 mqm
-useradd --root ${mnt_mq} --system --uid 888 --gid mqm mqm
+# Install "sudo" if using MQ Advanced for Developers
+if [ "$mqdev" = "TRUE" ]; then
+yum install \
+  --assumeyes \
+  --installroot=${mnt_mq} \
+  --setopt install_weak_deps=false \
+  --setopt=tsflags=nodocs \
+  --setopt=override_install_langs=en_US.utf8 \
+  sudo
+fi
+
+groupadd --root ${mnt_mq} --system --gid ${mqm_gid} mqm
+useradd --root ${mnt_mq} --system --uid ${mqm_uid} --gid mqm mqm
 usermod --root ${mnt_mq} -aG root mqm
 usermod --root ${mnt_mq} -aG mqm root
+
+# Install MQ server packages into the MQ builder image
+./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
 
 # Clean up cached files
 yum clean --installroot=${mnt_mq} all
 rm -rf ${mnt_mq}/var/cache/yum/*
 rm -rf ${mnt_mq}/etc/yum.repos.d/*
 
-# Install MQ server packages into the MQ builder image
-./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
-
 # Create the directory for MQ configuration files
 mkdir -p ${mnt_mq}/etc/mqm
-chown 888:888 ${mnt_mq}/etc/mqm
+chown ${mqm_uid}:${mqm_gid} ${mnt_mq}/etc/mqm
 
 # Install the Go binaries into the image
-install --mode 0750 --owner 888 --group 888 ./build/runmqserver ${mnt_mq}/usr/local/bin/
-install --mode 6750 --owner 888 --group 888 ./build/chk* ${mnt_mq}/usr/local/bin/
-install --mode 0750 --owner 888 --group 888 ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
+install --mode 0750 --owner ${mqm_uid} --group ${mqm_gid} ./build/runmqserver ${mnt_mq}/usr/local/bin/
+install --mode 6750 --owner ${mqm_uid} --group ${mqm_gid} ./build/chk* ${mnt_mq}/usr/local/bin/
+install --mode 0750 --owner ${mqm_uid} --group ${mqm_gid} ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
 
 ###############################################################################
 # Final Buildah commands
@@ -139,7 +157,7 @@ buildah config \
   --env LANG=en_US.UTF-8 \
   --env LOG_FORMAT=basic \
   --entrypoint runmqserver \
-  --user root \
+  --user ${mqm_uid} \
   $ctr_mq
 buildah unmount $ctr_mq
 buildah commit $ctr_mq $tag
