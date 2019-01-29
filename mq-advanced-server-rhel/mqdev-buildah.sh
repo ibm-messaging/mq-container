@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Build a RHEL image, using the buildah tool
-# Usage
-# mq-buildah.sh ARCHIVEFILE PACKAGES
+# Build a RHEL image of MQ Advanced for Developers, using the buildah tool
 
 set -x
 set -e
@@ -62,12 +60,11 @@ readonly mqm_gid=888
 # It's used by runmqdevserver to change the admin/app passwords.
 echo "mqm    ALL = NOPASSWD: /usr/sbin/chpasswd" > $mnt_mq/etc/sudoers.d/mq-dev-config
 
-useradd --root $mnt_mq --gid mqm admin
-groupadd --root $mnt_mq --system mqclient
-useradd --root $mnt_mq --gid mqclient app
-
-buildah run $ctr_mq -- id admin
-echo admin:passw0rd | chpasswd --root ${mnt_mq} 
+# Run these commands inside the container so that the SELinux context is handled correctly
+buildah run --user root $ctr_mq -- useradd --gid mqm admin
+buildah run --user root $ctr_mq -- groupadd --system mqclient
+buildah run --user root $ctr_mq -- useradd --gid mqclient app
+buildah run --user root $ctr_mq -- bash -c "echo admin:passw0rd | chpasswd"
 
 mkdir --parents $mnt_mq/run/runmqdevserver
 chown ${mqm_uid}:${mqm_gid} $mnt_mq/run/runmqdevserver

@@ -16,8 +16,6 @@
 # limitations under the License.
 
 # Build a RHEL image, using the buildah tool
-# Usage
-# mq-buildah.sh ARCHIVE-NAME PACKAGES
 
 set -x
 set -e
@@ -99,10 +97,10 @@ yum install \
   sudo
 fi
 
-groupadd --root ${mnt_mq} --system --gid ${mqm_gid} mqm
-useradd --root ${mnt_mq} --system --uid ${mqm_uid} --gid mqm mqm
-usermod --root ${mnt_mq} -aG root mqm
-usermod --root ${mnt_mq} -aG mqm root
+buildah run --user root $ctr_mq -- groupadd --system --gid ${mqm_gid} mqm
+buildah run --user root $ctr_mq -- useradd --system --uid ${mqm_uid} --gid mqm mqm
+buildah run --user root $ctr_mq -- usermod -aG root mqm
+buildah run --user root $ctr_mq -- usermod -aG mqm root
 
 # Install MQ server packages into the MQ builder image
 ./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
