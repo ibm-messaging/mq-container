@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Build a RHEL image, using the buildah tool
-# Usage
-# mq-buildah.sh ARCHIVEFILE PACKAGES
+# Build a RHEL image of MQ Advanced for Developers, using the buildah tool
 
 set -x
 set -e
@@ -57,12 +55,11 @@ readonly tag=$2
 readonly version=$3
 
 
-useradd --root $mnt_mq --gid mqm admin
-groupadd --root $mnt_mq --system mqclient
-useradd --root $mnt_mq --gid mqclient app
-
-buildah run $ctr_mq -- id admin
-buildah run $ctr_mq -- sh -c "echo admin:passw0rd | chpasswd"
+# Run these commands inside the container so that the SELinux context is handled correctly
+buildah run --user root $ctr_mq -- useradd --gid mqm admin
+buildah run --user root $ctr_mq -- groupadd --system mqclient
+buildah run --user root $ctr_mq -- useradd --gid mqclient app
+buildah run --user root $ctr_mq -- bash -c "echo admin:passw0rd | chpasswd"
 
 mkdir -p $mnt_mq/run/runmqdevserver
 chown 888:888 $mnt_mq/run/runmqdevserver

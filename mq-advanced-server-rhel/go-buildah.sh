@@ -34,8 +34,10 @@ readonly dev=$2
 IMAGE_REVISION=${IMAGE_REVISION:="Not Applicable"}
 IMAGE_SOURCE=${IMAGE_SOURCE:="Not Applicable"}
 
+# Run the build in a container
+# Note the ":Z" on the volume is to allow the container to access the files when SELinux is enabled
 podman run \
-  --volume ${PWD}:/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/ \
+  --volume ${PWD}:/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/:Z \
   --env IMAGE_REVISION="$IMAGE_REVISION" \
   --env IMAGE_SOURCE="$IMAGE_SOURCE" \
   --env MQDEV=${dev} \

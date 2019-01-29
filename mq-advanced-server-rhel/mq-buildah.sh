@@ -16,8 +16,6 @@
 # limitations under the License.
 
 # Build a RHEL image, using the buildah tool
-# Usage
-# mq-buildah.sh ARCHIVE-NAME PACKAGES
 
 set -x
 set -e
@@ -56,6 +54,8 @@ readonly packages=$2
 readonly tag=$3
 readonly version=$4
 readonly mqdev=$5
+readonly mqm_uid=888
+readonly mqm_gid=888
 
 ###############################################################################
 # Install MQ server
@@ -93,10 +93,10 @@ buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install \
 buildah run ${ctr_mq} -- microdnf ${microdnf_opts} clean all
 rm -rf ${mnt_mq}/etc/yum.repos.d/*
 
-groupadd --root ${mnt_mq} --system --gid 888 mqm
-useradd --root ${mnt_mq} --system --uid 888 --gid mqm mqm
-usermod --root ${mnt_mq} -aG root mqm
-usermod --root ${mnt_mq} -aG mqm root
+buildah run --user root $ctr_mq -- groupadd --system --gid ${mqm_gid} mqm
+buildah run --user root $ctr_mq -- useradd --system --uid ${mqm_uid} --gid mqm mqm
+buildah run --user root $ctr_mq -- usermod -aG root mqm
+buildah run --user root $ctr_mq -- usermod -aG mqm root
 
 # Install MQ server packages into the MQ builder image
 ./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
@@ -106,9 +106,9 @@ mkdir -p ${mnt_mq}/etc/mqm
 chown 888:888 ${mnt_mq}/etc/mqm
 
 # Install the Go binaries into the image
-install --mode 0750 --owner 888 --group 888 ./build/runmqserver ${mnt_mq}/usr/local/bin/
-install --mode 6750 --owner 888 --group 888 ./build/chk* ${mnt_mq}/usr/local/bin/
-install --mode 0750 --owner 888 --group 888 ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
+install --mode 0750 --owner ${mqm_uid} --group 0 ./build/runmqserver ${mnt_mq}/usr/local/bin/
+install --mode 6750 --owner ${mqm_uid} --group 0 ./build/chk* ${mnt_mq}/usr/local/bin/
+install --mode 0750 --owner ${mqm_uid} --group 0 ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
 
 ###############################################################################
 # Final Buildah commands

@@ -46,9 +46,10 @@ fi
 
 
 # Accept the MQ license
-buildah run --volume ${dir_extract}:/mnt/mq-download $ctr_mq -- /mnt/mq-download/MQServer/mqlicense.sh -text_only -accept
+buildah run --user root --volume ${dir_extract}:/mnt/mq-download:Z $ctr_mq -- /mnt/mq-download/MQServer/mqlicense.sh -text_only -accept
 
-buildah run --volume ${dir_extract}:/mnt/mq-download $ctr_mq -- bash -c "cd /mnt/mq-download/MQServer && rpm -ivh $mq_packages"
+# Install MQ
+buildah run --user root --volume ${dir_extract}:/mnt/mq-download:Z $ctr_mq -- bash -c "cd /mnt/mq-download/MQServer && rpm -ivh $mq_packages"
 
 rm -rf ${dir_extract}/MQServer
 
@@ -71,7 +72,7 @@ rm -rf $mnt_mq/var/mqm
 mkdir -p $mnt_mq/mnt/mqm
 
 # Create a symlink for /var/mqm -> /mnt/mqm/data
-buildah run $ctr_mq -- ln -s /mnt/mqm/data /var/mqm
+buildah run --user root $ctr_mq -- ln -s /mnt/mqm/data /var/mqm
 
 # Optional: Set these values for the IBM Cloud Vulnerability Report
 sed -i 's/PASS_MAX_DAYS\t99999/PASS_MAX_DAYS\t90/' $mnt_mq/etc/login.defs
