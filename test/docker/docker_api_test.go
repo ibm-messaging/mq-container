@@ -34,6 +34,8 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+
+	"mq-container/internal/command"
 )
 
 func TestLicenseNotSet(t *testing.T) {
@@ -108,7 +110,7 @@ func goldenPath(t *testing.T, metric bool) {
 
 // TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
 // by Ubuntu
-func TestSecurityVulnerabilities(t *testing.T) {
+func TestSecurityVulnerabilitiesUbuntu(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -126,12 +128,46 @@ func TestSecurityVulnerabilities(t *testing.T) {
 		url = "http://ports.ubuntu.com/ubuntu-ports/"
 	}
 	rc, log := runContainerOneShot(t, cli, "bash", "-c", "source /etc/os-release && echo \"deb "+url+" ${VERSION_CODENAME}-security main restricted\" > /etc/apt/sources.list && apt-get update 2>&1 >/dev/null && apt-get --simulate -qq upgrade")
+	t.Logf("RC: %v \n LOG: %v", rc, log)
 	if rc != 0 {
 		t.Fatalf("Expected success, got %v", rc)
 	}
 	lines := strings.Split(strings.TrimSpace(log), "\n")
 	if len(lines) > 0 && lines[0] != "" {
 		t.Errorf("Expected no vulnerabilities, found the following:\n%v", log)
+	}
+}
+
+// TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
+// by Redhat
+func TestSecurityVulnerabilitiesRedHat(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "test -f /etc/redhat-release")
+	if rc != 0 {
+		t.Skip("Skipping test because container is not Redhat-based")
+	}
+	id, _, err := command.Run("buildah", "from", imageName())
+	id = strings.TrimSpace(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer command.Run("buildah", "rm", id)
+	mnt, _, err := command.Run("buildah", "mount", id)
+	mnt = strings.TrimSpace(mnt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, err = command.Run("bash", "-c", "cp /etc/yum.repos.d/* "+mnt+"/etc/yum.repos.d/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, ret, _ := command.Run("bash", "-c", "yum --installroot="+mnt+" updateinfo list sec | grep /Sec")
+	if ret != 1{
+		t.Errorf("Expected no vulnerabilities, found the following:\n%v", out)
 	}
 }
 
