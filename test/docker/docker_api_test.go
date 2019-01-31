@@ -108,7 +108,7 @@ func goldenPath(t *testing.T, metric bool) {
 	stopContainer(t, cli, id)
 }
 
-// TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
+// TestSecurityVulnerabilitiesUbuntu checks for any vulnerabilities in the image, as reported
 // by Ubuntu
 func TestSecurityVulnerabilitiesUbuntu(t *testing.T) {
 	t.Parallel()
@@ -137,7 +137,7 @@ func TestSecurityVulnerabilitiesUbuntu(t *testing.T) {
 	}
 }
 
-// TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
+// TestSecurityVulnerabilitiesRedHat checks for any vulnerabilities in the image, as reported
 // by Redhat
 func TestSecurityVulnerabilitiesRedHat(t *testing.T) {
 	t.Parallel()
@@ -145,21 +145,25 @@ func TestSecurityVulnerabilitiesRedHat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	_, ret, _ := command.Run("bash", "-c", "test -f /etc/redhat-release")
+	if ret != 0 {
+		t.Skip("Skipping test because host is not RedHat-based")
+	}
 	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "test -f /etc/redhat-release")
 	if rc != 0 {
-		t.Skip("Skipping test because container is not Redhat-based")
+		t.Skip("Skipping test because container is not RedHat-based")
 	}
 	id, _, err := command.Run("buildah", "from", imageName())
-	id = strings.TrimSpace(id)
 	if err != nil {
 		t.Fatal(err)
 	}
+	id = strings.TrimSpace(id)
 	defer command.Run("buildah", "rm", id)
 	mnt, _, err := command.Run("buildah", "mount", id)
-	mnt = strings.TrimSpace(mnt)
 	if err != nil {
 		t.Fatal(err)
 	}
+	mnt = strings.TrimSpace(mnt)
 	_, _, err = command.Run("bash", "-c", "cp /etc/yum.repos.d/* "+mnt+"/etc/yum.repos.d/")
 	if err != nil {
 		t.Fatal(err)
