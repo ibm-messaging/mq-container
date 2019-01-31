@@ -35,7 +35,8 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 
-	"github.com/ibm-messaging/mq-container/internal/command"
+	// "github.com/ibm-messaging/mq-container/internal/command"
+	"mq-container/internal/command"
 )
 
 func TestLicenseNotSet(t *testing.T) {
@@ -138,7 +139,7 @@ func TestSecurityVulnerabilitiesUbuntu(t *testing.T) {
 }
 
 // TestSecurityVulnerabilitiesRedHat checks for any vulnerabilities in the image, as reported
-// by Redhat
+// by Red Hat
 func TestSecurityVulnerabilitiesRedHat(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewEnvClient()
@@ -164,7 +165,7 @@ func TestSecurityVulnerabilitiesRedHat(t *testing.T) {
 		t.Fatal(err)
 	}
 	mnt = strings.TrimSpace(mnt)
-	_, _, err = command.Run("bash", "-c", "cp /etc/yum.repos.d/* "+mnt+"/etc/yum.repos.d/")
+	_, _, err = command.Run("bash", "-c", "cp /etc/yum.repos.d/* "+ filepath.Join(mnt, "/etc/yum.repos.d/"))
 	if err != nil {
 		t.Fatal(err)
 	}
