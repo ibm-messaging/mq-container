@@ -35,7 +35,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 
-	"mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 func TestLicenseNotSet(t *testing.T) {
@@ -128,7 +128,6 @@ func TestSecurityVulnerabilitiesUbuntu(t *testing.T) {
 		url = "http://ports.ubuntu.com/ubuntu-ports/"
 	}
 	rc, log := runContainerOneShot(t, cli, "bash", "-c", "source /etc/os-release && echo \"deb "+url+" ${VERSION_CODENAME}-security main restricted\" > /etc/apt/sources.list && apt-get update 2>&1 >/dev/null && apt-get --simulate -qq upgrade")
-	t.Logf("RC: %v \n LOG: %v", rc, log)
 	if rc != 0 {
 		t.Fatalf("Expected success, got %v", rc)
 	}
