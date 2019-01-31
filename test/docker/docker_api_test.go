@@ -35,8 +35,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 
-	// "github.com/ibm-messaging/mq-container/internal/command"
-	"mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 func TestLicenseNotSet(t *testing.T) {
