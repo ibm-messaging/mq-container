@@ -62,7 +62,7 @@ readonly mqdev=$5
 ###############################################################################
 
 # Use the Yum repositories configured on the host
-cp /etc/yum.repos.d/* ${mnt_mq}/etc/yum.repos.d/
+cp -R /etc/yum.repos.d/* ${mnt_mq}/etc/yum.repos.d/
 # Install the packages required by MQ
 yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
   bash \
