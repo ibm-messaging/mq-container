@@ -23,7 +23,7 @@ MQ_VERSION ?= 9.1.1.0
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
-MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION)_LINUX_$(MQ_ARCHIVE_ARCH).tar.gz
+MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION_VRM)_LINUX_$(MQ_ARCHIVE_ARCH).tar.gz
 # MQ_ARCHIVE_DEV is the name of the file, under the downloads directory, from which MQ Advanced
 # for Developers can be installed
 MQ_ARCHIVE_DEV ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
@@ -56,6 +56,10 @@ DEV_JMS_IMAGE=mq-dev-jms-test:latest
 IMAGE_REVISION=$(shell git rev-parse HEAD)
 IMAGE_SOURCE=$(shell git config --get remote.origin.url)
 MQDEV=
+EMPTY:=
+SPACE:= $(EMPTY) $(EMPTY)
+# MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.1 instead of 9.1.1.0
+MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
 
 
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
@@ -155,7 +159,7 @@ test-devserver: check-test-prereqs test/docker/vendor
 
 
 .PHONY: build-advancedserver
-build-advancedserver: check-prereqs downloads/$(MQ_ARCHIVE) build-go-programs-ex
+build-advancedserver: check-prereqs downloads/$(MQ_ARCHIVE) build-go-programs
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER)"$(END)))
 	sudo mq-advanced-server-rhel/mq-buildah.sh "$(MQ_ARCHIVE)" "$(MQ_PACKAGES)" "$(MQ_IMAGE_ADVANCEDSERVER)" "$(MQ_VERSION)" "$(MQDEV)"
 
@@ -163,25 +167,19 @@ build-advancedserver: check-prereqs downloads/$(MQ_ARCHIVE) build-go-programs-ex
 .PHONY: build-devserver
 build-devserver: MQDEV=TRUE
 build-devserver: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm MQSeriesWeb-*.rpm
-build-devserver: check-prereqs downloads/$(MQ_ARCHIVE_DEV) build-go-programs-ex
+build-devserver: check-prereqs downloads/$(MQ_ARCHIVE_DEV) build-go-programs
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER)"$(END)))
 	sudo mq-advanced-server-rhel/mq-buildah.sh "$(MQ_ARCHIVE_DEV)" "$(MQ_PACKAGES)" "$(MQ_IMAGE_DEVSERVER_BASE)" "$(MQ_VERSION)" "$(MQDEV)"
 	sudo mq-advanced-server-rhel/mqdev-buildah.sh "$(MQ_IMAGE_DEVSERVER_BASE)" "$(MQ_IMAGE_DEVSERVER)" "$(MQ_VERSION)"
 
 
 .PHONY: build-mqgolang-sdk
-build-mqgolang-sdk: check-prereqs downloads/$(MQ_SDK_ARCHIVE) build-mqgolang-sdk-ex
-
-.PHONY: build-mqgolang-sdk-ex
-build-mqgolang-sdk-ex: 
+build-mqgolang-sdk: check-prereqs downloads/$(MQ_SDK_ARCHIVE)
 	$(info $(SPACER)$(shell printf $(TITLE)"Build mq-golang SDK"$(END)))
 	sudo mq-advanced-server-rhel/mq-golang-sdk-buildah.sh "$(MQ_SDK_ARCHIVE)" "$(MQ_IMAGE_GOLANG_SDK)"
 
 .PHONY: build-go-programs
-build-go-programs: check-prereqs downloads/$(MQ_SDK_ARCHIVE) build-go-programs-ex
-
-.PHONY: build-go-programs-ex
-build-go-programs-ex: build-mqgolang-sdk-ex
+build-go-programs: check-prereqs downloads/$(MQ_SDK_ARCHIVE) build-mqgolang-sdk
 	$(info $(SPACER)$(shell printf $(TITLE)"Build go programs"$(END)))
 	IMAGE_REVISION=$(IMAGE_REVISION) IMAGE_SOURCE=$(IMAGE_SOURCE) sudo mq-advanced-server-rhel/go-buildah.sh "$(MQ_IMAGE_GOLANG_SDK)" "$(MQDEV)"
 
@@ -191,5 +189,16 @@ build-devjmstest: check-test-prereqs
 	cd test/messaging && sudo ./buildah.sh $(DEV_JMS_IMAGE)
 	sudo buildah push $(DEV_JMS_IMAGE) docker-daemon:$(DEV_JMS_IMAGE)
 	docker tag docker.io/$(DEV_JMS_IMAGE) $(DEV_JMS_IMAGE)
+
+.PHONY: debug-vars
+debug-vars:
+	@echo MQ_VERSION=$(MQ_VERSION)
+	@echo MQ_VERSION_VRM=$(MQ_VERSION_VRM)
+	@echo MQ_ARCHIVE=$(MQ_ARCHIVE)
+	@echo MQ_SDK_ARCHIVE=$(MQ_SDK_ARCHIVE)
+	@echo MQ_IMAGE_GOLANG_SDK=$(MQ_IMAGE_GOLANG_SDK)
+	@echo MQ_IMAGE_DEVSERVER_BASE=$(MQ_IMAGE_DEVSERVER_BASE)
+	@echo MQ_IMAGE_DEVSERVER=$(MQ_IMAGE_DEVSERVER)
+	@echo MQ_IMAGE_ADVANCEDSERVER=$(MQ_IMAGE_ADVANCEDSERVER)
 
 include formatting.mk
