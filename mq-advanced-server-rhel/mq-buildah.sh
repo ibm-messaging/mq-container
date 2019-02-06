@@ -102,7 +102,7 @@ buildah run --user root $ctr_mq -- usermod -aG mqm root
 
 # Create the directory for MQ configuration files
 mkdir -p ${mnt_mq}/etc/mqm
-chown 888:888 ${mnt_mq}/etc/mqm
+chown ${mqm_uid}:${mqm_gid} ${mnt_mq}/etc/mqm
 
 # Install the Go binaries into the image
 install --mode 0750 --owner ${mqm_uid} --group 0 ./build/runmqserver ${mnt_mq}/usr/local/bin/
