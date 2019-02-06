@@ -41,5 +41,6 @@ podman run \
   --env MQDEV=${dev} \
   --user $(id -u) \
   --rm \
+  --network podman \
   ${tag} \
   bash -c "cd /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/ && ./mq-advanced-server-rhel/go-build.sh"

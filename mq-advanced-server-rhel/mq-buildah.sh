@@ -61,10 +61,18 @@ readonly mqdev=$5
 # Install MQ server
 ###############################################################################
 
-# Use the Yum repositories configured on the host
-cp -R /etc/yum.repos.d/* ${mnt_mq}/etc/yum.repos.d/
-# Install the packages required by MQ
-yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
+microdnf_opts="--nodocs"
+# Check whether the host is registered with Red Hat
+subscription-manager status
+if [ "$?" -eq "0" ]; then
+  # Host is subscribed, but the minimal image has no enabled repos
+  microdnf_opts="${microdnf_opts} --enablerepo=rhel-7-server-rpms"
+  # buildah run ${ctr_mq} -- microdnf microdnf --enablerepo=rhel-7-server-rpms --nodocs install ${prereq_packages}
+else
+  # Use the Yum repositories configured on the host
+  cp -R /etc/yum.repos.d/* ${mnt_mq}/etc/yum.repos.d/
+fi
+buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install \
   bash \
   bc \
   coreutils \
@@ -81,15 +89,14 @@ yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt
   util-linux \
   which
 
+# Clean up cached files
+buildah run ${ctr_mq} -- microdnf ${microdnf_opts} clean all
+rm -rf ${mnt_mq}/etc/yum.repos.d/*
+
 groupadd --root ${mnt_mq} --system --gid 888 mqm
 useradd --root ${mnt_mq} --system --uid 888 --gid mqm mqm
 usermod --root ${mnt_mq} -aG root mqm
 usermod --root ${mnt_mq} -aG mqm root
-
-# Clean up cached files
-yum clean --installroot=${mnt_mq} all
-rm -rf ${mnt_mq}/var/cache/yum/*
-rm -rf ${mnt_mq}/etc/yum.repos.d/*
 
 # Install MQ server packages into the MQ builder image
 ./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
