@@ -63,11 +63,10 @@ readonly mqm_gid=888
 
 microdnf_opts="--nodocs"
 # Check whether the host is registered with Red Hat
-subscription-manager status
-if [ "$?" -eq "0" ]; then
+if subscription-manager status ; then
   # Host is subscribed, but the minimal image has no enabled repos
-  microdnf_opts="${microdnf_opts} --enablerepo=rhel-7-server-rpms"
-  # buildah run ${ctr_mq} -- microdnf microdnf --enablerepo=rhel-7-server-rpms --nodocs install ${prereq_packages}
+  # Note that the "bc" package is the only one in "extras"
+  microdnf_opts="${microdnf_opts} --enablerepo=rhel-7-server-rpms --enablerepo=rhel-7-server-extras-rpms"
 else
   # Use the Yum repositories configured on the host
   cp -R /etc/yum.repos.d/* ${mnt_mq}/etc/yum.repos.d/
