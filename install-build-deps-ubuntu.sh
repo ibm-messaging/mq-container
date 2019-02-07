@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2018
+# © Copyright IBM Corporation 2015, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,4 +23,4 @@ curl https://glide.sh/get | sh
 sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64
 sudo chmod +x /usr/local/bin/dep
 
-go get golang.org/x/lint/golint
+go get -u golang.org/x/lint/golint
