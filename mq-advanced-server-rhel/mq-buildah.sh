@@ -16,8 +16,6 @@
 # limitations under the License.
 
 # Build a RHEL image, using the buildah tool
-# Usage
-# mq-buildah.sh ARCHIVE-NAME PACKAGES
 
 set -x
 set -e
@@ -56,15 +54,24 @@ readonly packages=$2
 readonly tag=$3
 readonly version=$4
 readonly mqdev=$5
+readonly mqm_uid=888
+readonly mqm_gid=888
 
 ###############################################################################
 # Install MQ server
 ###############################################################################
 
-# Use the Yum repositories configured on the host
-cp /etc/yum.repos.d/* ${mnt_mq}/etc/yum.repos.d/
-# Install the packages required by MQ
-yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt=tsflags=nodocs --setopt=override_install_langs=en_US.utf8 \
+microdnf_opts="--nodocs"
+# Check whether the host is registered with Red Hat
+if subscription-manager status ; then
+  # Host is subscribed, but the minimal image has no enabled repos
+  # Note that the "bc" package is the only one in "extras"
+  microdnf_opts="${microdnf_opts} --enablerepo=rhel-7-server-rpms --enablerepo=rhel-7-server-extras-rpms"
+else
+  # Use the Yum repositories configured on the host
+  cp -R /etc/yum.repos.d/* ${mnt_mq}/etc/yum.repos.d/
+fi
+buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install \
   bash \
   bc \
   coreutils \
@@ -81,27 +88,26 @@ yum install -y --installroot=${mnt_mq} --setopt install_weak_deps=false --setopt
   util-linux \
   which
 
-groupadd --root ${mnt_mq} --system --gid 888 mqm
-useradd --root ${mnt_mq} --system --uid 888 --gid mqm mqm
-usermod --root ${mnt_mq} -aG root mqm
-usermod --root ${mnt_mq} -aG mqm root
-
 # Clean up cached files
-yum clean --installroot=${mnt_mq} all
-rm -rf ${mnt_mq}/var/cache/yum/*
+buildah run ${ctr_mq} -- microdnf ${microdnf_opts} clean all
 rm -rf ${mnt_mq}/etc/yum.repos.d/*
+
+buildah run --user root $ctr_mq -- groupadd --system --gid ${mqm_gid} mqm
+buildah run --user root $ctr_mq -- useradd --system --uid ${mqm_uid} --gid mqm mqm
+buildah run --user root $ctr_mq -- usermod -aG root mqm
+buildah run --user root $ctr_mq -- usermod -aG mqm root
 
 # Install MQ server packages into the MQ builder image
 ./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
 
 # Create the directory for MQ configuration files
 mkdir -p ${mnt_mq}/etc/mqm
-chown 888:888 ${mnt_mq}/etc/mqm
+chown ${mqm_uid}:${mqm_gid} ${mnt_mq}/etc/mqm
 
 # Install the Go binaries into the image
-install --mode 0750 --owner 888 --group 888 ./build/runmqserver ${mnt_mq}/usr/local/bin/
-install --mode 6750 --owner 888 --group 888 ./build/chk* ${mnt_mq}/usr/local/bin/
-install --mode 0750 --owner 888 --group 888 ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
+install --mode 0750 --owner ${mqm_uid} --group 0 ./build/runmqserver ${mnt_mq}/usr/local/bin/
+install --mode 6750 --owner ${mqm_uid} --group 0 ./build/chk* ${mnt_mq}/usr/local/bin/
+install --mode 0750 --owner ${mqm_uid} --group 0 ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
 
 ###############################################################################
 # Final Buildah commands
