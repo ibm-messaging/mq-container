@@ -93,10 +93,13 @@ if [ "$mqdev" = "TRUE" ]; then
   buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install sudo
 fi
 
+<<<<<<< HEAD
 # Clean up cached files
 buildah run ${ctr_mq} -- microdnf ${microdnf_opts} clean all
 rm -rf ${mnt_mq}/etc/yum.repos.d/*
 
+=======
+>>>>>>> Build on host with SELinux enabled
 buildah run --user root $ctr_mq -- groupadd --system --gid ${mqm_gid} mqm
 buildah run --user root $ctr_mq -- useradd --system --uid ${mqm_uid} --gid mqm mqm
 buildah run --user root $ctr_mq -- usermod -aG root mqm
