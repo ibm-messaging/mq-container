@@ -88,6 +88,11 @@ buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install \
   util-linux \
   which
 
+# Install "sudo" if using MQ Advanced for Developers
+if [ "$mqdev" = "TRUE" ]; then
+  buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install sudo
+fi
+
 # Clean up cached files
 buildah run ${ctr_mq} -- microdnf ${microdnf_opts} clean all
 rm -rf ${mnt_mq}/etc/yum.repos.d/*
@@ -145,7 +150,7 @@ buildah config \
   --env LANG=en_US.UTF-8 \
   --env LOG_FORMAT=basic \
   --entrypoint runmqserver \
-  --user root \
+  --user ${mqm_uid} \
   $ctr_mq
 buildah unmount $ctr_mq
 buildah commit $ctr_mq $tag

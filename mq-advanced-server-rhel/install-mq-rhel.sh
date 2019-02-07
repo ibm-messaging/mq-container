@@ -34,6 +34,8 @@ readonly mnt_mq=$2
 readonly archive=$3
 readonly mq_packages=$4
 readonly dir_extract=/tmp/extract
+readonly mqm_uid=888
+readonly mqm_gid=888
 
 if [ ! -d ${dir_extract}/MQServer ]; then
   mkdir -p ${dir_extract}
@@ -41,9 +43,6 @@ if [ ! -d ${dir_extract}/MQServer ]; then
   tar -zxf $archive -C ${dir_extract}
   echo Extracting finished
 fi
-
-# If MQ_PACKAGES isn't specifically set, then choose a valid set of defaults
-
 
 # Accept the MQ license
 buildah run --user root --volume ${dir_extract}:/mnt/mq-download:Z $ctr_mq -- /mnt/mq-download/MQServer/mqlicense.sh -text_only -accept
@@ -63,13 +62,20 @@ find $mnt_mq/opt/mqm -name '*.tar.gz' -delete
 buildah run $ctr_mq -- /opt/mqm/bin/setmqinst -p /opt/mqm -i
 
 mkdir -p $mnt_mq/run/runmqserver
-chown 888:888 $mnt_mq/run/runmqserver
+chown ${mqm_uid}:${mqm_gid} $mnt_mq/run/runmqserver
 
 # Remove the directory structure under /var/mqm which was created by the installer
 rm -rf $mnt_mq/var/mqm
 
-# Create the mount point for volumes
+# Create the mount point for volumes, ensuring MQ has permissions to all directories
 mkdir -p $mnt_mq/mnt/mqm
+install --directory --mode 0775 --owner ${mqm_uid} --group root $mnt_mq/mnt
+install --directory --mode 0775 --owner ${mqm_uid} --group root $mnt_mq/mnt/mqm
+install --directory --mode 0775 --owner ${mqm_uid} --group root $mnt_mq/mnt/mqm/data
+
+# Create the directory for MQ configuration files
+mkdir -p /etc/mqm
+install --directory --mode 0775 --owner ${mqm_uid} --group root $mnt_mq/etc/mqm
 
 # Create a symlink for /var/mqm -> /mnt/mqm/data
 buildah run --user root $ctr_mq -- ln -s /mnt/mqm/data /var/mqm
