@@ -164,12 +164,12 @@ func TestSecurityVulnerabilitiesRedHat(t *testing.T) {
 		t.Fatal(err)
 	}
 	mnt = strings.TrimSpace(mnt)
-	_, _, err = command.Run("bash", "-c", "cp /etc/yum.repos.d/* "+ filepath.Join(mnt, "/etc/yum.repos.d/"))
+	_, _, err = command.Run("bash", "-c", "cp /etc/yum.repos.d/* "+filepath.Join(mnt, "/etc/yum.repos.d/"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	out, ret, _ := command.Run("bash", "-c", "yum --installroot="+mnt+" updateinfo list sec | grep /Sec")
-	if ret != 1{
+	if ret != 1 {
 		t.Errorf("Expected no vulnerabilities, found the following:\n%v", out)
 	}
 }
@@ -313,16 +313,23 @@ func TestStartQueueManagerFail(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	img, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
-	if err != nil {
-		t.Fatal(err)
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		RUN echo '#!/bin/bash\ndltmqm $@ && strmqm $@' > /opt/mqm/bin/strmqm
+		RUN chown mqm:mqm /opt/mqm/bin/strmqm
+		RUN chmod 6550 /opt/mqm/bin/strmqm
+		USER mqm`, imageName())},
 	}
-	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
 	containerConfig := container.Config{
-		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=1"},
-		// Override the entrypoint to replace `strmqm` with a script which deletes the queue manager.
-		// This will cause `strmqm` to return with an exit code of 72.
-		Entrypoint: []string{"bash", "-c", "echo '#!/bin/bash\ndltmqm $@ && strmqm $@' > /opt/mqm/bin/strmqm && exec " + oldEntrypoint},
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
@@ -430,7 +437,13 @@ func TestMQSC(t *testing.T) {
 	var files = []struct {
 		Name, Body string
 	}{
-		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD test.mqsc /etc/mqm/", imageName())},
+		{"Dockerfile", fmt.Sprintf(`
+		  FROM %v
+		  USER root
+		  RUN rm -f /etc/mqm/*.mqsc
+		  ADD test.mqsc /etc/mqm/
+		  RUN chmod 0660 /etc/mqm/test.mqsc
+		  USER mqm`, imageName())},
 		{"test.mqsc", "DEFINE QLOCAL(test)"},
 	}
 	tag := createImage(t, cli, files)
@@ -461,7 +474,13 @@ func TestInvalidMQSC(t *testing.T) {
 	var files = []struct {
 		Name, Body string
 	}{
-		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD mqscTest.mqsc /etc/mqm/", imageName())},
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		RUN rm -f /etc/mqm/*.mqsc
+		ADD mqscTest.mqsc /etc/mqm/
+		RUN chmod 0660 /etc/mqm/mqscTest.mqsc
+		USER mqm`, imageName())},
 		{"mqscTest.mqsc", "DEFINE INVALIDLISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE"},
 	}
 	tag := createImage(t, cli, files)
@@ -497,7 +516,13 @@ func TestReadiness(t *testing.T) {
 	var files = []struct {
 		Name, Body string
 	}{
-		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD test.mqsc /etc/mqm/", imageName())},
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		RUN rm -f /etc/mqm/*.mqsc
+		ADD test.mqsc /etc/mqm/
+		RUN chmod 0660 /etc/mqm/test.mqsc
+		USER mqm`, imageName())},
 		{"test.mqsc", buf.String()},
 	}
 	tag := createImage(t, cli, files)

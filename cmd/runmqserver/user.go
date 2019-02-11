@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,18 +25,18 @@ import (
 
 const groupName string = "supplgrp"
 
-func verifyCurrentUser() error {
-	log.Debug("Verifying current user information")
+func manageSupplementaryGroups() error {
 	curUser, err := user.Current()
 	if err != nil {
 		return err
 	}
 	log.Debugf("Detected current user as: %v+", curUser)
 	if curUser.Username == "mqm" {
-		// Not supported yet
-		return fmt.Errorf("Container is running as mqm user which is not supported. Please run this container as root")
-	} else if curUser.Username == "root" {
-		// We're running as root so need to check for supplementary groups.
+		return nil
+	}
+	if curUser.Username == "root" {
+		log.Debug("Add supplementary groups to mqm")
+		// We're running as root so need to check for supplementary groups, and add them to the "mqm" user.
 		// We can't use the golang User.GroupIDs as it doesn't seem to detect container supplementary groups..
 		groups, err := getCurrentUserGroups()
 		for _, e := range groups {
@@ -57,7 +57,7 @@ func verifyCurrentUser() error {
 		}
 	} else {
 		// We're running as an unknown user...
-		return fmt.Errorf("Container is running as %s user which is not supported. Please run this container as root", curUser.Username)
+		return fmt.Errorf("Container is running as %s user which is not supported. Please run this container as mqm", curUser.Username)
 	}
 
 	return nil

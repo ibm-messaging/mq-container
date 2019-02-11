@@ -43,6 +43,8 @@ ENV MQ_DEV=true
 # Default administrator password
 ENV MQ_ADMIN_PASSWORD=passw0rd
 
+USER root
+
 # Install sudo
 RUN export DEBIAN_FRONTEND=noninteractive \
   && apt-get update \
@@ -75,5 +77,7 @@ COPY --chown=mqm:mqm incubating/mqadvanced-server-dev/web /etc/mqm/web
 RUN chmod +x /usr/local/bin/runmq*
 
 EXPOSE 9443
+
+USER 999
 
 ENTRYPOINT ["runmqdevserver"]

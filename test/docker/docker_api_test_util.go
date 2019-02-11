@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -219,6 +219,10 @@ func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *co
 	if containerConfig.Image == "" {
 		containerConfig.Image = imageName()
 	}
+	// Always run as the "mqm" user, unless the test has specified otherwise
+	if containerConfig.User == "" {
+		containerConfig.User = "mqm"
+	}
 	// if coverage
 	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
 	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
@@ -254,9 +258,11 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	return runContainerWithPorts(t, cli, containerConfig, nil)
 }
 
+// runContainerOneShot runs a container with a custom entrypoint, as the root user
 func runContainerOneShot(t *testing.T, cli *client.Client, command ...string) (int64, string) {
 	containerConfig := container.Config{
 		Entrypoint: command,
+		User:       "root",
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)

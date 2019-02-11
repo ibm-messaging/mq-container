@@ -103,9 +103,9 @@ $UBUNTU && apt-get autoremove -y
 
 # Recommended: Create the mqm user ID with a fixed UID and group, so that the file permissions work between different images
 $UBUNTU && groupadd --system --gid 999 mqm
-$UBUNTU && useradd --system --uid 999 --gid mqm mqm
+$UBUNTU && useradd --system --uid 999 --gid mqm --groups 0 mqm
 $RHEL && groupadd --system --gid 888 mqm
-$RHEL && useradd --system --uid 888 --gid mqm mqm
+$RHEL && useradd --system --uid 888 --gid mqm --groups 0 mqm
 usermod -aG mqm root
 
 # Find directory containing .deb files

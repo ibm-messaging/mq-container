@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2018
+# © Copyright IBM Corporation 2015, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,5 +71,7 @@ RUN chmod ug+x /usr/local/bin/runmqserver \
 EXPOSE 1414 9157
 
 ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1 LOG_FORMAT=basic
+
+USER 999
 
 ENTRYPOINT ["runmqserver"]
