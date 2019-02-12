@@ -266,7 +266,7 @@ func runContainerOneShot(t *testing.T, cli *client.Client, command ...string) (i
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	return waitForContainer(t, cli, id, 10), inspectLogs(t, cli, id)
+	return waitForContainer(t, cli, id, 10*time.Second), inspectLogs(t, cli, id)
 }
 
 func startContainer(t *testing.T, cli *client.Client, ID string) {
@@ -315,18 +315,18 @@ func getCoverageExitCode(t *testing.T, orig int64) int64 {
 }
 
 // waitForContainer waits until a container has exited
-func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout int64) int64 {
-	rc, err := cli.ContainerWait(context.Background(), ID)
-
+func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout time.Duration) int64 {
+	c, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	rc, err := cli.ContainerWait(c, ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if coverage() {
 		// COVERAGE: When running coverage, the exit code is written to a file,
 		// to allow the coverage to be generated (which doesn't happen for non-zero
 		// exit codes)
 		rc = getCoverageExitCode(t, rc)
-	}
-
-	if err != nil {
-		t.Fatal(err)
 	}
 	return rc
 }
@@ -401,7 +401,7 @@ func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd
 }
 
 func waitForReady(t *testing.T, cli *client.Client, ID string) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	for {
