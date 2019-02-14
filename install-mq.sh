@@ -168,12 +168,6 @@ ln -s /mnt/mqm/data /var/mqm
 sed -i 's/PASS_MAX_DAYS\t99999/PASS_MAX_DAYS\t90/' /etc/login.defs
 sed -i 's/PASS_MIN_DAYS\t0/PASS_MIN_DAYS\t1/' /etc/login.defs
 
-# Enable editing the list of users and groups by members of the "root" group
-# If the container runtime dynamically inserts an unknown UID/GID, these
-# permissions mean that `runmqserver` can make them known.
-chmod -R g=u /etc/passwd
-chmod -R g=u /etc/group
-
 $UBUNTU && PAM_FILE=/etc/pam.d/common-password
 $RHEL && PAM_FILE=/etc/pam.d/password-auth
 sed -i 's/password\t\[success=1 default=ignore\]\tpam_unix\.so obscure sha512/password\t[success=1 default=ignore]\tpam_unix.so obscure sha512 minlen=8/' $PAM_FILE

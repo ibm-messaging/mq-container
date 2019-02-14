@@ -212,6 +212,22 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	}
 }
 
+// devImage returns true if the specified image is a developer image,
+// determined by use of the MQ_ADMIN_PASSWORD or MQ_APP_PASSWORD
+// environment variables
+func devImage(t *testing.T, cli *client.Client, imageID string) bool {
+	i, _, err := cli.ImageInspectWithRaw(context.Background(), imageID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range i.ContainerConfig.Env {
+		if strings.HasPrefix(e, "MQ_ADMIN_PASSWORD") || strings.HasPrefix(e, "MQ_APP_PASSWORD") {
+			return true
+		}
+	}
+	return false
+}
+
 // runContainerWithPorts creates and starts a container, exposing the specified ports on the host.
 // If no image is specified in the container config, then the image name is retrieved from the TEST_IMAGE
 // environment variable.
@@ -232,6 +248,18 @@ func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *co
 			terminationBind(t),
 		},
 		PortBindings: nat.PortMap{},
+		CapDrop: []string{
+			"ALL",
+		},
+	}
+	if devImage(t, cli, containerConfig.Image) {
+		t.Logf("Detected MQ Advanced for Developers image — adding extra Linux capabilities to container")
+		hostConfig.CapAdd = []string{
+			"CHOWN",
+			"SETUID",
+			"SETGID",
+			"AUDIT_WRITE",
+		}
 	}
 	for _, p := range ports {
 		port := nat.Port(fmt.Sprintf("%v/tcp", p))
@@ -258,15 +286,24 @@ func runContainer(t *testing.T, cli *client.Client, containerConfig *container.C
 	return runContainerWithPorts(t, cli, containerConfig, nil)
 }
 
-// runContainerOneShot runs a container with a custom entrypoint, as the root user
+// runContainerOneShot runs a container with a custom entrypoint, as the root
+// user and with default capabilities
 func runContainerOneShot(t *testing.T, cli *client.Client, command ...string) (int64, string) {
 	containerConfig := container.Config{
 		Entrypoint: command,
 		User:       "root",
+		Image:      imageName(),
 	}
-	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
-	return waitForContainer(t, cli, id, 10*time.Second), inspectLogs(t, cli, id)
+	hostConfig := container.HostConfig{}
+	networkingConfig := network.NetworkingConfig{}
+	t.Logf("Running one shot container (%s)", containerConfig.Image)
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctr.ID)
+	return waitForContainer(t, cli, ctr.ID, 10*time.Second), inspectLogs(t, cli, ctr.ID)
 }
 
 func startContainer(t *testing.T, cli *client.Client, ID string) {
