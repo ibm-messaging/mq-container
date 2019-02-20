@@ -41,7 +41,6 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
-	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 func imageName() string {
@@ -125,48 +124,33 @@ func getTempDir(t *testing.T, unixStylePath bool) string {
 	return "/tmp/"
 }
 
-// terminationLogUnixPath returns the name of the file to use for the termination log message, with a UNIX path
-func terminationLogUnixPath(t *testing.T) string {
-	// Warning: this directory must be accessible to the Docker daemon,
-	// in order to enable the bind mount
-	return getTempDir(t, true) + t.Name() + "-termination-log"
-}
-
-// terminationLogOSPath returns the name of the file to use for the termination log message, with an OS specific path
-func terminationLogOSPath(t *testing.T) string {
-	// Warning: this directory must be accessible to the Docker daemon,
-	// in order to enable the bind mount
-	return getTempDir(t, false) + t.Name() + "-termination-log"
-}
-
-// terminationBind returns a string to use to bind-mount a termination log file.
-// This is done using a bind, because you can't copy files from /dev out of the container.
-func terminationBind(t *testing.T) string {
-	n := terminationLogUnixPath(t)
-	// Remove it if it already exists
-	os.Remove(n)
-	out, _, err := command.Run("ls", "-lan "+n)
-	t.Logf("**** ls output:\n%v\n", out)
-	// Create the empty file
-	f, err := os.OpenFile(n, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		t.Fatal(err)
-	}
-	f.Close()
-	return terminationLogOSPath(t) + ":/dev/termination-log"
-}
-
 // terminationMessage return the termination message, or an empty string if not set
-func terminationMessage(t *testing.T) string {
-	b, err := ioutil.ReadFile(terminationLogUnixPath(t))
+func terminationMessage(t *testing.T, cli *client.Client, ID string) string {
+	r, _, err := cli.CopyFromContainer(context.Background(), ID, "/run/termination-log")
 	if err != nil {
 		t.Log(err)
+		return ""
 	}
-	return string(b)
+	b, err := ioutil.ReadAll(r)
+	tr := tar.NewReader(bytes.NewReader(b))
+	h, err := tr.Next()
+	t.Log(h)
+	if err != nil {
+		t.Log(err)
+		return ""
+	}
+	// read the complete content of the file h.Name into the bs []byte
+	content, err := ioutil.ReadAll(tr)
+	if err != nil {
+		t.Log(err)
+		return ""
+	}
+	t.Logf("Content is %v", string(content))
+	return string(content)
 }
 
-func expectTerminationMessage(t *testing.T) {
-	m := terminationMessage(t)
+func expectTerminationMessage(t *testing.T, cli *client.Client, ID string) {
+	m := terminationMessage(t, cli, ID)
 	if m == "" {
 		t.Error("Expected termination message to be set")
 	}
@@ -198,11 +182,10 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	// Log the container output for any container we're about to delete
 	t.Logf("Console log from container %v:\n%v", ID, inspectTextLogs(t, cli, ID))
 
-	m := terminationMessage(t)
+	m := terminationMessage(t, cli, ID)
 	if m != "" {
 		t.Logf("Termination message: %v", m)
 	}
-	os.Remove(terminationLogUnixPath(t))
 
 	t.Logf("Removing container: %s", ID)
 	opts := types.ContainerRemoveOptions{
@@ -248,7 +231,7 @@ func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *co
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
-			terminationBind(t),
+			// terminationBind(t),
 		},
 		PortBindings: nat.PortMap{},
 		CapDrop: []string{

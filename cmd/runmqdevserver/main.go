@@ -93,16 +93,16 @@ func configureWeb(qmName string) error {
 }
 
 func logTerminationf(format string, args ...interface{}) {
-	logTermination(fmt.Sprintf(format, args))
+	logTermination(fmt.Sprintf(format, args...))
 }
 
 // TODO: Duplicated code
 func logTermination(args ...interface{}) {
-	msg := fmt.Sprint(args)
-	// Write the message to the termination log.  This is the default place
+	msg := fmt.Sprint(args...)
+	// Write the message to the termination log.  This is not the default place
 	// that Kubernetes will look for termination information.
 	log.Debugf("Writing termination message: %v", msg)
-	err := ioutil.WriteFile("/dev/termination-log", []byte(msg), 0660)
+	err := ioutil.WriteFile("/run/termination-log", []byte(msg), 0660)
 	if err != nil {
 		log.Debug(err)
 	}

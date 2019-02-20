@@ -51,7 +51,7 @@ func TestLicenseNotSet(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
-	expectTerminationMessage(t)
+	expectTerminationMessage(t, cli, id)
 }
 
 func TestLicenseView(t *testing.T) {
@@ -310,7 +310,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
-	expectTerminationMessage(t)
+	expectTerminationMessage(t, cli, id)
 }
 
 // TestStartQueueManagerFail causes a failure of `strmqm`
@@ -344,7 +344,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
-	expectTerminationMessage(t)
+	expectTerminationMessage(t, cli, id)
 }
 
 // TestVolumeUnmount runs a queue manager with a volume, and then forces an
@@ -503,7 +503,7 @@ func TestInvalidMQSC(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
-	expectTerminationMessage(t)
+	expectTerminationMessage(t, cli, id)
 }
 
 // TestReadiness creates a new image with large amounts of MQSC in, to
@@ -692,7 +692,7 @@ func TestBadLogFormat(t *testing.T) {
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
-	expectTerminationMessage(t)
+	expectTerminationMessage(t, cli, id)
 }
 
 // TestMQJSONDisabled tests the case where MQ's JSON logging feature is
