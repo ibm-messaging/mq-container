@@ -72,6 +72,8 @@ chown ${mqm_uid}:${mqm_gid} $mnt_mq/run/runmqdevserver
 # Copy runmqdevserver program
 install --mode 0750 --owner ${mqm_uid} --group ${mqm_gid} ./build/runmqdevserver ${mnt_mq}/usr/local/bin/
 
+install --directory --mode 0775 --owner ${mqm_uid} --group 0 ${mnt_mq}/run/runmqdevserver
+
 # Copy template files
 cp ./incubating/mqadvanced-server-dev/*.tpl ${mnt_mq}/etc/mqm/
 

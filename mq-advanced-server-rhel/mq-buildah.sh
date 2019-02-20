@@ -113,6 +113,11 @@ install --mode 0750 --owner ${mqm_uid} --group 0 ./build/runmqserver ${mnt_mq}/u
 install --mode 6750 --owner ${mqm_uid} --group 0 ./build/chk* ${mnt_mq}/usr/local/bin/
 install --mode 0750 --owner ${mqm_uid} --group 0 ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
 
+install --directory --mode 0775 --owner ${mqm_uid} --group 0 ${mnt_mq}/run/runmqserver
+buildah run --user root $ctr_mq -- touch /run/termination-log
+buildah run --user root $ctr_mq -- chown mqm:root /run/termination-log
+buildah run --user root $ctr_mq -- chmod 0660 /run/termination-log
+
 ###############################################################################
 # Final Buildah commands
 ###############################################################################
