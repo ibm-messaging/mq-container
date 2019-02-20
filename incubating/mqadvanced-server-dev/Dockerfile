@@ -45,12 +45,11 @@ ENV MQ_ADMIN_PASSWORD=passw0rd
 
 USER root
 
-# Install sudo
-RUN export DEBIAN_FRONTEND=noninteractive \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends \
-    sudo \
-  && rm -rf /var/lib/apt/lists/*
+COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
+
+RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
+  && sleep 1 \
+  && install-extra-packages.sh
 
 # WARNING: This is what allows the mqm user to change the password of any other user
 # It's used by runmqdevserver to change the admin/app passwords.
