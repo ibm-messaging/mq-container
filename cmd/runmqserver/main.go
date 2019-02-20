@@ -81,12 +81,6 @@ func doMain() error {
 	// Enable diagnostic collecting on failure
 	collectDiagOnFail = true
 
-	err = manageSupplementaryGroups()
-	if err != nil {
-		logTermination(err)
-		return err
-	}
-
 	err = logConfig()
 	if err != nil {
 		logTermination(err)

@@ -25,44 +25,6 @@ import (
 
 const groupName string = "supplgrp"
 
-func manageSupplementaryGroups() error {
-	curUser, err := user.Current()
-	if err != nil {
-		return err
-	}
-	log.Debugf("Detected current user as: %v+", curUser)
-	if curUser.Username == "mqm" {
-		return nil
-	}
-	if curUser.Username == "root" {
-		log.Debug("Add supplementary groups to mqm")
-		// We're running as root so need to check for supplementary groups, and add them to the "mqm" user.
-		// We can't use the golang User.GroupIDs as it doesn't seem to detect container supplementary groups..
-		groups, err := getCurrentUserGroups()
-		for _, e := range groups {
-			_, _, testGroup := command.Run("getent", "group", e)
-			if testGroup != nil {
-				log.Printf("Group %s does not exist on the system... Adding to system and MQM user", e)
-				_, _, err = command.Run("groupadd", "-g", e, groupName)
-				if err != nil {
-					log.Errorf("Failed to create group %s as %s", e, groupName)
-					return err
-				}
-				_, _, err = command.Run("usermod", "-aG", groupName, "mqm")
-				if err != nil {
-					log.Errorf("Failed to add group %s(%s) to the mqm user.", groupName, e)
-					return err
-				}
-			}
-		}
-	} else {
-		// We're running as an unknown user...
-		return fmt.Errorf("Container is running as %s user which is not supported. Please run this container as mqm", curUser.Username)
-	}
-
-	return nil
-}
-
 func logUser() {
 	u, usererr := user.Current()
 	if usererr == nil {
