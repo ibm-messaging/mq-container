@@ -41,6 +41,7 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/go-connections/nat"
+	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 func imageName() string {
@@ -144,8 +145,10 @@ func terminationBind(t *testing.T) string {
 	n := terminationLogUnixPath(t)
 	// Remove it if it already exists
 	os.Remove(n)
+	out, _, err := command.Run("ls", "-lan "+n)
+	t.Logf("**** ls output:\n%v\n", out)
 	// Create the empty file
-	f, err := os.OpenFile(n, os.O_WRONLY|os.O_CREATE, 0600)
+	f, err := os.OpenFile(n, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		t.Fatal(err)
 	}

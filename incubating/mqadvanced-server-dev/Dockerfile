@@ -74,7 +74,8 @@ COPY --chown=mqm:mqm incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
 # Copy web XML files for default developer configuration
 COPY --chown=mqm:mqm incubating/mqadvanced-server-dev/web /etc/mqm/web
 
-RUN chmod +x /usr/local/bin/runmq*
+RUN chmod +x /usr/local/bin/runmq* \
+  && install --directory --mode 0775 --owner mqm --group root /run/runmqdevserver
 
 EXPOSE 9443
 

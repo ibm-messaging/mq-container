@@ -21,8 +21,11 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"os"
+	"runtime"
 	"sync"
+	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/name"
@@ -39,6 +42,19 @@ func doMain() error {
 	if err != nil {
 		logTermination(err)
 		return err
+	}
+
+	fi, err := os.Stat("/dev")
+	sys := fi.Sys()
+	if sys != nil && runtime.GOOS == "linux" {
+		stat := sys.(*syscall.Stat_t)
+		fmt.Printf("*** stat output %v %v %v\n", fi.Mode(), stat.Uid, stat.Gid)
+	}
+	fi, err = os.Stat("/dev/termination-log")
+	sys = fi.Sys()
+	if sys != nil && runtime.GOOS == "linux" {
+		stat := sys.(*syscall.Stat_t)
+		fmt.Printf("*** stat output %v %v %v\n", fi.Mode(), stat.Uid, stat.Gid)
 	}
 
 	// Check whether they only want debug info

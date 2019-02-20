@@ -65,7 +65,8 @@ COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
 
 RUN chmod ug+x /usr/local/bin/runmqserver \
   && chown mqm:mqm /usr/local/bin/*mq* \
-  && chmod ug+xs /usr/local/bin/chkmq*
+  && chmod ug+xs /usr/local/bin/chkmq* \
+  && install --directory --mode 0775 --owner mqm --group root /run/runmqserver
 
 # Always use port 1414 for MQ & 9157 for the metrics
 EXPOSE 1414 9157
