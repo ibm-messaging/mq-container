@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,22 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=mq-sdk:9.1.1.0-x86_64-ubuntu-16.04
+FROM golang:1.10
 
-FROM $BASE_IMAGE
-
-COPY incubating/mq-golang-sdk/install-golang.sh /usr/local/bin
-
-ENV GO_VERSION=1.10
-
-ENV PATH="${PATH}:/usr/lib/go-${GO_VERSION}/bin:/go/bin:/usr/local/go/bin" \
-    CGO_CFLAGS="-I/opt/mqm/inc/"                                           \
-    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"                                       \
-    GOPATH="/go"
-
-# Install the Go compiler and Git
-RUN chmod +x /usr/local/bin/install-golang.sh \
-    && sleep 1 \
-    && install-golang.sh 
-
-WORKDIR $GOPATH
+# Install the MQ redistributable client (including header files) into the Go builder image
+RUN mkdir -p /opt/mqm \
+  && curl -L https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.1.1.0-IBM-MQC-Redist-LinuxX64.tar.gz | tar -xz -C /opt/mqm
+ENV CGO_CFLAGS="-I/opt/mqm/inc/" \
+    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
