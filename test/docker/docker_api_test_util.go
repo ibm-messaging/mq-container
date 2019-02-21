@@ -133,8 +133,7 @@ func terminationMessage(t *testing.T, cli *client.Client, ID string) string {
 	}
 	b, err := ioutil.ReadAll(r)
 	tr := tar.NewReader(bytes.NewReader(b))
-	h, err := tr.Next()
-	t.Log(h)
+	_, err = tr.Next()
 	if err != nil {
 		t.Log(err)
 		return ""
@@ -145,7 +144,6 @@ func terminationMessage(t *testing.T, cli *client.Client, ID string) string {
 		t.Log(err)
 		return ""
 	}
-	t.Logf("Content is %v", string(content))
 	return string(content)
 }
 

@@ -41,9 +41,10 @@ func setPassword(user string, password string) error {
 	if err != nil {
 		log.Errorf("Error closing password stdin: %v", err)
 	}
-	_, _, err = command.RunCmd(cmd)
+	out, _, err := command.RunCmd(cmd)
 	if err != nil {
-		return err
+		// Include the command output in the error
+		return fmt.Errorf("%v: %v", err.Error(), out)
 	}
 	log.Printf("Set password for \"%v\" user", user)
 	return nil
