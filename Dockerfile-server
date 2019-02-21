@@ -48,12 +48,15 @@ ARG MQ_URL
 # The MQ packages to install - see install-mq.sh for default value
 ARG MQ_PACKAGES
 
+# The UID to use for the "mqm" user
+ARG MQM_UID=999
+
 COPY install-mq.sh /usr/local/bin/
 
 # Install MQ.  To avoid a "text file busy" error here, we sleep before installing.
 RUN chmod u+x /usr/local/bin/install-mq.sh \
   && sleep 1 \
-  && install-mq.sh
+  && install-mq.sh $MQM_UID
 
 # Create a directory for runtime data from runmqserver
 RUN mkdir -p /run/runmqserver \
@@ -76,6 +79,6 @@ EXPOSE 1414 9157
 
 ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1 LOG_FORMAT=basic
 
-USER 999
+USER $MQM_UID
 
 ENTRYPOINT ["runmqserver"]

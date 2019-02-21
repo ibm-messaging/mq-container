@@ -43,6 +43,8 @@ ENV MQ_DEV=true
 # Default administrator password
 ENV MQ_ADMIN_PASSWORD=passw0rd
 
+ARG MQM_UID=999
+
 USER root
 
 COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
@@ -78,6 +80,6 @@ RUN chmod +x /usr/local/bin/runmq* \
 
 EXPOSE 9443
 
-USER 999
+USER $MQM_UID
 
 ENTRYPOINT ["runmqdevserver"]

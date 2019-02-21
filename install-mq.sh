@@ -18,6 +18,8 @@
 # Fail on any non-zero return code
 set -ex
 
+mqm_uid=${1:=999}
+
 test -f /usr/bin/yum && RHEL=true || RHEL=false
 test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
 
@@ -102,10 +104,8 @@ $UBUNTU && apt-get purge -y \
 $UBUNTU && apt-get autoremove -y
 
 # Recommended: Create the mqm user ID with a fixed UID and group, so that the file permissions work between different images
-$UBUNTU && groupadd --system --gid 999 mqm
-$UBUNTU && useradd --system --uid 999 --gid mqm --groups 0 mqm
-$RHEL && groupadd --system --gid 888 mqm
-$RHEL && useradd --system --uid 888 --gid mqm --groups 0 mqm
+groupadd --system --gid ${mqm_uid} mqm
+useradd --system --uid ${mqm_uid} --gid mqm --groups 0 mqm
 usermod -aG mqm root
 
 # Find directory containing .deb files
