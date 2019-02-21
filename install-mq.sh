@@ -18,7 +18,7 @@
 # Fail on any non-zero return code
 set -ex
 
-mqm_uid=${1:=999}
+mqm_uid=${1:-999}
 
 test -f /usr/bin/yum && RHEL=true || RHEL=false
 test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
