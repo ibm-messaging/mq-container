@@ -279,6 +279,70 @@ func TestNoVolumeWithRestart(t *testing.T) {
 	waitForReady(t, cli, id)
 }
 
+// TestVolumeRequiresRoot tests the case where only the root user can write
+// to the persistent volume.  In this case, an "init container" is needed,
+// where `runmqserver -i` is run to initialize the storage.  Then the
+// container can be run as normal.
+func TestVolumeRequiresRoot(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	vol := createVolume(t, cli)
+	defer removeVolume(t, cli, vol.Name)
+
+	// Set permissions on the volume to only allow root to write it
+	// It's important that read and execute permissions are given to other users
+	rc, _ := runContainerOneShotWithVolume(t, cli, vol.Name+":/mnt/mqm:nocopy", "bash", "-c", "chown 65534:4294967294 /mnt/mqm/ && chmod 0755 /mnt/mqm/ && ls -lan /mnt/mqm/")
+	if rc != 0 {
+		t.Errorf("Expected one shot container to return rc=0, got rc=%v", rc)
+	}
+
+	containerConfig := container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			vol.Name + ":/mnt/mqm:nocopy",
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+
+	// Run an "init container" as root, with the "-i" option, to initialize the volume
+	containerConfig = container.Config{
+		Image:      imageName(),
+		Env:        []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=true"},
+		User:       "0",
+		Entrypoint: []string{"runmqserver", "-i"},
+	}
+	initCtr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+"Init")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, initCtr.ID)
+	t.Logf("Init container ID=%v", initCtr.ID)
+	startContainer(t, cli, initCtr.ID)
+	rc = waitForContainer(t, cli, initCtr.ID, 10*time.Second)
+	if rc != 0 {
+		t.Errorf("Expected init container to exit with rc=0, got rc=%v", rc)
+	}
+
+	containerConfig = container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=true"},
+	}
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+"Main")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, ctr.ID)
+	t.Logf("Main container ID=%v", ctr.ID)
+	startContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+}
+
 // TestCreateQueueManagerFail causes a failure of `crtmqm`
 func TestCreateQueueManagerFail(t *testing.T) {
 	t.Parallel()

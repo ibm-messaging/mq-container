@@ -290,6 +290,31 @@ func runContainerOneShot(t *testing.T, cli *client.Client, command ...string) (i
 	return waitForContainer(t, cli, ctr.ID, 10*time.Second), inspectLogs(t, cli, ctr.ID)
 }
 
+// runContainerOneShot runs a container with a custom entrypoint, as the root
+// user, with default capabilities, and a volume mounted
+func runContainerOneShotWithVolume(t *testing.T, cli *client.Client, bind string, command ...string) (int64, string) {
+	containerConfig := container.Config{
+		Entrypoint: command,
+		User:       "root",
+		Image:      imageName(),
+	}
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			bind,
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+	t.Logf("Running one shot container with volume (%s): %v", containerConfig.Image, command)
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("One shot container ID: %v", ctr.ID)
+	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctr.ID)
+	return waitForContainer(t, cli, ctr.ID, 10*time.Second), inspectLogs(t, cli, ctr.ID)
+}
+
 func startContainer(t *testing.T, cli *client.Client, ID string) {
 	t.Logf("Starting container: %v", ID)
 	startOptions := types.ContainerStartOptions{}
