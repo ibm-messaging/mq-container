@@ -116,6 +116,9 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
+	logContainerDetails()
+
 	adminPassword, set := os.LookupEnv("MQ_ADMIN_PASSWORD")
 	if set {
 		err = setPassword("admin", adminPassword)
@@ -171,7 +174,7 @@ func main() {
 	} else {
 		// Replace this process with runmqserver
 		// #nosec G204
-		err = syscall.Exec("/usr/local/bin/runmqserver", []string{"runmqserver"}, os.Environ())
+		err = syscall.Exec("/usr/local/bin/runmqserver", []string{"runmqserver", "-dev"}, os.Environ())
 		if err != nil {
 			log.Errorf("Error replacing this process with runmqserver: %v", err)
 		}

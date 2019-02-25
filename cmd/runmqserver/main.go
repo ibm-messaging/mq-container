@@ -32,6 +32,7 @@ import (
 func doMain() error {
 	var initFlag = flag.Bool("i", false, "initialize volume only, then exit")
 	var infoFlag = flag.Bool("info", false, "Display debug info, then exit")
+	var devFlag = flag.Bool("dev", false, "used when running this program from runmqdevserver to control log output")
 	flag.Parse()
 
 	name, nameErr := name.GetQueueManagerName()
@@ -44,7 +45,7 @@ func doMain() error {
 	// Check whether they only want debug info
 	if *infoFlag {
 		logVersionInfo()
-		logConfig()
+		logContainerDetails()
 		return nil
 	}
 
@@ -81,10 +82,12 @@ func doMain() error {
 	// Enable diagnostic collecting on failure
 	collectDiagOnFail = true
 
-	err = logConfig()
-	if err != nil {
-		logTermination(err)
-		return err
+	if *devFlag == false {
+		err = logContainerDetails()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	err = createVolume("/mnt/mqm")
