@@ -1,7 +1,7 @@
 // +build linux
 
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,11 +15,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+package runtime
 
 import (
-	"fmt"
-
 	"golang.org/x/sys/unix"
 )
 
@@ -101,24 +99,28 @@ var fsTypes = map[int64]string{
 	0x58295829: "zsmalloc",
 }
 
-func checkFS(path string) error {
+// GetFilesystem returns the filesystem type for the specified path
+func GetFilesystem(path string) (string, error) {
 	statfs := &unix.Statfs_t{}
 	err := unix.Statfs(path, statfs)
 	if err != nil {
-		log.Println(err)
-		return nil
+		return "", err
 	}
 	// Use a type conversion to make type an int64.  On s390x it's a uint32.
 	t, ok := fsTypes[int64(statfs.Type)]
 	if !ok {
-		log.Printf("WARNING: detected %v has unknown filesystem type %x", path, statfs.Type)
-		return nil
+		return "unknown", nil
+		// log.Printf("WARNING: detected %v has unknown filesystem type %x", path, statfs.Type)
 	}
-	switch t {
+	return t, nil
+}
+
+// SupportedFilesystem returns true if the supplied filesystem type is supported for MQ data
+func SupportedFilesystem(fsType string) bool {
+	switch fsType {
 	case "aufs", "overlayfs", "tmpfs":
-		return fmt.Errorf("%v uses unsupported filesystem type: %v", path, t)
+		return false
 	default:
-		log.Printf("Detected %v has filesystem type '%v'", path, t)
-		return nil
+		return true
 	}
 }

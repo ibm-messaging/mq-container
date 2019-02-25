@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2018
+# © Copyright IBM Corporation 2015, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,8 @@
 
 # Fail on any non-zero return code
 set -ex
+
+mqm_uid=${1:-999}
 
 test -f /usr/bin/yum && RHEL=true || RHEL=false
 test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
@@ -102,10 +104,8 @@ $UBUNTU && apt-get purge -y \
 $UBUNTU && apt-get autoremove -y
 
 # Recommended: Create the mqm user ID with a fixed UID and group, so that the file permissions work between different images
-$UBUNTU && groupadd --system --gid 999 mqm
-$UBUNTU && useradd --system --uid 999 --gid mqm mqm
-$RHEL && groupadd --system --gid 888 mqm
-$RHEL && useradd --system --uid 888 --gid mqm mqm
+groupadd --system --gid ${mqm_uid} mqm
+useradd --system --uid ${mqm_uid} --gid mqm --groups 0 mqm
 usermod -aG mqm root
 
 # Find directory containing .deb files
@@ -153,16 +153,18 @@ $UBUNTU && echo "mq:$(dspmqver -b -f 2)" > /etc/debian_chroot
 # Remove the directory structure under /var/mqm which was created by the installer
 rm -rf /var/mqm
 
-# Create the mount point for volumes
-mkdir -p /mnt/mqm
+# Create the mount point for volumes, ensuring MQ has permissions to all directories
+install --directory --mode 0775 --owner mqm --group root /mnt
+install --directory --mode 0775 --owner mqm --group root /mnt/mqm
+install --directory --mode 0775 --owner mqm --group root /mnt/mqm/data
 
 # Create the directory for MQ configuration files
-mkdir -p /etc/mqm
+install --directory --mode 0775 --owner mqm --group root /etc/mqm
 
 # Create a symlink for /var/mqm -> /mnt/mqm/data
 ln -s /mnt/mqm/data /var/mqm
 
-# Optional: Set these values for the Bluemix Vulnerability Report
+# Optional: Ensure any passwords expire in a timely manner
 sed -i 's/PASS_MAX_DAYS\t99999/PASS_MAX_DAYS\t90/' /etc/login.defs
 sed -i 's/PASS_MIN_DAYS\t0/PASS_MIN_DAYS\t1/' /etc/login.defs
 

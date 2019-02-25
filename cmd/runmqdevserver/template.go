@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ func processTemplateFile(templateFile, destFile string, data interface{}) error 
 	_, err = os.Stat(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = os.MkdirAll(dir, 0660)
+			err = os.MkdirAll(dir, 0770)
 			if err != nil {
 				log.Error(err)
 				return err

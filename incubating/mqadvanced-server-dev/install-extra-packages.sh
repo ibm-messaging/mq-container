@@ -1,4 +1,7 @@
-# © Copyright IBM Corporation 2018, 2019
+#!/bin/bash
+# -*- mode: sh -*-
+# © Copyright IBM Corporation 2019
+#
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.10
+test -f /usr/bin/yum && RHEL=true || RHEL=false
+test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
 
-# Install the MQ redistributable client (including header files) into the Go builder image
-RUN mkdir -p /opt/mqm \
-  && curl -L https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.1.1.0-IBM-MQC-Redist-LinuxX64.tar.gz | tar -xz -C /opt/mqm
-ENV CGO_CFLAGS="-I/opt/mqm/inc/" \
-    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
+if ($UBUNTU); then
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends sudo
+    rm -rf /var/lib/apt/lists/*
+fi
+
+if ($RHEL); then
+    yum -y install sudo
+    yum -y clean all
+    rm -rf /var/cache/yum/*
+fi
