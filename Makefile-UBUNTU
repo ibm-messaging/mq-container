@@ -151,6 +151,7 @@ test-unit:
 .PHONY: test-advancedserver
 test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER) on $(shell docker --version)"$(END)))
+	docker inspect $(MQ_IMAGE_ADVANCEDSERVER)
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
@@ -161,6 +162,7 @@ build-devjmstest:
 .PHONY: test-devserver
 test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER) on $(shell docker --version)"$(END)))
+	docker inspect $(MQ_IMAGE_DEVSERVER)
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
 
 coverage:
