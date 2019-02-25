@@ -66,20 +66,20 @@ The following is an *example* `Dockerfile` for creating your own pre-configured 
 
 ```dockerfile
 FROM ibmcom/mq
+USER root
 RUN useradd alice -G mqm && \
     echo alice:passw0rd | chpasswd
+USER mqm
 COPY 20-config.mqsc /etc/mqm/
 ```
 
-Here is an example corresponding `20-config.mqsc` script from the [mqdev blog](https://developer.ibm.com/messaging/2018/10/01/archives-getting-going-without-turning-off-ibm-mq-security/), which allows users with passwords to connect on the `PASSWORD.SVRCONN` channel:
+The `USER` instructions are necessary to ensure that the `useradd` and `chpasswd` commands are run as the root user.
+
+Here is an example corresponding `20-config.mqsc` script, which creates two local queues:
 
 ```mqsc
-DEFINE CHANNEL(PASSWORD.SVRCONN) CHLTYPE(SVRCONN) REPLACE
-SET CHLAUTH(PASSWORD.SVRCONN) TYPE(BLOCKUSER) USERLIST('nobody') DESCR('Allow privileged users on this channel')
-SET CHLAUTH('*') TYPE(ADDRESSMAP) ADDRESS('*') USERSRC(NOACCESS) DESCR('BackStop rule')
-SET CHLAUTH(PASSWORD.SVRCONN) TYPE(ADDRESSMAP) ADDRESS('*') USERSRC(CHANNEL) CHCKCLNT(REQUIRED)
-ALTER AUTHINFO(SYSTEM.DEFAULT.AUTHINFO.IDPWOS) AUTHTYPE(IDPWOS) ADOPTCTX(YES)
-REFRESH SECURITY TYPE(CONNAUTH)
+DEFINE QLOCAL(MY.QUEUE.1) REPLACE
+DEFINE QLOCAL(MY.QUEUE.2) REPLACE
 ```
 
 The file `20-config.mqsc` should be saved into the same directory as the `Dockerfile`.
