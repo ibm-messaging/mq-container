@@ -52,6 +52,8 @@ func logContainerDetails() {
 				log.Printf("Capabilities (%s set): %v", strings.ToLower(k), strings.Join(v, ","))
 			}
 		}
+	} else {
+		log.Errorf("Error getting capabilities: %v", err)
 	}
 	sc, err := containerruntime.GetSeccomp()
 	if err == nil {

@@ -59,6 +59,18 @@ func imageNameDevJMS() string {
 	return image
 }
 
+func baseImage(t *testing.T, cli *client.Client) string {
+	rc, out := runContainerOneShot(t, cli, "bash", "-c", "cat /etc/*release | grep \"^ID=\"")
+	if rc != 0 {
+		t.Fatal("Couldn't determine base image")
+	}
+	s := strings.Split(out, "=")
+	if len(s) < 2 {
+		t.Fatal("Couldn't determine base image string")
+	}
+	return s[1]
+}
+
 // isWSL return whether we are running in the Windows Subsystem for Linux
 func isWSL(t *testing.T) bool {
 	if runtime.GOOS == "linux" {
@@ -243,6 +255,10 @@ func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *co
 			"SETUID",
 			"SETGID",
 			"AUDIT_WRITE",
+		}
+		// Only needed for a RHEL-based image
+		if baseImage(t, cli) != "ubuntu" {
+			hostConfig.CapAdd = append(hostConfig.CapAdd, "DAC_OVERRIDE")
 		}
 	}
 	for _, p := range ports {
