@@ -1,7 +1,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, pa
 		t.Fatal(err)
 	}
 	startContainer(t, cli, ctr.ID)
-	rc := waitForContainer(t, cli, ctr.ID, 10)
+	rc := waitForContainer(t, cli, ctr.ID, 2*time.Minute)
 	if rc != 0 {
 		t.Errorf("JUnit container failed with rc=%v", rc)
 	}

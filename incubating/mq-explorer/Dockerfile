@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2017
+# © Copyright IBM Corporation 2015, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ ARG MQ_URL=https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messag
 # The MQ packages to install
 ARG MQ_PACKAGES="ibmmq-explorer"
 
+ARG MQM_UID=999
+
 RUN export DEBIAN_FRONTEND=noninteractive \
   && apt-get update \
   && apt-get install -y \
@@ -27,7 +29,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     libxtst6
 
 ADD install-mq.sh /usr/local/bin/
-RUN chmod u+x /usr/local/bin/install-mq.sh \
+RUN chmod u+x /usr/local/bin/install-mq.sh $MQM_UID \
   && install-mq.sh
 
 ENV LANG=en_US.UTF-8

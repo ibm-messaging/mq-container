@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ type Logger struct {
 	pid         string
 	serverName  string
 	host        string
-	user        *user.User
+	userName    string
 }
 
 // NewLogger creates a new logger
@@ -53,9 +53,13 @@ func NewLogger(writer io.Writer, debug bool, json bool, serverName string) (*Log
 	if err != nil {
 		return nil, err
 	}
+	// This can fail because the container's running as a random UID which
+	// is not known by the OS.  We don't want this to break the logging
+	// entirely, so just use a blank user name.
 	user, err := user.Current()
-	if err != nil {
-		return nil, err
+	userName := ""
+	if err == nil {
+		userName = user.Username
 	}
 	return &Logger{
 		mutex:       sync.Mutex{},
@@ -66,7 +70,7 @@ func NewLogger(writer io.Writer, debug bool, json bool, serverName string) (*Log
 		pid:         strconv.Itoa(os.Getpid()),
 		serverName:  serverName,
 		host:        hostname,
-		user:        user,
+		userName:    userName,
 	}, nil
 }
 
@@ -93,7 +97,7 @@ func (l *Logger) log(level string, msg string) {
 		"ibm_serverName":  l.serverName,
 		"ibm_processName": l.processName,
 		"ibm_processId":   l.pid,
-		"ibm_userName":    l.user.Username,
+		"ibm_userName":    l.userName,
 		"type":            "mq_containerlog",
 	}
 	s, err := l.format(entry)

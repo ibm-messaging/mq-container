@@ -88,13 +88,17 @@ buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install \
   util-linux \
   which
 
+# Install "sudo" if using MQ Advanced for Developers
+if [ "$mqdev" = "TRUE" ]; then
+  buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install sudo
+fi
+
 # Clean up cached files
 buildah run ${ctr_mq} -- microdnf ${microdnf_opts} clean all
 rm -rf ${mnt_mq}/etc/yum.repos.d/*
 
 buildah run --user root $ctr_mq -- groupadd --system --gid ${mqm_gid} mqm
-buildah run --user root $ctr_mq -- useradd --system --uid ${mqm_uid} --gid mqm mqm
-buildah run --user root $ctr_mq -- usermod -aG root mqm
+buildah run --user root $ctr_mq -- useradd --system --uid ${mqm_uid} --gid mqm --groups 0 mqm
 buildah run --user root $ctr_mq -- usermod -aG mqm root
 
 # Install MQ server packages into the MQ builder image
@@ -108,6 +112,11 @@ chown ${mqm_uid}:${mqm_gid} ${mnt_mq}/etc/mqm
 install --mode 0750 --owner ${mqm_uid} --group 0 ./build/runmqserver ${mnt_mq}/usr/local/bin/
 install --mode 6750 --owner ${mqm_uid} --group 0 ./build/chk* ${mnt_mq}/usr/local/bin/
 install --mode 0750 --owner ${mqm_uid} --group 0 ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
+
+install --directory --mode 0775 --owner ${mqm_uid} --group 0 ${mnt_mq}/run/runmqserver
+buildah run --user root $ctr_mq -- touch /run/termination-log
+buildah run --user root $ctr_mq -- chown mqm:root /run/termination-log
+buildah run --user root $ctr_mq -- chmod 0660 /run/termination-log
 
 ###############################################################################
 # Final Buildah commands
@@ -145,7 +154,7 @@ buildah config \
   --env LANG=en_US.UTF-8 \
   --env LOG_FORMAT=basic \
   --entrypoint runmqserver \
-  --user root \
+  --user ${mqm_uid} \
   $ctr_mq
 buildah unmount $ctr_mq
 buildah commit $ctr_mq $tag
