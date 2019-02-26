@@ -72,17 +72,6 @@ func GetSecurityAttributes() string {
 	return a
 }
 
-// func logUser() {
-// 	u, err := user.GetUser()
-// 	if err == nil {
-// 		if len(u.SupplementalGID) == 0 {
-// 			log.Printf("Running as user ID %v (%v) with primary group %v", u.UID, u.Name, u.PrimaryGID)
-// 		} else {
-// 			log.Printf("Running as user ID %v (%v) with primary group %v, and supplementary groups %v", u.UID, u.Name, u.PrimaryGID, strings.Join(u.SupplementalGID, ","))
-// 		}
-// 	}
-// }
-
 func readProc(filename string) (value string, err error) {
 	// #nosec G304
 	buf, err := ioutil.ReadFile(filename)
