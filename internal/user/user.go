@@ -73,7 +73,6 @@ func getCurrentUserGroups() ([]string, error) {
 
 	out = strings.TrimSpace(out)
 	if out == "" {
-		// we don't have any groups?
 		return nilArray, fmt.Errorf("Unable to determine groups for current user")
 	}
 
