@@ -109,6 +109,10 @@ install --mode 0750 --owner ${mqm_uid} --group 0 ./build/runmqserver ${mnt_mq}/u
 install --mode 6750 --owner ${mqm_uid} --group 0 ./build/chk* ${mnt_mq}/usr/local/bin/
 install --mode 0750 --owner ${mqm_uid} --group 0 ./NOTICES.txt ${mnt_mq}/opt/mqm/licenses/notices-container.txt
 
+# Copy in licenses from installed packages
+install --mode 0550 --owner root --group root ./mq-advanced-server-rhel/writePackages.sh ${mnt_mq}/usr/local/bin/writePackages
+buildah run --user root $ctr_mq -- /usr/local/bin/writePackages
+
 ###############################################################################
 # Final Buildah commands
 ###############################################################################
