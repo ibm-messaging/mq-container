@@ -99,7 +99,6 @@ rm -rf ${mnt_mq}/etc/yum.repos.d/*
 
 buildah run --user root $ctr_mq -- groupadd --system --gid ${mqm_gid} mqm
 buildah run --user root $ctr_mq -- useradd --system --uid ${mqm_uid} --gid mqm --groups 0 mqm
-buildah run --user root $ctr_mq -- usermod -aG mqm root
 
 # Install MQ server packages into the MQ builder image
 ./mq-advanced-server-rhel/install-mq-rhel.sh ${ctr_mq} "${mnt_mq}" "${archive}" "${packages}"
