@@ -46,11 +46,16 @@ func logContainerDetails() {
 		}
 	}
 	caps, err := containerruntime.GetCapabilities()
+	capLogged := false
 	if err == nil {
 		for k, v := range caps {
 			if len(v) > 0 {
 				log.Printf("Capabilities (%s set): %v", strings.ToLower(k), strings.Join(v, ","))
+				capLogged = true
 			}
+		}
+		if !capLogged {
+			log.Print("Capabilities: none")
 		}
 	} else {
 		log.Errorf("Error getting capabilities: %v", err)
