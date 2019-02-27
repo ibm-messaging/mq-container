@@ -181,7 +181,7 @@ build-mqgolang-sdk: check-prereqs downloads/$(MQ_SDK_ARCHIVE)
 .PHONY: build-go-programs
 build-go-programs: check-prereqs downloads/$(MQ_SDK_ARCHIVE) build-mqgolang-sdk
 	$(info $(SPACER)$(shell printf $(TITLE)"Build go programs"$(END)))
-	IMAGE_REVISION=$(IMAGE_REVISION) IMAGE_SOURCE=$(IMAGE_SOURCE) sudo mq-advanced-server-rhel/go-buildah.sh "$(MQ_IMAGE_GOLANG_SDK)" "$(MQDEV)"
+	IMAGE_REVISION=$(IMAGE_REVISION) IMAGE_SOURCE=$(IMAGE_SOURCE) sudo --preserve-env mq-advanced-server-rhel/go-buildah.sh "$(MQ_IMAGE_GOLANG_SDK)" "$(MQDEV)"
 
 .PHONY: build-devjmstest
 build-devjmstest: check-test-prereqs

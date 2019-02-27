@@ -1,5 +1,5 @@
 #!/bin/bash
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,24 +22,34 @@ set -e
 
 # Use a "scratch" container, so the resulting image has minimal files
 # Resulting image won't have yum, for example
-readonly ctr_mq=$(buildah from rhel7)
+readonly ctr_mq=$(buildah from rhel7-minimal)
 readonly mnt_mq=$(buildah mount $ctr_mq)
 readonly imagename=$1
 
-buildah run $ctr_mq -- yum install -y \
-    java-1.7.0-openjdk-devel \
-    java \
-    which \
-    wget
+microdnf_opts="--nodocs"
+# Check whether the host is registered with Red Hat
+if subscription-manager status ; then
+  # Host is subscribed, but the minimal image has no enabled repos
+  # Note that the "bc" package is the only one in "extras"
+  microdnf_opts="${microdnf_opts} --enablerepo=rhel-7-server-rpms --enablerepo=rhel-7-server-extras-rpms"
+else
+  # Use the Yum repositories configured on the host
+  cp -R /etc/yum.repos.d/* ${mnt_mq}/etc/yum.repos.d/
+fi
+buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install \
+  java-1.8.0-openjdk-devel \
+  java \
+  which \
+  wget
 
-buildah run $ctr_mq -- sh -c "cd /tmp && wget http://mirror.olnevhost.net/pub/apache/maven/binaries/apache-maven-3.2.2-bin.tar.gz"
-tar xvf $mnt_mq/tmp/apache-maven-3.2.2-bin.tar.gz -C $mnt_mq/tmp/
+buildah run $ctr_mq -- sh -c "cd /tmp && wget https://www-eu.apache.org/dist/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.tar.gz"
+tar xvf $mnt_mq/tmp/apache-maven-3.6.0-bin.tar.gz -C $mnt_mq/tmp/
 
 mkdir -p $mnt_mq/usr/src/mymaven
 cp pom.xml $mnt_mq/usr/src/mymaven/
 cp -R src $mnt_mq/usr/src/mymaven/src
 
-buildah run $ctr_mq -- sh -c "cd /usr/src/mymaven && export M2_HOME=/tmp/apache-maven-3.2.2 && export M2=\$M2_HOME/bin && export PATH=\$M2:\$PATH && mvn --version && mvn dependency:go-offline install && mvn --offline install"
+buildah run $ctr_mq -- sh -c "cd /usr/src/mymaven && export M2_HOME=/tmp/apache-maven-3.6.0 && export M2=\$M2_HOME/bin && export PATH=\$M2:\$PATH && mvn --version && mvn dependency:go-offline install && mvn --offline install"
 
 mkdir -p $mnt_mq/opt/app
 
@@ -53,13 +63,9 @@ cp $mnt_mq/usr/src/mymaven/target/lib/*.jar $mnt_mq/opt/app/
 rm -rf $mnt_mq/tmp/*
 rm -rf $mnt_mq/usr/src/mymaven
 
-# We can't uninstall tar or gzip because they are required
-buildah run $ctr_mq -- yum remove -y \
-    wget
-
 # Clean up cached files
-buildah run $ctr_mq -- yum clean all
-rm -rf ${mnt_mq}/var/cache/yum/*
+buildah run ${ctr_mq} -- microdnf ${microdnf_opts} clean all
+rm -rf ${mnt_mq}/etc/yum.repos.d/*
 
 ###############################################################################
 # Contain image finalization
@@ -69,6 +75,7 @@ buildah config \
   --os linux \
   --label architecture=x86_64 \
   --label name="${imagename%:*}" \
+  --cmd "" \
   --entrypoint '["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]' \
   $ctr_mq
 buildah unmount $ctr_mq
