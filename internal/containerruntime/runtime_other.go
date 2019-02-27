@@ -1,7 +1,7 @@
 // +build !linux
 
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+package runtime
 
 // Dummy version of this function, only for non-Linux systems.
 // Having this allows unit tests to be run on other platforms (e.g. macOS)

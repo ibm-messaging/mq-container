@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,15 +36,15 @@ var log *logger.Logger
 var collectDiagOnFail = false
 
 func logTerminationf(format string, args ...interface{}) {
-	logTermination(fmt.Sprintf(format, args))
+	logTermination(fmt.Sprintf(format, args...))
 }
 
 func logTermination(args ...interface{}) {
-	msg := fmt.Sprint(args)
-	// Write the message to the termination log.  This is the default place
+	msg := fmt.Sprint(args...)
+	// Write the message to the termination log.  This is not the default place
 	// that Kubernetes will look for termination information.
 	log.Debugf("Writing termination message: %v", msg)
-	err := ioutil.WriteFile("/dev/termination-log", []byte(msg), 0660)
+	err := ioutil.WriteFile("/run/termination-log", []byte(msg), 0660)
 	if err != nil {
 		log.Debug(err)
 	}

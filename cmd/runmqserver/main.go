@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,10 +30,11 @@ import (
 )
 
 func doMain() error {
+	var initFlag = flag.Bool("i", false, "initialize volume only, then exit")
 	var infoFlag = flag.Bool("info", false, "Display debug info, then exit")
+	var devFlag = flag.Bool("dev", false, "used when running this program from runmqdevserver to control log output")
 	flag.Parse()
 
-	// Configure the logger so we can output messages
 	name, nameErr := name.GetQueueManagerName()
 	mf, err := configureLogger(name)
 	if err != nil {
@@ -44,7 +45,7 @@ func doMain() error {
 	// Check whether they only want debug info
 	if *infoFlag {
 		logVersionInfo()
-		logConfig()
+		logContainerDetails()
 		return nil
 	}
 
@@ -81,16 +82,12 @@ func doMain() error {
 	// Enable diagnostic collecting on failure
 	collectDiagOnFail = true
 
-	err = verifyCurrentUser()
-	if err != nil {
-		logTermination(err)
-		return err
-	}
-
-	err = logConfig()
-	if err != nil {
-		logTermination(err)
-		return err
+	if *devFlag == false {
+		err = logContainerDetails()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	err = createVolume("/mnt/mqm")
@@ -102,6 +99,11 @@ func doMain() error {
 	if err != nil {
 		logTermination(err)
 		return err
+	}
+
+	// If init flag is set, exit now
+	if *initFlag {
+		return nil
 	}
 
 	// Print out versioning information
