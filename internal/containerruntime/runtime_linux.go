@@ -110,7 +110,6 @@ func GetFilesystem(path string) (string, error) {
 	t, ok := fsTypes[int64(statfs.Type)]
 	if !ok {
 		return "unknown", nil
-		// log.Printf("WARNING: detected %v has unknown filesystem type %x", path, statfs.Type)
 	}
 	return t, nil
 }

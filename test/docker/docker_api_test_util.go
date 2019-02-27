@@ -276,7 +276,6 @@ func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *co
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
-			// terminationBind(t),
 		},
 		PortBindings: nat.PortMap{},
 		CapDrop: []string{

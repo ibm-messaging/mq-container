@@ -254,7 +254,7 @@ build-advancedserver-cover: docker-version
 
 .PHONY: build-explorer 
 build-explorer: downloads/$(MQ_ARCHIVE_DEV) docker-pull
-	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile-mq-explorer,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
+	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 
 .PHONY: build-sdk
 build-sdk: downloads/$(MQ_SDK_ARCHIVE) build-sdk-ex
