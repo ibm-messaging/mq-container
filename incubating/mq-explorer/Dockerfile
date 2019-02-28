@@ -18,7 +18,7 @@ FROM ubuntu:16.04
 ARG MQ_URL=https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev911_ubuntu_x86-64.tar.gz
 
 # The MQ packages to install
-ARG MQ_PACKAGES="ibmmq-explorer"
+ARG MQ_PACKAGES
 
 ARG MQM_UID=999
 
@@ -29,7 +29,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     libxtst6
 
 ADD install-mq.sh /usr/local/bin/
-RUN chmod u+x /usr/local/bin/install-mq.sh $MQM_UID \
+RUN chmod u+x /usr/local/bin/install-mq.sh \
   && install-mq.sh
 
 ENV LANG=en_US.UTF-8

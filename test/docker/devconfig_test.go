@@ -33,6 +33,7 @@ import (
 // Note: This test requires a separate container image to be available for the JMS tests.
 func TestDevGoldenPath(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -66,6 +67,7 @@ func TestDevGoldenPath(t *testing.T) {
 // Note: This test requires a separate container image to be available for the JMS tests
 func TestDevSecure(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -127,6 +129,7 @@ func TestDevSecure(t *testing.T) {
 
 func TestDevWebDisabled(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -157,6 +160,7 @@ func TestDevWebDisabled(t *testing.T) {
 
 func TestDevConfigDisabled(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)

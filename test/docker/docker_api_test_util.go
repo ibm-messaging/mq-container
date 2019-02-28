@@ -343,7 +343,7 @@ func runContainerOneShot(t *testing.T, cli *client.Client, command ...string) (i
 		t.Fatal(err)
 	}
 	defer cleanContainerQuiet(t, cli, ctr.ID)
-	rc := waitForContainer(t, cli, ctr.ID, 10*time.Second)
+	rc := waitForContainer(t, cli, ctr.ID, 20*time.Second)
 	out := inspectLogs(t, cli, ctr.ID)
 	t.Logf("One shot container finished with rc=%v, output=%v", rc, out)
 	return rc, out
@@ -374,7 +374,7 @@ func runContainerOneShotWithVolume(t *testing.T, cli *client.Client, bind string
 		t.Fatal(err)
 	}
 	defer cleanContainerQuiet(t, cli, ctr.ID)
-	rc := waitForContainer(t, cli, ctr.ID, 10*time.Second)
+	rc := waitForContainer(t, cli, ctr.ID, 20*time.Second)
 	out := inspectLogs(t, cli, ctr.ID)
 	t.Logf("One shot container finished with rc=%v, output=%v", rc, out)
 	return rc, out
