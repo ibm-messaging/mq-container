@@ -117,6 +117,10 @@ buildah run --user root $ctr_mq -- touch /run/termination-log
 buildah run --user root $ctr_mq -- chown mqm:root /run/termination-log
 buildah run --user root $ctr_mq -- chmod 0660 /run/termination-log
 
+# Copy in licenses from installed packages
+install --mode 0550 --owner root --group root ./mq-advanced-server-rhel/writePackages.sh ${mnt_mq}/usr/local/bin/writePackages
+buildah run --user root $ctr_mq -- /usr/local/bin/writePackages
+
 ###############################################################################
 # Final Buildah commands
 ###############################################################################
