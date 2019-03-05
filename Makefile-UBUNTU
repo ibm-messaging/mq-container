@@ -270,7 +270,7 @@ build-sdk-ex: docker-version docker-pull
 	$(call docker-build-mq,$(MQ_IMAGE_SDK),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers SDK (Non-Warranted)",$(MQ_VERSION))
 
 .PHONY: build-golang-sdk
-build-golang-sdk: docker-version build-sdk
+build-golang-sdk: docker-version build-sdk-ex
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_GOLANG_SDK)"$(END)))
 	@echo hello
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_SDK) -t $(MQ_IMAGE_GOLANG_SDK) -f incubating/mq-golang-sdk/Dockerfile .
