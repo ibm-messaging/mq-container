@@ -47,7 +47,7 @@ func TestLicenseNotSet(t *testing.T) {
 	containerConfig := container.Config{}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 10*time.Second)
+	rc := waitForContainer(t, cli, id, 20*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -65,7 +65,7 @@ func TestLicenseView(t *testing.T) {
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 10*time.Second)
+	rc := waitForContainer(t, cli, id, 20*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -324,7 +324,7 @@ func TestVolumeRequiresRoot(t *testing.T) {
 	defer cleanContainer(t, cli, initCtr.ID)
 	t.Logf("Init container ID=%v", initCtr.ID)
 	startContainer(t, cli, initCtr.ID)
-	rc = waitForContainer(t, cli, initCtr.ID, 10*time.Second)
+	rc = waitForContainer(t, cli, initCtr.ID, 20*time.Second)
 	if rc != 0 {
 		t.Errorf("Expected init container to exit with rc=0, got rc=%v", rc)
 	}
@@ -404,7 +404,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 10*time.Second)
+	rc := waitForContainer(t, cli, id, 20*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -752,7 +752,7 @@ func TestBadLogFormat(t *testing.T) {
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 5*time.Second)
+	rc := waitForContainer(t, cli, id, 20*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
