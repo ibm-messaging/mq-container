@@ -688,8 +688,6 @@ func TestErrorLogRotation(t *testing.T) {
 
 	for {
 		execContainer(t, cli, id, "fred", []string{"bash", "-c", "/opt/mqm/samp/bin/amqsput FAKE"})
-		_, atoiStr1 := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "wc -c < " + filepath.Join(dir, "AMQERR01.json")})
-		amqerr01size, _ := strconv.Atoi(atoiStr1)
 
 		_, atoiStr := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "wc -c < " + filepath.Join(dir, "AMQERR02.json")})
 		amqerr02size, _ := strconv.Atoi(atoiStr)

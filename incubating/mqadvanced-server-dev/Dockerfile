@@ -76,7 +76,6 @@ COPY incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
 COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
 
 RUN chown -R mqm:mqm /etc/mqm/* \
-  && ls -lar /etc/mqm/ \
   && chmod +x /usr/local/bin/runmq* \
   && install --directory --mode 0775 --owner mqm --group root /run/runmqdevserver
 
