@@ -45,7 +45,10 @@ func doMain() error {
 	// Check whether they only want debug info
 	if *infoFlag {
 		logVersionInfo()
-		logContainerDetails()
+		err = logContainerDetails()
+		if err != nil {
+			log.Printf("Error displaying container details: %v", err)
+		}
 		return nil
 	}
 
