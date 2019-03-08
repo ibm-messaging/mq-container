@@ -36,6 +36,7 @@ func processTemplateFile(templateFile, destFile string, data interface{}) error 
 	_, err = os.Stat(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
+			// #nosec G301
 			err = os.MkdirAll(dir, 0770)
 			if err != nil {
 				log.Error(err)
