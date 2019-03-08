@@ -120,7 +120,6 @@ func configureQueueManager() error {
 			out, err := cmd.CombinedOutput()
 			if err != nil {
 				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, strings.Replace(string(out), "\n", "\n\t", -1))
-				return err
 			}
 			// Print the runmqsc output, adding tab characters to make it more readable as part of the log
 			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))

@@ -3,7 +3,7 @@
 ## vNext
 
 * Now runs using the "mqm" user instead of root.  See new [security doc](https://github.com/ibm-messaging/mq-container/blob/master/docs/security.md)
-* [New IGNSTATE parameter for runmqsc START and STOP commands](https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.pro.doc/q132310_.htm#q132310___ignstateparm) - From MQ version 9.1.1.0, any MQSC scripts included in the image should make use of the `IGNSTATE(YES)` parameter on any `START` and `STOP` commands. This allows for consistency when executing scripts multiple times (e.g. when a container is restarted) 
+* New [IGNSTATE](https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.pro.doc/q132310_.htm#q132310___ignstateparm) parameter used in default developer config
 * Termination log moved from `/dev/termination-log` to `/run/termination-log`, to make permissions easier to handle
 * Fixes for the following issues:
     * Brackets no longer appear in termination log
