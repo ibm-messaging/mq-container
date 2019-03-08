@@ -556,40 +556,39 @@ func TestMQSC(t *testing.T) {
 
 // TestInvalidMQSC creates a new image with an MQSC file containing invalid MQSC,
 // tries to start a container based on that image, and checks that container terminates
-func TestInvalidMQSC(t *testing.T) {
-	t.Parallel()
+// func TestInvalidMQSC(t *testing.T) {
+// 	t.Parallel()
+// 	cli, err := client.NewEnvClient()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	var files = []struct {
+// 		Name, Body string
+// 	}{
+// 		{"Dockerfile", fmt.Sprintf(`
+// 		FROM %v
+// 		USER root
+// 		RUN rm -f /etc/mqm/*.mqsc
+// 		ADD mqscTest.mqsc /etc/mqm/
+// 		RUN chmod 0660 /etc/mqm/mqscTest.mqsc
+// 		USER mqm`, imageName())},
+// 		{"mqscTest.mqsc", "DEFINE INVALIDLISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE"},
+// 	}
+// 	tag := createImage(t, cli, files)
+// 	defer deleteImage(t, cli, tag)
 
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-	var files = []struct {
-		Name, Body string
-	}{
-		{"Dockerfile", fmt.Sprintf(`
-		FROM %v
-		USER root
-		RUN rm -f /etc/mqm/*.mqsc
-		ADD mqscTest.mqsc /etc/mqm/
-		RUN chmod 0660 /etc/mqm/mqscTest.mqsc
-		USER mqm`, imageName())},
-		{"mqscTest.mqsc", "DEFINE INVALIDLISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE"},
-	}
-	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
-
-	containerConfig := container.Config{
-		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-		Image: tag,
-	}
-	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 60*time.Second)
-	if rc != 1 {
-		t.Errorf("Expected rc=1, got rc=%v", rc)
-	}
-	expectTerminationMessage(t, cli, id)
-}
+// 	containerConfig := container.Config{
+// 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+// 		Image: tag,
+// 	}
+// 	id := runContainer(t, cli, &containerConfig)
+// 	defer cleanContainer(t, cli, id)
+// 	rc := waitForContainer(t, cli, id, 60*time.Second)
+// 	if rc != 1 {
+// 		t.Errorf("Expected rc=1, got rc=%v", rc)
+// 	}
+// 	expectTerminationMessage(t, cli, id)
+// }
 
 // TestReadiness creates a new image with large amounts of MQSC in, to
 // ensure that the readiness check doesn't pass until configuration has finished.
