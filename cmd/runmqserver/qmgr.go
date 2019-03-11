@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"io"
 	"io/ioutil"
 	"os"
@@ -86,43 +87,29 @@ func configureQueueManager() error {
 		log.Println(err)
 		return err
 	}
-
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".mqsc") {
 			abs := filepath.Join(configDir, file.Name())
 			// #nosec G204
-			cmd := exec.Command("runmqsc")
-			stdin, err := cmd.StdinPipe()
+			cmd1 := exec.Command("cat", abs)
+			cmd2 := exec.Command("runmqsc")
+			reader, writer := io.Pipe()
+			defer writer.Close()
+			defer reader.Close()
+			cmd1.Stdout = writer
+			cmd2.Stdin = reader
+			var buffer2 bytes.Buffer
+			cmd2.Stdout = &buffer2
+			cmd1.Start()
+			cmd2.Start()
+			cmd1.Wait()
+			cmd2.Wait()
+			out := os.Stdout
+			_, err := io.Copy(out, &buffer2)
 			if err != nil {
-				log.Println(err)
-				return err
+				log.Error("Error running MQSC file %v :\n\t%v", file.Name(), err)
 			}
-			// Open the MQSC file for reading
-			// #nosec G304
-			f, err := os.Open(abs)
-			if err != nil {
-				log.Printf("Error opening %v: %v", abs, err)
-			}
-			// Copy the contents to stdin of the runmqsc process
-			_, err = io.Copy(stdin, f)
-			if err != nil {
-				log.Errorf("Error reading %v: %v", abs, err)
-			}
-			err = f.Close()
-			if err != nil {
-				log.Errorf("Failed to close MQSC file handle: %v", err)
-			}
-			err = stdin.Close()
-			if err != nil {
-				log.Errorf("Failed to close MQSC stdin: %v", err)
-			}
-			// Run the command and wait for completion
-			out, err := cmd.CombinedOutput()
-			if err != nil {
-				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, strings.Replace(string(out), "\n", "\n\t", -1))
-			}
-			// Print the runmqsc output, adding tab characters to make it more readable as part of the log
-			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
+			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, out)
 		}
 	}
 	return nil
