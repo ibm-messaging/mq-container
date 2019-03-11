@@ -567,7 +567,7 @@ func TestLargeMQSC(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	// defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 
 	rc, mqscOutput := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test" + strconv.Itoa(numQueues) + ")' | runmqsc"})

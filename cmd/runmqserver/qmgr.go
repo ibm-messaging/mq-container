@@ -94,7 +94,6 @@ func configureQueueManager() error {
 			cmd1 := exec.Command("cat", abs)
 			cmd2 := exec.Command("runmqsc")
 			reader, writer := io.Pipe()
-			defer writer.Close()
 			defer reader.Close()
 			cmd1.Stdout = writer
 			cmd2.Stdin = reader
@@ -103,6 +102,7 @@ func configureQueueManager() error {
 			cmd1.Start()
 			cmd2.Start()
 			cmd1.Wait()
+			writer.Close()
 			cmd2.Wait()
 			out := os.Stdout
 			_, err := io.Copy(out, &buffer2)
