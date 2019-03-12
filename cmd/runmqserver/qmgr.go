@@ -90,7 +90,7 @@ func configureQueueManager() error {
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".mqsc") {
 			abs := filepath.Join(configDir, file.Name())
-			// #nosec G204
+			// Pipe the mqsc file into runmqsc
 			cmd1 := exec.Command("cat", abs)
 			cmd2 := exec.Command("runmqsc")
 			reader, writer := io.Pipe()
@@ -99,6 +99,7 @@ func configureQueueManager() error {
 			cmd2.Stdin = reader
 			var buffer2 bytes.Buffer
 			cmd2.Stdout = &buffer2
+			// Run the command and wait for completion
 			cmd1.Start()
 			cmd2.Start()
 			cmd1.Wait()
