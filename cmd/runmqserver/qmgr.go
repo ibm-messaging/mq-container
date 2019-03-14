@@ -104,13 +104,13 @@ func configureQueueManager() error {
 			cmd2.Start()
 			cmd1.Wait()
 			writer.Close()
-			cmd2.Wait()
-			out := os.Stdout
-			_, err := io.Copy(out, &buffer2)
+			err := cmd2.Wait()
+			out := buffer2.String()
+			// _, err := io.Copy(out, &buffer2)
 			if err != nil {
-				log.Error("Error running MQSC file %v :\n\t%v", file.Name(), err)
+				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, strings.Replace(string(out), "\n", "\n\t", -1))
 			}
-			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, out)
+			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
 		}
 	}
 	return nil
