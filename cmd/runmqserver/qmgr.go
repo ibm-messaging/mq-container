@@ -106,7 +106,6 @@ func configureQueueManager() error {
 			writer.Close()
 			err := cmd2.Wait()
 			out := buffer2.String()
-			// _, err := io.Copy(out, &buffer2)
 			if err != nil {
 				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, strings.Replace(string(out), "\n", "\n\t", -1))
 			}
