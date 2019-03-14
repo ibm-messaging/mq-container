@@ -40,6 +40,7 @@ import (
 
 func TestLicenseNotSet(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -56,6 +57,7 @@ func TestLicenseNotSet(t *testing.T) {
 
 func TestLicenseView(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -79,12 +81,14 @@ func TestLicenseView(t *testing.T) {
 // TestGoldenPath starts a queue manager successfully when metrics are enabled
 func TestGoldenPathWithMetrics(t *testing.T) {
 	t.Parallel()
+
 	goldenPath(t, true)
 }
 
 // TestGoldenPath starts a queue manager successfully when metrics are disabled
 func TestGoldenPathNoMetrics(t *testing.T) {
 	t.Parallel()
+
 	goldenPath(t, false)
 }
 
@@ -112,6 +116,7 @@ func goldenPath(t *testing.T, metric bool) {
 // by Ubuntu
 func TestSecurityVulnerabilitiesUbuntu(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -141,6 +146,7 @@ func TestSecurityVulnerabilitiesUbuntu(t *testing.T) {
 // by Red Hat
 func TestSecurityVulnerabilitiesRedHat(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -153,22 +159,25 @@ func TestSecurityVulnerabilitiesRedHat(t *testing.T) {
 	if rc != 0 {
 		t.Skip("Skipping test because container is not RedHat-based")
 	}
-	id, _, err := command.Run("buildah", "from", imageName())
+	id, _, err := command.Run("sudo", "buildah", "from", imageName())
 	if err != nil {
+		t.Log(id)
 		t.Fatal(err)
 	}
 	id = strings.TrimSpace(id)
 	defer command.Run("buildah", "rm", id)
-	mnt, _, err := command.Run("buildah", "mount", id)
+	mnt, _, err := command.Run("sudo", "buildah", "mount", id)
 	if err != nil {
+		t.Log(mnt)
 		t.Fatal(err)
 	}
 	mnt = strings.TrimSpace(mnt)
-	_, _, err = command.Run("bash", "-c", "cp /etc/yum.repos.d/* "+filepath.Join(mnt, "/etc/yum.repos.d/"))
+	out, _, err := command.Run("bash", "-c", "sudo cp /etc/yum.repos.d/* "+filepath.Join(mnt, "/etc/yum.repos.d/"))
 	if err != nil {
+		t.Log(out)
 		t.Fatal(err)
 	}
-	out, ret, _ := command.Run("bash", "-c", "yum --installroot="+mnt+" updateinfo list sec | grep /Sec")
+	out, ret, _ = command.Run("bash", "-c", "yum --installroot="+mnt+" updateinfo list sec | grep /Sec")
 	if ret != 1 {
 		t.Errorf("Expected no vulnerabilities, found the following:\n%v", out)
 	}
@@ -194,11 +203,13 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 }
 func TestNoQueueManagerName(t *testing.T) {
 	t.Parallel()
+
 	utilTestNoQueueManagerName(t, "test", "test")
 }
 
 func TestNoQueueManagerNameInvalidHostname(t *testing.T) {
 	t.Parallel()
+
 	utilTestNoQueueManagerName(t, "test-1", "test1")
 }
 
@@ -206,6 +217,7 @@ func TestNoQueueManagerNameInvalidHostname(t *testing.T) {
 // container and starts a new one with same volume. With metrics enabled
 func TestWithVolumeAndMetrics(t *testing.T) {
 	t.Parallel()
+
 	withVolume(t, true)
 }
 
@@ -213,6 +225,7 @@ func TestWithVolumeAndMetrics(t *testing.T) {
 // container and starts a new one with same volume. With metrics disabled
 func TestWithVolumeNoMetrics(t *testing.T) {
 	t.Parallel()
+
 	withVolume(t, false)
 }
 
@@ -264,6 +277,7 @@ func withVolume(t *testing.T, metric bool) {
 // and restarted cleanly
 func TestNoVolumeWithRestart(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -284,6 +298,7 @@ func TestNoVolumeWithRestart(t *testing.T) {
 // where `runmqserver -i` is run to initialize the storage.  Then the
 // container can be run as normal.
 func TestVolumeRequiresRoot(t *testing.T) {
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -346,6 +361,7 @@ func TestVolumeRequiresRoot(t *testing.T) {
 // TestCreateQueueManagerFail causes a failure of `crtmqm`
 func TestCreateQueueManagerFail(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -380,6 +396,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 // TestStartQueueManagerFail causes a failure of `strmqm`
 func TestStartQueueManagerFail(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -417,6 +434,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 // attached storage gets unmounted.
 func TestVolumeUnmount(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -465,6 +483,7 @@ func TestVolumeUnmount(t *testing.T) {
 // created, then checks that no zombies exist (runmqserver should reap them)
 func TestZombies(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -501,6 +520,7 @@ func TestZombies(t *testing.T) {
 // on that image, and checks that the MQSC has been applied correctly.
 func TestMQSC(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -618,6 +638,7 @@ func TestLargeMQSC(t *testing.T) {
 // WARNING: This test is sensitive to the speed of the machine it's running on.
 func TestReadiness(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -672,22 +693,34 @@ func TestReadiness(t *testing.T) {
 
 func TestErrorLogRotation(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	logsize := 65536
+
+	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "test -d /etc/apt")
+	if rc != 0 {
+		// RHEL
+		logsize = 32768
+	}
+
 	qmName := "qm1"
 	containerConfig := container.Config{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qmName,
-			"MQMAXERRORLOGSIZE=65536",
+			fmt.Sprintf("MQMAXERRORLOGSIZE=%d", logsize),
 			"LOG_FORMAT=json",
+			fmt.Sprintf("AMQ_EXTRA_QM_STANZAS=QMErrorLog:ErrorLogSize=%d", logsize),
 		},
 		ExposedPorts: nat.PortSet{
 			"1414/tcp": struct{}{},
 		},
 	}
+
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
@@ -695,6 +728,7 @@ func TestErrorLogRotation(t *testing.T) {
 	// Generate some content for the error logs, by trying to put messages under an unauthorized user
 	// execContainer(t, cli, id, "fred", []string{"bash", "-c", "for i in {1..30} ; do /opt/mqm/samp/bin/amqsput FAKE; done"})
 	execContainer(t, cli, id, "root", []string{"useradd", "fred"})
+
 	for {
 		execContainer(t, cli, id, "fred", []string{"bash", "-c", "/opt/mqm/samp/bin/amqsput FAKE"})
 
@@ -737,12 +771,14 @@ func TestErrorLogRotation(t *testing.T) {
 // Tests the log comes out in JSON format when JSON format is enabled. With metrics enabled
 func TestJSONLogFormatWithMetrics(t *testing.T) {
 	t.Parallel()
+
 	jsonLogFormat(t, true)
 }
 
 // Tests the log comes out in JSON format when JSON format is enabled. With metrics disabled
 func TestJSONLogFormatNoMetrics(t *testing.T) {
 	t.Parallel()
+
 	jsonLogFormat(t, false)
 }
 
@@ -783,6 +819,7 @@ func jsonLogFormat(t *testing.T, metric bool) {
 
 func TestBadLogFormat(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)

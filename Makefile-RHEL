@@ -28,7 +28,7 @@ MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION_VRM)_LINUX_$(MQ_ARCHIVE_ARCH).tar.gz
 # for Developers can be installed
 MQ_ARCHIVE_DEV ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # MQ_SDK_ARCHIVE specifies the archive to use for the MQ redistributable client, which is used for building the golang programs.
-MQ_SDK_ARCHIVE ?= $(MQ_VERSION)-IBM-MQC-Redist-LinuxX64.tar.gz
+MQ_SDK_ARCHIVE ?= 9.1.1.0-IBM-MQC-Redist-LinuxX64.tar.gz
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
 # MQ_IMAGE_ADVANCEDSERVER is the name and tag of the built MQ Advanced image

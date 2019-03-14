@@ -71,11 +71,12 @@ COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqserver /u
 COPY --from=builder /go/src/github.com/ibm-messaging/mq-container/runmqdevserver /usr/local/bin/
 
 # Copy template files
-COPY --chown=mqm:mqm incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
+COPY incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
 # Copy web XML files for default developer configuration
-COPY --chown=mqm:mqm incubating/mqadvanced-server-dev/web /etc/mqm/web
+COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
 
-RUN chmod +x /usr/local/bin/runmq* \
+RUN chown -R mqm:mqm /etc/mqm/* \
+  && chmod +x /usr/local/bin/runmq* \
   && install --directory --mode 0775 --owner mqm --group root /run/runmqdevserver
 
 EXPOSE 9443

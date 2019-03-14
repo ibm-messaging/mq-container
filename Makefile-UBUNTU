@@ -231,7 +231,7 @@ docker-version:
 
 .PHONY: build-advancedserver
 build-advancedserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE)
-build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version build-golang-sdk
+build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version build-golang-sdk-ex
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_ADVANCEDSERVER),Dockerfile-server,$(MQ_ARCHIVE),"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced",$(MQ_VERSION))
 
@@ -243,7 +243,7 @@ else
 build-devserver: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm MQSeriesWeb-*.rpm
 endif
 build-devserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE_DEV)
-build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk
+build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk-ex
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE)"$(END)))
 	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER_BASE),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 	$(DOCKER) build --tag $(MQ_IMAGE_DEVSERVER) --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" --build-arg IMAGE_TAG="$(MQ_IMAGE_DEVSERVER)" --build-arg BASE_IMAGE=$(MQ_IMAGE_DEVSERVER_BASE) --build-arg BUILDER_IMAGE=$(MQ_IMAGE_GOLANG_SDK) --build-arg MQM_UID=$(MQM_UID) --file incubating/mqadvanced-server-dev/Dockerfile .
@@ -253,6 +253,11 @@ build-advancedserver-cover: docker-version
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_IMAGE_ADVANCEDSERVER)-cover -f Dockerfile-server.cover .
 
 .PHONY: build-explorer 
+ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
+build-explorer: MQ_PACKAGES=ibmmq-explorer
+else 
+build-explorer: MQ_PACKAGES=MQSeriesRuntime*.rpm MQSeriesJRE*.rpm MQSeriesExplorer*.rpm 
+endif
 build-explorer: downloads/$(MQ_ARCHIVE_DEV) docker-pull
 	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
 
