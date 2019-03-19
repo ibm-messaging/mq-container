@@ -1,5 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <server>
+	<!-- ****************************************************************** -->
+	<!--                                                                    -->
+	<!--  IBM MQ security configuration for MQ Console and REST API.        -->
+	<!--                                                                    -->
+	<!--  Name: mqwebuser.xml                                               -->
+	<!--                                                                    -->
+	<!--  Description:  Default webconsole configuration                    -->
+	<!--                                                                    -->
+	<!-- ****************************************************************** -->
+	<!-- <copyright                                                         -->
+	<!--     notice='lm-source-program'                                     -->
+	<!--     pids='5724-H72'                                                -->
+	<!--     years='2018,2019'                                              -->
+	<!--     crc='0' >                                                      -->
+	<!--                                                                    -->
+	<!--     Licensed Materials - Property of IBM                           -->
+	<!--                                                                    -->
+	<!--     5724-H72                                                       -->
+	<!--                                                                    -->
+	<!--     (C) Copyright IBM Corp. 2018, 2019 All Rights Reserved.        -->
+	<!--                                                                    -->
+	<!--     US Government Users Restricted Rights - Use, duplication or    -->
+	<!--     disclosure restricted by GSA ADP Schedule Contract with        -->
+	<!--     IBM Corp.                                                      -->
+	<!-- </copyright>                                                       -->
     <featureManager>
         <feature>appSecurity-2.0</feature>
         <feature>basicAuthenticationMQ-1.0</feature>

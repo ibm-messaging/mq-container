@@ -1,5 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <server>
+	<!-- ****************************************************************** -->
+	<!--                                                                    -->
+	<!--  IBM MQ security configuration for MQ Console and REST API.        -->
+	<!--                                                                    -->
+	<!--  Name: mqwebuser.xml                                               -->
+	<!--                                                                    -->
+	<!--  Description:  Default webconsole configuration                    -->
+	<!--                                                                    -->
+	<!-- ****************************************************************** -->
+	<!-- <copyright                                                         -->
+	<!--     notice='lm-source-program'                                     -->
+	<!--     pids='5724-H72'                                                -->
+	<!--     years='2018,2019'                                              -->
+	<!--     crc='0' >                                                      -->
+	<!--                                                                    -->
+	<!--     Licensed Materials - Property of IBM                           -->
+	<!--                                                                    -->
+	<!--     5724-H72                                                       -->
+	<!--                                                                    -->
+	<!--     (C) Copyright IBM Corp. 2018, 2019 All Rights Reserved.        -->
+	<!--                                                                    -->
+	<!--     US Government Users Restricted Rights - Use, duplication or    -->
+	<!--     disclosure restricted by GSA ADP Schedule Contract with        -->
+	<!--     IBM Corp.                                                      -->
+	<!-- </copyright>                                                       -->
     <keyStore id="MQWebKeyStore" location="/run/runmqdevserver/tls/key.jks" type="JKS" password="${env.MQ_TLS_PASSPHRASE}"/>
     <keyStore id="MQWebTrustStore" location="/run/runmqdevserver/tls/trust.jks" type="JKS" password="${env.MQ_TLS_PASSPHRASE}"/>
     <ssl id="thisSSLConfig" clientAuthenticationSupported="true" keyStoreRef="MQWebKeyStore" trustStoreRef="MQWebTrustStore" sslProtocol="TLSv1.2" serverKeyAlias="devcert"/>
