@@ -125,6 +125,9 @@ buildah run --user root $ctr_mq -- /usr/local/bin/writePackages
 # Copy web XML files
 cp -R web ${mnt_mq}/etc/mqm/web
 
+# Copy web XML files
+cp -R web ${mnt_mq}/etc/mqm/web
+
 ###############################################################################
 # Final Buildah commands
 ###############################################################################

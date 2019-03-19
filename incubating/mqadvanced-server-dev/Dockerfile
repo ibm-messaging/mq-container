@@ -79,8 +79,6 @@ RUN chown -R mqm:mqm /etc/mqm/* \
   && chmod +x /usr/local/bin/runmq* \
   && install --directory --mode 0775 --owner mqm --group root /run/runmqdevserver
 
-EXPOSE 9443
-
 USER $MQM_UID
 
 ENTRYPOINT ["runmqdevserver"]
