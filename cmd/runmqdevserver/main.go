@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,16 +31,21 @@ import (
 var log *logger.Logger
 
 func setPassword(user string, password string) error {
-	cmd := exec.Command("chpasswd")
+	// #nosec G204
+	cmd := exec.Command("sudo", "chpasswd")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return err
 	}
 	fmt.Fprintf(stdin, "%s:%s", user, password)
-	stdin.Close()
-	_, _, err = command.RunCmd(cmd)
+	err = stdin.Close()
 	if err != nil {
-		return err
+		log.Errorf("Error closing password stdin: %v", err)
+	}
+	out, _, err := command.RunCmd(cmd)
+	if err != nil {
+		// Include the command output in the error
+		return fmt.Errorf("%v: %v", err.Error(), out)
 	}
 	log.Printf("Set password for \"%v\" user", user)
 	return nil
@@ -90,16 +95,16 @@ func configureWeb(qmName string) error {
 }
 
 func logTerminationf(format string, args ...interface{}) {
-	logTermination(fmt.Sprintf(format, args))
+	logTermination(fmt.Sprintf(format, args...))
 }
 
 // TODO: Duplicated code
 func logTermination(args ...interface{}) {
-	msg := fmt.Sprint(args)
-	// Write the message to the termination log.  This is the default place
+	msg := fmt.Sprint(args...)
+	// Write the message to the termination log.  This is not the default place
 	// that Kubernetes will look for termination information.
 	log.Debugf("Writing termination message: %v", msg)
-	err := ioutil.WriteFile("/dev/termination-log", []byte(msg), 0660)
+	err := ioutil.WriteFile("/run/termination-log", []byte(msg), 0660)
 	if err != nil {
 		log.Debug(err)
 	}
@@ -112,6 +117,9 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
+	logContainerDetails()
+
 	adminPassword, set := os.LookupEnv("MQ_ADMIN_PASSWORD")
 	if set {
 		err = setPassword("admin", adminPassword)
@@ -166,6 +174,10 @@ func main() {
 		osExit(1)
 	} else {
 		// Replace this process with runmqserver
-		syscall.Exec("/usr/local/bin/runmqserver", []string{"runmqserver"}, os.Environ())
+		// #nosec G204
+		err = syscall.Exec("/usr/local/bin/runmqserver", []string{"runmqserver", "-dev"}, os.Environ())
+		if err != nil {
+			log.Errorf("Error replacing this process with runmqserver: %v", err)
+		}
 	}
 }

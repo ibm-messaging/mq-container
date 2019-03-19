@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ func processMetrics(log *logger.Logger, qmName string) {
 				firstConnect = false
 				startChannel <- true
 			}
+			// #nosec G104
 			metrics, _ = initialiseMetrics(log)
 		}
 

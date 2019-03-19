@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,18 +33,18 @@ import (
 // var debug = false
 var log *logger.Logger
 
-var collectDiagOnFail bool = false
+var collectDiagOnFail = false
 
 func logTerminationf(format string, args ...interface{}) {
-	logTermination(fmt.Sprintf(format, args))
+	logTermination(fmt.Sprintf(format, args...))
 }
 
 func logTermination(args ...interface{}) {
-	msg := fmt.Sprint(args)
-	// Write the message to the termination log.  This is the default place
+	msg := fmt.Sprint(args...)
+	// Write the message to the termination log.  This is not the default place
 	// that Kubernetes will look for termination information.
 	log.Debugf("Writing termination message: %v", msg)
-	err := ioutil.WriteFile("/dev/termination-log", []byte(msg), 0660)
+	err := ioutil.WriteFile("/run/termination-log", []byte(msg), 0660)
 	if err != nil {
 		log.Debug(err)
 	}
@@ -108,8 +108,12 @@ func configureLogger(name string) (mirrorFunc, error) {
 		return func(msg string) {
 			// Parse the JSON message, and print a simplified version
 			var obj map[string]interface{}
-			json.Unmarshal([]byte(msg), &obj)
-			fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
+			err := json.Unmarshal([]byte(msg), &obj)
+			if err != nil {
+				fmt.Printf("Failed to Unmarshall JSON - %v", err)
+			} else {
+				fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
+			}
 		}, nil
 	default:
 		log, err = logger.NewLogger(os.Stdout, d, false, name)
@@ -124,20 +128,30 @@ func logDiagnostics() {
 	log.Debug("--- Start Diagnostics ---")
 
 	// show the directory ownership/permissions
+	// #nosec G104
 	out, _, _ := command.Run("ls", "-l", "/mnt/")
 	log.Debugf("/mnt/:\n%s", out)
+	// #nosec G104
 	out, _, _ = command.Run("ls", "-l", "/mnt/mqm")
 	log.Debugf("/mnt/mqm:\n%s", out)
+	// #nosec G104
 	out, _, _ = command.Run("ls", "-l", "/mnt/mqm/data")
 	log.Debugf("/mnt/mqm/data:\n%s", out)
+	// #nosec G104
+	out, _, _ = command.Run("ls", "-l", "/etc/mqm")
+	log.Debugf("/etc/mqm:\n%s", out)
+	// #nosec G104
 	out, _, _ = command.Run("ls", "-l", "/var/mqm")
 	log.Debugf("/var/mqm:\n%s", out)
+	// #nosec G104
 	out, _, _ = command.Run("ls", "-l", "/var/mqm/errors")
 	log.Debugf("/var/mqm/errors:\n%s", out)
 
 	// Print out summary of any FDCs
+	// #nosec G204
 	cmd := exec.Command("/opt/mqm/bin/ffstsummary")
 	cmd.Dir = "/var/mqm/errors"
+	// #nosec G104
 	outB, _ := cmd.CombinedOutput()
 	log.Debugf("ffstsummary:\n%s", string(outB))
 

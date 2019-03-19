@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ func GatherMetrics(qmName string, log *logger.Logger) {
 	err := startMetricsGathering(qmName, log)
 	if err != nil {
 		log.Errorf("Metrics Error: %s", err.Error())
-		StopMetricsGathering()
+		StopMetricsGathering(log)
 	}
 }
 
@@ -76,6 +76,7 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 	http.Handle("/metrics", prometheus.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
+		// #nosec G104
 		w.Write([]byte("Status: METRICS ACTIVE"))
 	})
 
@@ -83,7 +84,7 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 		err = metricsServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			log.Errorf("Metrics Error: Failed to handle metrics request: %v", err)
-			StopMetricsGathering()
+			StopMetricsGathering(log)
 		}
 	}()
 
@@ -91,7 +92,7 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 }
 
 // StopMetricsGathering stops gathering metrics for the queue manager
-func StopMetricsGathering() {
+func StopMetricsGathering(log *logger.Logger) {
 
 	if metricsEnabled {
 
@@ -101,6 +102,9 @@ func StopMetricsGathering() {
 		// Shutdown HTTP server
 		timeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		metricsServer.Shutdown(timeout)
+		err := metricsServer.Shutdown(timeout)
+		if err != nil {
+			log.Errorf("Failed to shutdown metrics server: %v", err)
+		}
 	}
 }

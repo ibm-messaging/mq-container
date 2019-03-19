@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017, 2019
+# © Copyright IBM Corporation 2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[[constraint]]
-  name = "github.com/docker/docker"
-  version = "=v17.03.2-ce"
+image: ibmcorp/mqadvanced-server-dev:9.1.1.0
+manifests:
+  - image: ibmcorp/mqadvanced-server-dev:9.1.1.0-x86_64
+    platform:
+      architecture: amd64
+      os: linux
+  - image: ibmcorp/mqadvanced-server-dev:9.1.1.0-ppc64le
+    platform:
+      architecture: ppc64le
+      os: linux
+  - image: ibmcorp/mqadvanced-server-dev:9.1.1.0-s390x
+    platform:
+      architecture: s390x
+      os: linux
 
-[[constraint]]
-  name = "github.com/docker/go-connections"
-  version = "0.4.0"
-
-[prune]
-  go-tests = true

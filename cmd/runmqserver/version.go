@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ var (
 	ImageRevision = "Not specified"
 	// ImageSource is the URL to get source code for building the image
 	ImageSource = "Not specified"
+	// ImageTag is the tag of the image
+	ImageTag = "Not specified"
 )
 
 func logDateStamp() {
@@ -41,6 +43,10 @@ func logGitRepo() {
 
 func logGitCommit() {
 	log.Printf("Image source: %v", ImageSource)
+}
+
+func logImageTag() {
+	log.Printf("Image tag: %v", ImageTag)
 }
 
 func logMQVersion() {
@@ -67,5 +73,6 @@ func logVersionInfo() {
 	logDateStamp()
 	logGitRepo()
 	logGitCommit()
+	logImageTag()
 	logMQVersion()
 }

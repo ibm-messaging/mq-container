@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ func createVolume(path string) error {
 	fi, err := os.Stat(dataPath)
 	if err != nil {
 		if os.IsNotExist(err) {
+			// #nosec G301
 			err = os.MkdirAll(dataPath, 0755)
 			if err != nil {
 				return err
@@ -55,6 +56,64 @@ func createVolume(path string) error {
 				log.Printf("Error: Unable to change ownership of %v", dataPath)
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+func createWebConsoleTLSDirStructure() error {
+	// Create tls directory
+	dir := "/run/tls"
+	_, err := os.Stat(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(dir, 0770)
+			if err != nil {
+				return err
+			}
+			mqmUID, mqmGID, err := command.LookupMQM()
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			err = os.Chown(dir, mqmUID, mqmGID)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	return nil
+}
+
+/* TODO: remove duplicated code */
+func createDevTLSDir() error {
+	// TODO: Use a persisted file (on the volume) instead?
+	dir := "/run/runmqdevserver/tls"
+
+	_, err := os.Stat(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// #nosec G301
+			err = os.MkdirAll(dir, 0770)
+			if err != nil {
+				return err
+			}
+			mqmUID, mqmGID, err := command.LookupMQM()
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			err = os.Chown(dir, mqmUID, mqmGID)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+		} else {
+			return err
 		}
 	}
 	return nil

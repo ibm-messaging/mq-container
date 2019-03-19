@@ -1,4 +1,7 @@
-# © Copyright IBM Corporation 2018
+#!/bin/bash
+# -*- mode: sh -*-
+# © Copyright IBM Corporation 2015, 2019
+#
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-image: ibmcom/mq:9
-manifests:
-  - image: ibmcom/mq:9.1.0.0-x86_64
-    platform:
-      architecture: amd64
-      os: linux
-  - image: ibmcom/mq:9.1.0.0-ppc64le
-    platform:
-      architecture: ppc64le
-      os: linux
-  - image: ibmcom/mq:9.1.0.0-s390x
-    platform:
-      architecture: s390x
-      os: linux
+# Install Docker and dep, required by build (assumes Ubuntu host, as used by Travis build)
 
+set -ex
+
+curl https://glide.sh/get | sh
+sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64
+sudo chmod +x /usr/local/bin/dep
+
+go get -u golang.org/x/lint/golint

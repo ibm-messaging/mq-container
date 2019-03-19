@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-ARG BASE_IMAGE=mq-sdk:9.0.5.0-x86_64-ubuntu-16.04
+ 
+ARG BASE_IMAGE=mq-sdk:9.1.1.0-x86_64-ubuntu-16.04
 
 FROM $BASE_IMAGE
 

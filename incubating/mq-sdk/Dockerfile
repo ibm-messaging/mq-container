@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ ARG MQ_URL
 # The packages to install in install-mq.sh
 ARG MQ_PACKAGES
 
+ARG MQM_UID=999
+
 COPY install-mq.sh /usr/local/bin/
 
 # Install MQ.  To avoid a "text file busy" error here, we sleep before installing.
@@ -30,6 +32,6 @@ COPY install-mq.sh /usr/local/bin/
 # errors with some commands (e.g. `dspmqver`)
 RUN chmod u+x /usr/local/bin/install-mq.sh \
   && sleep 1 \
-  && install-mq.sh \
+  && install-mq.sh $MQM_UID \
   && rm -rf /var/mqm \
   && /opt/mqm/bin/crtmqdir -f -s

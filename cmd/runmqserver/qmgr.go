@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ func createDirStructure() error {
 		return err
 	}
 	log.Println("Created directory structure under /var/mqm")
+
 	return nil
 }
 
@@ -90,6 +91,7 @@ func configureQueueManager() error {
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".mqsc") {
 			abs := filepath.Join(configDir, file.Name())
+			// #nosec G204
 			cmd := exec.Command("runmqsc")
 			stdin, err := cmd.StdinPipe()
 			if err != nil {
@@ -97,6 +99,7 @@ func configureQueueManager() error {
 				return err
 			}
 			// Open the MQSC file for reading
+			// #nosec G304
 			f, err := os.Open(abs)
 			if err != nil {
 				log.Printf("Error opening %v: %v", abs, err)
@@ -104,14 +107,20 @@ func configureQueueManager() error {
 			// Copy the contents to stdin of the runmqsc process
 			_, err = io.Copy(stdin, f)
 			if err != nil {
-				log.Printf("Error reading %v: %v", abs, err)
+				log.Errorf("Error reading %v: %v", abs, err)
 			}
-			f.Close()
-			stdin.Close()
+			err = f.Close()
+			if err != nil {
+				log.Errorf("Failed to close MQSC file handle: %v", err)
+			}
+			err = stdin.Close()
+			if err != nil {
+				log.Errorf("Failed to close MQSC stdin: %v", err)
+			}
 			// Run the command and wait for completion
 			out, err := cmd.CombinedOutput()
 			if err != nil {
-				log.Println(err)
+				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, strings.Replace(string(out), "\n", "\n\t", -1))
 			}
 			// Print the runmqsc output, adding tab characters to make it more readable as part of the log
 			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
@@ -122,7 +131,7 @@ func configureQueueManager() error {
 
 func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
-	out, _, err := command.Run("endmqm", "-w", name)
+	out, _, err := command.Run("endmqm", "-w", "-r", name)
 	if err != nil {
 		log.Printf("Error stopping queue manager: %v", string(out))
 		return err

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -139,7 +139,10 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 		// Always start at the beginning if we've been told to go from the start
 		if offset != 0 && !fromStart {
 			log.Debugf("Seeking offset %v in file %v", offset, path)
-			f.Seek(offset, 0)
+			_, err = f.Seek(offset, 0)
+			if err != nil {
+				log.Errorf("Unable to return to offset %v: %v", offset, err)
+			}
 		}
 		closing := false
 		for {
@@ -159,7 +162,10 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 				// could skip all those messages.  This could happen with a very small
 				// MQ error log size.
 				mirrorAvailableMessages(f, mf)
-				f.Close()
+				err = f.Close()
+				if err != nil {
+					log.Errorf("Unable to close mirror file handle: %v", err)
+				}
 				// Re-open file
 				log.Debugf("Re-opening error log file %v", path)
 				f, err = os.OpenFile(path, os.O_RDONLY, 0)

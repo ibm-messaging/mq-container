@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+dist: xenial
 
 sudo: required
 language: go
@@ -27,43 +29,51 @@ cache:
   directories:
     - downloads
 
-env:
-  - BASE_IMAGE=ubuntu:16.04
-# Commented out temporarily until Issue 166 is resolved
-#  - BASE_IMAGE=centos:latest
-
 jobs:
   include:
-    - if: type IN (pull_request)
-      env: DOCKER_DOWNGRADE="docker save -o images.tar mqadvanced-server-dev mq-dev-jms-test &&
-        sudo apt-get autoremove -y docker-ce &&
-        curl -fsSL \"https://apt.dockerproject.org/gpg\" | sudo apt-key add - &&
-        sudo apt-add-repository \"deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main\" &&
-        sudo apt-get update &&
-        sudo apt-get install docker-engine=1.12.6-0~ubuntu-$(lsb_release -cs) &&
-        docker load -q -i images.tar &&
-        export DOCKER_API_VERSION=\"1.24\""
-    - env: DOCKER_DOWNGRADE="echo nothing to be done"
+    - stage: build and test
+      env:
+        - BASE_IMAGE=ubuntu:16.04
+        - DOCKER_DOWNGRADE="echo nothing to be done"
+    - env:
+        - BASE_IMAGE=centos:7
+        - DOCKER_DOWNGRADE="echo nothing to be done"
+    - if: type IN (pull_request) OR tag IS present
+      env: 
+        - BASE_IMAGE=ubuntu:16.04
+        - DOCKER_DOWNGRADE="docker save -o images.tar mqadvanced-server-dev mq-dev-jms-test &&
+          sudo apt-get autoremove -y docker-ce &&
+          curl -fsSL \"https://apt.dockerproject.org/gpg\" | sudo apt-key add - &&
+          sudo apt-add-repository \"deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main\" &&
+          sudo apt-get update &&
+          sudo apt-get install docker-engine=1.12.6-0~ubuntu-$(lsb_release -cs) &&
+          docker load -q -i images.tar &&
+          export DOCKER_API_VERSION=\"1.24\""
 
 before_install:
-  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-  - sudo apt-get update
-  - sudo apt-get -y install docker-ce
-  - curl https://glide.sh/get | sh
-  - sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64
-  - sudo chmod +x /usr/local/bin/dep
+  - ./install-build-deps-ubuntu.sh
 
 install:
   - echo nothing
 
-script:
+before_script:
+  - echo 'Downloading Go dependencies...' && echo -en 'travis_fold:start:deps\\r'
   - make deps
+  - echo -en 'travis_fold:end:deps\\r'
+  - echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
   - make build-devserver
+  - echo -en 'travis_fold:end:build-devserver\\r'
+  - echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
   - make build-devjmstest
+  - echo -en 'travis_fold:end:build-devjmstest\\r'
+
+script:
+  - echo 'Downgrading Docker (if necessary)...' && echo -en 'travis_fold:start:docker-downgrade\\r'
   - eval "$DOCKER_DOWNGRADE"
+  - echo -en 'travis_fold:end:docker-downgrade\\r'
+  - echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
   - make test-devserver
+  - echo -en 'travis_fold:end:test-devserver\\r'
 
 after_success:
-  - go get golang.org/x/lint/golint
   - make lint

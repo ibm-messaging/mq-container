@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ func queueManagerHealthy() (bool, error) {
 		return false, err
 	}
 	// Specify the queue manager name, just in case someone's created a second queue manager
+	// #nosec G204
 	cmd := exec.Command("dspmq", "-n", "-m", name)
 	// Run the command and wait for completion
 	out, err := cmd.CombinedOutput()

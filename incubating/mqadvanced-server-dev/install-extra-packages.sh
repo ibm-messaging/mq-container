@@ -1,4 +1,7 @@
-# © Copyright IBM Corporation 2017, 2019
+#!/bin/bash
+# -*- mode: sh -*-
+# © Copyright IBM Corporation 2019
+#
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[[constraint]]
-  name = "github.com/docker/docker"
-  version = "=v17.03.2-ce"
+test -f /usr/bin/yum && RHEL=true || RHEL=false
+test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
 
-[[constraint]]
-  name = "github.com/docker/go-connections"
-  version = "0.4.0"
+if ($UBUNTU); then
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends sudo
+    rm -rf /var/lib/apt/lists/*
+fi
 
-[prune]
-  go-tests = true
+if ($RHEL); then
+    yum -y install sudo
+    yum -y clean all
+    rm -rf /var/cache/yum/*
+fi

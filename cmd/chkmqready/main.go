@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,5 +37,8 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	conn.Close()
+	err = conn.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
 }

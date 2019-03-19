@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,10 +34,13 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+
+	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 func TestLicenseNotSet(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -45,15 +48,16 @@ func TestLicenseNotSet(t *testing.T) {
 	containerConfig := container.Config{}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 5)
+	rc := waitForContainer(t, cli, id, 20*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
-	expectTerminationMessage(t)
+	expectTerminationMessage(t, cli, id)
 }
 
 func TestLicenseView(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -63,7 +67,7 @@ func TestLicenseView(t *testing.T) {
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 5)
+	rc := waitForContainer(t, cli, id, 20*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -77,12 +81,14 @@ func TestLicenseView(t *testing.T) {
 // TestGoldenPath starts a queue manager successfully when metrics are enabled
 func TestGoldenPathWithMetrics(t *testing.T) {
 	t.Parallel()
+
 	goldenPath(t, true)
 }
 
 // TestGoldenPath starts a queue manager successfully when metrics are disabled
 func TestGoldenPathNoMetrics(t *testing.T) {
 	t.Parallel()
+
 	goldenPath(t, false)
 }
 
@@ -106,10 +112,11 @@ func goldenPath(t *testing.T, metric bool) {
 	stopContainer(t, cli, id)
 }
 
-// TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
+// TestSecurityVulnerabilitiesUbuntu checks for any vulnerabilities in the image, as reported
 // by Ubuntu
-func TestSecurityVulnerabilities(t *testing.T) {
+func TestSecurityVulnerabilitiesUbuntu(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -135,6 +142,47 @@ func TestSecurityVulnerabilities(t *testing.T) {
 	}
 }
 
+// TestSecurityVulnerabilitiesRedHat checks for any vulnerabilities in the image, as reported
+// by Red Hat
+func TestSecurityVulnerabilitiesRedHat(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, ret, _ := command.Run("bash", "-c", "test -f /etc/redhat-release")
+	if ret != 0 {
+		t.Skip("Skipping test because host is not RedHat-based")
+	}
+	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "test -f /etc/redhat-release")
+	if rc != 0 {
+		t.Skip("Skipping test because container is not RedHat-based")
+	}
+	id, _, err := command.Run("sudo", "buildah", "from", imageName())
+	if err != nil {
+		t.Log(id)
+		t.Fatal(err)
+	}
+	id = strings.TrimSpace(id)
+	defer command.Run("buildah", "rm", id)
+	mnt, _, err := command.Run("sudo", "buildah", "mount", id)
+	if err != nil {
+		t.Log(mnt)
+		t.Fatal(err)
+	}
+	mnt = strings.TrimSpace(mnt)
+	out, _, err := command.Run("bash", "-c", "sudo cp /etc/yum.repos.d/* "+filepath.Join(mnt, "/etc/yum.repos.d/"))
+	if err != nil {
+		t.Log(out)
+		t.Fatal(err)
+	}
+	out, ret, _ = command.Run("bash", "-c", "yum --installroot="+mnt+" updateinfo list sec | grep /Sec")
+	if ret != 1 {
+		t.Errorf("Expected no vulnerabilities, found the following:\n%v", out)
+	}
+}
+
 func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName string) {
 	search := "QMNAME(" + expectedName + ")"
 	cli, err := client.NewEnvClient()
@@ -155,11 +203,13 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 }
 func TestNoQueueManagerName(t *testing.T) {
 	t.Parallel()
+
 	utilTestNoQueueManagerName(t, "test", "test")
 }
 
 func TestNoQueueManagerNameInvalidHostname(t *testing.T) {
 	t.Parallel()
+
 	utilTestNoQueueManagerName(t, "test-1", "test1")
 }
 
@@ -167,6 +217,7 @@ func TestNoQueueManagerNameInvalidHostname(t *testing.T) {
 // container and starts a new one with same volume. With metrics enabled
 func TestWithVolumeAndMetrics(t *testing.T) {
 	t.Parallel()
+
 	withVolume(t, true)
 }
 
@@ -174,6 +225,7 @@ func TestWithVolumeAndMetrics(t *testing.T) {
 // container and starts a new one with same volume. With metrics disabled
 func TestWithVolumeNoMetrics(t *testing.T) {
 	t.Parallel()
+
 	withVolume(t, false)
 }
 
@@ -225,6 +277,7 @@ func withVolume(t *testing.T, metric bool) {
 // and restarted cleanly
 func TestNoVolumeWithRestart(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -240,58 +293,139 @@ func TestNoVolumeWithRestart(t *testing.T) {
 	waitForReady(t, cli, id)
 }
 
-// TestCreateQueueManagerFail causes a failure of `crtmqm`
-func TestCreateQueueManagerFail(t *testing.T) {
-	t.Parallel()
+// TestVolumeRequiresRoot tests the case where only the root user can write
+// to the persistent volume.  In this case, an "init container" is needed,
+// where `runmqserver -i` is run to initialize the storage.  Then the
+// container can be run as normal.
+func TestVolumeRequiresRoot(t *testing.T) {
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	img, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
+	vol := createVolume(t, cli)
+	defer removeVolume(t, cli, vol.Name)
+
+	// Set permissions on the volume to only allow root to write it
+	// It's important that read and execute permissions are given to other users
+	rc, _ := runContainerOneShotWithVolume(t, cli, vol.Name+":/mnt/mqm:nocopy", "bash", "-c", "chown 65534:4294967294 /mnt/mqm/ && chmod 0755 /mnt/mqm/ && ls -lan /mnt/mqm/")
+	if rc != 0 {
+		t.Errorf("Expected one shot container to return rc=0, got rc=%v", rc)
+	}
+
+	containerConfig := container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			vol.Name + ":/mnt/mqm:nocopy",
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+
+	// Run an "init container" as root, with the "-i" option, to initialize the volume
+	containerConfig = container.Config{
+		Image:      imageName(),
+		Env:        []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=true"},
+		User:       "0",
+		Entrypoint: []string{"runmqserver", "-i"},
+	}
+	initCtr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+"Init")
 	if err != nil {
 		t.Fatal(err)
 	}
-	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
+	defer cleanContainer(t, cli, initCtr.ID)
+	t.Logf("Init container ID=%v", initCtr.ID)
+	startContainer(t, cli, initCtr.ID)
+	rc = waitForContainer(t, cli, initCtr.ID, 20*time.Second)
+	if rc != 0 {
+		t.Errorf("Expected init container to exit with rc=0, got rc=%v", rc)
+	}
+
+	containerConfig = container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=true"},
+	}
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+"Main")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, ctr.ID)
+	t.Logf("Main container ID=%v", ctr.ID)
+	startContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+}
+
+// TestCreateQueueManagerFail causes a failure of `crtmqm`
+func TestCreateQueueManagerFail(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		RUN echo '#!/bin/bash\nexit 999' > /opt/mqm/bin/crtmqm
+		RUN chown mqm:mqm /opt/mqm/bin/crtmqm
+		RUN chmod 6550 /opt/mqm/bin/crtmqm
+		USER mqm`, imageName())},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
 	containerConfig := container.Config{
-		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-		// Override the entrypoint to create the queue manager directory, but leave it empty.
-		// This will cause `crtmqm` to return with an exit code of 2.
-		Entrypoint: []string{"bash", "-c", "mkdir -p /mnt/mqm/data && mkdir -p /var/mqm/qmgrs/qm1 && exec " + oldEntrypoint},
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 10)
+	rc := waitForContainer(t, cli, id, 10*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
-	expectTerminationMessage(t)
+	expectTerminationMessage(t, cli, id)
 }
 
 // TestStartQueueManagerFail causes a failure of `strmqm`
 func TestStartQueueManagerFail(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	img, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
-	if err != nil {
-		t.Fatal(err)
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		RUN echo '#!/bin/bash\ndltmqm $@ && strmqm $@' > /opt/mqm/bin/strmqm
+		RUN chown mqm:mqm /opt/mqm/bin/strmqm
+		RUN chmod 6550 /opt/mqm/bin/strmqm
+		USER mqm`, imageName())},
 	}
-	oldEntrypoint := strings.Join(img.Config.Entrypoint, " ")
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
 	containerConfig := container.Config{
-		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=1"},
-		// Override the entrypoint to replace `strmqm` with a script which deletes the queue manager.
-		// This will cause `strmqm` to return with an exit code of 72.
-		Entrypoint: []string{"bash", "-c", "echo '#!/bin/bash\ndltmqm $@ && strmqm $@' > /opt/mqm/bin/strmqm && exec " + oldEntrypoint},
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 10)
+	rc := waitForContainer(t, cli, id, 20*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
-	expectTerminationMessage(t)
+	expectTerminationMessage(t, cli, id)
 }
 
 // TestVolumeUnmount runs a queue manager with a volume, and then forces an
@@ -300,6 +434,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 // attached storage gets unmounted.
 func TestVolumeUnmount(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -348,6 +483,7 @@ func TestVolumeUnmount(t *testing.T) {
 // created, then checks that no zombies exist (runmqserver should reap them)
 func TestZombies(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -384,6 +520,7 @@ func TestZombies(t *testing.T) {
 // on that image, and checks that the MQSC has been applied correctly.
 func TestMQSC(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -391,7 +528,13 @@ func TestMQSC(t *testing.T) {
 	var files = []struct {
 		Name, Body string
 	}{
-		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD test.mqsc /etc/mqm/", imageName())},
+		{"Dockerfile", fmt.Sprintf(`
+		  FROM %v
+		  USER root
+		  RUN rm -f /etc/mqm/*.mqsc
+		  ADD test.mqsc /etc/mqm/
+		  RUN chmod 0660 /etc/mqm/test.mqsc
+		  USER mqm`, imageName())},
 		{"test.mqsc", "DEFINE QLOCAL(test)"},
 	}
 	tag := createImage(t, cli, files)
@@ -411,11 +554,48 @@ func TestMQSC(t *testing.T) {
 	}
 }
 
+// TestInvalidMQSC creates a new image with an MQSC file containing invalid MQSC,
+// tries to start a container based on that image, and checks that container terminates
+// func TestInvalidMQSC(t *testing.T) {
+// 	t.Parallel()
+// 	cli, err := client.NewEnvClient()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	var files = []struct {
+// 		Name, Body string
+// 	}{
+// 		{"Dockerfile", fmt.Sprintf(`
+// 		FROM %v
+// 		USER root
+// 		RUN rm -f /etc/mqm/*.mqsc
+// 		ADD mqscTest.mqsc /etc/mqm/
+// 		RUN chmod 0660 /etc/mqm/mqscTest.mqsc
+// 		USER mqm`, imageName())},
+// 		{"mqscTest.mqsc", "DEFINE INVALIDLISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE"},
+// 	}
+// 	tag := createImage(t, cli, files)
+// 	defer deleteImage(t, cli, tag)
+
+// 	containerConfig := container.Config{
+// 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+// 		Image: tag,
+// 	}
+// 	id := runContainer(t, cli, &containerConfig)
+// 	defer cleanContainer(t, cli, id)
+// 	rc := waitForContainer(t, cli, id, 60*time.Second)
+// 	if rc != 1 {
+// 		t.Errorf("Expected rc=1, got rc=%v", rc)
+// 	}
+// 	expectTerminationMessage(t, cli, id)
+// }
+
 // TestReadiness creates a new image with large amounts of MQSC in, to
 // ensure that the readiness check doesn't pass until configuration has finished.
 // WARNING: This test is sensitive to the speed of the machine it's running on.
 func TestReadiness(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -428,7 +608,13 @@ func TestReadiness(t *testing.T) {
 	var files = []struct {
 		Name, Body string
 	}{
-		{"Dockerfile", fmt.Sprintf("FROM %v\nRUN rm -f /etc/mqm/*.mqsc\nADD test.mqsc /etc/mqm/", imageName())},
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		RUN rm -f /etc/mqm/*.mqsc
+		ADD test.mqsc /etc/mqm/
+		RUN chmod 0660 /etc/mqm/test.mqsc
+		USER mqm`, imageName())},
 		{"test.mqsc", buf.String()},
 	}
 	tag := createImage(t, cli, files)
@@ -464,22 +650,34 @@ func TestReadiness(t *testing.T) {
 
 func TestErrorLogRotation(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	logsize := 65536
+
+	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "test -d /etc/apt")
+	if rc != 0 {
+		// RHEL
+		logsize = 32768
+	}
+
 	qmName := "qm1"
 	containerConfig := container.Config{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qmName,
-			"MQMAXERRORLOGSIZE=65536",
+			fmt.Sprintf("MQMAXERRORLOGSIZE=%d", logsize),
 			"LOG_FORMAT=json",
+			fmt.Sprintf("AMQ_EXTRA_QM_STANZAS=QMErrorLog:ErrorLogSize=%d", logsize),
 		},
 		ExposedPorts: nat.PortSet{
 			"1414/tcp": struct{}{},
 		},
 	}
+
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
@@ -487,6 +685,7 @@ func TestErrorLogRotation(t *testing.T) {
 	// Generate some content for the error logs, by trying to put messages under an unauthorized user
 	// execContainer(t, cli, id, "fred", []string{"bash", "-c", "for i in {1..30} ; do /opt/mqm/samp/bin/amqsput FAKE; done"})
 	execContainer(t, cli, id, "root", []string{"useradd", "fred"})
+
 	for {
 		execContainer(t, cli, id, "fred", []string{"bash", "-c", "/opt/mqm/samp/bin/amqsput FAKE"})
 
@@ -529,12 +728,14 @@ func TestErrorLogRotation(t *testing.T) {
 // Tests the log comes out in JSON format when JSON format is enabled. With metrics enabled
 func TestJSONLogFormatWithMetrics(t *testing.T) {
 	t.Parallel()
+
 	jsonLogFormat(t, true)
 }
 
 // Tests the log comes out in JSON format when JSON format is enabled. With metrics disabled
 func TestJSONLogFormatNoMetrics(t *testing.T) {
 	t.Parallel()
+
 	jsonLogFormat(t, false)
 }
 
@@ -575,6 +776,7 @@ func jsonLogFormat(t *testing.T, metric bool) {
 
 func TestBadLogFormat(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -587,11 +789,11 @@ func TestBadLogFormat(t *testing.T) {
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 5)
+	rc := waitForContainer(t, cli, id, 20*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
-	expectTerminationMessage(t)
+	expectTerminationMessage(t, cli, id)
 }
 
 // TestMQJSONDisabled tests the case where MQ's JSON logging feature is

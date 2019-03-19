@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -43,12 +45,23 @@ func startWebServer() error {
 		// Take all current environment variables, and add the app password
 		cmd.Env = append(os.Environ(), "MQ_APP_PASSWORD=passw0rd")
 	}
-	cmd.SysProcAttr = &syscall.SysProcAttr{}
 	uid, gid, err := command.LookupMQM()
 	if err != nil {
 		return err
 	}
-	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
+	u, err := user.Current()
+	if err != nil {
+		return err
+	}
+	currentUID, err := strconv.Atoi(u.Uid)
+	if err != nil {
+		return fmt.Errorf("Error converting UID to string: %v", err)
+	}
+	// Add credentials to run as 'mqm', only if we aren't already 'mqm'
+	if currentUID != uid {
+		cmd.SysProcAttr = &syscall.SysProcAttr{}
+		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
+	}
 	out, rc, err := command.RunCmd(cmd)
 	if err != nil {
 		log.Printf("Error %v starting web server: %v", rc, string(out))
@@ -123,34 +136,14 @@ func configureSSO_TLS() error {
 
 	// Create tls directory
 	dir := "/run/tls"
-	_, err := os.Stat(dir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.MkdirAll(dir, 0770)
-			if err != nil {
-				return err
-			}
-			mqmUID, mqmGID, err := command.LookupMQM()
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			err = os.Chown(dir, mqmUID, mqmGID)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-		} else {
-			return err
-		}
-	}
+	mntdir := "/mnt/tls/"
 
 	// Setup key store & trust store
 	ks := keystore.NewJKSKeyStore(filepath.Join(dir, "key.jks"), "password")
 	ts := keystore.NewJKSKeyStore(filepath.Join(dir, "trust.jks"), "password")
 
 	log.Debug("Creating key store")
-	err = ks.Create(log)
+	err := ks.Create(log)
 	if err != nil {
 		return err
 	}
@@ -160,12 +153,12 @@ func configureSSO_TLS() error {
 		return err
 	}
 	log.Debug("Generating PKCS12 file")
-	err = ks.GeneratePKCS12("/mnt/tls/tls.key", "/mnt/tls/tls.crt", "/run/tls/tls.p12", "default", "password")
+	err = ks.GeneratePKCS12(filepath.Join(mntdir, "tls.key"), filepath.Join(mntdir, "tls.crt"), filepath.Join(dir, "tls.p12"), "default", "password")
 	if err != nil {
 		return err
 	}
 	log.Debug("Importing certificate into key store")
-	err = ks.Import("/run/tls/tls.p12", "password")
+	err = ks.Import(filepath.Join(dir, "tls.p12"), "password")
 	if err != nil {
 		return err
 	}
@@ -188,10 +181,6 @@ func configureWebServer() error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return err
-	}
-	uid, gid, err := command.LookupMQM()
-	if err != nil {
 		return err
 	}
 	const prefix string = "/etc/mqm/web"
@@ -228,10 +217,6 @@ func configureWebServer() error {
 				log.Error(err)
 				return err
 			}
-		}
-		err = os.Chown(to, uid, gid)
-		if err != nil {
-			return err
 		}
 		return nil
 	})

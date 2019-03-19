@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"os"
 	"sync"
 
@@ -29,12 +30,35 @@ import (
 )
 
 func doMain() error {
+	var initFlag = flag.Bool("i", false, "initialize volume only, then exit")
+	var infoFlag = flag.Bool("info", false, "Display debug info, then exit")
+	var devFlag = flag.Bool("dev", false, "used when running this program from runmqdevserver to control log output")
+	flag.Parse()
+
 	name, nameErr := name.GetQueueManagerName()
 	mf, err := configureLogger(name)
 	if err != nil {
 		logTermination(err)
 		return err
 	}
+
+	// Check whether they only want debug info
+	if *infoFlag {
+		logVersionInfo()
+		err = logContainerDetails()
+		if err != nil {
+			log.Printf("Error displaying container details: %v", err)
+		}
+		return nil
+	}
+
+	err = verifySingleProcess()
+	if err != nil {
+		// We don't do the normal termination here as it would create a termination file.
+		log.Error(err)
+		return err
+	}
+
 	if nameErr != nil {
 		logTermination(err)
 		return err
@@ -61,16 +85,12 @@ func doMain() error {
 	// Enable diagnostic collecting on failure
 	collectDiagOnFail = true
 
-	err = verifyCurrentUser()
-	if err != nil {
-		logTermination(err)
-		return err
-	}
-
-	err = logConfig()
-	if err != nil {
-		logTermination(err)
-		return err
+	if *devFlag == false {
+		err = logContainerDetails()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	err = createVolume("/mnt/mqm")
@@ -82,6 +102,25 @@ func doMain() error {
 	if err != nil {
 		logTermination(err)
 		return err
+	}
+
+	err = createWebConsoleTLSDirStructure()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	if *devFlag == true {
+		err = createDevTLSDir()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+
+	// If init flag is set, exit now
+	if *initFlag {
+		return nil
 	}
 
 	// Print out versioning information
@@ -129,7 +168,11 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
-	configureQueueManager()
+	err = configureQueueManager()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
 
 	enableMetrics := os.Getenv("MQ_ENABLE_METRICS")
 	if enableMetrics == "true" || enableMetrics == "1" {
@@ -145,7 +188,11 @@ func doMain() error {
 	// Reap zombies now, just in case we've already got some
 	signalControl <- reapNow
 	// Write a file to indicate that chkmqready should now work as normal
-	ready.Set()
+	err = ready.Set()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
 	// Wait for terminate signal
 	<-signalControl
 	return nil

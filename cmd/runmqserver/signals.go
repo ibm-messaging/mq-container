@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,7 +43,8 @@ func signalHandler(qmgr string) chan int {
 				log.Printf("Signal received: %v", sig)
 				signal.Stop(reapSignals)
 				signal.Stop(stopSignals)
-				metrics.StopMetricsGathering()
+				metrics.StopMetricsGathering(log)
+				// #nosec G104
 				stopQueueManager(qmgr)
 				// One final reap
 				reapZombies()

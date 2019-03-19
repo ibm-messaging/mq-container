@@ -1,4 +1,7 @@
-# © Copyright IBM Corporation 2017, 2019
+#!/bin/bash
+# -*- mode: sh -*-
+# © Copyright IBM Corporation 2018, 2019
+#
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[[constraint]]
-  name = "github.com/docker/docker"
-  version = "=v17.03.2-ce"
+# Copy in licenses from installed packages
 
-[[constraint]]
-  name = "github.com/docker/go-connections"
-  version = "0.4.0"
+set -e 
 
-[prune]
-  go-tests = true
+rm -f /licenses/installed_package_notices
+
+for p in $(rpm -qa | sort)
+do 
+  rpm -qi $p >> /licenses/installed_package_notices
+  printf "\n" >> /licenses/installed_package_notices
+done
+
+chmod 0444 /licenses/installed_package_notices

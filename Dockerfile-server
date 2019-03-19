@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2018
+# © Copyright IBM Corporation 2015, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=ubuntu:16.04
-ARG BUILDER_IMAGE=mq-golang-sdk:9.0.5.0-x86_64-ubuntu-16.04
+ARG BUILDER_IMAGE=mq-golang-sdk:9.1.1.0-x86_64-ubuntu-16.04
 
 ###############################################################################
 # Build stage to build Go code
@@ -22,10 +22,11 @@ FROM $BUILDER_IMAGE as builder
 WORKDIR /go/src/github.com/ibm-messaging/mq-container/
 ARG IMAGE_REVISION="Not specified"
 ARG IMAGE_SOURCE="Not specified"
+ARG IMAGE_TAG="Not specified"
 COPY cmd/ ./cmd
 COPY internal/ ./internal
 COPY vendor/ ./vendor
-RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\"" ./cmd/runmqserver/
+RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\" -X \"main.ImageTag=$IMAGE_TAG\"" ./cmd/runmqserver/
 RUN go build ./cmd/chkmqready/
 RUN go build ./cmd/chkmqhealthy/
 # Run all unit tests
@@ -47,12 +48,15 @@ ARG MQ_URL
 # The MQ packages to install - see install-mq.sh for default value
 ARG MQ_PACKAGES
 
+# The UID to use for the "mqm" user
+ARG MQM_UID=999
+
 COPY install-mq.sh /usr/local/bin/
 
 # Install MQ.  To avoid a "text file busy" error here, we sleep before installing.
 RUN chmod u+x /usr/local/bin/install-mq.sh \
   && sleep 1 \
-  && install-mq.sh
+  && install-mq.sh $MQM_UID
 
 # Create a directory for runtime data from runmqserver
 RUN mkdir -p /run/runmqserver \
@@ -64,7 +68,12 @@ COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
 
 RUN chmod ug+x /usr/local/bin/runmqserver \
   && chown mqm:mqm /usr/local/bin/*mq* \
-  && chmod ug+xs /usr/local/bin/chkmq*
+  && chmod ug+xs /usr/local/bin/chkmq* \
+  && install --directory --mode 0775 --owner mqm --group root /run/runmqserver \
+  && install --directory --mode 0775 --owner mqm --group root /run/tls \
+  && touch /run/termination-log \
+  && chown mqm:root /run/termination-log \
+  && chmod 0660 /run/termination-log
 
 # Always use port 1414 for MQ, 9157 for the metrics & 9443 for the web console
 EXPOSE 1414 9157 9443
@@ -73,5 +82,7 @@ EXPOSE 1414 9157 9443
 COPY web /etc/mqm/web
 
 ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1 LOG_FORMAT=basic
+
+USER $MQM_UID
 
 ENTRYPOINT ["runmqserver"]

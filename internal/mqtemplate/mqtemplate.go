@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/logger"
 )
 
@@ -38,13 +37,8 @@ func ProcessTemplateFile(templateFile, destFile string, data interface{}, log *l
 	_, err = os.Stat(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			os.MkdirAll(dir, 0660)
-			mqmUID, mqmGID, err := command.LookupMQM()
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			err = os.Chown(dir, mqmUID, mqmGID)
+			// #nosec G301
+			err = os.MkdirAll(dir, 0770)
 			if err != nil {
 				log.Error(err)
 				return err
@@ -53,19 +47,10 @@ func ProcessTemplateFile(templateFile, destFile string, data interface{}, log *l
 			return err
 		}
 	}
+	// #nosec G302
 	f, err := os.OpenFile(destFile, os.O_CREATE|os.O_WRONLY, 0660)
 	defer f.Close()
 	err = t.Execute(f, data)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	mqmUID, mqmGID, err := command.LookupMQM()
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	err = os.Chown(destFile, mqmUID, mqmGID)
 	if err != nil {
 		log.Error(err)
 		return err

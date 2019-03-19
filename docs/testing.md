@@ -8,6 +8,12 @@ You need to ensure you have the following tools installed:
 * [dep](https://github.com/golang/dep) (official Go dependency management tool) - needed to prepare for running the tests
 * [Helm](https://helm.sh) - only needed for running the Kubernetes tests
 
+### Prerequisites for testing a RedHat image
+If you want to test a container image with Red Hat Enterprise Linux as the base OS, then you need to use a host server with Red Hat Enterprise Linux.  You must also have the following tools installed:
+
+* [Yum](http://yum.baseurl.org/) (available in `rhel-7-server-extras`)
+* [Buildah](https://buildah.io) (available in `rhel-7-server-extras`)
+
 ## Running the tests
 There are two main sets of tests:
 
@@ -25,7 +31,7 @@ make test-advancedserver
 You can specify the image to use directly by using the `MQ_IMAGE_ADVANCEDSERVER` or `MQ_IMAGE_DEVSERVER` variables, for example:
 
 ```
-MQ_IMAGE_ADVANCEDSERVER=mqadvanced-server:9.1.0.0-x86_64-ubuntu-16.04 make test-advancedserver
+MQ_IMAGE_ADVANCEDSERVER=mqadvanced-server:9.1.1.0-x86_64-ubuntu-16.04 make test-advancedserver
 ```
 
 You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command::
@@ -34,10 +40,10 @@ You can pass parameters to `go test` with an environment variable.  For example,
 TEST_OPTS_DOCKER="-run TestGoldenPath" make test-advancedserver
 ```
 
-You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `mqadvanced-server:9.0.5.0-x86_64-ubuntu-16.04`:
+You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `mqadvanced-server:9.1.0.0-x86_64-ubuntu-16.04`:
 
 ```
-MQ_VERSION=9.0.5.0 make test-advancedserver
+MQ_VERSION=9.1.0.0 make test-advancedserver
 ```
 
 ### Running the Docker tests with code coverage

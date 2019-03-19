@@ -1,5 +1,30 @@
 # Change log
 
+## vNext
+
+* Now runs using the "mqm" user instead of root.  See new [security doc](https://github.com/ibm-messaging/mq-container/blob/master/docs/security.md)
+* New [IGNSTATE](https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.pro.doc/q132310_.htm#q132310___ignstateparm) parameter used in default developer config
+* Termination log moved from `/dev/termination-log` to `/run/termination-log`, to make permissions easier to handle
+* Fixes for the following issues:
+    * Brackets no longer appear in termination log
+    * Test timeouts weren't being used correctly
+
+## 9.1.1.0 (2018-11-30)
+
+* Updated to MQ version 9.1.1.0
+* Created seperate RedHat Makefile for building images on RedHat machines with buildah
+* Enabled REST messaging capability for app user.
+* Added support for container supplementary groups
+* Removed IBM MQ version 9.0.5 details.
+* Added additional Diagnostics ([#203](https://github.com/ibm-messaging/mq-container/pull/203))
+* Implementted GOSec to perform code scans for security vulnerabilities. (([#227](https://github.com/ibm-messaging/mq-container/pull/227)))
+* Removed Queue manager create option from the MQ Console.
+* Fixes for the following issues:
+    * Check explicitly for `/mnt/mqm` ([#175](https://github.com/ibm-messaging/mq-container/pull/175))
+    * Force string output in chkmqhealthy ([#174](https://github.com/ibm-messaging/mq-container/pull/174))
+    * Use -aG not -G when adding a group for a user
+    * Security fixes for libsystemd0 systemd systemd-sysv & libudev1
+
 ## 9.1.0.0 (2018-07-23)
 
 * Updated to MQ version 9.1.0.0
