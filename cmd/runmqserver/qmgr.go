@@ -34,6 +34,7 @@ func createDirStructure() error {
 		return err
 	}
 	log.Println("Created directory structure under /var/mqm")
+
 	return nil
 }
 

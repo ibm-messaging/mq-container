@@ -22,7 +22,6 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/logger"
 )
 
@@ -44,16 +43,6 @@ func ProcessTemplateFile(templateFile, destFile string, data interface{}, log *l
 				log.Error(err)
 				return err
 			}
-			mqmUID, mqmGID, err := command.LookupMQM()
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			err = os.Chown(dir, mqmUID, mqmGID)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
 		} else {
 			return err
 		}
@@ -62,16 +51,6 @@ func ProcessTemplateFile(templateFile, destFile string, data interface{}, log *l
 	f, err := os.OpenFile(destFile, os.O_CREATE|os.O_WRONLY, 0660)
 	defer f.Close()
 	err = t.Execute(f, data)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	mqmUID, mqmGID, err := command.LookupMQM()
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	err = os.Chown(destFile, mqmUID, mqmGID)
 	if err != nil {
 		log.Error(err)
 		return err

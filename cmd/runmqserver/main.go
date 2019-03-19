@@ -104,6 +104,20 @@ func doMain() error {
 		return err
 	}
 
+	err = createWebConsoleTLSDirStructure()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	if *devFlag == true {
+		err = createDevTLSDir()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+
 	// If init flag is set, exit now
 	if *initFlag {
 		return nil

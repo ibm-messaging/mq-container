@@ -274,9 +274,7 @@ build-golang-sdk: downloads/$(MQ_SDK_ARCHIVE) build-golang-sdk-ex
 .PHONY: build-golang-sdk-ex
 build-golang-sdk-ex: docker-version build-sdk-ex
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_GOLANG_SDK)"$(END)))
-	@echo hello
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_SDK) -t $(MQ_IMAGE_GOLANG_SDK) -f incubating/mq-golang-sdk/Dockerfile .
-	@echo goodbye
 
 .PHONY: docker-pull
 docker-pull:

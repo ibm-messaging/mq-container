@@ -99,17 +99,6 @@ func (ks *KeyStore) Create(log *logger.Logger) error {
 	if err != nil {
 		return fmt.Errorf("error running \"%v -keydb -create\": %v %s", ks.command, err, out)
 	}
-
-	mqmUID, mqmGID, err := command.LookupMQM()
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	err = os.Chown(ks.Filename, mqmUID, mqmGID)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
 	return nil
 }
 
@@ -126,16 +115,6 @@ func (ks *KeyStore) CreateStash(log *logger.Logger) error {
 				return fmt.Errorf("error running \"%v -keydb -stashpw\": %v %s", ks.command, err, out)
 			}
 		}
-		return err
-	}
-	mqmUID, mqmGID, err := command.LookupMQM()
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	err = os.Chown(stashFile, mqmUID, mqmGID)
-	if err != nil {
-		log.Error(err)
 		return err
 	}
 	return nil

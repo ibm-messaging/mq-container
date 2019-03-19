@@ -138,6 +138,9 @@ func logDiagnostics() {
 	out, _, _ = command.Run("ls", "-l", "/mnt/mqm/data")
 	log.Debugf("/mnt/mqm/data:\n%s", out)
 	// #nosec G104
+	out, _, _ = command.Run("ls", "-l", "/etc/mqm")
+	log.Debugf("/etc/mqm:\n%s", out)
+	// #nosec G104
 	out, _, _ = command.Run("ls", "-l", "/var/mqm")
 	log.Debugf("/var/mqm:\n%s", out)
 	// #nosec G104

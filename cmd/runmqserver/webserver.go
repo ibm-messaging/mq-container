@@ -136,34 +136,14 @@ func configureSSO_TLS() error {
 
 	// Create tls directory
 	dir := "/run/tls"
-	_, err := os.Stat(dir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.MkdirAll(dir, 0770)
-			if err != nil {
-				return err
-			}
-			mqmUID, mqmGID, err := command.LookupMQM()
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			err = os.Chown(dir, mqmUID, mqmGID)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-		} else {
-			return err
-		}
-	}
+	mntdir := "/mnt/tls/"
 
 	// Setup key store & trust store
 	ks := keystore.NewJKSKeyStore(filepath.Join(dir, "key.jks"), "password")
 	ts := keystore.NewJKSKeyStore(filepath.Join(dir, "trust.jks"), "password")
 
 	log.Debug("Creating key store")
-	err = ks.Create(log)
+	err := ks.Create(log)
 	if err != nil {
 		return err
 	}
@@ -173,12 +153,12 @@ func configureSSO_TLS() error {
 		return err
 	}
 	log.Debug("Generating PKCS12 file")
-	err = ks.GeneratePKCS12("/mnt/tls/tls.key", "/mnt/tls/tls.crt", "/run/tls/tls.p12", "default", "password")
+	err = ks.GeneratePKCS12(filepath.Join(mntdir, "tls.key"), filepath.Join(mntdir, "tls.crt"), filepath.Join(dir, "tls.p12"), "default", "password")
 	if err != nil {
 		return err
 	}
 	log.Debug("Importing certificate into key store")
-	err = ks.Import("/run/tls/tls.p12", "password")
+	err = ks.Import(filepath.Join(dir, "tls.p12"), "password")
 	if err != nil {
 		return err
 	}
@@ -201,10 +181,6 @@ func configureWebServer() error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return err
-	}
-	uid, gid, err := command.LookupMQM()
-	if err != nil {
 		return err
 	}
 	const prefix string = "/etc/mqm/web"
@@ -241,10 +217,6 @@ func configureWebServer() error {
 				log.Error(err)
 				return err
 			}
-		}
-		err = os.Chown(to, uid, gid)
-		if err != nil {
-			return err
 		}
 		return nil
 	})
