@@ -89,10 +89,10 @@ func createWebConsoleTLSDirStructure() error {
 	return nil
 }
 
+/* TODO: remove duplicated code */
 func createDevTLSDir() error {
 	// TODO: Use a persisted file (on the volume) instead?
-	par := "/run/runmqdevserver"
-	dir := filepath.Join(par, "tls")
+	dir := "/run/runmqdevserver/tls"
 
 	_, err := os.Stat(dir)
 	if err != nil {
@@ -112,12 +112,6 @@ func createDevTLSDir() error {
 				log.Error(err)
 				return err
 			}
-			err = os.Chown(par, mqmUID, mqmGID)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-
 		} else {
 			return err
 		}

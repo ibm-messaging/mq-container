@@ -20,6 +20,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/keystore"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 )
@@ -62,9 +63,14 @@ func configureWebTLS(cms *keystore.KeyStore) error {
 }
 
 func configureTLS(qmName string, inputFile string, passPhrase string) error {
+	err := createDevTLSDir()
+	if err != nil {
+		return err
+	}
+
 	log.Debug("Configuring TLS")
 
-	_, err := os.Stat(inputFile)
+	_, err = os.Stat(inputFile)
 	if err != nil {
 		return err
 	}
@@ -128,5 +134,34 @@ func configureTLS(qmName string, inputFile string, passPhrase string) error {
 		return err
 	}
 
+	return nil
+}
+
+func createDevTLSDir() error {
+	// TODO: Use a persisted file (on the volume) instead?
+	dir := "/run/runmqdevserver/tls"
+
+	_, err := os.Stat(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// #nosec G301
+			err = os.MkdirAll(dir, 0770)
+			if err != nil {
+				return err
+			}
+			mqmUID, mqmGID, err := command.LookupMQM()
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			err = os.Chown(dir, mqmUID, mqmGID)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+		} else {
+			return err
+		}
+	}
 	return nil
 }
