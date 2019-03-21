@@ -31,7 +31,7 @@ make test-advancedserver
 You can specify the image to use directly by using the `MQ_IMAGE_ADVANCEDSERVER` or `MQ_IMAGE_DEVSERVER` variables, for example:
 
 ```
-MQ_IMAGE_ADVANCEDSERVER=mqadvanced-server:9.1.1.0-x86_64-ubuntu-16.04 make test-advancedserver
+MQ_IMAGE_ADVANCEDSERVER=mqadvanced-server:9.1.2.0-x86_64-ubuntu-16.04 make test-advancedserver
 ```
 
 You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command::
@@ -40,10 +40,10 @@ You can pass parameters to `go test` with an environment variable.  For example,
 TEST_OPTS_DOCKER="-run TestGoldenPath" make test-advancedserver
 ```
 
-You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `mqadvanced-server:9.1.0.0-x86_64-ubuntu-16.04`:
+You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `mqadvanced-server:9.1.2.0-x86_64-ubuntu-16.04`:
 
 ```
-MQ_VERSION=9.1.0.0 make test-advancedserver
+MQ_VERSION=9.1.2.0 make test-advancedserver
 ```
 
 ### Running the Docker tests with code coverage
