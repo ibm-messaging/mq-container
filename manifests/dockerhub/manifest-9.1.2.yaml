@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-image: ibmcom/mq:latest
+image: ibmcom/mq:9.1.2.0
 manifests:
   - image: ibmcom/mq:9.1.2.0-x86_64
     platform:
