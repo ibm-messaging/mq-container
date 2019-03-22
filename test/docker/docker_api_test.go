@@ -554,6 +554,49 @@ func TestMQSC(t *testing.T) {
 	}
 }
 
+// TestLargeMQSC creates a new image with a large MQSC file in, starts a container based
+// on that image, and checks that the MQSC has been applied correctly.
+func TestLargeMQSC(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const numQueues = 1000
+	var buf bytes.Buffer
+	for i := 1; i <= numQueues; i++ {
+		fmt.Fprintf(&buf, "* Test processing of a large MQSC file, defining queue test%v\nDEFINE QLOCAL(test%v)\n", i, i)
+	}
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+          FROM %v
+          USER root
+          RUN rm -f /etc/mqm/*.mqsc
+          ADD test.mqsc /etc/mqm/
+          RUN chmod 0660 /etc/mqm/test.mqsc
+          USER mqm`, imageName())},
+		{"test.mqsc", buf.String()},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	rc, mqscOutput := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test" + strconv.Itoa(numQueues) + ")' | runmqsc"})
+	if rc != 0 {
+		r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
+		t.Fatalf("Expected runmqsc to exit with rc=0, got %v with error %v", rc, r.FindString(mqscOutput))
+	}
+}
+
 // TestInvalidMQSC creates a new image with an MQSC file containing invalid MQSC,
 // tries to start a container based on that image, and checks that container terminates
 // func TestInvalidMQSC(t *testing.T) {
