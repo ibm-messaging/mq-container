@@ -16,7 +16,7 @@ limitations under the License.
 package main
 
 import (
-	"io"
+	"bytes"
 	"io/ioutil"
 	"os"
 	"os/exec"
