@@ -156,6 +156,10 @@ rm -rf /var/mqm
 install --directory --mode 0775 --owner mqm --group root /mnt
 install --directory --mode 0775 --owner mqm --group root /mnt/mqm
 install --directory --mode 0775 --owner mqm --group root /mnt/mqm/data
+install --directory --mode 0775 --owner mqm --group root /mnt/mqm-log
+install --directory --mode 0775 --owner mqm --group root /mnt/mqm-log/data
+install --directory --mode 0775 --owner mqm --group root /mnt/mqm-data
+install --directory --mode 0775 --owner mqm --group root /mnt/mqm-data/data
 
 # Create the directory for MQ configuration files
 install --directory --mode 0775 --owner mqm --group root /etc/mqm

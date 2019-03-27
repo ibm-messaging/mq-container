@@ -19,6 +19,7 @@ package mqini
 
 import (
 	"bufio"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -71,5 +72,8 @@ func GetQueueManager(name string) (*QueueManager, error) {
 // GetErrorLogDirectory returns the directory holding the error logs for the
 // specified queue manager
 func GetErrorLogDirectory(qm *QueueManager) string {
+	if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
+		return filepath.Join(qm.DataPath, "errors")
+	}
 	return filepath.Join(qm.Prefix, "qmgrs", qm.Directory, "errors")
 }

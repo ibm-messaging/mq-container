@@ -93,7 +93,19 @@ func doMain() error {
 		}
 	}
 
+	// TODO : for multi-instance queue manager should we check mounts exist?
+
 	err = createVolume("/mnt/mqm")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+	err = createVolume("/mnt/mqm-log")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+	err = createVolume("/mnt/mqm-data")
 	if err != nil {
 		logTermination(err)
 		return err
@@ -149,7 +161,7 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
-	err = startQueueManager()
+	err = startQueueManager(name)
 	if err != nil {
 		logTermination(err)
 		return err
