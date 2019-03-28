@@ -17,6 +17,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 
@@ -79,6 +80,19 @@ func logContainerDetails() error {
 				if !containerruntime.SupportedFilesystem(fsType) {
 					return fmt.Errorf("%v uses unsupported filesystem type: %v", mountPoint, fsType)
 				}
+			}
+		}
+	}
+	// For a multi-instance queue manager - check all required mounts exist & validate filesystem type
+	if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
+		reqMounts := []string{"/mnt/mqm", "/mnt/mqm-log", "/mnt/mqm-data"}
+		for _, mountPoint := range reqMounts {
+			if fsType, ok := m[mountPoint]; ok {
+				if !containerruntime.ValidMultiInstanceFilesystem(fsType) {
+					return fmt.Errorf("%v uses filesystem type '%v' which is invalid for a multi-instance queue manager", mountPoint, fsType)
+				}
+			} else {
+				return fmt.Errorf("Missing required mount '%v' for a multi-instance queue manager", mountPoint)
 			}
 		}
 	}

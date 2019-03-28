@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	containerruntime "github.com/ibm-messaging/mq-container/internal/containerruntime"
 	"github.com/ibm-messaging/mq-container/internal/mqscredact"
 )
 
@@ -43,45 +44,52 @@ func createDirStructure() error {
 // It returns true if one was created, or false if one already existed
 func createQueueManager(name string) (bool, error) {
 	log.Printf("Creating queue manager %v", name)
-	out, rc, err := command.Run("dspmqinf", name)
-	if err != nil {
-		// TODO : handle single instance queue manager with log & data volumes
-		dataDir := filepath.Join("/var/mqm/qmgrs", name)
-		if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
-			dataDir = filepath.Join("/mnt/mqm-data/data", name)
-		}
-		if _, err := os.Stat(filepath.Join(dataDir, "qm.ini")); err != nil {
-			// TODO : tidy-up & test setting log & data when not mounted
-			if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
-				log.Println("Creating active queue manager")
-				out, rc, err = command.Run("crtmqm", "-q", "-p", "1414", "-ld", "/mnt/mqm-log/data", "-md", "/mnt/mqm-data/data", name)
-			} else {
-				out, rc, err = command.Run("crtmqm", "-q", "-p", "1414", name)
-			}
-			if err != nil {
-				log.Printf("crtmqm returned %v : %v", rc, string(out))
-				return false, err
-			}
-			// Return true or false?
-			return true, nil
-		} else {
-			log.Println("Creating standby queue manager")
-			qmName := fmt.Sprintf("Name=%v", name)
-			qmDirectory := fmt.Sprintf("Directory=%v", name)
-			qmPrefix := "Prefix=/var/mqm"
-			qmDataPath := fmt.Sprintf("DataPath=/mnt/mqm-data/data/%v", name)
-			out, rc, err := command.Run("addmqinf", "-s", "QueueManager", "-v", qmName, "-v", qmDirectory, "-v", qmPrefix, "-v", qmDataPath)
-			if err != nil {
-				log.Printf("addmqinf returned %v : %v", rc, string(out))
-				return false, err
-			}
-			// Return true or false?
-			return true, nil
-		}
-	} else {
+	_, _, err := command.Run("dspmqinf", name)
+	if err == nil {
 		log.Printf("Detected existing queue manager %v", name)
 		return false, nil
 	}
+	mounts, err := containerruntime.GetMounts()
+	if err != nil {
+		log.Printf("Error getting mounts for queue manager")
+		return false, err
+	}
+	dataDir := filepath.Join("/var/mqm/qmgrs", name)
+	if _, ok := mounts["/mnt/mqm-data"]; ok {
+		dataDir = filepath.Join("/mnt/mqm-data/qmgrs", name)
+	}
+	// TODO : handle possible race condition - use a file lock?
+	_, err = os.Stat(filepath.Join(dataDir, "qm.ini"))
+	if err != nil {
+		args := []string{"-q", "-p", "1414"}
+		if _, ok := mounts["/mnt/mqm-log"]; ok {
+			args = append(args, "-ld", "/mnt/mqm-log/log")
+		}
+		if _, ok := mounts["/mnt/mqm-data"]; ok {
+			args = append(args, "-md", "/mnt/mqm-data/qmgrs")
+		}
+		args = append(args, name)
+		out, rc, err := command.Run("crtmqm", args...)
+		if err != nil {
+			log.Printf("Error %v creating queue manager: %v", rc, string(out))
+			return false, err
+		}
+	} else {
+		qmName := fmt.Sprintf("Name=%v", name)
+		qmDirectory := fmt.Sprintf("Directory=%v", name)
+		qmPrefix := "Prefix=/var/mqm"
+		qmDataPath := fmt.Sprintf("DataPath=/mnt/mqm-data/qmgrs/%v", name)
+		out, rc, err := command.Run("addmqinf", "-s", "QueueManager", "-v", qmName, "-v", qmDirectory, "-v", qmPrefix, "-v", qmDataPath)
+		if err != nil {
+			log.Printf("Error %v creating standby queue manager: %v", rc, string(out))
+			return false, err
+		}
+		// TODO : should we return true or false for log mirroring of a standby queue manager?
+		log.Println("Created standby queue manager")
+		return false, nil
+	}
+	log.Println("Created queue manager")
+	return true, nil
 }
 
 func updateCommandLevel() error {
@@ -101,9 +109,9 @@ func startQueueManager(name string) error {
 	log.Println("Starting queue manager")
 	out, rc, err := command.Run("strmqm", "-x", name)
 	if err != nil {
-		// 30=Standby queue manager started, which is fine
+		// 30=standby queue manager started, which is fine
 		if rc == 30 {
-			log.Printf("Detected standby queue manager %v", name)
+			log.Printf("Started standby queue manager")
 			return nil
 		}
 		log.Printf("Error %v starting queue manager: %v", rc, string(out))
@@ -168,22 +176,24 @@ func configureQueueManager() error {
 
 func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
-
-	// TODO : tidy-up code
 	isStandby, err := isStandbyQueueManager(name)
 	if err != nil {
 		return err
 	}
-	arg := "-s"
+	args := []string{"-s", "-w", "-r", name}
 	if isStandby {
-		arg = "-x"
+		args = []string{"-x", name}
 	}
-	out, _, err := command.Run("endmqm", arg, "-w", "-r", name)
+	out, rc, err := command.Run("endmqm", args...)
 	if err != nil {
-		log.Printf("Error stopping queue manager: %v", string(out))
+		log.Printf("Error %v stopping queue manager: %v", rc, string(out))
 		return err
 	}
-	log.Println("Stopped queue manager")
+	if isStandby {
+		log.Printf("Stopped standby queue manager")
+	} else {
+		log.Println("Stopped queue manager")
+	}
 	return nil
 }
 
@@ -196,9 +206,9 @@ func formatMQSCOutput(out string) string {
 }
 
 func isStandbyQueueManager(name string) (bool, error) {
-	out, _, err := command.Run("dspmq", "-n", "-m", name)
+	out, rc, err := command.Run("dspmq", "-n", "-m", name)
 	if err != nil {
-		log.Printf("Error getting status for queue manager: %v", string(out))
+		log.Printf("Error %v getting status for queue manager: %v", rc, string(out))
 		return false, err
 	}
 	if strings.Contains(string(out), "(RUNNING AS STANDBY)") {

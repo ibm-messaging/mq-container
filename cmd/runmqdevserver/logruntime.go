@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"os"
 	"runtime"
 	"strings"
 
@@ -65,4 +66,30 @@ func logContainerDetails() {
 		log.Printf("seccomp enforcing mode: %v", sc)
 	}
 	log.Printf("Process security attributes: %v", containerruntime.GetSecurityAttributes())
+	m, err := containerruntime.GetMounts()
+	if err == nil {
+		if len(m) == 0 {
+			log.Print("No volume detected. Persistent messages may be lost")
+		} else {
+			for mountPoint, fsType := range m {
+				log.Printf("Detected '%v' volume mounted to %v", fsType, mountPoint)
+				if !containerruntime.SupportedFilesystem(fsType) {
+					log.Errorf("%v uses unsupported filesystem type: %v", mountPoint, fsType)
+				}
+			}
+		}
+	}
+	// For a multi-instance queue manager - check all required mounts exist & validate filesystem type
+	if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
+		reqMounts := []string{"/mnt/mqm", "/mnt/mqm-log", "/mnt/mqm-data"}
+		for _, mountPoint := range reqMounts {
+			if fsType, ok := m[mountPoint]; ok {
+				if !containerruntime.ValidMultiInstanceFilesystem(fsType) {
+					log.Errorf("%v uses filesystem type '%v' which is invalid for a multi-instance queue manager", mountPoint, fsType)
+				}
+			} else {
+				log.Errorf("Missing required mount '%v' for a multi-instance queue manager", mountPoint)
+			}
+		}
+	}
 }
