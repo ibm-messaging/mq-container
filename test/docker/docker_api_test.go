@@ -235,7 +235,7 @@ func withVolume(t *testing.T, metric bool) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vol := createVolume(t, cli)
+	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol.Name)
 	containerConfig := container.Config{
 		Image: imageName(),
@@ -302,7 +302,7 @@ func TestVolumeRequiresRoot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vol := createVolume(t, cli)
+	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol.Name)
 
 	// Set permissions on the volume to only allow root to write it
@@ -438,7 +438,7 @@ func TestVolumeUnmount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vol := createVolume(t, cli)
+	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol.Name)
 	containerConfig := container.Config{
 		Image: imageName(),
