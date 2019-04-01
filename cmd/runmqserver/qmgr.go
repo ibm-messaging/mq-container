@@ -45,47 +45,35 @@ func createDirStructure() error {
 func createQueueManager(name string) (bool, error) {
 	log.Printf("Creating queue manager %v", name)
 	_, _, err := command.Run("dspmqinf", name)
-	if err == nil {
-		log.Printf("Detected existing queue manager %v", name)
-		return false, nil
-	}
-	mounts, err := containerruntime.GetMounts()
 	if err != nil {
-		log.Printf("Error getting mounts for queue manager")
-		return false, err
-	}
-	dataDir := filepath.Join("/var/mqm/qmgrs", name)
-	if _, ok := mounts["/mnt/mqm-data"]; ok {
-		dataDir = filepath.Join("/mnt/mqm-data/qmgrs", name)
-	}
-	// TODO : handle possible race condition - use a file lock?
-	_, err = os.Stat(filepath.Join(dataDir, "qm.ini"))
-	if err != nil {
-		args := []string{"-q", "-p", "1414"}
-		if _, ok := mounts["/mnt/mqm-log"]; ok {
-			args = append(args, "-ld", "/mnt/mqm-log/log")
-		}
-		if _, ok := mounts["/mnt/mqm-data"]; ok {
-			args = append(args, "-md", "/mnt/mqm-data/qmgrs")
-		}
-		args = append(args, name)
-		out, rc, err := command.Run("crtmqm", args...)
+		mounts, err := containerruntime.GetMounts()
 		if err != nil {
-			log.Printf("Error %v creating queue manager: %v", rc, string(out))
+			log.Printf("Error getting mounts for queue manager")
 			return false, err
+		}
+		// TODO : handle possible race condition - use a file lock?
+		dataDir := getQueueManagerDataDir(mounts, name)
+		_, err = os.Stat(filepath.Join(dataDir, "qm.ini"))
+		if err != nil {
+			args := getCreateQueueManagerArgs(mounts, name)
+			out, rc, err := command.Run("crtmqm", args...)
+			if err != nil {
+				log.Printf("Error %v creating queue manager: %v", rc, string(out))
+				return false, err
+			}
+		} else {
+			args := getCreateStandbyQueueManagerArgs(name)
+			out, rc, err := command.Run("addmqinf", args...)
+			if err != nil {
+				log.Printf("Error %v creating standby queue manager: %v", rc, string(out))
+				return false, err
+			}
+			// TODO : should we return true or false for log mirroring of a standby queue manager?
+			log.Println("Created standby queue manager")
+			return false, nil
 		}
 	} else {
-		qmName := fmt.Sprintf("Name=%v", name)
-		qmDirectory := fmt.Sprintf("Directory=%v", name)
-		qmPrefix := "Prefix=/var/mqm"
-		qmDataPath := fmt.Sprintf("DataPath=/mnt/mqm-data/qmgrs/%v", name)
-		out, rc, err := command.Run("addmqinf", "-s", "QueueManager", "-v", qmName, "-v", qmDirectory, "-v", qmPrefix, "-v", qmDataPath)
-		if err != nil {
-			log.Printf("Error %v creating standby queue manager: %v", rc, string(out))
-			return false, err
-		}
-		// TODO : should we return true or false for log mirroring of a standby queue manager?
-		log.Println("Created standby queue manager")
+		log.Printf("Detected existing queue manager %v", name)
 		return false, nil
 	}
 	log.Println("Created queue manager")
@@ -215,4 +203,33 @@ func isStandbyQueueManager(name string) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func getQueueManagerDataDir(mounts map[string]string, name string) string {
+	dataDir := filepath.Join("/var/mqm/qmgrs", name)
+	if _, ok := mounts["/mnt/mqm-data"]; ok {
+		dataDir = filepath.Join("/mnt/mqm-data/qmgrs", name)
+	}
+	return dataDir
+}
+
+func getCreateQueueManagerArgs(mounts map[string]string, name string) []string {
+	args := []string{"-q", "-p", "1414"}
+	if _, ok := mounts["/mnt/mqm-log"]; ok {
+		args = append(args, "-ld", "/mnt/mqm-log/log")
+	}
+	if _, ok := mounts["/mnt/mqm-data"]; ok {
+		args = append(args, "-md", "/mnt/mqm-data/qmgrs")
+	}
+	args = append(args, name)
+	return args
+}
+
+func getCreateStandbyQueueManagerArgs(name string) []string {
+	args := []string{"-s", "QueueManager"}
+	args = append(args, "-v", fmt.Sprintf("Name=%v", name))
+	args = append(args, "-v", fmt.Sprintf("Directory=%v", name))
+	args = append(args, "-v", "Prefix=/var/mqm")
+	args = append(args, "-v", fmt.Sprintf("DataPath=/mnt/mqm-data/qmgrs/%v", name))
+	return args
 }
