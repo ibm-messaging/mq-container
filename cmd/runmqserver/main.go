@@ -164,17 +164,7 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
-
-	// TODO : tidy up
-	if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
-		if standby, _ := isStandbyQueueManager(name); !standby {
-			err = configureQueueManager()
-			if err != nil {
-				logTermination(err)
-				return err
-			}
-		}
-	} else {
+	if standby, _ := isStandbyQueueManager(name); !standby {
 		err = configureQueueManager()
 		if err != nil {
 			logTermination(err)
