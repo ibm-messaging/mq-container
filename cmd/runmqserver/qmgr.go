@@ -168,10 +168,16 @@ func stopQueueManager(name string) error {
 	if err != nil {
 		return err
 	}
-	args := []string{"-s", "-w", "-r", name}
-	if isStandby {
-		args = []string{"-x", name}
+	args := []string{"-w", "-r", name}
+	if os.Getenv("MQ_MULTI_INSTANCE") == "true"{
+		if isStandby {
+			args = []string{"-x", name}
+		} else {
+			args = []string{"-s", "-w", "-r", name}
+		}
 	}
+	
+	log.Printf("** DEBUG: command: endmq $v", args)
 	out, rc, err := command.Run("endmqm", args...)
 	if err != nil {
 		log.Printf("Error %v stopping queue manager: %v", rc, string(out))
@@ -196,7 +202,7 @@ func formatMQSCOutput(out string) string {
 func isStandbyQueueManager(name string) (bool, error) {
 	out, rc, err := command.Run("dspmq", "-n", "-m", name)
 	if err != nil {
-		log.Printf("Error %v getting status for queue manager: %v", rc, string(out))
+		log.Printf("Error %v getting status for queue manager %v: %v", rc, name, string(out))
 		return false, err
 	}
 	if strings.Contains(string(out), "(RUNNING AS STANDBY)") {

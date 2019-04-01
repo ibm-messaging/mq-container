@@ -25,20 +25,22 @@ import (
 	"github.com/docker/docker/api/types/network"
 )
 
-// TestMultiInstanceStartup creates 2 containers
+// TestMultiInstanceStartup creates 2 containers in a multi instance queue manager configuration,	
+// checks to ensure both active and standby queue managers are started
 func TestMultiInstanceStartup(t *testing.T) {
 	t.Parallel()
-
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	qm1adata := createVolume(t, cli, "qm1adata")
-	defer removeVolume(t, cli, qm1adata.Name)
+
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
 	defer removeVolume(t, cli, qmsharedlogs.Name)
 	qmshareddata := createVolume(t, cli, "qmshareddata")
 	defer removeVolume(t, cli, qmshareddata.Name)
+
+	qm1adata := createVolume(t, cli, "qm1adata")
+	defer removeVolume(t, cli, qm1adata.Name)
 	containerConfig := container.Config{
 		Image: imageName(),
 		Env: []string{
@@ -63,7 +65,7 @@ func TestMultiInstanceStartup(t *testing.T) {
 	defer cleanContainer(t, cli, qm1a.ID)
 	startContainer(t, cli, qm1a.ID)
 	waitForReady(t, cli, qm1a.ID)
-
+	
 	qm1bdata := createVolume(t, cli, "qm1bdata")
 	defer removeVolume(t, cli, qm1bdata.Name)
 	containerConfig = container.Config{
@@ -90,15 +92,12 @@ func TestMultiInstanceStartup(t *testing.T) {
 	defer cleanContainer(t, cli, qm1b.ID)
 	startContainer(t, cli, qm1b.ID)
 	waitForReady(t, cli, qm1b.ID)
-
 	_, dspmqOut := execContainer(t, cli, qm1a.ID, "mqm", []string{"bash", "-c", "dspmq", "-m", "QM1"})
 	if strings.Contains(dspmqOut, "STATUS(Running)") == false {
 		t.Fatalf("Expected QM1 to be running on active queue manager, dspmq returned %v", dspmqOut)
 	}
-
 	_, dspmqOut = execContainer(t, cli, qm1b.ID, "mqm", []string{"bash", "-c", "dspmq", "-m", "QM1"})
 	if strings.Contains(dspmqOut, "STATUS(Running as standby)") == false {
 		t.Fatalf("Expected QM1 to be running as standby on standby queue manager, dspmq returned %v", dspmqOut)
 	}
-
 }

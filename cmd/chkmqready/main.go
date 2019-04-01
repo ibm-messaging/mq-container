@@ -21,8 +21,11 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/ready"
+	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/name"
 )
 
 func main() {
@@ -31,14 +34,33 @@ func main() {
 	if !r || err != nil {
 		os.Exit(1)
 	}
-	// Check if the queue manager has a running listener
-	conn, err := net.Dial("tcp", "127.0.0.1:1414")
+	name, err := name.GetQueueManagerName()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	err = conn.Close()
+	isStandby, err := isStandbyQueueManager(name)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
+	if !isStandby {
+		conn, err := net.Dial("tcp", "127.0.0.1:1414")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		err = conn.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
+func isStandbyQueueManager(name string) (bool, error) {
+	out, rc, _ := command.Run("dspmq", "-n", "-m", name)
+	if (rc == 0 && strings.Contains(string(out), "(RUNNING AS STANDBY)")) {
+		return true, nil
+	}
+	return false, nil
 }
