@@ -95,12 +95,14 @@ func configureQueueManager() error {
 			mqsc, err := ioutil.ReadFile(abs)
 			if err != nil {
 				log.Printf("Error reading file %v: %v", abs, err)
+				continue
 			}
 			// Write mqsc to buffer
 			var buffer bytes.Buffer
 			_, err = buffer.Write(mqsc)
 			if err != nil {
-				log.Printf("Error writing mqsc file %v to buffer: %v", abs, err)
+				log.Printf("Error writing MQSC file %v to buffer: %v", abs, err)
+				continue
 			}
 			// Buffer mqsc to stdin of runmqsc
 			cmd.Stdin = &buffer
@@ -108,9 +110,11 @@ func configureQueueManager() error {
 			out, err := cmd.CombinedOutput()
 			if err != nil {
 				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, strings.Replace(string(out), "\n", "\n\t", -1))
+				continue
+			} else {
+				// Print the runmqsc output, adding tab characters to make it more readable as part of the log
+				log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
 			}
-			// Print the runmqsc output, adding tab characters to make it more readable as part of the log
-			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
 		}
 	}
 	return nil
