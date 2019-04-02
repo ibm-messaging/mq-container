@@ -49,16 +49,17 @@ func waitForFile(ctx context.Context, path string) (os.FileInfo, error) {
 	}
 }
 
-type mirrorFunc func(msg string)
+type mirrorFunc func(msg string, isQMLog bool) bool
 
 // mirrorAvailableMessages prints lines from the file, until no more are available
-func mirrorAvailableMessages(f *os.File, mf mirrorFunc) {
+func mirrorAvailableMessages(f *os.File, mf mirrorFunc, isQMLog bool) {
 	scanner := bufio.NewScanner(f)
 	count := 0
 	for scanner.Scan() {
 		t := scanner.Text()
-		mf(t)
-		count++
+		if mf(t, isQMLog) {
+			count++
+		}
 	}
 	if count > 0 {
 		log.Debugf("Mirrored %v log entries from %v", count, f.Name())
@@ -73,7 +74,7 @@ func mirrorAvailableMessages(f *os.File, mf mirrorFunc) {
 // mirrorLog tails the specified file, and logs each line to stdout.
 // This is useful for usability, as the container console log can show
 // messages from the MQ error logs.
-func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart bool, mf mirrorFunc) (chan error, error) {
+func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart bool, mf mirrorFunc, isQMLog bool) (chan error, error) {
 	errorChannel := make(chan error, 1)
 	var offset int64 = -1
 	var f *os.File
@@ -147,7 +148,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 		closing := false
 		for {
 			// If there's already data there, mirror it now.
-			mirrorAvailableMessages(f, mf)
+			mirrorAvailableMessages(f, mf, isQMLog)
 			// Wait for the new log file (after rotation)
 			newFI, err := waitForFile(ctx, path)
 			if err != nil {
@@ -161,7 +162,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 				// log rotation happens before we can open the new file, then we
 				// could skip all those messages.  This could happen with a very small
 				// MQ error log size.
-				mirrorAvailableMessages(f, mf)
+				mirrorAvailableMessages(f, mf, isQMLog)
 				err = f.Close()
 				if err != nil {
 					log.Errorf("Unable to close mirror file handle: %v", err)
@@ -176,7 +177,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 				}
 				fi = newFI
 				// Don't seek this time, because we know it's a new file
-				mirrorAvailableMessages(f, mf)
+				mirrorAvailableMessages(f, mf, isQMLog)
 			}
 			select {
 			case <-ctx.Done():

@@ -41,9 +41,10 @@ func TestMirrorLogWithoutRotation(t *testing.T) {
 			count := 0
 			ctx, cancel := context.WithCancel(context.Background())
 			var wg sync.WaitGroup
-			_, err = mirrorLog(ctx, &wg, tmp.Name(), true, func(msg string) {
+			_, err = mirrorLog(ctx, &wg, tmp.Name(), true, func(msg string, isQMLog bool) bool {
 				count++
-			})
+				return true
+			}, false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -82,9 +83,10 @@ func TestMirrorLogWithRotation(t *testing.T) {
 			count := 0
 			ctx, cancel := context.WithCancel(context.Background())
 			var wg sync.WaitGroup
-			_, err = mirrorLog(ctx, &wg, tmp.Name(), true, func(msg string) {
+			_, err = mirrorLog(ctx, &wg, tmp.Name(), true, func(msg string, isQMLog bool) bool {
 				count++
-			})
+				return true
+			}, false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -135,9 +137,10 @@ func testMirrorLogExistingFile(t *testing.T, newQM bool) int {
 	count := 0
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
-	_, err = mirrorLog(ctx, &wg, tmp.Name(), newQM, func(msg string) {
+	_, err = mirrorLog(ctx, &wg, tmp.Name(), newQM, func(msg string, isQMLog bool) bool {
 		count++
-	})
+		return true
+	}, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,8 +182,9 @@ func TestMirrorLogCancelWhileWaiting(t *testing.T) {
 		cancel()
 		wg.Wait()
 	}()
-	_, err := mirrorLog(ctx, &wg, "fake.log", true, func(msg string) {
-	})
+	_, err := mirrorLog(ctx, &wg, "fake.log", true, func(msg string, isQMLog bool) bool {
+		return true
+	}, false)
 	if err != nil {
 		t.Error(err)
 	}

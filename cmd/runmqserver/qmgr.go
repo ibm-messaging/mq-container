@@ -68,9 +68,8 @@ func createQueueManager(name string) (bool, error) {
 				log.Printf("Error %v creating standby queue manager: %v", rc, string(out))
 				return false, err
 			}
-			// TODO : should we return true or false for log mirroring of a standby queue manager?
 			log.Println("Created standby queue manager")
-			return false, nil
+			return true, nil
 		}
 	} else {
 		log.Printf("Detected existing queue manager %v", name)
