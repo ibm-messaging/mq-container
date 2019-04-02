@@ -85,6 +85,7 @@ func logContainerDetails() error {
 	}
 	// For a multi-instance queue manager - check all required mounts exist & validate filesystem type
 	if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
+		log.Println("Multi-instance queue manager: enabled")
 		reqMounts := []string{"/mnt/mqm", "/mnt/mqm-log", "/mnt/mqm-data"}
 		for _, mountPoint := range reqMounts {
 			if fsType, ok := m[mountPoint]; ok {
