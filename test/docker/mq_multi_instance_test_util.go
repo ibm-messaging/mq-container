@@ -18,14 +18,16 @@ package main
 import (
 	"testing"
 	"context"
+	"regexp"
+	"strings"
 
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 )
 
-// configureMultiInstance creates the volumes and containers required for testing multi
-// instance queue managers. Returns error, qm1a ID, qm1b ID, slice of volume names
+// configureMultiInstance creates the volumes and containers required for basic testing 
+// of multi instance queue managers. Returns error, qm1a ID, qm1b ID, slice of volume names
 func configureMultiInstance(t *testing.T, cli *client.Client) (error, string, string, []string) {
 
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
@@ -84,4 +86,12 @@ func configureMultiInstance(t *testing.T, cli *client.Client) (error, string, st
 	volumes := []string{qmsharedlogs.Name, qmshareddata.Name, qm1adata.Name, qm1bdata.Name}
 
 	return nil, qm1a.ID, qm1b.ID, volumes
+}
+
+func getQueueManagerStatus(t *testing.T, cli *client.Client, containerID string, queueManagerName string) string {
+	_, dspmqOut := execContainer(t, cli, containerID, "mqm", []string{"bash", "-c", "dspmq", "-m", queueManagerName})
+	regex := regexp.MustCompile(`STATUS\(.*\)`)
+	status := regex.FindString(dspmqOut)
+	status = strings.TrimSuffix(strings.TrimPrefix(status, "STATUS("), ")")	
+	return status
 }

@@ -39,12 +39,44 @@ func TestMultiInstanceStartup(t *testing.T) {
 	}
 	defer cleanContainer(t, cli, qm1a)
 	defer cleanContainer(t, cli, qm1b)
-	_, dspmqOut := execContainer(t, cli, qm1a, "mqm", []string{"bash", "-c", "dspmq", "-m", "QM1"})
-	if strings.Contains(dspmqOut, "STATUS(Running)") == false {
-		t.Fatalf("Expected QM1 to be running on active queue manager, dspmq returned %v", dspmqOut)
+
+	if status := getQueueManagerStatus(t, cli, qm1a, "QM1"); strings.Compare(status, "Running") != 0 {
+		t.Fatalf("Expected QM1 to be running as active queue manager, dspmq returned status of %v", status)
+	} 
+	if status := getQueueManagerStatus(t, cli, qm1b, "QM1"); strings.Compare(status, "Running as standby") != 0 {
+		t.Fatalf("Expected QM1 to be running as standby queue manager, dspmq returned status of %v", status)
 	}
-	_, dspmqOut = execContainer(t, cli, qm1b, "mqm", []string{"bash", "-c", "dspmq", "-m", "QM1"})
-	if strings.Contains(dspmqOut, "STATUS(Running as standby)") == false {
-		t.Fatalf("Expected QM1 to be running as standby on standby queue manager, dspmq returned %v", dspmqOut)
+}
+
+// TestMultiInstanceStop starts 2 containers in a multi instance queue manager configuration,	
+// stops the active queue manager, then checks to ensure the backup queue manager becomes active
+func TestMultiInstanceStop(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
 	}
+	err, qm1a, qm1b, volumes := configureMultiInstance(t, cli)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, volume := range volumes {
+		defer removeVolume(t, cli, volume)
+	}
+	defer cleanContainer(t, cli, qm1a)
+	defer cleanContainer(t, cli, qm1b)
+
+	if status := getQueueManagerStatus(t, cli, qm1a, "QM1"); strings.Compare(status, "Running") != 0 {
+		t.Fatalf("Expected QM1 to be running as active queue manager, dspmq returned status of %v", status)
+	} 
+	if status := getQueueManagerStatus(t, cli, qm1b, "QM1"); strings.Compare(status, "Running as standby") != 0 {
+		t.Fatalf("Expected QM1 to be running as standby queue manager, dspmq returned status of %v", status)
+	}
+
+	stopContainer(t, cli, qm1a)
+
+	if status := getQueueManagerStatus(t, cli, qm1b, "QM1"); strings.Compare(status, "Running") != 0 {
+		t.Fatalf("Expected QM1 to be running as standby queue manager, dspmq returned status of %v", status)
+	}
+
 }
