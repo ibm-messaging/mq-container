@@ -18,11 +18,8 @@ package main
 import (
 	"testing"
 	"strings"
-	"context"
 
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
 )
 
 // TestMultiInstanceStartup creates 2 containers in a multi instance queue manager configuration,	
@@ -33,70 +30,20 @@ func TestMultiInstanceStartup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
-	defer removeVolume(t, cli, qmsharedlogs.Name)
-	qmshareddata := createVolume(t, cli, "qmshareddata")
-	defer removeVolume(t, cli, qmshareddata.Name)
-
-	qm1adata := createVolume(t, cli, "qm1adata")
-	defer removeVolume(t, cli, qm1adata.Name)
-	containerConfig := container.Config{
-		Image: imageName(),
-		Env: []string{
-			"LICENSE=accept",
-			"MQ_QMGR_NAME=QM1",
-			"MQ_MULTI_INSTANCE=true",
-		},
-	}
-	hostConfig := container.HostConfig{
-		Binds: []string{
-			coverageBind(t),
-			qm1adata.Name + ":/mnt/mqm",
-			qmsharedlogs.Name + ":/mnt/mqm-log",
-			qmshareddata.Name + ":/mnt/mqm-data",
-		},
-	}
-	networkingConfig := network.NetworkingConfig{}
-	qm1a, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+"qm1a")
+	err, qm1a, qm1b, volumes := configureMultiInstance(t, cli)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, qm1a.ID)
-	startContainer(t, cli, qm1a.ID)
-	waitForReady(t, cli, qm1a.ID)
-	
-	qm1bdata := createVolume(t, cli, "qm1bdata")
-	defer removeVolume(t, cli, qm1bdata.Name)
-	containerConfig = container.Config{
-		Image: imageName(),
-		Env: []string{
-			"LICENSE=accept",
-			"MQ_QMGR_NAME=QM1",
-			"MQ_MULTI_INSTANCE=true",
-		},
+	for _, volume := range volumes {
+		defer removeVolume(t, cli, volume)
 	}
-	hostConfig = container.HostConfig{
-		Binds: []string{
-			coverageBind(t),
-			qm1bdata.Name + ":/mnt/mqm",
-			qmsharedlogs.Name + ":/mnt/mqm-log",
-			qmshareddata.Name + ":/mnt/mqm-data",
-		},
-	}
-	networkingConfig = network.NetworkingConfig{}
-	qm1b, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+"qm1b")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer cleanContainer(t, cli, qm1b.ID)
-	startContainer(t, cli, qm1b.ID)
-	waitForReady(t, cli, qm1b.ID)
-	_, dspmqOut := execContainer(t, cli, qm1a.ID, "mqm", []string{"bash", "-c", "dspmq", "-m", "QM1"})
+	defer cleanContainer(t, cli, qm1a)
+	defer cleanContainer(t, cli, qm1b)
+	_, dspmqOut := execContainer(t, cli, qm1a, "mqm", []string{"bash", "-c", "dspmq", "-m", "QM1"})
 	if strings.Contains(dspmqOut, "STATUS(Running)") == false {
 		t.Fatalf("Expected QM1 to be running on active queue manager, dspmq returned %v", dspmqOut)
 	}
-	_, dspmqOut = execContainer(t, cli, qm1b.ID, "mqm", []string{"bash", "-c", "dspmq", "-m", "QM1"})
+	_, dspmqOut = execContainer(t, cli, qm1b, "mqm", []string{"bash", "-c", "dspmq", "-m", "QM1"})
 	if strings.Contains(dspmqOut, "STATUS(Running as standby)") == false {
 		t.Fatalf("Expected QM1 to be running as standby on standby queue manager, dspmq returned %v", dspmqOut)
 	}
