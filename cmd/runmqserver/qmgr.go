@@ -41,39 +41,46 @@ func createDirStructure() error {
 }
 
 // createQueueManager creates a queue manager, if it doesn't already exist.
-// It returns true if one was created, or false if one already existed
+// It returns true if one was created (or a standby was created), or false if one already existed
 func createQueueManager(name string) (bool, error) {
 	log.Printf("Creating queue manager %v", name)
+
+	// Run 'dspmqinf' to check if 'mqs.ini' configuration file exists
+	// If command succeeds, the queue manager (or standby queue manager) has already been created
 	_, _, err := command.Run("dspmqinf", name)
-	if err != nil {
-		mounts, err := containerruntime.GetMounts()
-		if err != nil {
-			log.Printf("Error getting mounts for queue manager")
-			return false, err
-		}
-		// TODO : handle possible race condition - use a file lock?
-		dataDir := getQueueManagerDataDir(mounts, name)
-		_, err = os.Stat(filepath.Join(dataDir, "qm.ini"))
-		if err != nil {
-			args := getCreateQueueManagerArgs(mounts, name)
-			out, rc, err := command.Run("crtmqm", args...)
-			if err != nil {
-				log.Printf("Error %v creating queue manager: %v", rc, string(out))
-				return false, err
-			}
-		} else {
-			args := getCreateStandbyQueueManagerArgs(name)
-			out, rc, err := command.Run("addmqinf", args...)
-			if err != nil {
-				log.Printf("Error %v creating standby queue manager: %v", rc, string(out))
-				return false, err
-			}
-			log.Println("Created standby queue manager")
-			return true, nil
-		}
-	} else {
+	if err == nil {
 		log.Printf("Detected existing queue manager %v", name)
 		return false, nil
+	}
+
+	mounts, err := containerruntime.GetMounts()
+	if err != nil {
+		log.Printf("Error getting mounts for queue manager")
+		return false, err
+	}
+
+	// Check if 'qm.ini' configuration file exists for the queue manager
+	// TODO : handle possible race condition - use a file lock?
+	dataDir := getQueueManagerDataDir(mounts, name)
+	_, err = os.Stat(filepath.Join(dataDir, "qm.ini"))
+	if err != nil {
+		// If 'qm.ini' is not found - run 'crtmqm' to create a new queue manager
+		args := getCreateQueueManagerArgs(mounts, name)
+		out, rc, err := command.Run("crtmqm", args...)
+		if err != nil {
+			log.Printf("Error %v creating queue manager: %v", rc, string(out))
+			return false, err
+		}
+	} else {
+		// If 'qm.ini' is found - run 'addmqinf' to create a standby queue manager with existing configuration
+		args := getCreateStandbyQueueManagerArgs(name)
+		out, rc, err := command.Run("addmqinf", args...)
+		if err != nil {
+			log.Printf("Error %v creating standby queue manager: %v", rc, string(out))
+			return false, err
+		}
+		log.Println("Created standby queue manager")
+		return true, nil
 	}
 	log.Println("Created queue manager")
 	return true, nil
@@ -168,7 +175,7 @@ func stopQueueManager(name string) error {
 		return err
 	}
 	args := []string{"-w", "-r", name}
-	if os.Getenv("MQ_MULTI_INSTANCE") == "true"{
+	if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
 		if isStandby {
 			args = []string{"-x", name}
 		} else {
