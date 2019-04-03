@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+package logruntime
 
 import (
 	"fmt"
@@ -22,10 +22,12 @@ import (
 	"strings"
 
 	containerruntime "github.com/ibm-messaging/mq-container/internal/containerruntime"
+	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/ibm-messaging/mq-container/internal/user"
 )
 
-func logContainerDetails() error {
+// LogContainerDetails logs details about the container runtime
+func LogContainerDetails(log *logger.Logger) error {
 	if runtime.GOOS != "linux" {
 		return fmt.Errorf("Unsupported platform: %v", runtime.GOOS)
 	}

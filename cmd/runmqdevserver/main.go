@@ -23,6 +23,7 @@ import (
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	containerruntimelogger "github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/ibm-messaging/mq-container/internal/name"
 )
@@ -117,7 +118,11 @@ func doMain() error {
 		return err
 	}
 
-	logContainerDetails()
+	err = containerruntimelogger.LogContainerDetails(log)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
 
 	adminPassword, set := os.LookupEnv("MQ_ADMIN_PASSWORD")
 	if set {

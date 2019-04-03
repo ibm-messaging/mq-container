@@ -24,6 +24,7 @@ import (
 	"os"
 	"sync"
 
+	containerruntimelogger "github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
@@ -45,7 +46,7 @@ func doMain() error {
 	// Check whether they only want debug info
 	if *infoFlag {
 		logVersionInfo()
-		err = logContainerDetails()
+		err = containerruntimelogger.LogContainerDetails(log)
 		if err != nil {
 			log.Printf("Error displaying container details: %v", err)
 		}
@@ -86,7 +87,7 @@ func doMain() error {
 	collectDiagOnFail = true
 
 	if *devFlag == false {
-		err = logContainerDetails()
+		err = containerruntimelogger.LogContainerDetails(log)
 		if err != nil {
 			logTermination(err)
 			return err
