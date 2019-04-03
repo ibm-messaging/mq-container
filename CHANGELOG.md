@@ -1,11 +1,23 @@
 # Change log
 
+## 9.1.2.0 (2019-03-21)
+
+* Now runs using the "mqm" user instead of root.  See new [security doc](https://github.com/ibm-messaging/mq-container/blob/master/docs/security.md)
+* New [IGNSTATE](https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.pro.doc/q132310_.htm#q132310___ignstateparm) parameter used in default developer config
+* Termination log moved from `/dev/termination-log` to `/run/termination-log`, to make permissions easier to handle
+* Fixes for the following issues:
+    * Brackets no longer appear in termination log
+    * Test timeouts weren't being used correctly
+    * Building on subscribed and unsubscribed hosts ([#273](https://github.com/ibm-messaging/mq-container/pull/273))
+    * Gosec failures ([#286](https://github.com/ibm-messaging/mq-container/pull/286))
+    * Security fix for perl-base ([#253](https://github.com/ibm-messaging/mq-container/pull/253))
+
 ## 9.1.1.0 (2018-11-30)
 
 * Updated to MQ version 9.1.1.0
 * Created seperate RedHat Makefile for building images on RedHat machines with buildah
 * Enabled REST messaging capability for app user.
-* Added support for container suplimentary groups
+* Added support for container supplementary groups
 * Removed IBM MQ version 9.0.5 details.
 * Added additional Diagnostics ([#203](https://github.com/ibm-messaging/mq-container/pull/203))
 * Implementted GOSec to perform code scans for security vulnerabilities. (([#227](https://github.com/ibm-messaging/mq-container/pull/227)))

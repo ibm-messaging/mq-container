@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,12 +34,16 @@ readonly dev=$2
 IMAGE_REVISION=${IMAGE_REVISION:="Not Applicable"}
 IMAGE_SOURCE=${IMAGE_SOURCE:="Not Applicable"}
 
+# Run the build in a container
+# Note the ":Z" on the volume is to allow the container to access the files when SELinux is enabled
+# Note the "podman" network is used explicitly, to avoid problems other CNI networks (e.g. on an OpenShift node)
 podman run \
-  --volume ${PWD}:/go/src/github.com/ibm-messaging/mq-container/ \
-  --env GOPATH=/go \
+  --volume ${PWD}:/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/:Z \
   --env IMAGE_REVISION="$IMAGE_REVISION" \
   --env IMAGE_SOURCE="$IMAGE_SOURCE" \
   --env MQDEV=${dev} \
+  --user $(id -u) \
   --rm \
+  --network podman \
   ${tag} \
-  bash -c "cd /go/src/github.com/ibm-messaging/mq-container/ && ./mq-advanced-server-rhel/go-build.sh"
+  bash -c "cd /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/ && ./mq-advanced-server-rhel/go-build.sh"

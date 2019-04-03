@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2017
+# © Copyright IBM Corporation 2015, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ FROM ubuntu:16.04
 ARG MQ_URL=https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev911_ubuntu_x86-64.tar.gz
 
 # The MQ packages to install
-ARG MQ_PACKAGES="ibmmq-explorer"
+ARG MQ_PACKAGES
+
+ARG MQM_UID=999
 
 RUN export DEBIAN_FRONTEND=noninteractive \
   && apt-get update \

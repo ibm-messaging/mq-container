@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Build a RHEL image, using the buildah tool
-# Usage
-# mq-buildah.sh ARCHIVEFILE PACKAGES
+# Build a RHEL image of MQ Advanced for Developers, using the buildah tool
 
 set -x
 set -e
@@ -55,26 +53,37 @@ fi
 
 readonly tag=$2
 readonly version=$3
+readonly mqm_uid=888
+readonly mqm_gid=888
 
+# WARNING: This is what allows the mqm user to change the password of any other user
+# It's used by runmqdevserver to change the admin/app passwords.
+echo "mqm    ALL = NOPASSWD: /usr/sbin/chpasswd" > $mnt_mq/etc/sudoers.d/mq-dev-config
 
-useradd --root $mnt_mq --gid mqm admin
-groupadd --root $mnt_mq --system mqclient
-useradd --root $mnt_mq --gid mqclient app
+# Run these commands inside the container so that the SELinux context is handled correctly
+buildah run --user root $ctr_mq -- useradd --gid mqm admin
+buildah run --user root $ctr_mq -- groupadd --system mqclient
+buildah run --user root $ctr_mq -- useradd --gid mqclient app
+buildah run --user root $ctr_mq -- bash -c "echo admin:passw0rd | chpasswd"
 
-buildah run $ctr_mq -- id admin
-buildah run $ctr_mq -- sh -c "echo admin:passw0rd | chpasswd"
-
-mkdir -p $mnt_mq/run/runmqdevserver
-chown 888:888 $mnt_mq/run/runmqdevserver
+mkdir --parents $mnt_mq/run/runmqdevserver
+chown ${mqm_uid}:${mqm_gid} $mnt_mq/run/runmqdevserver
 
 # Copy runmqdevserver program
-install --mode 0750 --owner 888 --group 888 ./build/runmqdevserver ${mnt_mq}/usr/local/bin/
+install --mode 0750 --owner ${mqm_uid} --group ${mqm_gid} ./build/runmqdevserver ${mnt_mq}/usr/local/bin/
+
+install --directory --mode 0775 --owner ${mqm_uid} --group 0 ${mnt_mq}/run/runmqdevserver
 
 # Copy template files
-cp incubating/mqadvanced-server-dev/*.tpl ${mnt_mq}/etc/mqm/
+cp ./incubating/mqadvanced-server-dev/*.tpl ${mnt_mq}/etc/mqm/
 
 # Copy web XML files for default developer configuration
-cp -R incubating/mqadvanced-server-dev/web ${mnt_mq}/etc/mqm/web
+mkdir --parents ${mnt_mq}/etc/mqm/web
+cp --recursive ./incubating/mqadvanced-server-dev/web/* ${mnt_mq}/etc/mqm/web/
+
+# Make "mqm" the owner of all the config files
+chown --recursive ${mqm_uid}:${mqm_gid} ${mnt_mq}/etc/mqm/*
+chmod --recursive 0750 ${mnt_mq}/etc/mqm/*
 
 ###############################################################################
 # Final Buildah commands
@@ -105,7 +114,7 @@ buildah config \
   --env MQ_ADMIN_PASSWORD=passw0rd \
   --env MQ_DEV=true \
   --entrypoint runmqdevserver \
-  --user root \
+  --user ${mqm_uid} \
   $ctr_mq
 buildah unmount $ctr_mq
 buildah commit $ctr_mq $tag

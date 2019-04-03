@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +17,11 @@
 
 # Builds and tests the golang programs used by the MQ image.
 
-set -e
+set -ex
 
-cd $GOPATH/src/github.com/ibm-messaging/mq-container/
+# Handle a GOPATH with multiple entries (just choose the first one)
+IFS=':' read -ra DIR <<< "$GOPATH"
+cd ${DIR[0]}/src/github.com/ibm-messaging/mq-container/
 
 # Build and test the Go code
 mkdir -p build

@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2019
+# © Copyright IBM Corporation 2018, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Install Docker and dep, required by build (assumes Ubuntu host, as used by Travis build)
+# Copy in licenses from installed packages
 
-set -ex
+set -e 
 
-curl https://glide.sh/get | sh
-sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64
-sudo chmod +x /usr/local/bin/dep
+rm -f /licenses/installed_package_notices
 
-go get -u golang.org/x/lint/golint
+for p in $(rpm -qa | sort)
+do 
+  rpm -qi $p >> /licenses/installed_package_notices
+  printf "\n" >> /licenses/installed_package_notices
+done
+
+chmod 0444 /licenses/installed_package_notices

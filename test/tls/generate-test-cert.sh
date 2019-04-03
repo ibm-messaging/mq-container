@@ -23,7 +23,7 @@ PASSWORD=passw0rd
 openssl req \
        -newkey rsa:2048 -nodes -keyout ${KEY} \
        -subj "/CN=localhost" \
-       -x509 -days 365 -out ${CERT}
+       -x509 -days 3650 -out ${CERT}
 
 # Add the key and certificate to a PKCS #12 key store, for the server to use
 openssl pkcs12 \
