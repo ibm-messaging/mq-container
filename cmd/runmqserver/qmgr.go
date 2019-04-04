@@ -16,7 +16,7 @@ limitations under the License.
 package main
 
 import (
-	"io"
+	"bytes"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -86,43 +86,35 @@ func configureQueueManager() error {
 		log.Println(err)
 		return err
 	}
-
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".mqsc") {
 			abs := filepath.Join(configDir, file.Name())
 			// #nosec G204
 			cmd := exec.Command("runmqsc")
-			stdin, err := cmd.StdinPipe()
+			// Read mqsc file into variable
+			mqsc, err := ioutil.ReadFile(abs)
 			if err != nil {
-				log.Println(err)
-				return err
+				log.Printf("Error reading file %v: %v", abs, err)
+				continue
 			}
-			// Open the MQSC file for reading
-			// #nosec G304
-			f, err := os.Open(abs)
+			// Write mqsc to buffer
+			var buffer bytes.Buffer
+			_, err = buffer.Write(mqsc)
 			if err != nil {
-				log.Printf("Error opening %v: %v", abs, err)
+				log.Printf("Error writing MQSC file %v to buffer: %v", abs, err)
+				continue
 			}
-			// Copy the contents to stdin of the runmqsc process
-			_, err = io.Copy(stdin, f)
-			if err != nil {
-				log.Errorf("Error reading %v: %v", abs, err)
-			}
-			err = f.Close()
-			if err != nil {
-				log.Errorf("Failed to close MQSC file handle: %v", err)
-			}
-			err = stdin.Close()
-			if err != nil {
-				log.Errorf("Failed to close MQSC stdin: %v", err)
-			}
-			// Run the command and wait for completion
+			// Buffer mqsc to stdin of runmqsc
+			cmd.Stdin = &buffer
+			// Run runmqsc command
 			out, err := cmd.CombinedOutput()
 			if err != nil {
 				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, strings.Replace(string(out), "\n", "\n\t", -1))
+				continue
+			} else {
+				// Print the runmqsc output, adding tab characters to make it more readable as part of the log
+				log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
 			}
-			// Print the runmqsc output, adding tab characters to make it more readable as part of the log
-			log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
 		}
 	}
 	return nil
