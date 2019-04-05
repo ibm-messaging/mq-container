@@ -558,6 +558,7 @@ func TestMQSC(t *testing.T) {
 // on that image, and checks that the MQSC has been applied correctly.
 func TestLargeMQSC(t *testing.T) {
 	t.Parallel()
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -594,6 +595,57 @@ func TestLargeMQSC(t *testing.T) {
 	if rc != 0 {
 		r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
 		t.Fatalf("Expected runmqsc to exit with rc=0, got %v with error %v", rc, r.FindString(mqscOutput))
+	}
+}
+
+// TestRedactMQSC creates a new image with a MQSC file that contains sensitive information, starts a container based
+// on that image, and checks that the MQSC has been redacted in the logs.
+func TestRedactMQSC(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	sslcryp := "GSK_PKCS11=/usr/lib/pkcs11/PKCS11_API.so;token-label;token-password;SYMMETRIC_CIPHER_ON;"
+	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) LDAPPWD(abcdefgh) B(2) PASSWORD(abcdefgh) C(3) SSLCRYP(%v) D(4)\n", sslcryp)
+	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) ldappwd(12345678) B(2) password(12345678) C(3) sslcryp(%v) D(4)\n", sslcryp)
+	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) LDAPPWD (12?@!$gh) B(2) PASSWORD (12?@!$gh) C(3) SSLCRYP (%v) D(4)", sslcryp)
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		  FROM %v
+		  USER root
+		  RUN rm -f /etc/mqm/*.mqsc
+		  ADD test.mqsc /etc/mqm/
+		  RUN chmod 0660 /etc/mqm/test.mqsc
+		  USER mqm`, imageName())},
+		{"test.mqsc", buf.String()},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	stopContainer(t, cli, id)
+	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
+	expectedOutput := "*TEST-REDACT-MQSC: A(1) LDAPPWD(*********) B(2) PASSWORD(*********) C(3) SSLCRYP(*********) D(4)"
+	for scanner.Scan() {
+		s := scanner.Text()
+		if strings.Contains(s, "*TEST-REDACT-MQSC:") && !strings.Contains(s, expectedOutput) {
+			t.Fatalf("Expected redacted MQSC output, got: %v", s)
+		}
+	}
+	err = scanner.Err()
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
