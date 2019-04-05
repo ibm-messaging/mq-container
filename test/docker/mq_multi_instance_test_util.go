@@ -92,10 +92,10 @@ func startMultiInstanceQueueManager(t *testing.T, cli *client.Client, qmsharedlo
 	if err != nil {
 		return err, "", ""
 	}
-	// err = waitForReady(t, cli, qm.ID)
-	// if err != nil {
-	// 	return err, "", ""
-	// }
+	err = waitForReady(t, cli, qm.ID)
+	if err != nil {
+		return err, "", ""
+	}
 
 	return nil, qm.ID, qmData.Name
 }
