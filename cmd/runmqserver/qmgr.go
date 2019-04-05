@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
@@ -109,11 +110,11 @@ func configureQueueManager() error {
 			// Run runmqsc command
 			out, err := cmd.CombinedOutput()
 			if err != nil {
-				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, strings.Replace(string(out), "\n", "\n\t", -1))
+				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, formatMQSCOutput(string(out)))
 				continue
 			} else {
 				// Print the runmqsc output, adding tab characters to make it more readable as part of the log
-				log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, strings.Replace(string(out), "\n", "\n\t", -1))
+				log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, formatMQSCOutput(string(out)))
 			}
 		}
 	}
@@ -129,4 +130,17 @@ func stopQueueManager(name string) error {
 	}
 	log.Println("Stopped queue manager")
 	return nil
+}
+
+func formatMQSCOutput(out string) string {
+	// redact sensitive information
+	pattern, _ := regexp.Compile("(?i)LDAPPWD\\s?\\((.*?)\\)")
+	out = pattern.ReplaceAllString(out, "LDAPPWD(*********)")
+	pattern, _ = regexp.Compile("(?i)PASSWORD\\s?\\((.*?)\\)")
+	out = pattern.ReplaceAllString(out, "PASSWORD(*********)")
+	pattern, _ = regexp.Compile("(?i)SSLCRYP\\s?\\((.*?)\\)")
+	out = pattern.ReplaceAllString(out, "SSLCRYP(*********)")
+
+	// add tab characters to make it more readable as part of the log
+	return strings.Replace(string(out), "\n", "\n\t", -1)
 }
