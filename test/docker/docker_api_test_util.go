@@ -380,19 +380,29 @@ func runContainerOneShotWithVolume(t *testing.T, cli *client.Client, bind string
 	return rc, out
 }
 
-func startContainer(t *testing.T, cli *client.Client, ID string) {
+func startContainer(t *testing.T, cli *client.Client, ID string) error{
 	t.Logf("Starting container: %v", ID)
 	startOptions := types.ContainerStartOptions{}
 	err := cli.ContainerStart(context.Background(), ID, startOptions)
 	if err != nil {
 		t.Fatal(err)
+		return err
 	}
+	return nil
 }
 
 func stopContainer(t *testing.T, cli *client.Client, ID string) {
 	t.Logf("Stopping container: %v", ID)
 	timeout := 10 * time.Second
 	err := cli.ContainerStop(context.Background(), ID, &timeout) //Duration(20)*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func killContainer(t *testing.T, cli *client.Client, ID string, signal string) {
+	t.Logf("Killing container: %v", ID)
+	err := cli.ContainerKill(context.Background(), ID, signal)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -511,7 +521,7 @@ func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd
 	return exitcode, outputStr
 }
 
-func waitForReady(t *testing.T, cli *client.Client, ID string) {
+func waitForReady(t *testing.T, cli *client.Client, ID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -521,10 +531,11 @@ func waitForReady(t *testing.T, cli *client.Client, ID string) {
 			rc, _ := execContainer(t, cli, ID, "mqm", []string{"chkmqready"})
 			if rc == 0 {
 				t.Log("MQ is ready")
-				return
+				return nil
 			}
 		case <-ctx.Done():
 			t.Fatal("Timed out waiting for container to become ready")
+			return fmt.Errorf("Timed out waiting for container %v to become ready", ID)
 		}
 	}
 }
