@@ -46,6 +46,7 @@ func configureMultiInstance(t *testing.T, cli *client.Client) (error, string, st
 	if err != nil {
 		return err, "", "", []string{}
 	}
+	time.Sleep(10 * time.Second)
 	err, qm1bId, qm1bData := startMultiInstanceQueueManager(t, cli, qmsharedlogs.Name, qmshareddata.Name)
 	if err != nil {
 		return err, "", "", []string{}
@@ -64,9 +65,43 @@ func singleInstance(t *testing.T, cli *client.Client, qmsharedlogs string, qmsha
 	qmsChannel <- QMChan{QMId: qmId, QMData: qmData}
 }
 
+func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata string, qmdata string) container.HostConfig {
+
+	var hostConfig container.HostConfig
+
+	switch mounts {
+	case 1:
+		hostConfig = container.HostConfig{
+			Binds: []string{
+				coverageBind(t),
+				qmdata + ":/mnt/mqm",
+			},
+		}
+	case 2:
+		hostConfig = container.HostConfig{
+			Binds: []string{
+				coverageBind(t),
+				qmdata + ":/mnt/mqm",
+				qmshareddata + ":/mnt/mqm-data",
+			},
+		}
+	case 3:
+		hostConfig = container.HostConfig{
+			Binds: []string{
+				coverageBind(t),
+				qmdata + ":/mnt/mqm",
+				qmsharedlogs + ":/mnt/mqm-log",
+				qmshareddata + ":/mnt/mqm-data",
+			},
+		}
+	}
+
+	return hostConfig
+}
+
 func startMultiInstanceQueueManager(t *testing.T, cli *client.Client, qmsharedlogs string, qmshareddata string) (error, string, string) {
 	id := strconv.FormatInt(time.Now().UnixNano(), 10)
-	qmData := createVolume(t, cli, id)
+	qmdata := createVolume(t, cli, id)
 	containerConfig := container.Config{
 		Image: imageName(),
 		Env: []string{
@@ -75,29 +110,22 @@ func startMultiInstanceQueueManager(t *testing.T, cli *client.Client, qmsharedlo
 			"MQ_MULTI_INSTANCE=true",
 		},
 	}
-	hostConfig := container.HostConfig{
-		Binds: []string{
-			coverageBind(t),
-			qmData.Name + ":/mnt/mqm",
-			qmsharedlogs + ":/mnt/mqm-log",
-			qmshareddata + ":/mnt/mqm-data",
-		},
+	var hostConfig container.HostConfig
+	if (qmsharedlogs == "" && qmshareddata == "") {
+		hostConfig = getHostConfig(t, 1, "", "", qmdata.Name)
+	} else if (qmsharedlogs == "") {
+		hostConfig = getHostConfig(t, 2, "", qmshareddata, qmdata.Name)
+	} else {
+		hostConfig = getHostConfig(t, 3, qmsharedlogs, qmshareddata, qmdata.Name)
 	}
 	networkingConfig := network.NetworkingConfig{}
 	qm, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+id)
 	if err != nil {
 		return err, "", ""
 	}
-	err = startContainer(t, cli, qm.ID)
-	if err != nil {
-		return err, "", ""
-	}
-	err = waitForReady(t, cli, qm.ID)
-	if err != nil {
-		return err, "", ""
-	}
+	startContainer(t, cli, qm.ID)
 
-	return nil, qm.ID, qmData.Name
+	return nil, qm.ID, qmdata.Name
 }
 
 func getActiveStandbyQueueManager(t *testing.T, cli *client.Client, qm1aId string, qm1bId string) (error, string, string) {
@@ -119,4 +147,23 @@ func getQueueManagerStatus(t *testing.T, cli *client.Client, containerID string,
 	status := regex.FindString(dspmqOut)
 	status = strings.TrimSuffix(strings.TrimPrefix(status, "STATUS("), ")")	
 	return status
+}
+
+func waitForTerminationMessage(t *testing.T, cli *client.Client, qmId string, terminationString string, timeout time.Duration) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	for {
+		select {
+		case <-time.After(1 * time.Second):
+			m := terminationMessage(t, cli, qmId)
+			if m != "" {
+				if !strings.Contains(m, terminationString){
+					t.Fatalf("Expected container to fail on missing required mount. Got termination message: %v", m)
+				}
+				return
+			} 
+		case <-ctx.Done():
+			t.Fatal("Timed out waiting for container to become ready")
+		}
+	}
 }

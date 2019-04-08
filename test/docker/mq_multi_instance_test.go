@@ -23,44 +23,44 @@ import (
 	"github.com/docker/docker/client"
 )
 
-
-
-// TestMultiInstanceStartup creates 2 containers in a multi instance queue manager configuration
+// TestMultiInstanceStartStop creates 2 containers in a multi instance queue manager configuration
 // and starts/stop them checking we always have an active and standby
 func TestMultiInstanceStartStop(t *testing.T) {
-	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	err, qm1a, qm1b, volumes := configureMultiInstance(t, cli)
+	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, volume := range volumes {
 		defer removeVolume(t, cli, volume)
 	}
-	defer cleanContainer(t, cli, qm1a)
-	defer cleanContainer(t, cli, qm1b)
+	defer cleanContainer(t, cli, qm1aId)
+	defer cleanContainer(t, cli, qm1bId)
 
-	if status := getQueueManagerStatus(t, cli, qm1a, "QM1"); strings.Compare(status, "Running") != 0 {
-		t.Fatalf("Expected QM1 to be running as active queue manager, dspmq returned status of %v", status)
-	} 
-	if status := getQueueManagerStatus(t, cli, qm1b, "QM1"); strings.Compare(status, "Running as standby") != 0 {
-		t.Fatalf("Expected QM1 to be running as standby queue manager, dspmq returned status of %v", status)
+	waitForReady(t, cli, qm1aId)
+	waitForReady(t, cli, qm1bId)
+
+	err, active, standby := getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
+	if err != nil {
+		t.Fatal(err)
 	}
-	killContainer(t, cli, qm1a, "SIGTERM")
+
+	killContainer(t, cli, active, "SIGTERM")
 	time.Sleep(2 * time.Second)
 
-	if status := getQueueManagerStatus(t, cli, qm1b, "QM1"); strings.Compare(status, "Running") != 0 {
+	if status := getQueueManagerStatus(t, cli, standby, "QM1"); strings.Compare(status, "Running") != 0 {
 		t.Fatalf("Expected QM1 to be running as active queue manager, dspmq returned status of %v", status)
 	}
 
-	startContainer(t, cli, qm1a)
-	waitForReady(t, cli, qm1a)
+	startContainer(t, cli, qm1aId)
+	waitForReady(t, cli, qm1aId)
 
-	if status := getQueueManagerStatus(t, cli, qm1a, "QM1"); strings.Compare(status, "Running as standby") != 0 {
-		t.Fatalf("Expected QM1 to be running as standby queue manager, dspmq returned status of %v", status)
+	err, _, _ = getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 }
@@ -68,39 +68,35 @@ func TestMultiInstanceStartStop(t *testing.T) {
 // TestMultiInstanceContainerStop starts 2 containers in a multi instance queue manager configuration,	
 // stops the active queue manager, then checks to ensure the backup queue manager becomes active
 func TestMultiInstanceContainerStop(t *testing.T) {
-	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	err, qm1a, qm1b, volumes := configureMultiInstance(t, cli)
+	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, volume := range volumes {
 		defer removeVolume(t, cli, volume)
 	}
-	defer cleanContainer(t, cli, qm1a)
-	defer cleanContainer(t, cli, qm1b)
+	defer cleanContainer(t, cli, qm1aId)
+	defer cleanContainer(t, cli, qm1bId)
 
-	if status := getQueueManagerStatus(t, cli, qm1a, "QM1"); strings.Compare(status, "Running") != 0 {
-		t.Fatalf("Expected QM1 to be running as active queue manager, dspmq returned status of %v", status)
-	} 
-	if status := getQueueManagerStatus(t, cli, qm1b, "QM1"); strings.Compare(status, "Running as standby") != 0 {
-		t.Fatalf("Expected QM1 to be running as standby queue manager, dspmq returned status of %v", status)
+	err, active, standby := getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	stopContainer(t, cli, qm1a)
-
-	if status := getQueueManagerStatus(t, cli, qm1b, "QM1"); strings.Compare(status, "Running") != 0 {
-		t.Fatalf("Expected QM1 to be running as standby queue manager, dspmq returned status of %v", status)
+	stopContainer(t, cli, active)
+	
+	if status := getQueueManagerStatus(t, cli, standby, "QM1"); strings.Compare(status, "Running") != 0 {
+		t.Fatalf("Expected QM1 to be running as active queue manager, dspmq returned status of %v", status)
 	}
 }
 
 // TestMultiInstanceRace starts 2 containers in separate goroutines in a multi instance queue manager 
 // configuration, then checks to ensure that both an active and standby queue manager have been started
 // func TestMultiInstanceRace(t *testing.T) {
-// 	t.Parallel()
 // 	cli, err := client.NewEnvClient()
 // 	if err != nil {
 // 		t.Fatal(err)
@@ -114,7 +110,6 @@ func TestMultiInstanceContainerStop(t *testing.T) {
 // 	qmsChannel := make(chan QMChan)
 
 // 	go singleInstance(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
-// 	// time.Sleep(1 * time.Second)
 // 	go singleInstance(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
 
 // 	qm1a := <- qmsChannel
@@ -127,8 +122,6 @@ func TestMultiInstanceContainerStop(t *testing.T) {
 // 		t.Fatal(qm1b.Error)
 // 	}
 
-// 	close(qmsChannel)
-
 // 	qm1aId, qm1aData := qm1a.QMId, qm1a.QMData
 // 	qm1bId, qm1bData := qm1b.QMId, qm1b.QMData
 
@@ -137,10 +130,75 @@ func TestMultiInstanceContainerStop(t *testing.T) {
 // 	defer cleanContainer(t, cli, qm1aId)
 // 	defer cleanContainer(t, cli, qm1bId)
 
+// 	err = waitForReady(t, cli, qm1aId)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+
+// 	err = waitForReady(t, cli, qm1bId)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+
 // 	err, _, _ = getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
 // 	if err != nil {
 // 		t.Fatal(err)
 // 	}
 // }
 
+// TestMultiInstanceSingleMount starts 2 multi instance queue managers without providing shared log/data 
+// mounts, then checks to ensure that the container terminates with the expected message
+func TestMultiInstanceSingleMount(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
 
+	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err, qm1bId, qm1bData := startMultiInstanceQueueManager(t, cli, "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer removeVolume(t, cli, qm1aData)
+	defer removeVolume(t, cli, qm1bData)
+	defer cleanContainer(t, cli, qm1aId)
+	defer cleanContainer(t, cli, qm1bId)
+
+	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount", 30*time.Second)
+
+}
+
+// TestMultiInstanceDoubleMount starts 2 multi instance queue managers without providing a shared log 
+// mount, then checks to ensure that the container terminates with the expected message
+func TestMultiInstanceDoubleMount(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	qmshareddata := createVolume(t, cli, "qmshareddata")
+	defer removeVolume(t, cli, qmshareddata.Name)
+
+	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, "", qmshareddata.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err, qm1bId, qm1bData := startMultiInstanceQueueManager(t, cli, "", qmshareddata.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer removeVolume(t, cli, qm1aData)
+	defer removeVolume(t, cli, qm1bData)
+	defer cleanContainer(t, cli, qm1aId)
+	defer cleanContainer(t, cli, qm1bId)
+
+	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount", 30*time.Second)
+}
