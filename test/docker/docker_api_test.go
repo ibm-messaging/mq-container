@@ -611,7 +611,8 @@ func TestRedactMQSC(t *testing.T) {
 	sslcryp := "GSK_PKCS11=/usr/lib/pkcs11/PKCS11_API.so;token-label;token-password;SYMMETRIC_CIPHER_ON;"
 	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) LDAPPWD(abcdefgh) B(2) PASSWORD(abcdefgh) C(3) SSLCRYP(%v) D(4)\n", sslcryp)
 	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) ldappwd(12345678) B(2) password(12345678) C(3) sslcryp(%v) D(4)\n", sslcryp)
-	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) LDAPPWD (12?@!$gh) B(2) PASSWORD (12?@!$gh) C(3) SSLCRYP (%v) D(4)", sslcryp)
+	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) LdapPwd('12?@!$Gh') B(2) Password('12?@!$Gh') C(3) SSLCryp(%v) D(4)\n", sslcryp)
+	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) LDAPPWD (abcdefgh) B(2) PASSWORD\t(abcdefgh) C(3) SSLCRYP \t (%v) D(4)", sslcryp)
 	var files = []struct {
 		Name, Body string
 	}{
