@@ -16,8 +16,8 @@ limitations under the License.
 package main
 
 import (
-	"testing"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/docker/docker/client"
@@ -65,7 +65,7 @@ func TestMultiInstanceStartStop(t *testing.T) {
 
 }
 
-// TestMultiInstanceContainerStop starts 2 containers in a multi instance queue manager configuration,	
+// TestMultiInstanceContainerStop starts 2 containers in a multi instance queue manager configuration,
 // stops the active queue manager, then checks to ensure the backup queue manager becomes active
 func TestMultiInstanceContainerStop(t *testing.T) {
 	cli, err := client.NewEnvClient()
@@ -91,13 +91,13 @@ func TestMultiInstanceContainerStop(t *testing.T) {
 	}
 
 	stopContainer(t, cli, active)
-	
+
 	if status := getQueueManagerStatus(t, cli, standby, "QM1"); strings.Compare(status, "Running") != 0 {
 		t.Fatalf("Expected QM1 to be running as active queue manager, dspmq returned status of %v", status)
 	}
 }
 
-// TestMultiInstanceRace starts 2 containers in separate goroutines in a multi instance queue manager 
+// TestMultiInstanceRace starts 2 containers in separate goroutines in a multi instance queue manager
 // configuration, then checks to ensure that both an active and standby queue manager have been started
 func TestMultiInstanceRace(t *testing.T) {
 	t.Skipf("Skipping %v until file lock is implemented", t.Name())
@@ -117,12 +117,12 @@ func TestMultiInstanceRace(t *testing.T) {
 	go singleInstance(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
 	go singleInstance(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
 
-	qm1a := <- qmsChannel
+	qm1a := <-qmsChannel
 	if qm1a.Error != nil {
 		t.Fatal(qm1a.Error)
 	}
 
-	qm1b := <- qmsChannel
+	qm1b := <-qmsChannel
 	if qm1b.Error != nil {
 		t.Fatal(qm1b.Error)
 	}
@@ -144,36 +144,29 @@ func TestMultiInstanceRace(t *testing.T) {
 	}
 }
 
-// TestMultiInstanceSingleMount starts 2 multi instance queue managers without providing shared log/data 
+// TestMultiInstanceNoSharedMounts starts 2 multi instance queue managers without providing shared log/data
 // mounts, then checks to ensure that the container terminates with the expected message
-func TestMultiInstanceSingleMount(t *testing.T) {
+func TestMultiInstanceNoSharedMounts(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, "", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err, qm1bId, qm1bData := startMultiInstanceQueueManager(t, cli, "", "")
+	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, true, "", "")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	defer removeVolume(t, cli, qm1aData)
-	defer removeVolume(t, cli, qm1bData)
 	defer cleanContainer(t, cli, qm1aId)
-	defer cleanContainer(t, cli, qm1bId)
 
-	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount", 30*time.Second)
+	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount '/mnt/mqm-log'", 30*time.Second)
 }
 
-// TestMultiInstanceSharedData starts 2 multi instance queue managers without providing a shared log 
+// TestMultiInstanceNoSharedLogs starts 2 multi instance queue managers without providing a shared log
 // mount, then checks to ensure that the container terminates with the expected message
-func TestMultiInstanceSharedData(t *testing.T) {
+func TestMultiInstanceNoSharedLogs(t *testing.T) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -182,27 +175,20 @@ func TestMultiInstanceSharedData(t *testing.T) {
 	qmshareddata := createVolume(t, cli, "qmshareddata")
 	defer removeVolume(t, cli, qmshareddata.Name)
 
-	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, "", qmshareddata.Name)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err, qm1bId, qm1bData := startMultiInstanceQueueManager(t, cli, "", qmshareddata.Name)
+	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, true, "", qmshareddata.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	defer removeVolume(t, cli, qm1aData)
-	defer removeVolume(t, cli, qm1bData)
 	defer cleanContainer(t, cli, qm1aId)
-	defer cleanContainer(t, cli, qm1bId)
 
-	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount", 30*time.Second)
+	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount '/mnt/mqm-log'", 30*time.Second)
 }
 
-// TestMultiInstanceSharedLogs starts 2 multi instance queue managers without providing a shared data 
+// TestMultiInstanceNoSharedData starts 2 multi instance queue managers without providing a shared data
 // mount, then checks to ensure that the container terminates with the expected message
-func TestMultiInstanceSharedLogs(t *testing.T) {
+func TestMultiInstanceNoSharedData(t *testing.T) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -211,21 +197,32 @@ func TestMultiInstanceSharedLogs(t *testing.T) {
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
 	defer removeVolume(t, cli, qmsharedlogs.Name)
 
-	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, "", qmsharedlogs.Name)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err, qm1bId, qm1bData := startMultiInstanceQueueManager(t, cli, "", qmsharedlogs.Name)
+	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, true, qmsharedlogs.Name, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	defer removeVolume(t, cli, qm1aData)
-	defer removeVolume(t, cli, qm1bData)
 	defer cleanContainer(t, cli, qm1aId)
-	defer cleanContainer(t, cli, qm1bId)
 
-	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount", 30*time.Second)
+	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount '/mnt/mqm-data'", 30*time.Second)
 }
 
+// TestMultiInstanceNoMounts starts 2 multi instance queue managers without providing a shared data
+// mount, then checks to ensure that the container terminates with the expected message
+func TestMultiInstanceNoMounts(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, false, "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer removeVolume(t, cli, qm1aData)
+	defer cleanContainer(t, cli, qm1aId)
+
+	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount '/mnt/mqm'", 30*time.Second)
+}
