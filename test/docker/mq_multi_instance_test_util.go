@@ -42,12 +42,12 @@ func configureMultiInstance(t *testing.T, cli *client.Client) (error, string, st
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
 	qmshareddata := createVolume(t, cli, "qmshareddata")
 
-	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, true, qmsharedlogs.Name, qmshareddata.Name)
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, qmshareddata.Name, miEnv)
 	if err != nil {
 		return err, "", "", []string{}
 	}
 	time.Sleep(10 * time.Second)
-	err, qm1bId, qm1bData := startMultiInstanceQueueManager(t, cli, true, qmsharedlogs.Name, qmshareddata.Name)
+	err, qm1bId, qm1bData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, qmshareddata.Name, miEnv)
 	if err != nil {
 		return err, "", "", []string{}
 	}
@@ -57,8 +57,8 @@ func configureMultiInstance(t *testing.T, cli *client.Client) (error, string, st
 	return nil, qm1aId, qm1bId, volumes
 }
 
-func singleInstance(t *testing.T, cli *client.Client, qmsharedlogs string, qmshareddata string, qmsChannel chan QMChan) {
-	err, qmId, qmData := startMultiInstanceQueueManager(t, cli, true, qmsharedlogs, qmshareddata)
+func singleMultiInstanceQueueManager(t *testing.T, cli *client.Client, qmsharedlogs string, qmshareddata string, qmsChannel chan QMChan) {
+	err, qmId, qmData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, miEnv)
 	if err != nil {
 		qmsChannel <- QMChan{Error: err}
 	}
@@ -107,16 +107,12 @@ func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata s
 	return hostConfig
 }
 
-func startMultiInstanceQueueManager(t *testing.T, cli *client.Client, dataVol bool, qmsharedlogs string, qmshareddata string) (error, string, string) {
+func startMultiVolumeQueueManager(t *testing.T, cli *client.Client, dataVol bool, qmsharedlogs string, qmshareddata string, env []string) (error, string, string) {
 	id := strconv.FormatInt(time.Now().UnixNano(), 10)
 	qmdata := createVolume(t, cli, id)
 	containerConfig := container.Config{
 		Image: imageName(),
-		Env: []string{
-			"LICENSE=accept",
-			"MQ_QMGR_NAME=QM1",
-			"MQ_MULTI_INSTANCE=true",
-		},
+		Env:   env,
 	}
 	var hostConfig container.HostConfig
 

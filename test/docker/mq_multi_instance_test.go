@@ -23,6 +23,12 @@ import (
 	"github.com/docker/docker/client"
 )
 
+var miEnv = []string{
+	"LICENSE=accept",
+	"MQ_QMGR_NAME=QM1",
+	"MQ_MULTI_INSTANCE=true",
+}
+
 // TestMultiInstanceStartStop creates 2 containers in a multi instance queue manager configuration
 // and starts/stop them checking we always have an active and standby
 func TestMultiInstanceStartStop(t *testing.T) {
@@ -114,8 +120,8 @@ func TestMultiInstanceRace(t *testing.T) {
 
 	qmsChannel := make(chan QMChan)
 
-	go singleInstance(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
-	go singleInstance(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
+	go singleMultiInstanceQueueManager(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
+	go singleMultiInstanceQueueManager(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
 
 	qm1a := <-qmsChannel
 	if qm1a.Error != nil {
@@ -153,7 +159,7 @@ func TestMultiInstanceNoSharedMounts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, true, "", "")
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, "", "", miEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,7 +181,7 @@ func TestMultiInstanceNoSharedLogs(t *testing.T) {
 	qmshareddata := createVolume(t, cli, "qmshareddata")
 	defer removeVolume(t, cli, qmshareddata.Name)
 
-	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, true, "", qmshareddata.Name)
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata.Name, miEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,7 +203,7 @@ func TestMultiInstanceNoSharedData(t *testing.T) {
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
 	defer removeVolume(t, cli, qmsharedlogs.Name)
 
-	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, true, qmsharedlogs.Name, "")
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, "", miEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,7 +222,7 @@ func TestMultiInstanceNoMounts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, false, "", "")
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, false, "", "", miEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
