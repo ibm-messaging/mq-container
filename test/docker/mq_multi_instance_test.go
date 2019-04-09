@@ -82,6 +82,9 @@ func TestMultiInstanceContainerStop(t *testing.T) {
 	defer cleanContainer(t, cli, qm1aId)
 	defer cleanContainer(t, cli, qm1bId)
 
+	waitForReady(t, cli, qm1aId)
+	waitForReady(t, cli, qm1bId)
+
 	err, active, standby := getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
 	if err != nil {
 		t.Fatal(err)
@@ -96,55 +99,50 @@ func TestMultiInstanceContainerStop(t *testing.T) {
 
 // TestMultiInstanceRace starts 2 containers in separate goroutines in a multi instance queue manager 
 // configuration, then checks to ensure that both an active and standby queue manager have been started
-// func TestMultiInstanceRace(t *testing.T) {
-// 	cli, err := client.NewEnvClient()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+func TestMultiInstanceRace(t *testing.T) {
+	t.Skipf("Skipping %v until file lock is implemented", t.Name())
 
-// 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
-// 	defer removeVolume(t, cli, qmsharedlogs.Name)
-// 	qmshareddata := createVolume(t, cli, "qmshareddata")
-// 	defer removeVolume(t, cli, qmshareddata.Name)
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	qmsChannel := make(chan QMChan)
+	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
+	defer removeVolume(t, cli, qmsharedlogs.Name)
+	qmshareddata := createVolume(t, cli, "qmshareddata")
+	defer removeVolume(t, cli, qmshareddata.Name)
 
-// 	go singleInstance(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
-// 	go singleInstance(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
+	qmsChannel := make(chan QMChan)
 
-// 	qm1a := <- qmsChannel
-// 	if qm1a.Error != nil {
-// 		t.Fatal(qm1a.Error)
-// 	}
+	go singleInstance(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
+	go singleInstance(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
 
-// 	qm1b := <- qmsChannel
-// 	if qm1b.Error != nil {
-// 		t.Fatal(qm1b.Error)
-// 	}
+	qm1a := <- qmsChannel
+	if qm1a.Error != nil {
+		t.Fatal(qm1a.Error)
+	}
 
-// 	qm1aId, qm1aData := qm1a.QMId, qm1a.QMData
-// 	qm1bId, qm1bData := qm1b.QMId, qm1b.QMData
+	qm1b := <- qmsChannel
+	if qm1b.Error != nil {
+		t.Fatal(qm1b.Error)
+	}
 
-// 	defer removeVolume(t, cli, qm1aData)
-// 	defer removeVolume(t, cli, qm1bData)
-// 	defer cleanContainer(t, cli, qm1aId)
-// 	defer cleanContainer(t, cli, qm1bId)
+	qm1aId, qm1aData := qm1a.QMId, qm1a.QMData
+	qm1bId, qm1bData := qm1b.QMId, qm1b.QMData
 
-// 	err = waitForReady(t, cli, qm1aId)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	defer removeVolume(t, cli, qm1aData)
+	defer removeVolume(t, cli, qm1bData)
+	defer cleanContainer(t, cli, qm1aId)
+	defer cleanContainer(t, cli, qm1bId)
 
-// 	err = waitForReady(t, cli, qm1bId)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	waitForReady(t, cli, qm1aId)
+	waitForReady(t, cli, qm1bId)
 
-// 	err, _, _ = getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// }
+	err, _, _ = getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 // TestMultiInstanceSingleMount starts 2 multi instance queue managers without providing shared log/data 
 // mounts, then checks to ensure that the container terminates with the expected message
@@ -171,7 +169,6 @@ func TestMultiInstanceSingleMount(t *testing.T) {
 	defer cleanContainer(t, cli, qm1bId)
 
 	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount", 30*time.Second)
-
 }
 
 // TestMultiInstanceDoubleMount starts 2 multi instance queue managers without providing a shared log 

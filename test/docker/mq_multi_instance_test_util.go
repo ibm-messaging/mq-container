@@ -163,7 +163,7 @@ func waitForTerminationMessage(t *testing.T, cli *client.Client, qmId string, te
 				return
 			} 
 		case <-ctx.Done():
-			t.Fatal("Timed out waiting for container to become ready")
+			t.Fatal("Timed out waiting for container to terminate")
 		}
 	}
 }
