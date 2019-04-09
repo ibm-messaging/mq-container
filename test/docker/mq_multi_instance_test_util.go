@@ -91,6 +91,14 @@ func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata s
 				coverageBind(t),
 				qmdata + ":/mnt/mqm",
 				qmsharedlogs + ":/mnt/mqm-log",
+			},
+		}
+	case 4:
+		hostConfig = container.HostConfig{
+			Binds: []string{
+				coverageBind(t),
+				qmdata + ":/mnt/mqm",
+				qmsharedlogs + ":/mnt/mqm-log",
 				qmshareddata + ":/mnt/mqm-data",
 			},
 		}
@@ -115,8 +123,10 @@ func startMultiInstanceQueueManager(t *testing.T, cli *client.Client, qmsharedlo
 		hostConfig = getHostConfig(t, 1, "", "", qmdata.Name)
 	} else if (qmsharedlogs == "") {
 		hostConfig = getHostConfig(t, 2, "", qmshareddata, qmdata.Name)
+	} else if (qmshareddata == "") {
+		hostConfig = getHostConfig(t, 3, qmsharedlogs, "", qmdata.Name)
 	} else {
-		hostConfig = getHostConfig(t, 3, qmsharedlogs, qmshareddata, qmdata.Name)
+		hostConfig = getHostConfig(t, 4, qmsharedlogs, qmshareddata, qmdata.Name)
 	}
 	networkingConfig := network.NetworkingConfig{}
 	qm, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+id)

@@ -171,9 +171,9 @@ func TestMultiInstanceSingleMount(t *testing.T) {
 	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount", 30*time.Second)
 }
 
-// TestMultiInstanceDoubleMount starts 2 multi instance queue managers without providing a shared log 
+// TestMultiInstanceSharedData starts 2 multi instance queue managers without providing a shared log 
 // mount, then checks to ensure that the container terminates with the expected message
-func TestMultiInstanceDoubleMount(t *testing.T) {
+func TestMultiInstanceSharedData(t *testing.T) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
@@ -199,3 +199,33 @@ func TestMultiInstanceDoubleMount(t *testing.T) {
 
 	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount", 30*time.Second)
 }
+
+// TestMultiInstanceSharedLogs starts 2 multi instance queue managers without providing a shared data 
+// mount, then checks to ensure that the container terminates with the expected message
+func TestMultiInstanceSharedLogs(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
+	defer removeVolume(t, cli, qmsharedlogs.Name)
+
+	err, qm1aId, qm1aData := startMultiInstanceQueueManager(t, cli, "", qmsharedlogs.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err, qm1bId, qm1bData := startMultiInstanceQueueManager(t, cli, "", qmsharedlogs.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer removeVolume(t, cli, qm1aData)
+	defer removeVolume(t, cli, qm1bData)
+	defer cleanContainer(t, cli, qm1aId)
+	defer cleanContainer(t, cli, qm1bId)
+
+	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount", 30*time.Second)
+}
+
