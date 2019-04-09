@@ -134,11 +134,11 @@ func stopQueueManager(name string) error {
 
 func formatMQSCOutput(out string) string {
 	// redact sensitive information
-	pattern, _ := regexp.Compile("(?i)LDAPPWD\\s?\\((.*?)\\)")
+	pattern, _ := regexp.Compile("(?i)LDAPPWD\\s*?\\((.*?)\\)")
 	out = pattern.ReplaceAllString(out, "LDAPPWD(*********)")
-	pattern, _ = regexp.Compile("(?i)PASSWORD\\s?\\((.*?)\\)")
+	pattern, _ = regexp.Compile("(?i)PASSWORD\\s*?\\((.*?)\\)")
 	out = pattern.ReplaceAllString(out, "PASSWORD(*********)")
-	pattern, _ = regexp.Compile("(?i)SSLCRYP\\s?\\((.*?)\\)")
+	pattern, _ = regexp.Compile("(?i)SSLCRYP\\s*?\\((.*?)\\)")
 	out = pattern.ReplaceAllString(out, "SSLCRYP(*********)")
 
 	// add tab characters to make it more readable as part of the log
