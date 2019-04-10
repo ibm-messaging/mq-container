@@ -23,9 +23,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/name"
+	"github.com/ibm-messaging/mq-container/internal/ready"
 )
 
 func main() {
@@ -39,9 +39,9 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	isStandby, err := isStandbyQueueManager(name)
-	if err != nil {
-		fmt.Println(err)
+	isStandby, rc := isStandbyQueueManager(name)
+	if rc != 0 {
+		fmt.Printf("Tried to run dspmq expecting rc=0, got rc=%v", rc)
 		os.Exit(1)
 	}
 	if !isStandby {
@@ -54,13 +54,16 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
+	} else {
+		fmt.Printf("Queue Manager Running as Standby. Exiting readiness check.")
+		os.Exit(10)
 	}
 }
 
-func isStandbyQueueManager(name string) (bool, error) {
+func isStandbyQueueManager(name string) (bool, int) {
 	out, rc, _ := command.Run("dspmq", "-n", "-m", name)
-	if (rc == 0 && strings.Contains(string(out), "(RUNNING AS STANDBY)")) {
-		return true, nil
+	if rc == 0 && strings.Contains(string(out), "(RUNNING AS STANDBY)") {
+		return true, rc
 	}
-	return false, nil
+	return false, rc
 }

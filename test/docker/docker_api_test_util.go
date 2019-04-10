@@ -530,6 +530,9 @@ func waitForReady(t *testing.T, cli *client.Client, ID string) {
 			if rc == 0 {
 				t.Log("MQ is ready")
 				return
+			} else if rc == 10 {
+				t.Log("MQ Readiness: Queue Manager Running as Standby")
+				return
 			}
 		case <-ctx.Done():
 			t.Fatal("Timed out waiting for container to become ready")
