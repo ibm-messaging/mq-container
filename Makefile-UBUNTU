@@ -134,7 +134,7 @@ downloads/$(MQ_ARCHIVE_DEV):
 downloads/$(MQ_SDK_ARCHIVE):
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
 	mkdir -p downloads
-	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_SDK_ARCHIVE) 
+	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_SDK_ARCHIVE)
 
 .PHONY: downloads
 downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
@@ -239,7 +239,7 @@ build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version build-golang-sdk-ex
 # Target-specific variable to add web server into devserver image
 ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
 build-devserver: MQ_PACKAGES=ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-ams ibmmq-web
-else 
+else
 build-devserver: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesAMS-*.rpm MQSeriesWeb-*.rpm
 endif
 build-devserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE_DEV)
@@ -252,11 +252,11 @@ build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version build-golang-sdk-ex
 build-advancedserver-cover: docker-version
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_IMAGE_ADVANCEDSERVER)-cover -f Dockerfile-server.cover .
 
-.PHONY: build-explorer 
+.PHONY: build-explorer
 ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
 build-explorer: MQ_PACKAGES=ibmmq-explorer
-else 
-build-explorer: MQ_PACKAGES=MQSeriesRuntime*.rpm MQSeriesJRE*.rpm MQSeriesExplorer*.rpm 
+else
+build-explorer: MQ_PACKAGES=MQSeriesRuntime*.rpm MQSeriesJRE*.rpm MQSeriesExplorer*.rpm
 endif
 build-explorer: downloads/$(MQ_ARCHIVE_DEV) docker-pull
 	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION))
@@ -267,7 +267,7 @@ build-sdk: downloads/$(MQ_SDK_ARCHIVE) build-sdk-ex
 .PHONY: build-sdk-ex
 ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
 build-sdk-ex: MQ_PACKAGES=ibmmq-sdk ibmmq-samples build-essential
-else 
+else
 build-sdk-ex: MQ_PACKAGES=MQSeriesRuntime-*.rpm MQSeriesSDK-*.rpm MQSeriesSamples*.rpm
 endif
 build-sdk-ex: docker-version docker-pull
@@ -280,9 +280,7 @@ build-golang-sdk: downloads/$(MQ_SDK_ARCHIVE) build-golang-sdk-ex
 .PHONY: build-golang-sdk-ex
 build-golang-sdk-ex: docker-version build-sdk-ex
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_GOLANG_SDK)"$(END)))
-	@echo hello
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_SDK) -t $(MQ_IMAGE_GOLANG_SDK) -f incubating/mq-golang-sdk/Dockerfile .
-	@echo goodbye
 
 .PHONY: docker-pull
 docker-pull:
