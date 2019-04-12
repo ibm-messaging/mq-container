@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ func queueManagerHealthy() (bool, error) {
 		return false, err
 	}
 	fmt.Printf("%s", out)
-	if !strings.Contains(string(out), "(RUNNING)") {
+	if !strings.Contains(string(out), "(RUNNING)") && !strings.Contains(string(out), "(RUNNING AS STANDBY)") {
 		return false, nil
 	}
 	return true, nil

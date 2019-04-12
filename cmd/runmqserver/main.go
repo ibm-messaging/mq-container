@@ -165,7 +165,7 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
-	if standby, _ := isStandbyQueueManager(name); !standby {
+	if standby, _ := ready.IsStandbyQueueManager(name); !standby {
 		err = configureQueueManager()
 		if err != nil {
 			logTermination(err)

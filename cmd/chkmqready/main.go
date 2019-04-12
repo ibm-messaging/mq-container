@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
 
-	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
@@ -39,9 +37,9 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	isStandby, rc := isStandbyQueueManager(name)
-	if rc != 0 {
-		fmt.Printf("Tried to run dspmq expecting rc=0, got rc=%v", rc)
+	isStandby, err := ready.IsStandbyQueueManager(name)
+	if err != nil {
+		fmt.Printf("Error getting status for queue manager %v: %v", name, err)
 		os.Exit(1)
 	}
 	if !isStandby {
@@ -55,15 +53,7 @@ func main() {
 			fmt.Println(err)
 		}
 	} else {
-		fmt.Printf("Queue Manager Running as Standby. Exiting readiness check.")
+		fmt.Printf("Detected queue manager running in standby mode")
 		os.Exit(10)
 	}
-}
-
-func isStandbyQueueManager(name string) (bool, int) {
-	out, rc, _ := command.Run("dspmq", "-n", "-m", name)
-	if rc == 0 && strings.Contains(string(out), "(RUNNING AS STANDBY)") {
-		return true, rc
-	}
-	return false, rc
 }

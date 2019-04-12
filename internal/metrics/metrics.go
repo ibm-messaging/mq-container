@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/ibm-messaging/mq-container/internal/logger"
+	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -38,6 +39,17 @@ var (
 
 // GatherMetrics gathers metrics for the queue manager
 func GatherMetrics(qmName string, log *logger.Logger) {
+
+	// If running in standby mode - wait until the queue manager becomes active
+	for {
+		standby, err := ready.IsStandbyQueueManager(qmName)
+		if err != nil {
+			log.Errorf("Metrics Error: Failed to get status for queue manager: %v", err)
+		} else if !standby {
+			break
+		}
+		time.Sleep(requestTimeout * time.Second)
+	}
 
 	metricsEnabled = true
 

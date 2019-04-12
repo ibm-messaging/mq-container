@@ -27,6 +27,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/command"
 	containerruntime "github.com/ibm-messaging/mq-container/internal/containerruntime"
 	"github.com/ibm-messaging/mq-container/internal/mqscredact"
+	"github.com/ibm-messaging/mq-container/internal/ready"
 )
 
 // createDirStructure creates the default MQ directory structure under /var/mqm
@@ -170,8 +171,9 @@ func configureQueueManager() error {
 
 func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
-	isStandby, err := isStandbyQueueManager(name)
+	isStandby, err := ready.IsStandbyQueueManager(name)
 	if err != nil {
+		log.Printf("Error getting status for queue manager %v: ", name, err)
 		return err
 	}
 	args := []string{"-w", "-r", name}
