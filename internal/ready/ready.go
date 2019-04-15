@@ -66,13 +66,22 @@ func Check() (bool, error) {
 	return exists, nil
 }
 
-// IsStandbyQueueManager returns true if queue manager is running in standby mode
-func IsStandbyQueueManager(name string) (bool, error) {
+// IsRunningAsActiveQM returns true if the queue manager is running in active mode
+func IsRunningAsActiveQM(name string) (bool, error) {
+	return isRunningQM(name, "(RUNNING)")
+}
+
+// IsRunningAsStandbyQM returns true if the queue manager is running in standby mode
+func IsRunningAsStandbyQM(name string) (bool, error) {
+	return isRunningQM(name, "(RUNNING AS STANDBY)")
+}
+
+func isRunningQM(name string, status string) (bool, error) {
 	out, _, err := command.Run("dspmq", "-n", "-m", name)
 	if err != nil {
 		return false, err
 	}
-	if strings.Contains(string(out), "(RUNNING AS STANDBY)") {
+	if strings.Contains(string(out), status) {
 		return true, nil
 	}
 	return false, nil

@@ -42,10 +42,10 @@ func GatherMetrics(qmName string, log *logger.Logger) {
 
 	// If running in standby mode - wait until the queue manager becomes active
 	for {
-		standby, err := ready.IsStandbyQueueManager(qmName)
+		active, err := ready.IsRunningAsActiveQM(qmName)
 		if err != nil {
 			log.Errorf("Metrics Error: Failed to get status for queue manager: %v", err)
-		} else if !standby {
+		} else if active {
 			break
 		}
 		time.Sleep(requestTimeout * time.Second)

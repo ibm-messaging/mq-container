@@ -37,12 +37,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	isStandby, err := ready.IsStandbyQueueManager(name)
-	if err != nil {
-		fmt.Printf("Error getting status for queue manager %v: %v", name, err)
-		os.Exit(1)
-	}
-	if !isStandby {
+	if standby, _ := ready.IsRunningAsStandbyQM(name); !standby {
 		conn, err := net.Dial("tcp", "127.0.0.1:1414")
 		if err != nil {
 			fmt.Println(err)
