@@ -21,10 +21,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/mqscredact"
 )
 
 // createDirStructure creates the default MQ directory structure under /var/mqm
@@ -134,12 +134,7 @@ func stopQueueManager(name string) error {
 
 func formatMQSCOutput(out string) string {
 	// redact sensitive information
-	pattern, _ := regexp.Compile("(?i)LDAPPWD\\s*?\\((.*?)\\)")
-	out = pattern.ReplaceAllString(out, "LDAPPWD(*********)")
-	pattern, _ = regexp.Compile("(?i)PASSWORD\\s*?\\((.*?)\\)")
-	out = pattern.ReplaceAllString(out, "PASSWORD(*********)")
-	pattern, _ = regexp.Compile("(?i)SSLCRYP\\s*?\\((.*?)\\)")
-	out = pattern.ReplaceAllString(out, "SSLCRYP(*********)")
+	out, _ = mqscredact.Redact(out)
 
 	// add tab characters to make it more readable as part of the log
 	return strings.Replace(string(out), "\n", "\n\t", -1)

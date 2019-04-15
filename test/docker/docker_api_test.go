@@ -608,11 +608,38 @@ func TestRedactMQSC(t *testing.T) {
 		t.Fatal(err)
 	}
 	var buf bytes.Buffer
-	sslcryp := "GSK_PKCS11=/usr/lib/pkcs11/PKCS11_API.so;token-label;token-password;SYMMETRIC_CIPHER_ON;"
-	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) LDAPPWD(abcdefgh) B(2) PASSWORD(abcdefgh) C(3) SSLCRYP(%v) D(4)\n", sslcryp)
-	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) ldappwd(12345678) B(2) password(12345678) C(3) sslcryp(%v) D(4)\n", sslcryp)
-	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) LdapPwd('12?@!$Gh') B(2) Password('12?@!$Gh') C(3) SSLCryp(%v) D(4)\n", sslcryp)
-	fmt.Fprintf(&buf, "*TEST-REDACT-MQSC: A(1) LDAPPWD (abcdefgh) B(2) PASSWORD\t(abcdefgh) C(3) SSLCRYP \t (%v) D(4)", sslcryp)
+	passwords := "hippoman4567"
+	sslcryp := fmt.Sprintf("GSK_PKCS11=/usr/lib/pkcs11/PKCS11_API.so;token-label;%s;SYMMETRIC_CIPHER_ON;", passwords)
+
+	/* LDAPPWD*/
+	fmt.Fprintf(&buf, "DEFINE AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) CONNAME('test(24)') SHORTUSR('sn') LDAPUSER('user') LDAPPWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) ldappwd('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) lDaPpWd('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD \t('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) +\n LDAP+\n PWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) -\nLDAPP-\nWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) +\n*test comment\n LDAPP-\n*test comment2\nWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD(%v)\n", passwords)
+
+	/* PASSWORD */
+	fmt.Fprintf(&buf, "DEFINE CHANNEL(TEST2) CHLTYPE(SDR) CONNAME('test(24)') XMITQ('fake') PASSWORD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) CHLTYPE(SDR) password('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) CHLTYPE(SDR) pAsSwOrD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) CHLTYPE(SDR) PASSWORD \t('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) +\n CHLTYPE(SDR) PASS+\n WORD+\n ('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) -\nCHLTYPE(SDR) PASS-\nWORD-\n('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) +\n CHLTYPE(SDR) PASS-\n*comemnt 2\nWORD+\n*test comment\n ('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) CHLTYPE(SDR) PASSWORD(%s)\n", passwords)
+
+	/* SSLCRYP */
+	fmt.Fprintf(&buf, "ALTER QMGR SSLCRYP('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR sslcryp('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR SsLcRyP('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR SSLCRYP \t('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR +\n SSL+\n CRYP+\n ('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR -\nSSLC-\nRYP-\n('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR +\n*commenttime\n SSL-\n*commentagain\nCRYP+\n*last comment\n ('%v')\n", sslcryp)
+
 	var files = []struct {
 		Name, Body string
 	}{
@@ -637,10 +664,9 @@ func TestRedactMQSC(t *testing.T) {
 	waitForReady(t, cli, id)
 	stopContainer(t, cli, id)
 	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
-	expectedOutput := "*TEST-REDACT-MQSC: A(1) LDAPPWD(*********) B(2) PASSWORD(*********) C(3) SSLCRYP(*********) D(4)"
 	for scanner.Scan() {
 		s := scanner.Text()
-		if strings.Contains(s, "*TEST-REDACT-MQSC:") && !strings.Contains(s, expectedOutput) {
+		if strings.Contains(s, sslcryp) || strings.Contains(s, passwords) {
 			t.Fatalf("Expected redacted MQSC output, got: %v", s)
 		}
 	}
