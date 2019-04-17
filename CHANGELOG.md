@@ -1,5 +1,10 @@
 # Change log
 
+## vNext
+
+* BREAKING CHANGE: MQSC files supplied will be verified before being run. Files containing invalid MQSC will cause the container to fail to start
+* Security Fixes
+
 ## 9.1.2.0 (2019-03-21)
 
 * Now runs using the "mqm" user instead of root.  See new [security doc](https://github.com/ibm-messaging/mq-container/blob/master/docs/security.md)

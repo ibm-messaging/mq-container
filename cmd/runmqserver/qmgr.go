@@ -17,14 +17,15 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/mqscredact"
 )
 
 // createDirStructure creates the default MQ directory structure under /var/mqm
@@ -91,6 +92,7 @@ func configureQueueManager() error {
 		if strings.HasSuffix(file.Name(), ".mqsc") {
 			abs := filepath.Join(configDir, file.Name())
 			// #nosec G204
+			verify := exec.Command("runmqsc", "-v", "-e")
 			cmd := exec.Command("runmqsc")
 			// Read mqsc file into variable
 			mqsc, err := ioutil.ReadFile(abs)
@@ -105,10 +107,21 @@ func configureQueueManager() error {
 				log.Printf("Error writing MQSC file %v to buffer: %v", abs, err)
 				continue
 			}
+			verifyBuffer := buffer
+
 			// Buffer mqsc to stdin of runmqsc
 			cmd.Stdin = &buffer
+			verify.Stdin = &verifyBuffer
+
+			// Verify the MQSC commands
+			out, err := verify.CombinedOutput()
+			if err != nil {
+				log.Errorf("Error verifying MQSC file %v (%v):\n\t%v", file.Name(), err, formatMQSCOutput(string(out)))
+				return fmt.Errorf("Error verifying MQSC file %v (%v):\n\t%v", file.Name(), err, formatMQSCOutput(string(out)))
+			}
+
 			// Run runmqsc command
-			out, err := cmd.CombinedOutput()
+			out, err = cmd.CombinedOutput()
 			if err != nil {
 				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, formatMQSCOutput(string(out)))
 				continue
@@ -134,12 +147,7 @@ func stopQueueManager(name string) error {
 
 func formatMQSCOutput(out string) string {
 	// redact sensitive information
-	pattern, _ := regexp.Compile("(?i)LDAPPWD\\s*?\\((.*?)\\)")
-	out = pattern.ReplaceAllString(out, "LDAPPWD(*********)")
-	pattern, _ = regexp.Compile("(?i)PASSWORD\\s*?\\((.*?)\\)")
-	out = pattern.ReplaceAllString(out, "PASSWORD(*********)")
-	pattern, _ = regexp.Compile("(?i)SSLCRYP\\s*?\\((.*?)\\)")
-	out = pattern.ReplaceAllString(out, "SSLCRYP(*********)")
+	out, _ = mqscredact.Redact(out)
 
 	// add tab characters to make it more readable as part of the log
 	return strings.Replace(string(out), "\n", "\n\t", -1)
