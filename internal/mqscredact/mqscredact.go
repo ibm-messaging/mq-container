@@ -24,10 +24,10 @@ import (
 )
 
 /* List of sensitive MQ Parameters */
-var sensitiveParameters = [...]string{"LDAPPWD", "PASSWORD", "SSLCRYP"}
+var sensitiveParameters = []string{"LDAPPWD", "PASSWORD", "SSLCRYP"}
 
-// RedactionString is what sensitive paramters will be replaced with
-const RedactionString = "(*********)"
+// redactionString is what sensitive paramters will be replaced with
+const redactionString = "(*********)"
 
 func findEndOfParamterString(stringDenoter rune, r *bufio.Reader) string {
 	parameter := ""
@@ -135,7 +135,7 @@ MainLoop:
 			if !redacting {
 				returnStr = returnStr + parameterStr
 			} else {
-				returnStr = returnStr + RedactionString
+				returnStr = returnStr + redactionString
 			}
 
 			resetAllParameters(&currentVerb, &originalString, &lineContinuation, &foundGap, &parameterNext, &redacting, &checkComment)

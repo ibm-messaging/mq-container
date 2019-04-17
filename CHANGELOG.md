@@ -2,7 +2,7 @@
 
 ## vNext
 
-* BREAKING CHANGE: MQSC files supplied will be verified before ran. Files containing invalid MQSC will cause the container to fail to start
+* BREAKING CHANGE: MQSC files supplied will be verified before being run. Files containing invalid MQSC will cause the container to fail to start
 * Security Fixes
 
 ## 9.1.2.0 (2019-03-21)
