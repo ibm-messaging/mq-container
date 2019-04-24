@@ -122,7 +122,7 @@ func configureLogger(name string) (mirrorFunc, error) {
 				return false
 			}
 			if err != nil {
-				fmt.Printf("Failed to Unmarshall JSON - %v", err)
+				fmt.Printf("Failed to Unmarshall JSON - %v\n", err)
 			} else {
 				fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
 			}

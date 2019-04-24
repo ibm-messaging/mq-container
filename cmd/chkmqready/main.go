@@ -37,6 +37,8 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	// Check if the queue manager has a running listener
 	if standby, _ := ready.IsRunningAsStandbyQM(name); !standby {
 		conn, err := net.Dial("tcp", "127.0.0.1:1414")
 		if err != nil {
