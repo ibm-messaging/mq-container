@@ -101,13 +101,15 @@ func configureLogger(name string) (mirrorFunc, error) {
 			return nil, err
 		}
 		return func(msg string, isQMLog bool) bool {
-			if isQMLog {
-				obj, err := processLogMessage(msg)
-				if err == nil && filterQMLogMessage(obj) {
-					return false
-				}
+			obj, err := processLogMessage(msg)
+			if err == nil && isQMLog && filterQMLogMessage(obj) {
+				return false
 			}
-			fmt.Println(msg)
+			if err != nil {
+				log.Printf("Failed to unmarshall JSON - %v", msg)
+			} else {
+				fmt.Println(msg)
+			}
 			return true
 		}, nil
 	case "basic":
@@ -122,7 +124,7 @@ func configureLogger(name string) (mirrorFunc, error) {
 				return false
 			}
 			if err != nil {
-				fmt.Printf("Failed to Unmarshall JSON - %v\n", err)
+				log.Printf("Failed to unmarshall JSON - %v", err)
 			} else {
 				fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
 			}
