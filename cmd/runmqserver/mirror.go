@@ -22,8 +22,6 @@ import (
 	"os"
 	"sync"
 	"time"
-
-	"github.com/prometheus/common/log"
 )
 
 // waitForFile waits until the specified file exists
