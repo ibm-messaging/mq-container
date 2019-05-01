@@ -13,18 +13,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+package logruntime
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 
 	containerruntime "github.com/ibm-messaging/mq-container/internal/containerruntime"
+	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/ibm-messaging/mq-container/internal/user"
 )
 
-func logContainerDetails() error {
+// LogContainerDetails logs details about the container runtime
+func LogContainerDetails(log *logger.Logger) error {
 	if runtime.GOOS != "linux" {
 		return fmt.Errorf("Unsupported platform: %v", runtime.GOOS)
 	}
@@ -79,6 +82,20 @@ func logContainerDetails() error {
 				if !containerruntime.SupportedFilesystem(fsType) {
 					return fmt.Errorf("%v uses unsupported filesystem type: %v", mountPoint, fsType)
 				}
+			}
+		}
+	}
+	// For a multi-instance queue manager - check all required mounts exist & validate filesystem type
+	if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
+		log.Println("Multi-instance queue manager: enabled")
+		reqMounts := []string{"/mnt/mqm", "/mnt/mqm-log", "/mnt/mqm-data"}
+		for _, mountPoint := range reqMounts {
+			if fsType, ok := m[mountPoint]; ok {
+				if !containerruntime.ValidMultiInstanceFilesystem(fsType) {
+					return fmt.Errorf("%v uses filesystem type '%v' which is invalid for a multi-instance queue manager", mountPoint, fsType)
+				}
+			} else {
+				return fmt.Errorf("Missing required mount '%v' for a multi-instance queue manager", mountPoint)
 			}
 		}
 	}

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,15 +17,13 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 	"runtime"
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
-func createVolume(path string) error {
-	dataPath := filepath.Join(path, "data")
+func createVolume(dataPath string) error {
 	fi, err := os.Stat(dataPath)
 	if err != nil {
 		if os.IsNotExist(err) {

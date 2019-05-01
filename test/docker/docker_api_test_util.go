@@ -398,6 +398,14 @@ func stopContainer(t *testing.T, cli *client.Client, ID string) {
 	}
 }
 
+func killContainer(t *testing.T, cli *client.Client, ID string, signal string) {
+	t.Logf("Killing container: %v", ID)
+	err := cli.ContainerKill(context.Background(), ID, signal)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func getExitCodeFilename(t *testing.T) string {
 	return t.Name() + "ExitCode"
 }
@@ -522,6 +530,9 @@ func waitForReady(t *testing.T, cli *client.Client, ID string) {
 			if rc == 0 {
 				t.Log("MQ is ready")
 				return
+			} else if rc == 10 {
+				t.Log("MQ Readiness: Queue Manager Running as Standby")
+				return
 			}
 		case <-ctx.Done():
 			t.Fatal("Timed out waiting for container to become ready")
@@ -557,17 +568,17 @@ func removeNetwork(t *testing.T, cli *client.Client, ID string) {
 	}
 }
 
-func createVolume(t *testing.T, cli *client.Client) types.Volume {
+func createVolume(t *testing.T, cli *client.Client, name string) types.Volume {
 	v, err := cli.VolumeCreate(context.Background(), volume.VolumesCreateBody{
 		Driver:     "local",
 		DriverOpts: map[string]string{},
 		Labels:     map[string]string{},
-		Name:       t.Name(),
+		Name:       name,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Created volume %v", t.Name())
+	t.Logf("Created volume %v", v.Name)
 	return v
 }
 

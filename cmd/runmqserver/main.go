@@ -24,6 +24,7 @@ import (
 	"os"
 	"sync"
 
+	containerruntimelogger "github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
@@ -45,7 +46,7 @@ func doMain() error {
 	// Check whether they only want debug info
 	if *infoFlag {
 		logVersionInfo()
-		err = logContainerDetails()
+		err = containerruntimelogger.LogContainerDetails(log)
 		if err != nil {
 			log.Printf("Error displaying container details: %v", err)
 		}
@@ -86,14 +87,24 @@ func doMain() error {
 	collectDiagOnFail = true
 
 	if *devFlag == false {
-		err = logContainerDetails()
+		err = containerruntimelogger.LogContainerDetails(log)
 		if err != nil {
 			logTermination(err)
 			return err
 		}
 	}
 
-	err = createVolume("/mnt/mqm")
+	err = createVolume("/mnt/mqm/data")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+	err = createVolume("/mnt/mqm-log/log")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+	err = createVolume("/mnt/mqm-data/qmgrs")
 	if err != nil {
 		logTermination(err)
 		return err
@@ -149,15 +160,17 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
-	err = startQueueManager()
+	err = startQueueManager(name)
 	if err != nil {
 		logTermination(err)
 		return err
 	}
-	err = configureQueueManager()
-	if err != nil {
-		logTermination(err)
-		return err
+	if standby, _ := ready.IsRunningAsStandbyQM(name); !standby {
+		err = configureQueueManager()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	enableMetrics := os.Getenv("MQ_ENABLE_METRICS")

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/ibm-messaging/mq-container/internal/logger"
+	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -38,6 +39,15 @@ var (
 
 // GatherMetrics gathers metrics for the queue manager
 func GatherMetrics(qmName string, log *logger.Logger) {
+
+	// If running in standby mode - wait until the queue manager becomes active
+	for {
+		active, _ := ready.IsRunningAsActiveQM(qmName)
+		if active {
+			break
+		}
+		time.Sleep(requestTimeout * time.Second)
+	}
 
 	metricsEnabled = true
 

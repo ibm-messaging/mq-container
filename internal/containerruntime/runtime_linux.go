@@ -123,3 +123,12 @@ func SupportedFilesystem(fsType string) bool {
 		return true
 	}
 }
+
+// ValidMultiInstanceFilesystem returns true if the supplied filesystem type is valid for a multi-instance queue manager
+func ValidMultiInstanceFilesystem(fsType string) bool {
+	if !SupportedFilesystem(fsType) {
+		return false
+	}
+	// TODO : check for non-shared filesystems & shared filesystems which are known not to work
+	return true
+}

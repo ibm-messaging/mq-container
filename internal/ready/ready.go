@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ package ready
 import (
 	"io/ioutil"
 	"os"
+	"strings"
+
+	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 const fileName string = "/run/runmqserver/ready"
@@ -61,4 +64,25 @@ func Check() (bool, error) {
 		return false, err
 	}
 	return exists, nil
+}
+
+// IsRunningAsActiveQM returns true if the queue manager is running in active mode
+func IsRunningAsActiveQM(name string) (bool, error) {
+	return isRunningQM(name, "(RUNNING)")
+}
+
+// IsRunningAsStandbyQM returns true if the queue manager is running in standby mode
+func IsRunningAsStandbyQM(name string) (bool, error) {
+	return isRunningQM(name, "(RUNNING AS STANDBY)")
+}
+
+func isRunningQM(name string, status string) (bool, error) {
+	out, _, err := command.Run("dspmq", "-n", "-m", name)
+	if err != nil {
+		return false, err
+	}
+	if strings.Contains(string(out), status) {
+		return true, nil
+	}
+	return false, nil
 }

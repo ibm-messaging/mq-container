@@ -235,7 +235,7 @@ func withVolume(t *testing.T, metric bool) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vol := createVolume(t, cli)
+	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol.Name)
 	containerConfig := container.Config{
 		Image: imageName(),
@@ -273,6 +273,62 @@ func withVolume(t *testing.T, metric bool) {
 	waitForReady(t, cli, ctr2.ID)
 }
 
+// TestWithSplitVolumesLogsData starts a queue manager with separate log/data mounts
+func TestWithSplitVolumesLogsData(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
+	defer removeVolume(t, cli, qmsharedlogs.Name)
+	qmshareddata := createVolume(t, cli, "qmshareddata")
+	defer removeVolume(t, cli, qmshareddata.Name)
+
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, qmshareddata.Name, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
+
+	defer removeVolume(t, cli, qmVol)
+	defer cleanContainer(t, cli, qmID)
+
+	waitForReady(t, cli, qmID)
+}
+
+// TestWithSplitVolumesLogsOnly starts a queue manager with a separate log mount
+func TestWithSplitVolumesLogsOnly(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
+	defer removeVolume(t, cli, qmsharedlogs.Name)
+
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, "", []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
+
+	defer removeVolume(t, cli, qmVol)
+	defer cleanContainer(t, cli, qmID)
+
+	waitForReady(t, cli, qmID)
+}
+
+// TestWithSplitVolumesDataOnly starts a queue manager with a separate data mount
+func TestWithSplitVolumesDataOnly(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	qmshareddata := createVolume(t, cli, "qmshareddata")
+	defer removeVolume(t, cli, qmshareddata.Name)
+
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata.Name, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
+
+	defer removeVolume(t, cli, qmVol)
+	defer cleanContainer(t, cli, qmID)
+
+	waitForReady(t, cli, qmID)
+}
+
 // TestNoVolumeWithRestart ensures a queue manager container can be stopped
 // and restarted cleanly
 func TestNoVolumeWithRestart(t *testing.T) {
@@ -302,7 +358,7 @@ func TestVolumeRequiresRoot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vol := createVolume(t, cli)
+	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol.Name)
 
 	// Set permissions on the volume to only allow root to write it
@@ -438,7 +494,7 @@ func TestVolumeUnmount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vol := createVolume(t, cli)
+	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol.Name)
 	containerConfig := container.Config{
 		Image: imageName(),
