@@ -6,13 +6,6 @@ You need to ensure you have the following tools installed:
 * [GNU make](https://www.gnu.org/software/make/)
 * [Go](https://golang.org/) - only needed for running the tests
 * [dep](https://github.com/golang/dep) (official Go dependency management tool) - needed to prepare for running the tests
-* [Helm](https://helm.sh) - only needed for running the Kubernetes tests
-
-### Prerequisites for testing a RedHat image
-If you want to test a container image with Red Hat Enterprise Linux as the base OS, then you need to use a host server with Red Hat Enterprise Linux.  You must also have the following tools installed:
-
-* [Yum](http://yum.baseurl.org/) (available in `rhel-7-server-extras`)
-* [Buildah](https://buildah.io) (available in `rhel-7-server-extras`)
 
 ## Running the tests
 There are two main sets of tests:

@@ -24,6 +24,7 @@ The `runmqserver` command has the following responsibilities:
     - Works as PID 1, so is responsible for [reaping zombie processes](https://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/)
 * Creating and starting a queue manager
 * Configuring the queue manager, by running any MQSC scripts found under `/etc/mqm`
+* Starts the MQ web server (if enabled)
 * Starting Prometheus metrics generation for the queue manager (if enabled)
 * Indicates to the `chkmqready` command that configuration is complete, and that normal readiness checking can happen.  This is done by writing a file into `/run/runmqserver`
 
@@ -35,8 +36,6 @@ The `runmqdevserver` command is added to the MQ Advanced for Developers image on
 1. Sets passwords based on supplied environment variables
 2. Generates MQSC files to put in `/etc/mqm`, based on a template, which is updated with values based on supplied environment variables.
 3. If requested, it creates TLS key stores under `/run/runmqdevserver`, and configures MQ and the web server to use them
-
-A special version of `runmqserver` is used in the developer image, which performs extra actions like starting the web server.  This is built using the `mqdev` [build constraint](https://golang.org/pkg/go/build/#hdr-Build_Constraints).
 
 ## Prometheus metrics
 [Prometheus](https://prometheus.io) metrics are generated for the queue manager as follows:

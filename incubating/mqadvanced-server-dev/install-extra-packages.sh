@@ -15,7 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-test -f /usr/bin/yum && RHEL=true || RHEL=false
+test -f /usr/bin/yum && YUM=true || YUM=false
+test -f /usr/bin/microdnf && MICRODNF=true || MICRODNF=false
 test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
 
 if ($UBUNTU); then
@@ -25,8 +26,13 @@ if ($UBUNTU); then
     rm -rf /var/lib/apt/lists/*
 fi
 
-if ($RHEL); then
+if ($YUM); then
     yum -y install sudo
     yum -y clean all
     rm -rf /var/cache/yum/*
+fi
+
+if ($MICRODNF); then
+    microdnf install --nodocs sudo
+    microdnf clean all
 fi

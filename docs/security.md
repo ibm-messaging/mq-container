@@ -4,7 +4,7 @@
 
 ### User
 
-The MQ server image is run using the "mqm" user.  On the Ubuntu-based image, this uses the UID and GID of 999.  On the Red Hat Enterprise Linux image, it uses the UID and GID of 888.
+The MQ server image is run using the "mqm" user, with a fixed UID and GID of 888.
 
 ### Capabilities
 

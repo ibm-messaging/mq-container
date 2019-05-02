@@ -1,7 +1,5 @@
-// +build !mqdev
-
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +15,24 @@ limitations under the License.
 */
 package main
 
+import (
+	"os"
+)
+
+// postInit is run after /var/mqm is set up
 func postInit(name string) error {
+	web := os.Getenv("MQ_BETA_ENABLE_WEB_SERVER")
+	if web == "true" || web == "1" {
+		// Configure the web server (if installed)
+		err := configureWebServer()
+		if err != nil {
+			return err
+		}
+		// Start the web server, in the background (if installed)
+		// WARNING: No error handling or health checking available for the web server
+		go func() {
+			startWebServer()
+		}()
+	}
 	return nil
 }
