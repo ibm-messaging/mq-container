@@ -36,6 +36,11 @@ Run `make build-devserver`, which will download the latest version of MQ Advance
 
 You can use the environment variable `MQ_ARCHIVE_DEV` to specify an alternative local file to install from (which must be in the `downloads` directory).
 
+## Building from a Red Hat Enterprise Linux host
+Red Hat Enterprise Linux (RHEL) offers a suite of container tools, including Buildah for building container images, and Podman for running containers.  Buildah can accept input described in a [Dockerfile](https://docs.docker.com/engine/reference/builder/).  This MQ sample uses a multi-stage build, which requires a recent version of Podman, which is not yet available in Red Hat Enterprise Linux V7.  Therefore, if you are on a RHEL host, then the `build-devserver` and `build-advancedserver` targets are run using a more recent version of Buildah from inside a container.
+
+The containerized build process on a RHEL host will write an OCI compliant archive file to `/tmp/mq-buildah`.  If a version of Docker is installed on the host, it will also push the image into Docker's internal image registry.
+
 ## Installed components
 
 This image includes the core MQ server, Java, language packs, GSKit, and web server.  This can be configured by setting the `MQ_PACKAGES` argument to `make`.

@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ###############################################################################
 # Application build environment (Maven)
 ###############################################################################
-FROM maven:3-ibmjava as builder
+FROM docker.io/maven:3-ibmjava as builder
 COPY pom.xml /usr/src/mymaven/
 WORKDIR /usr/src/mymaven
 # Download dependencies separately, so Docker caches them
@@ -30,7 +30,7 @@ RUN find /usr/src/mymaven
 ###############################################################################
 # Application runtime (JRE only, no build environment)
 ###############################################################################
-FROM ibmjava:8-jre
+FROM docker.io/ibmjava:8-jre
 COPY --from=builder /usr/src/mymaven/target/*.jar /opt/app/
 COPY --from=builder /usr/src/mymaven/target/lib/*.jar /opt/app/
 ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]

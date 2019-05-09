@@ -38,7 +38,7 @@ MQ_TAG ?=$(MQ_VERSION)-$(ARCH)
 # DOCKER is the Docker command to run.  Defaults to "podman" if it's available, otherwise "docker"
 DOCKER ?= $(shell type -p podman || echo docker)
 # MQ_PACKAGES specifies the MQ packages (.deb or .rpm) to install.  Defaults vary on base image.
-MQ_PACKAGES ?=
+MQ_PACKAGES ?=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesWeb*.rpm MQSeriesAMS-*.rpm
 # MQM_UID is the UID to use for the "mqm" user
 MQM_UID ?= 888
 
@@ -68,6 +68,14 @@ EMPTY:=
 SPACE:= $(EMPTY) $(EMPTY)
 # MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.2 instead of 9.1.2.0
 MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
+
+# Set variable if running on a Red Hat Enterprise Linux host
+ifneq ($(wildcard /etc/redhat-release),)
+REDHAT_RELEASE = $(shell cat /etc/redhat-release)
+ifeq "$(findstring Red Hat,$(REDHAT_RELEASE))" "Red Hat"
+    RHEL_HOST = "true"
+endif
+endif
 
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
 	DOWNLOADS_DIR=$(patsubst /mnt/c%,C:%,$(realpath ./downloads/))
@@ -182,7 +190,7 @@ test-advancedserver-cover: test/docker/vendor coverage
 	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
 	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
 
-define docker-build-mq
+define build-mq
 	# Create a temporary network to use for the build
 	$(DOCKER) network create build
 	# Start a web server to host the MQ downloadable (tar.gz) file
@@ -193,26 +201,46 @@ define docker-build-mq
 	  --network-alias build \
 	  --volume $(DOWNLOADS_DIR):/usr/share/nginx/html:ro \
 	  --detach \
-	  nginx:alpine
+	  docker.io/nginx:alpine
 	# Build the new image
 	$(DOCKER) build \
 	  --tag $1:$2 \
 	  --file $3 \
 	  --network build \
 	  --build-arg MQ_URL=http://build:80/$4 \
+	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
 	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
 	  --build-arg IMAGE_TAG="$1:$2" \
 	  --build-arg MQM_UID=$(MQM_UID) \
-	  --label version=$7 \
+	  --label version=$(MQ_VERSION) \
 	  --label name=$1 \
 	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
 	  --label release="" \
 	  --label vcs-ref=$(IMAGE_REVISION) \
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
-	  --target $8 \
+	  --target $5 \
 	  . ; $(DOCKER) kill $(BUILD_SERVER_CONTAINER) && $(DOCKER) network rm build
+endef
+
+define build-mq-ctr
+	buildah/mq-buildah $1 $2 \
+	  --file /src/Dockerfile-server \
+	  --build-arg MQ_URL="file:///src/downloads/$3" \
+	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
+	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
+	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
+	  --build-arg IMAGE_TAG="$1:$2" \
+	  --build-arg MQM_UID=$(MQM_UID) \
+	  --label version=$(MQ_VERSION) \
+	  --label name=$1 \
+	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
+	  --label release="" \
+	  --label vcs-ref=$(IMAGE_REVISION) \
+	  --label vcs-type=git \
+	  --label vcs-url=$(IMAGE_SOURCE) \
+	  --target $4
 endef
 
 DOCKER_SERVER_VERSION=$(shell docker version --format "{{ .Server.Version }}")
@@ -223,33 +251,53 @@ docker-version:
 	@test "$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
 
 .PHONY: build-advancedserver
-build-advancedserver: MQ_SDK_ARCHIVE=$(MQ_ARCHIVE)
-build-advancedserver: downloads/$(MQ_ARCHIVE) docker-version #build-golang-sdk-ex
+ifdef RHEL_HOST
+# Build using Buildah inside a container on RHEL hosts
+build-advancedserver: build-advancedserver-ctr
+else
+build-advancedserver: build-advancedserver-host
+endif
+
+.PHONY: build-advancedserver-host
+build-advancedserver-host: downloads/$(MQ_ARCHIVE) docker-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
-	$(call docker-build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),"4486e8c4cc9146fd9b3ce1f14a2dfc5b","IBM MQ Advanced",$(MQ_VERSION),mq-server)
+	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
+
+.PHONY: buildah-advancedserver-host
+build-advancedserver-ctr: downloads/$(MQ_ARCHIVE)
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) in a container"$(END)))
+	$(call build-mq-ctr,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),$(MQ_ARCHIVE),mq-server)
 
 .PHONY: build-devserver
-build-devserver: downloads/$(MQ_ARCHIVE_DEV) docker-version #build-golang-sdk-ex
-	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER_BASE):$(MQ_TAG)"$(END)))
-	$(call docker-build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION),mq-dev-server)
+ifdef RHEL_HOST
+# Build using Buildah inside a container on RHEL hosts
+build-devserver: build-devserver-ctr
+else
+build-devserver: build-devserver-host
+endif
+
+.PHONY: build-devserver-host
+build-devserver-host: downloads/$(MQ_ARCHIVE_DEV) docker-version
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
+	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
+
+.PHONY: buildah-devserver-ctr
+build-devserver-ctr: downloads/$(MQ_ARCHIVE_DEV)
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) in a container"$(END)))
+	$(call build-mq-ctr,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),$(MQ_ARCHIVE_DEV),mq-dev-server)
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: docker-version
 	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover -f Dockerfile-server.cover .
 
 .PHONY: build-explorer
-ifeq "$(findstring ubuntu,$(BASE_IMAGE))" "ubuntu"
-build-explorer: MQ_PACKAGES=ibmmq-explorer
-else
-build-explorer: MQ_PACKAGES=MQSeriesRuntime*.rpm MQSeriesJRE*.rpm MQSeriesExplorer*.rpm
-endif
-build-explorer: downloads/$(MQ_ARCHIVE_DEV) docker-pull
-	$(call docker-build-mq,mq-explorer:latest-$(ARCH),incubating/mq-explorer/Dockerfile,$(MQ_ARCHIVE_DEV),"98102d16795c4263ad9ca075190a2d4d","IBM MQ Advanced for Developers (Non-Warranted)",$(MQ_VERSION),"ubuntu:16.04")
+build-explorer: downloads/$(MQ_ARCHIVE_DEV)
+	$(call build-mq,mq-explorer,latest-$(ARCH),incubating/mq-explorer/Dockerfile,$(MQ_ARCHIVE_DEV),mq-explorer)
 
-.PHONY: docker-pull
-docker-pull:
-	$(DOCKER) pull $(BASE_IMAGE)
-
+.PHONY: build-sdk
+build-sdk: downloads/$(MQ_ARCHIVE_DEV)
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
+	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
 
 .PHONY: debug-vars
 debug-vars:

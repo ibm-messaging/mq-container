@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=ubuntu:16.04
-
-FROM $BASE_IMAGE
+FROM registry.access.redhat.com/rhscl/devtoolset-7-toolchain-rhel7 AS mq-sdk
+#FROM docker.io/centos/devtoolset-7-toolchain-centos7 AS mq-sdk
 
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ Debian (.deb) install packages
 ARG MQ_URL
 
 # The packages to install in install-mq.sh
-ARG MQ_PACKAGES
+ENV MQ_PACKAGES="MQSeriesRuntime-*.rpm MQSeriesSDK-*.rpm MQSeriesSamples*.rpm"
 
-ARG MQM_UID=999
+ENV MQM_UID=888
 
+USER 0
 COPY install-mq.sh /usr/local/bin/
 
 # Install MQ.  To avoid a "text file busy" error here, we sleep before installing.
@@ -35,3 +35,4 @@ RUN chmod u+x /usr/local/bin/install-mq.sh \
   && install-mq.sh $MQM_UID \
   && rm -rf /var/mqm \
   && /opt/mqm/bin/crtmqdir -f -s
+USER 1001
