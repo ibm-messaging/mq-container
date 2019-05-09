@@ -16,6 +16,7 @@
 # Build stage to build Go code
 ###############################################################################
 FROM registry.access.redhat.com/devtools/go-toolset-7-rhel7 as builder
+# FROM docker.io/centos/go-toolset-7-centos7 as builder
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ RPM install packages
 ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev912_linux_x86-64.tar.gz"
@@ -53,6 +54,7 @@ FROM registry.access.redhat.com/ubi7/ubi-minimal AS mq-server
 # The MQ packages to install - see install-mq.sh for default value
 ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev912_linux_x86-64.tar.gz"
 ARG MQ_PACKAGES="MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesWeb*.rpm MQSeriesAMS-*.rpm"
+#ARG MQ_PACKAGES="ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-web ibmmq-ams"
 ARG MQM_UID=888
 LABEL summary="IBM MQ Advanced Server"
 LABEL description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
@@ -84,7 +86,7 @@ RUN chmod ug+x /usr/local/bin/runmqserver \
   && chown mqm:root /run/termination-log \
   && chmod 0660 /run/termination-log
 # Always use port 1414 for MQ & 9157 for the metrics
-EXPOSE 1414 9157
+EXPOSE 1414 9157 9443
 ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1 LOG_FORMAT=basic
 USER $MQM_UID
 ENTRYPOINT ["runmqserver"]
@@ -131,7 +133,6 @@ COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
 RUN chown -R mqm:mqm /etc/mqm/* \
   && chmod +x /usr/local/bin/runmq* \
   && install --directory --mode 0775 --owner mqm --group root /run/runmqdevserver
-EXPOSE 9443
 ENV MQ_BETA_ENABLE_WEB_SERVER=1
 USER $MQM_UID
 ENTRYPOINT ["runmqdevserver"]
