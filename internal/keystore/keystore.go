@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,7 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+
+// Package keystore contains code to create and update keystores
+package keystore
 
 import (
 	"bufio"
@@ -23,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/logger"
 )
 
 // KeyStore describes information about a keystore file
@@ -54,7 +57,7 @@ func NewCMSKeyStore(filename, password string) *KeyStore {
 }
 
 // Create a key store, if it doesn't already exist
-func (ks *KeyStore) Create() error {
+func (ks *KeyStore) Create(log *logger.Logger) error {
 	_, err := os.Stat(ks.Filename)
 	if err == nil {
 		// Keystore already exists so we should refresh it by deleting it.
@@ -111,7 +114,7 @@ func (ks *KeyStore) Create() error {
 }
 
 // CreateStash creates a key stash, if it doesn't already exist
-func (ks *KeyStore) CreateStash() error {
+func (ks *KeyStore) CreateStash(log *logger.Logger) error {
 	extension := filepath.Ext(ks.Filename)
 	stashFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".sth"
 	log.Debugf("TLS stash file: %v", stashFile)
@@ -138,11 +141,38 @@ func (ks *KeyStore) CreateStash() error {
 	return nil
 }
 
+// GeneratePKCS12 generates a PKCS12 file
+func (ks *KeyStore) GeneratePKCS12(keyFile, crtFile, pkcs12File, label, password string) error {
+	out, _, err := command.Run("openssl", "pkcs12", "-export", "-inkey", keyFile, "-in", crtFile, "-out", pkcs12File, "-name", label, "-passout", "pass:"+password)
+	if err != nil {
+		return fmt.Errorf("error running \"openssl pkcs12 -export\": %v %s", err, out)
+	}
+	return nil
+}
+
 // Import imports a certificate file in the keystore
 func (ks *KeyStore) Import(inputFile, password string) error {
 	out, _, err := command.Run(ks.command, "-cert", "-import", "-file", inputFile, "-pw", password, "-target", ks.Filename, "-target_pw", ks.Password, "-target_type", ks.keyStoreType)
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -import\": %v %s", ks.command, err, out)
+	}
+	return nil
+}
+
+// CreateSelfSignedCertificate creates a self-signed certificate in the keystore
+func (ks *KeyStore) CreateSelfSignedCertificate(label, dn string) error {
+	out, _, err := command.Run(ks.command, "-cert", "-create", "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn)
+	if err != nil {
+		return fmt.Errorf("error running \"%v -cert -create\": %v %s", ks.command, err, out)
+	}
+	return nil
+}
+
+// Add adds a CA certificate to the keystore
+func (ks *KeyStore) Add(inputFile, label string) error {
+	out, _, err := command.Run(ks.command, "-cert", "-add", "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile, "-label", label)
+	if err != nil {
+		return fmt.Errorf("error running \"%v -cert -add\": %v %s", ks.command, err, out)
 	}
 	return nil
 }

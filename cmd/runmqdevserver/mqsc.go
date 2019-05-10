@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package main
 
 import (
 	"os"
+
+	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 )
 
 func updateMQSC(appPasswordRequired bool) error {
@@ -30,7 +32,7 @@ func updateMQSC(appPasswordRequired bool) error {
 	if os.Getenv("MQ_DEV") == "true" {
 		const mqscTemplate string = mqsc + ".tpl"
 		// Re-configure channel if app password not set
-		err := processTemplateFile(mqsc+".tpl", mqsc, map[string]string{"ChckClnt": checkClient})
+		err := mqtemplate.ProcessTemplateFile(mqsc+".tpl", mqsc, map[string]string{"ChckClnt": checkClient}, log)
 		if err != nil {
 			return err
 		}

@@ -78,8 +78,7 @@ install --directory --mode 0775 --owner ${mqm_uid} --group 0 ${mnt_mq}/run/runmq
 cp ./incubating/mqadvanced-server-dev/*.tpl ${mnt_mq}/etc/mqm/
 
 # Copy web XML files for default developer configuration
-mkdir --parents ${mnt_mq}/etc/mqm/web
-cp --recursive ./incubating/mqadvanced-server-dev/web/* ${mnt_mq}/etc/mqm/web/
+cp -R incubating/mqadvanced-server-dev/web/ ${mnt_mq}/etc/mqm/web
 
 # Make "mqm" the owner of all the config files
 chown --recursive ${mqm_uid}:${mqm_gid} ${mnt_mq}/etc/mqm/*

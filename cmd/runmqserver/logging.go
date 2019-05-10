@@ -167,11 +167,20 @@ func logDiagnostics() {
 	out, _, _ = command.Run("ls", "-l", "/mnt/mqm/data")
 	log.Debugf("/mnt/mqm/data:\n%s", out)
 	// #nosec G104
+	out, _, _ = command.Run("ls", "-l", "/mnt/mqm-log/log")
+	log.Debugf("/mnt/mqm-log/log:\n%s", out)
+	// #nosec G104
+	out, _, _ = command.Run("ls", "-l", "/mnt/mqm-data/qmgrs")
+	log.Debugf("/mnt/mqm-data/qmgrs:\n%s", out)
+	// #nosec G104
 	out, _, _ = command.Run("ls", "-l", "/var/mqm")
 	log.Debugf("/var/mqm:\n%s", out)
 	// #nosec G104
 	out, _, _ = command.Run("ls", "-l", "/var/mqm/errors")
 	log.Debugf("/var/mqm/errors:\n%s", out)
+	// #nosec G104
+	out, _, _ = command.Run("ls", "-l", "/etc/mqm")
+	log.Debugf("/etc/mqm:\n%s", out)
 
 	// Print out summary of any FDCs
 	// #nosec G204

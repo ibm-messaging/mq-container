@@ -86,6 +86,7 @@ buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install \
   shadow-utils \
   tar \
   util-linux \
+  openssl \
   which
 
 # Install "sudo" if using MQ Advanced for Developers
@@ -121,6 +122,13 @@ buildah run --user root $ctr_mq -- chmod 0660 /run/termination-log
 install --mode 0550 --owner root --group root ./mq-advanced-server-rhel/writePackages.sh ${mnt_mq}/usr/local/bin/writePackages
 buildah run --user root $ctr_mq -- /usr/local/bin/writePackages
 
+# Copy web XML files
+cp -R web ${mnt_mq}/etc/mqm/web
+
+# Make "mqm" the owner of all the config files
+chown --recursive ${mqm_uid}:${mqm_gid} ${mnt_mq}/etc/mqm/*
+chmod --recursive 0750 ${mnt_mq}/etc/mqm/*
+
 ###############################################################################
 # Final Buildah commands
 ###############################################################################
@@ -138,6 +146,7 @@ fi
 buildah config \
   --port 1414/tcp \
   --port 9157/tcp \
+  --port 9443/tcp \
   --os linux \
   --label architecture=x86_64 \
   --label io.openshift.tags="$OSTAG" \

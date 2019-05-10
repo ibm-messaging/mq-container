@@ -23,9 +23,12 @@ import (
 	"os/user"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/keystore"
+	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 )
 
 func startWebServer() error {
@@ -85,6 +88,103 @@ func CopyFile(src, dest string) error {
 		return err
 	}
 	err = out.Close()
+	return err
+}
+
+func configureSSO() error {
+
+	// Ensure all required environment variables are set for SSO
+	requiredEnvVars := []string{
+		"MQ_WEB_ADMIN_USERS",
+		"MQ_OIDC_CLIENT_ID",
+		"MQ_OIDC_CLIENT_SECRET",
+		"MQ_OIDC_UNIQUE_USER_IDENTIFIER",
+		"MQ_OIDC_AUTHORIZATION_ENDPOINT",
+		"MQ_OIDC_TOKEN_ENDPOINT",
+		"MQ_OIDC_JWK_ENDPOINT",
+		"MQ_OIDC_ISSUER_IDENTIFIER",
+		"MQ_OIDC_CERTIFICATE",
+	}
+	for _, envVar := range requiredEnvVars {
+		if len(os.Getenv(envVar)) == 0 {
+			return fmt.Errorf("%v must be set when MQ_BETA_ENABLE_SSO=true", envVar)
+		}
+	}
+
+	// Check mqweb directory exists
+	const mqwebDir string = "/etc/mqm/web/installations/Installation1/servers/mqweb"
+	_, err := os.Stat(mqwebDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	// Process SSO template for generating file mqwebuser.xml
+	adminUsers := strings.Split(os.Getenv("MQ_WEB_ADMIN_USERS"), "\n")
+	err = mqtemplate.ProcessTemplateFile(mqwebDir+"/mqwebuser.xml.tpl", mqwebDir+"/mqwebuser.xml", map[string][]string{"AdminUser": adminUsers}, log)
+	if err != nil {
+		return err
+	}
+
+	// Configure SSO TLS
+	return configureSSO_TLS()
+}
+
+func configureSSO_TLS() error {
+
+	// Create tls directory
+	dir := "/run/tls"
+	mntdir := "/mnt/tls/"
+	_, err := os.Stat(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(dir, 0770)
+			if err != nil {
+				return err
+			}
+			mqmUID, mqmGID, err := command.LookupMQM()
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			err = os.Chown(dir, mqmUID, mqmGID)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	// Setup key store & trust store
+	ks := keystore.NewJKSKeyStore(filepath.Join(dir, "key.jks"), "password")
+	ts := keystore.NewJKSKeyStore(filepath.Join(dir, "trust.jks"), "password")
+
+	log.Debug("Creating key store")
+	err = ks.Create(log)
+	if err != nil {
+		return err
+	}
+	log.Debug("Creating trust store")
+	err = ts.Create(log)
+	if err != nil {
+		return err
+	}
+	log.Debug("Generating PKCS12 file")
+	err = ks.GeneratePKCS12(filepath.Join(mntdir, "tls.key"), filepath.Join(mntdir, "tls.crt"), filepath.Join(dir, "tls.p12"), "default", "password")
+	if err != nil {
+		return err
+	}
+	log.Debug("Importing certificate into key store")
+	err = ks.Import(filepath.Join(dir, "tls.p12"), "password")
+	if err != nil {
+		return err
+	}
+	log.Debug("Adding OIDC certificate to trust store")
+	err = ts.Add(os.Getenv("MQ_OIDC_CERTIFICATE"), "OIDC")
 	return err
 }
 
