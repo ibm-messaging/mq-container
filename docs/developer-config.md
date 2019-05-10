@@ -52,4 +52,4 @@ If you choose to accept the security warning, you will be presented with the log
 
 If you wish to change the password for the admin user, this can be done using the `MQ_ADMIN_PASSWORD` environment variable. If you supply a PKCS#12 keystore using the `MQ_TLS_KEYSTORE` environment variable, then the web console will be configured to use the certificate inside the keystore for HTTPS operations.
 
-If you do not wish the web console to run, you can disable it by setting the environment variable `MQ_BETA_ENABLE_WEB_SERVER` to `false`.
+If you do not wish the web console to run, you can disable it by setting the environment variable `MQ_ENABLE_EMBEDDED_WEB_SERVER` to `false`.

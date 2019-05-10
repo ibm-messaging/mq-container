@@ -138,7 +138,7 @@ func TestDevWebDisabled(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
-			"MQ_BETA_ENABLE_WEB_SERVER=false",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)

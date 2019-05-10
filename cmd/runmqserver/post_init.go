@@ -21,9 +21,19 @@ import (
 
 // postInit is run after /var/mqm is set up
 func postInit(name string) error {
-	web := os.Getenv("MQ_BETA_ENABLE_WEB_SERVER")
-	if web == "true" || web == "1" {
-		// Configure the web server (if installed)
+	enableWebServer := os.Getenv("MQ_ENABLE_EMBEDDED_WEB_SERVER")
+	if enableWebServer == "true" || enableWebServer == "1" {
+
+		// Configure Single-Sign-On for the web server (if enabled)
+		enableSSO := os.Getenv("MQ_BETA_ENABLE_SSO")
+		if enableSSO == "true" || enableSSO == "1" {
+			err := configureSSO()
+			if err != nil {
+				return err
+			}
+		}
+
+		// Configure the web server (if enabled)
 		err := configureWebServer()
 		if err != nil {
 			return err
