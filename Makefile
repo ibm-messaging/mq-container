@@ -164,6 +164,7 @@ test-devserver: test/docker/vendor
 	docker inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
 
+.PHONY: coverage
 coverage:
 	mkdir coverage
 
@@ -263,7 +264,7 @@ build-advancedserver-host: downloads/$(MQ_ARCHIVE) docker-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
 
-.PHONY: buildah-advancedserver-host
+.PHONY: build-advancedserver-ctr
 build-advancedserver-ctr: downloads/$(MQ_ARCHIVE)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) in a container"$(END)))
 	$(call build-mq-ctr,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),$(MQ_ARCHIVE),mq-server)
@@ -281,7 +282,7 @@ build-devserver-host: downloads/$(MQ_ARCHIVE_DEV) docker-version
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
 
-.PHONY: buildah-devserver-ctr
+.PHONY: build-devserver-ctr
 build-devserver-ctr: downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) in a container"$(END)))
 	$(call build-mq-ctr,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),$(MQ_ARCHIVE_DEV),mq-dev-server)
