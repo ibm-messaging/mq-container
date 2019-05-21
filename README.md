@@ -5,8 +5,6 @@
 **Note**: The `master` branch may be in an *unstable or even broken state* during development.
 To get a stable version, please use the correct [branch](https://github.com/ibm-messaging/mq-container/branches) for your MQ version, instead of the `master` branch.
 
-<img src="https://raw.githubusercontent.com/IBM/charts/master/logo/ibm-mq-icon.svg?sanitize=true" width="100" alt="IBM MQ logo" />
-
 ## Overview
 
 Run [IBM® MQ](http://www-03.ibm.com/software/products/en/ibm-mq) in a container.
@@ -54,4 +52,4 @@ Note: The IBM MQ Advanced for Developers license does not permit further distrib
 
 ## Copyright
 
-© Copyright IBM Corporation 2015, 2018
+© Copyright IBM Corporation 2015, 2019
