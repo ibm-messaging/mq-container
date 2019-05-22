@@ -109,10 +109,20 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
 	err = createDirStructure()
 	if err != nil {
 		logTermination(err)
 		return err
+	}
+
+	// handle /var/mqm/ permissions in upgrade to v4.0.0
+	if *initFlag {
+		err = configureOwnership([]string{"/var/mqm/web", "/var/mqm/qmgrs", "/var/mqm/sockets", "/var/mqm/log"})
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	// If init flag is set, exit now

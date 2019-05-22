@@ -41,6 +41,38 @@ func createDirStructure() error {
 	return nil
 }
 
+// configureOwnership recursively handles ownership of files within the given filepath
+func configureOwnership(paths []string) error {
+	uid, gid, err := command.LookupMQM()
+	if err != nil {
+		return err
+	}
+	for _, root := range paths {
+		_, err = os.Stat(root)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+		err = filepath.Walk(root, func(from string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			to := fmt.Sprintf("%v%v", root, from[len(root):])
+			err = os.Chown(to, uid, gid)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // createQueueManager creates a queue manager, if it doesn't already exist.
 // It returns true if one was created (or a standby was created), or false if one already existed
 func createQueueManager(name string) (bool, error) {
