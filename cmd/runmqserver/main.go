@@ -116,9 +116,23 @@ func doMain() error {
 		return err
 	}
 
-	// handle /var/mqm/ permissions in upgrade to ubi
+	// handle /var/mqm/ permissions in upgrade to UBI
 	if *initFlag {
-		err = configureOwnership([]string{"/var/mqm"})
+		varMqmDirs := []string{
+			"/var/mqm/config",
+			"/var/mqm/conv",
+			"/var/mqm/errors",
+			"/var/mqm/exits",
+			"/var/mqm/exits64",
+			"/var/mqm/log",
+			"/var/mqm/mqft",
+			"/var/mqm/qmgrs",
+			"/var/mqm/shared",
+			"/var/mqm/sockets",
+			"/var/mqm/trace",
+			"/var/mqm/web",
+		}
+		err = configureOwnership(varMqmDirs)
 		if err != nil {
 			logTermination(err)
 			return err
