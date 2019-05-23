@@ -24,6 +24,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/ibm-messaging/mq-container/internal/command"
 	containerruntime "github.com/ibm-messaging/mq-container/internal/containerruntime"
 	"github.com/ibm-messaging/mq-container/internal/mqscredact"
@@ -47,11 +49,13 @@ func configureOwnership(paths []string) error {
 	if err != nil {
 		return err
 	}
+	var fileInfo *unix.Stat_t
+	fileInfo = new(unix.Stat_t)
 	for _, root := range paths {
 		_, err = os.Stat(root)
 		if err != nil {
 			if os.IsNotExist(err) {
-				return nil
+				continue
 			}
 			return err
 		}
@@ -60,9 +64,16 @@ func configureOwnership(paths []string) error {
 				return err
 			}
 			to := fmt.Sprintf("%v%v", root, from[len(root):])
-			err = os.Chown(to, uid, gid)
+			err = unix.Stat(to, fileInfo)
 			if err != nil {
 				return err
+			}
+			fileUID := fmt.Sprint(fileInfo.Uid)
+			if strings.Compare(fileUID, "999") == 0 {
+				err = os.Chown(to, uid, gid)
+				if err != nil {
+					return err
+				}
 			}
 			return nil
 		})
