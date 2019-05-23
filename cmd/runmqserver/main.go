@@ -118,7 +118,7 @@ func doMain() error {
 
 	// handle /var/mqm/ permissions in upgrade to ubi
 	if *initFlag {
-		err = configureOwnership([]string{"/var/mqm/web", "/var/mqm/qmgrs", "/var/mqm/sockets", "/var/mqm/log"})
+		err = configureOwnership([]string{"/var/mqm"})
 		if err != nil {
 			logTermination(err)
 			return err
