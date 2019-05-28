@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<server>
-    <keyStore id="MQWebKeyStore" location="/run/runmqdevserver/tls/key.jks" type="JKS" password="${env.MQ_TLS_PASSPHRASE}"/>
-    <keyStore id="MQWebTrustStore" location="/run/runmqdevserver/tls/trust.jks" type="JKS" password="${env.MQ_TLS_PASSPHRASE}"/>
-    <ssl id="thisSSLConfig" clientAuthenticationSupported="true" keyStoreRef="MQWebKeyStore" trustStoreRef="MQWebTrustStore" sslProtocol="TLSv1.2" serverKeyAlias="devcert"/>
-    <sslDefault sslRef="thisSSLConfig"/>
-</server>

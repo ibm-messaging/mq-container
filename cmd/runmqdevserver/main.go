@@ -153,14 +153,6 @@ func doMain() error {
 		logTerminationf("Error getting queue manager name: %v", err)
 		return err
 	}
-	ks, set := os.LookupEnv("MQ_TLS_KEYSTORE")
-	if set {
-		err = configureTLS(name, ks, os.Getenv("MQ_TLS_PASSPHRASE"))
-		if err != nil {
-			logTerminationf("Error configuring TLS: %v", err)
-			return err
-		}
-	}
 
 	err = configureWeb(name)
 	if err != nil {

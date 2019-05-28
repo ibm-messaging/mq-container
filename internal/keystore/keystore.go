@@ -56,6 +56,16 @@ func NewCMSKeyStore(filename, password string) *KeyStore {
 	}
 }
 
+// NewPKCS12KeyStore creates a new PKCS12 Key Store, managed by the runmqakm command
+func NewPKCS12KeyStore(filename, password string) *KeyStore {
+	return &KeyStore{
+		Filename:     filename,
+		Password:     password,
+		keyStoreType: "p12",
+		command:      "/opt/mqm/bin/runmqakm",
+	}
+}
+
 // Create a key store, if it doesn't already exist
 func (ks *KeyStore) Create(log *logger.Logger) error {
 	_, err := os.Stat(ks.Filename)
@@ -177,6 +187,15 @@ func (ks *KeyStore) Add(inputFile, label string) error {
 	return nil
 }
 
+// Add adds a CA certificate to the keystore
+func (ks *KeyStore) AddNoLabel(inputFile string) error {
+	out, _, err := command.Run(ks.command, "-cert", "-add", "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile)
+	if err != nil {
+		return fmt.Errorf("error running \"%v -cert -add\": %v %s", ks.command, err, out)
+	}
+	return nil
+}
+
 // GetCertificateLabels returns the labels of all certificates in the key store
 func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
 	out, _, err := command.Run(ks.command, "-cert", "-list", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
@@ -206,4 +225,26 @@ func (ks *KeyStore) RenameCertificate(from, to string) error {
 		return fmt.Errorf("error running \"%v -cert -rename\": %v %s", ks.command, err, out)
 	}
 	return nil
+}
+
+// ListCertificates Lists all certificates in hte keystore
+func (ks *KeyStore) ListAllCertificates() ([]string, error) {
+	out, _, err := command.Run(ks.command, "-cert", "-list", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
+	if err != nil {
+		return nil, fmt.Errorf("error running \"%v -cert -list\": %v %s", ks.command, err, out)
+	}
+	scanner := bufio.NewScanner(strings.NewReader(out))
+	var labels []string
+	for scanner.Scan() {
+		s := scanner.Text()
+		if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "*-") || strings.HasPrefix(s, "!") {
+			s := strings.TrimLeft(s, "-*!")
+			labels = append(labels, strings.TrimSpace(s))
+		}
+	}
+	err = scanner.Err()
+	if err != nil {
+		return nil, err
+	}
+	return labels, nil
 }

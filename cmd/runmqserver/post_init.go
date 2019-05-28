@@ -23,6 +23,13 @@ import (
 func postInit(name string) error {
 	enableWebServer := os.Getenv("MQ_ENABLE_EMBEDDED_WEB_SERVER")
 	if enableWebServer == "true" || enableWebServer == "1" {
+		// Configure TLS for Web Console first
+		if webkeyStoreName != "" {
+			err := ConfigureWebTLS()
+			if err != nil {
+				return err
+			}
+		}
 
 		// Configure Single-Sign-On for the web server (if enabled)
 		enableSSO := os.Getenv("MQ_BETA_ENABLE_SSO")

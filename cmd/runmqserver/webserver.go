@@ -27,7 +27,6 @@ import (
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	"github.com/ibm-messaging/mq-container/internal/keystore"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 )
 
@@ -44,7 +43,16 @@ func startWebServer() error {
 	if !set {
 		// Take all current environment variables, and add the app password
 		cmd.Env = append(os.Environ(), "MQ_APP_PASSWORD=passw0rd")
+	} else {
+		cmd.Env = os.Environ()
 	}
+
+	// TLS enabled
+	if webkeyStoreName != "" {
+		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTORE="+webkeyStoreName)
+		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTOREPW="+keyStorePasswords)
+	}
+
 	uid, gid, err := command.LookupMQM()
 	if err != nil {
 		return err
@@ -70,17 +78,18 @@ func startWebServer() error {
 	log.Println("Started web server")
 	return nil
 }
-
-// CopyFile copies the specified file
-func CopyFile(src, dest string) error {
+func CopyFileMode(src, dest string, perm os.FileMode) error {
 	log.Debugf("Copying file %v to %v", src, dest)
 	in, err := os.Open(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open %s for copy: %v", src, err)
 	}
 	defer in.Close()
 
-	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY, 0770)
+	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY, perm)
+	if err != nil {
+		return fmt.Errorf("failed to open %s for copy: %v", dest, err)
+	}
 	defer out.Close()
 
 	_, err = io.Copy(out, in)
@@ -91,8 +100,12 @@ func CopyFile(src, dest string) error {
 	return err
 }
 
-func configureSSO() error {
+// CopyFile copies the specified file
+func CopyFile(src, dest string) error {
+	return CopyFileMode(src, dest, 0770)
+}
 
+func configureSSO() error {
 	// Ensure all required environment variables are set for SSO
 	requiredEnvVars := []string{
 		"MQ_WEB_ADMIN_USERS",
@@ -129,63 +142,7 @@ func configureSSO() error {
 	}
 
 	// Configure SSO TLS
-	return configureSSO_TLS()
-}
-
-func configureSSO_TLS() error {
-
-	// Create tls directory
-	dir := "/run/tls"
-	mntdir := "/mnt/tls/"
-	_, err := os.Stat(dir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.MkdirAll(dir, 0770)
-			if err != nil {
-				return err
-			}
-			mqmUID, mqmGID, err := command.LookupMQM()
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			err = os.Chown(dir, mqmUID, mqmGID)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-		} else {
-			return err
-		}
-	}
-
-	// Setup key store & trust store
-	ks := keystore.NewJKSKeyStore(filepath.Join(dir, "key.jks"), "password")
-	ts := keystore.NewJKSKeyStore(filepath.Join(dir, "trust.jks"), "password")
-
-	log.Debug("Creating key store")
-	err = ks.Create(log)
-	if err != nil {
-		return err
-	}
-	log.Debug("Creating trust store")
-	err = ts.Create(log)
-	if err != nil {
-		return err
-	}
-	log.Debug("Generating PKCS12 file")
-	err = ks.GeneratePKCS12(filepath.Join(mntdir, "tls.key"), filepath.Join(mntdir, "tls.crt"), filepath.Join(dir, "tls.p12"), "default", "password")
-	if err != nil {
-		return err
-	}
-	log.Debug("Importing certificate into key store")
-	err = ks.Import(filepath.Join(dir, "tls.p12"), "password")
-	if err != nil {
-		return err
-	}
-	log.Debug("Adding OIDC certificate to trust store")
-	err = ts.Add(os.Getenv("MQ_OIDC_CERTIFICATE"), "OIDC")
-	return err
+	return ConfigureSSOTLS()
 }
 
 func configureWebServer() error {

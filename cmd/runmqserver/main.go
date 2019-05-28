@@ -147,6 +147,18 @@ func doMain() error {
 	// Print out versioning information
 	logVersionInfo()
 
+	err = ConfigureTLSKeystores()
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	err = ConfigureTLS(*devFlag)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
 	err = postInit(name)
 	if err != nil {
 		logTermination(err)
