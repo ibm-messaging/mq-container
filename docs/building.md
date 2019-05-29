@@ -11,7 +11,7 @@ If you are working in the Windows Subsystem for Linux, follow [this guide by Mic
 
 ## Building a production image
 
-This procedure works for building the MQ Continuous Delivery release, on `x86_64`, `ppc64le` and `s390x` architectures.
+This procedure works for building the MQ Continuous Delivery release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
 2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.1.2_UBUNTU_X86-64.tar.gz`) in the `downloads` directory
@@ -32,7 +32,7 @@ MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 ```
 
 ## Building a developer image
-Run `make build-devserver`, which will download the latest version of MQ Advanced for Developers from IBM developerWorks.  This is currently only available on the `x86_64` architecture.
+Run `make build-devserver`, which will download the latest version of MQ Advanced for Developers from IBM developerWorks.  This is currently only available on the `amd64` architecture.
 
 You can use the environment variable `MQ_ARCHIVE_DEV` to specify an alternative local file to install from (which must be in the `downloads` directory).
 

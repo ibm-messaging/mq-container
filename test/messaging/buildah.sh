@@ -73,7 +73,7 @@ rm -rf ${mnt_mq}/etc/yum.repos.d/*
 
 buildah config \
   --os linux \
-  --label architecture=x86_64 \
+  --label architecture=amd64 \
   --label name="${imagename%:*}" \
   --cmd "" \
   --entrypoint '["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]' \
