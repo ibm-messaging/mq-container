@@ -25,7 +25,6 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	"github.com/ibm-messaging/mq-container/internal/logger"
 )
 
 // KeyStore describes information about a keystore file
@@ -67,12 +66,11 @@ func NewPKCS12KeyStore(filename, password string) *KeyStore {
 }
 
 // Create a key store, if it doesn't already exist
-func (ks *KeyStore) Create(log *logger.Logger) error {
+func (ks *KeyStore) Create() error {
 	_, err := os.Stat(ks.Filename)
 	if err == nil {
 		// Keystore already exists so we should refresh it by deleting it.
 		extension := filepath.Ext(ks.Filename)
-		log.Debugf("Refreshing keystore: %v", ks.Filename)
 		if ks.keyStoreType == "cms" {
 			// Only delete these when we are refreshing the kdb keystore
 			stashFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".sth"
@@ -80,23 +78,19 @@ func (ks *KeyStore) Create(log *logger.Logger) error {
 			crlFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".crl"
 			err = os.Remove(stashFile)
 			if err != nil {
-				log.Errorf("Error removing %s: %v", stashFile, err)
 				return err
 			}
 			err = os.Remove(rdbFile)
 			if err != nil {
-				log.Errorf("Error removing %s: %v", rdbFile, err)
 				return err
 			}
 			err = os.Remove(crlFile)
 			if err != nil {
-				log.Errorf("Error removing %s: %v", crlFile, err)
 				return err
 			}
 		}
 		err = os.Remove(ks.Filename)
 		if err != nil {
-			log.Errorf("Error removing %s: %v", ks.Filename, err)
 			return err
 		}
 	} else if !os.IsNotExist(err) {
@@ -112,22 +106,19 @@ func (ks *KeyStore) Create(log *logger.Logger) error {
 
 	mqmUID, mqmGID, err := command.LookupMQM()
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	err = os.Chown(ks.Filename, mqmUID, mqmGID)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	return nil
 }
 
 // CreateStash creates a key stash, if it doesn't already exist
-func (ks *KeyStore) CreateStash(log *logger.Logger) error {
+func (ks *KeyStore) CreateStash() error {
 	extension := filepath.Ext(ks.Filename)
 	stashFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".sth"
-	log.Debugf("TLS stash file: %v", stashFile)
 	_, err := os.Stat(stashFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -140,12 +131,10 @@ func (ks *KeyStore) CreateStash(log *logger.Logger) error {
 	}
 	mqmUID, mqmGID, err := command.LookupMQM()
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	err = os.Chown(stashFile, mqmUID, mqmGID)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	return nil

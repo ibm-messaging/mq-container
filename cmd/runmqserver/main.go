@@ -28,6 +28,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
+	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
 func doMain() error {
@@ -147,19 +148,19 @@ func doMain() error {
 	// Print out versioning information
 	logVersionInfo()
 
-	err = ConfigureTLSKeystores()
+	keylabel, cmsDB, p12Trust, _, err := tls.ConfigureTLSKeystores(keyDir, trustDir, keystoreDir)
 	if err != nil {
 		logTermination(err)
 		return err
 	}
 
-	err = ConfigureTLS(*devFlag)
+	err = configureTLS(keylabel, cmsDB, *devFlag)
 	if err != nil {
 		logTermination(err)
 		return err
 	}
 
-	err = postInit(name)
+	err = postInit(name, keylabel, p12Trust)
 	if err != nil {
 		logTermination(err)
 		return err

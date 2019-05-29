@@ -9,8 +9,8 @@ The MQ Developer Defaults supports some customization options, these are all con
 * **MQ_DEV** - Set this to `false` to stop the default objects being created.
 * **MQ_ADMIN_PASSWORD** - Changes the password of the `admin` user. Must be at least 8 characters long.
 * **MQ_APP_PASSWORD** - Changes the password of the app user. If set, this will cause the `DEV.APP.SVRCONN` channel to become secured and only allow connections that supply a valid userid and password. Must be at least 8 characters long.
-* **MQ_TLS_KEYSTORE** - Allows you to supply the location of a PKCS#12 keystore containing a single certificate which you want to use in both the web console and the queue manager. Requires `MQ_TLS_PASSPHRASE`. When enabled the channels created will be secured using the `TLS_RSA_WITH_AES_128_CBC_SHA256` CipherSpec. *Note*: you will need to make the keystore available inside your container, this can be done by mounting a volume to your container.
-* **MQ_TLS_PASSPHRASE** - Passphrase for the keystore referenced in `MQ_TLS_KEYSTORE`.
+* **MQ_TLS_KEYSTORE** - **DEPRECATED**. See section `Supplying TLS certificates` in [usage document](usage.md).  Allows you to supply the location of a PKCS#12 keystore containing a single certificate which you want to use in both the web console and the queue manager. Requires `MQ_TLS_PASSPHRASE`. When enabled the channels created will be secured using the `TLS_RSA_WITH_AES_128_CBC_SHA256` CipherSpec. *Note*: you will need to make the keystore available inside your container, this can be done by mounting a volume to your container.
+* **MQ_TLS_PASSPHRASE** - **DEPRECATED**. See section `Supplying TLS certificates` in [usage document](usage.md). Passphrase for the keystore referenced in `MQ_TLS_KEYSTORE`.
 
 ## Details of the default configuration
 

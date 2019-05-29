@@ -96,3 +96,22 @@ docker exec \
 ```
 
 Using this technique, you can have full control over all aspects of the MQ installation.  Note that if you use this technique to make changes to the filesystem, then those changes would be lost if you re-created your container unless you make those changes in volumes.
+
+## Supplying TLS certificates
+
+If you wish to supply TLS Certificates that the queue manager and MQ Console should use for TLS operations then you must supply the unencrypted PEM files for both the certificates and private keys in the following directories:
+
+ * `/etc/mqm/pki/keys/<Label>` - for certificates with public and private keys
+ * `/etc/mqm/pki/trust/<index>` - for certificates with only the public key
+
+For example, if you have an identity certificate you wish to add with the label `mykey` and 2 certificates you wish to add as trusted then you would need to add the files into the following locations where files ending in `.key` contain private keys and `.crt` contain certificates:
+
+ - `/etc/mqm/pki/keys/mykey/tls.key`
+ - `/etc/mqm/pki/keys/mykey/tls.crt`
+ - `/etc/mqm/pki/keys/mykey/ca.crt`
+ - `/etc/mqm/pki/trust/0/tls.crt`
+ - `/etc/mqm/pki/trust/1/tls.crt`
+
+This can be achieved by either mounting the directories or files into the container when you run it or by baking the files into the correct location in the image. 
+
+If you supply multiple identity certificates then the first label alphabetically will be chosen as the certificate to be used by the MQ Console and the default certificate for the queue manager. If you wish to use a different certificate on the queue manager then you can change the certificate to use at runtime by executing the MQSC command `ALTER QMGR CERTLABL('<newlabel>')`
