@@ -7,7 +7,9 @@
 * MQSC files supplied will be verified before being run. Files containing invalid MQSC will cause the container to fail to start
 
 Other changes:
-* Security Fixes
+* Security fixes
+* Web console added to production image
+* Container built on RedHat host
 
 ## 9.1.2.0 (2019-03-21)
 
