@@ -93,7 +93,7 @@ buildah config \
   --port 9157/tcp \
   --port 9443/tcp \
   --os linux \
-  --label architecture=x86_64 \
+  --label architecture=amd64 \
   --label io.openshift.tags="mq messaging developer" \
   --label io.k8s.display-name="IBM MQ Advanced Server Developer Edition" \
   --label io.k8s.description="IBM MQ is messaging middleware that simplifies and accelerates the integration of diverse applications and business data across multiple platforms.  It uses message queues to facilitate the exchanges of information and offers a single messaging solution for cloud, mobile, Internet of Things (IoT) and on-premises environments." \

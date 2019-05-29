@@ -29,11 +29,11 @@ MQ_ARCHIVE_DEV ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
-# MQ_IMAGE_ADVANCEDSERVER is the name and tag of the built MQ Advanced image
+# MQ_IMAGE_ADVANCEDSERVER is the name of the built MQ Advanced image
 MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server
-MQ_TAG_ADVANCEDSERVER ?=$(MQ_VERSION)-$(ARCH)-$(BASE_IMAGE_TAG)
-# MQ_IMAGE_DEVSERVER is the name and tag of the built MQ Advanced for Developers image
+# MQ_IMAGE_DEVSERVER is the name of the built MQ Advanced for Developers image
 MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev
+# MQ_TAG is the tag of the built MQ Advanced image & MQ Advanced for Developers image
 MQ_TAG ?=$(MQ_VERSION)-$(ARCH)
 # DOCKER is the Docker command to run.  Defaults to "podman" if it's available, otherwise "docker"
 DOCKER ?= $(shell type -p podman || echo docker)
@@ -48,8 +48,8 @@ MQM_UID ?= 888
 GO_PKG_DIRS = ./cmd ./internal ./test
 MQ_ARCHIVE_TYPE=LINUX
 MQ_ARCHIVE_DEV_PLATFORM=linux
-# ARCH is the platform architecture (e.g. x86_64, ppc64le or s390x)
-ARCH = $(shell uname -m)
+# ARCH is the platform architecture (e.g. amd64, ppc64le or s390x)
+ARCH=$(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
 # BUILD_SERVER_CONTAINER is the name of the web server container used at build time
 BUILD_SERVER_CONTAINER=build-server
 # NUM_CPU is the number of CPUs available to Docker.  Used to control how many
@@ -84,7 +84,7 @@ else
 endif
 
 # Try to figure out which archive to use from the architecture
-ifeq "$(ARCH)" "x86_64"
+ifeq "$(ARCH)" "amd64"
 	MQ_ARCHIVE_ARCH=X86-64
 	MQ_DEV_ARCH=x86-64
 else ifeq "$(ARCH)" "ppc64le"
@@ -339,7 +339,7 @@ lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
 	golint -set_exit_status $(sort $(dir $(wildcard $(addsuffix /*/*.go, $(GO_PKG_DIRS)))))
 
 .PHONY: gosec
-gosec: $(info $(SPACER)$(shell printf "Running gosec test"$(END))) 
+gosec: $(info $(SPACER)$(shell printf "Running gosec test"$(END)))
 	@gosec -fmt=json -out=gosec_results.json cmd/... internal/... 2> /dev/null ;\
 	cat "gosec_results.json" ;\
 	cat gosec_results.json | grep HIGH | grep severity > /dev/null ;\
