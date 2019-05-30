@@ -1,4 +1,4 @@
-* © Copyright IBM Corporation 2018, 2019
+* © Copyright IBM Corporation 2019
 *
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 
-* Set the cipherspec for dev channels
-ALTER CHANNEL('DEV.APP.SVRCONN') CHLTYPE(SVRCONN) SSLCIPH({{ .SSLCipherSpec }}) SSLCAUTH(OPTIONAL)
-ALTER CHANNEL('DEV.ADMIN.SVRCONN') CHLTYPE(SVRCONN) SSLCIPH({{ .SSLCipherSpec }}) SSLCAUTH(OPTIONAL)
+* Set the keystore location for the queue manager
+ALTER QMGR SSLKEYR('{{ .SSLKeyR }}')
+ALTER QMGR CERTLABL('{{ .CertificateLabel }}')
+

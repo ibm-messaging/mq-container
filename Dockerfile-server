@@ -80,6 +80,7 @@ COPY --from=builder /opt/app-root/src/go/src/github.com/ibm-messaging/mq-contain
 COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
 # Copy web XML files
 COPY web /etc/mqm/web
+COPY etc/mqm/*.tpl /etc/mqm/
 RUN chmod ug+x /usr/local/bin/runmqserver \
   && chown mqm:mqm /usr/local/bin/*mq* \
   && chmod ug+xs /usr/local/bin/chkmq* \

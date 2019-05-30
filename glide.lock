@@ -1,5 +1,5 @@
-hash: b02555ebf3957ece0ae5ecf132fa4e415a4f66a7f4c27a82d484f4fb78f56e41
-updated: 2018-07-13T08:50:32.923040349+01:00
+hash: 6ebd5fb1c39729378c7256da6f312e9699bff1ddff9941d3c8c1ba785e22acfd
+updated: 2019-05-21T10:38:01.227081+01:00
 imports:
 - name: github.com/beorn7/perks
   version: 3a771d992973f24aa725d07868b467d1ddfceafb
@@ -50,4 +50,8 @@ imports:
   version: 1b2967e3c290b7c545b3db0deeda16e9be4f98a2
   subpackages:
   - unix
+- name: software.sslmate.com/src/go-pkcs12
+  version: 6e380ad96778cc63c6ea17649a9b74224bceafe9
+  subpackages:
+  - internal/rc2
 testImports: []

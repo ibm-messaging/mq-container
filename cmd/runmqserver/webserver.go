@@ -17,7 +17,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"os/user"
@@ -27,11 +26,12 @@ import (
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	"github.com/ibm-messaging/mq-container/internal/keystore"
+	"github.com/ibm-messaging/mq-container/internal/copy"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
+	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
-func startWebServer() error {
+func startWebServer(keystore, keystorepw string) error {
 	_, err := os.Stat("/opt/mqm/bin/strmqweb")
 	if err != nil && os.IsNotExist(err) {
 		log.Debug("Skipping web server, because it's not installed")
@@ -44,7 +44,16 @@ func startWebServer() error {
 	if !set {
 		// Take all current environment variables, and add the app password
 		cmd.Env = append(os.Environ(), "MQ_APP_PASSWORD=passw0rd")
+	} else {
+		cmd.Env = os.Environ()
 	}
+
+	// TLS enabled
+	if keystore != "" {
+		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTORE="+keystore)
+		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTOREPW="+keystorepw)
+	}
+
 	uid, gid, err := command.LookupMQM()
 	if err != nil {
 		return err
@@ -71,28 +80,7 @@ func startWebServer() error {
 	return nil
 }
 
-// CopyFile copies the specified file
-func CopyFile(src, dest string) error {
-	log.Debugf("Copying file %v to %v", src, dest)
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY, 0770)
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	if err != nil {
-		return err
-	}
-	err = out.Close()
-	return err
-}
-
-func configureSSO() error {
-
+func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
 	// Ensure all required environment variables are set for SSO
 	requiredEnvVars := []string{
 		"MQ_WEB_ADMIN_USERS",
@@ -107,7 +95,7 @@ func configureSSO() error {
 	}
 	for _, envVar := range requiredEnvVars {
 		if len(os.Getenv(envVar)) == 0 {
-			return fmt.Errorf("%v must be set when MQ_BETA_ENABLE_SSO=true", envVar)
+			return "", fmt.Errorf("%v must be set when MQ_BETA_ENABLE_SSO=true", envVar)
 		}
 	}
 
@@ -116,97 +104,59 @@ func configureSSO() error {
 	_, err := os.Stat(mqwebDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil
+			return "", nil
 		}
-		return err
+		return "", err
 	}
 
 	// Process SSO template for generating file mqwebuser.xml
 	adminUsers := strings.Split(os.Getenv("MQ_WEB_ADMIN_USERS"), "\n")
 	err = mqtemplate.ProcessTemplateFile(mqwebDir+"/mqwebuser.xml.tpl", mqwebDir+"/mqwebuser.xml", map[string][]string{"AdminUser": adminUsers}, log)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Configure SSO TLS
-	return configureSSO_TLS()
+	return configureSSOTLS(p12TrustStore)
 }
 
-func configureSSO_TLS() error {
-
-	// Create tls directory
-	dir := "/run/tls"
-	mntdir := "/mnt/tls/"
-	_, err := os.Stat(dir)
+func configureWebServer(keyLabel string, p12Trust tls.KeyStoreData) (string, error) {
+	var keystore string
+	// Configure TLS for Web Console first if we have a certificate to use
+	err := configureWebTLS(keyLabel)
 	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.MkdirAll(dir, 0770)
-			if err != nil {
-				return err
-			}
-			mqmUID, mqmGID, err := command.LookupMQM()
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			err = os.Chown(dir, mqmUID, mqmGID)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-		} else {
-			return err
+		return keystore, err
+	}
+	if keyLabel != "" {
+		keystore = keyLabel + ".p12"
+	}
+
+	// Configure Single-Sign-On for the web server (if enabled)
+	enableSSO := os.Getenv("MQ_BETA_ENABLE_SSO")
+	if enableSSO == "true" || enableSSO == "1" {
+		keystore, err = configureSSO(p12Trust)
+		if err != nil {
+			return keystore, err
 		}
 	}
-
-	// Setup key store & trust store
-	ks := keystore.NewJKSKeyStore(filepath.Join(dir, "key.jks"), "password")
-	ts := keystore.NewJKSKeyStore(filepath.Join(dir, "trust.jks"), "password")
-
-	log.Debug("Creating key store")
-	err = ks.Create(log)
-	if err != nil {
-		return err
-	}
-	log.Debug("Creating trust store")
-	err = ts.Create(log)
-	if err != nil {
-		return err
-	}
-	log.Debug("Generating PKCS12 file")
-	err = ks.GeneratePKCS12(filepath.Join(mntdir, "tls.key"), filepath.Join(mntdir, "tls.crt"), filepath.Join(dir, "tls.p12"), "default", "password")
-	if err != nil {
-		return err
-	}
-	log.Debug("Importing certificate into key store")
-	err = ks.Import(filepath.Join(dir, "tls.p12"), "password")
-	if err != nil {
-		return err
-	}
-	log.Debug("Adding OIDC certificate to trust store")
-	err = ts.Add(os.Getenv("MQ_OIDC_CERTIFICATE"), "OIDC")
-	return err
-}
-
-func configureWebServer() error {
-	_, err := os.Stat("/opt/mqm/bin/strmqweb")
+	_, err = os.Stat("/opt/mqm/bin/strmqweb")
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil
+			return keystore, nil
 		}
-		return err
+		return keystore, err
 	}
 	const webConfigDir string = "/etc/mqm/web"
 	_, err = os.Stat(webConfigDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil
+			return keystore, nil
 		}
-		return err
+		return keystore, err
 	}
 	uid, gid, err := command.LookupMQM()
 	if err != nil {
-		return err
+		return keystore, err
 	}
 	const prefix string = "/etc/mqm/web"
 	err = filepath.Walk(prefix, func(from string, info os.FileInfo, err error) error {
@@ -237,7 +187,7 @@ func configureWebServer() error {
 					return err
 				}
 			}
-			err := CopyFile(from, to)
+			err := copy.CopyFile(from, to)
 			if err != nil {
 				log.Error(err)
 				return err
@@ -249,5 +199,5 @@ func configureWebServer() error {
 		}
 		return nil
 	})
-	return err
+	return keystore, err
 }

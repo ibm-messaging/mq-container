@@ -17,31 +17,23 @@ package main
 
 import (
 	"os"
+
+	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
 // postInit is run after /var/mqm is set up
-func postInit(name string) error {
+func postInit(name, keylabel string, p12Trust tls.KeyStoreData) error {
 	enableWebServer := os.Getenv("MQ_ENABLE_EMBEDDED_WEB_SERVER")
 	if enableWebServer == "true" || enableWebServer == "1" {
-
-		// Configure Single-Sign-On for the web server (if enabled)
-		enableSSO := os.Getenv("MQ_BETA_ENABLE_SSO")
-		if enableSSO == "true" || enableSSO == "1" {
-			err := configureSSO()
-			if err != nil {
-				return err
-			}
-		}
-
 		// Configure the web server (if enabled)
-		err := configureWebServer()
+		keystore, err := configureWebServer(keylabel, p12Trust)
 		if err != nil {
 			return err
 		}
 		// Start the web server, in the background (if installed)
 		// WARNING: No error handling or health checking available for the web server
 		go func() {
-			startWebServer()
+			startWebServer(keystore, p12Trust.Password)
 		}()
 	}
 	return nil

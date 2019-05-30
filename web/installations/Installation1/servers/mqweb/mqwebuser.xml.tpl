@@ -39,9 +39,6 @@
     <variable name="httpHost" value="*"/>
     <variable name="managementMode" value="externallyprovisioned"/>
     <jndiEntry jndiName="xframeAllowedSourceList" value="${env.MQ_HOSTS}"/>
-    <keyStore id="MQWebKeyStore" location="/run/tls/key.jks" type="JKS" password="password"/>
-    <keyStore id="MQWebTrustStore" location="/run/tls/trust.jks" type="JKS" password="password"/>
-    <ssl id="thisSSLConfig" clientAuthenticationSupported="true" keyStoreRef="MQWebKeyStore" trustStoreRef="MQWebTrustStore" sslProtocol="TLSv1.2" serverKeyAlias="default"/>
-    <sslDefault sslRef="thisSSLConfig"/>
     <httpDispatcher enableWelcomePage="false" appOrContextRootMissingMessage='&lt;script&gt;document.location.href="/ibmmq/console";&lt;/script&gt;' />
+    <include location="tls.xml"/>
 </server>
