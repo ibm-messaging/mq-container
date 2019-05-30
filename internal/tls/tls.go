@@ -404,7 +404,7 @@ func ConfigureTLSKeystores(keyDir, certDir, outputDir string) (string, KeyStoreD
 		return returnLabel, cmsKeyDB, p12TrustDB, keyFiles, err
 	}
 
-	returnLabel, err = expandOldTLSVarible(keyDir, outputDir, &cmsKeyDB, &p12TrustDB)
+	returnLabel, err = expandOldTLSVariable(keyDir, outputDir, &cmsKeyDB, &p12TrustDB)
 	if err != nil {
 		return returnLabel, cmsKeyDB, p12TrustDB, keyFiles, err
 	}
@@ -471,7 +471,7 @@ func handleIntegrationGeneratedCerts(keyDir string) error {
 }
 
 // This function supports the old mechanism of importing certificates supplied by the MQ_TLS_KEYSTORE envvar
-func expandOldTLSVarible(keyDir, outputDir string, cmsKeyDB, p12TrustDB *KeyStoreData) (string, error) {
+func expandOldTLSVariable(keyDir, outputDir string, cmsKeyDB, p12TrustDB *KeyStoreData) (string, error) {
 	// TODO: Change this or find a way to set it
 	outputDirName := "acopiedcertificate"
 
@@ -526,11 +526,11 @@ func expandOldTLSVarible(keyDir, outputDir string, cmsKeyDB, p12TrustDB *KeyStor
 		}
 		err = addCertToKeyData(&block, cmsKeyDB, false)
 		if err != nil {
-			return "", fmt.Errorf("expandOldTLSVarible: Failed to add cert to CMS Keystore duplicate list: %v", err)
+			return "", fmt.Errorf("expandOldTLSVariable: Failed to add cert to CMS Keystore duplicate list: %v", err)
 		}
 		err = addCertToKeyData(&block, p12TrustDB, true)
 		if err != nil {
-			return "", fmt.Errorf("expandOldTLSVarible: Failed to add cert to P12 Truststore duplicate list: %v", err)
+			return "", fmt.Errorf("expandOldTLSVariable: Failed to add cert to P12 Truststore duplicate list: %v", err)
 		}
 	}
 
@@ -546,13 +546,13 @@ func expandOldTLSVarible(keyDir, outputDir string, cmsKeyDB, p12TrustDB *KeyStor
 			// Add to the dup list for the CMS keystore
 			err = addCertToKeyData(&block, cmsKeyDB, false)
 			if err != nil {
-				return "", fmt.Errorf("expandOldTLSVarible: Failed to add CA cert %d to CMS Keystore duplicate list: %v", i, err)
+				return "", fmt.Errorf("expandOldTLSVariable: Failed to add CA cert %d to CMS Keystore duplicate list: %v", i, err)
 			}
 
 			// Add to the p12 truststore
 			err = addCertToKeyData(&block, p12TrustDB, true)
 			if err != nil {
-				return "", fmt.Errorf("expandOldTLSVarible: Failed to add CA cert %d to P12 Truststore duplicate list: %v", i, err)
+				return "", fmt.Errorf("expandOldTLSVariable: Failed to add CA cert %d to P12 Truststore duplicate list: %v", i, err)
 			}
 		}
 	}

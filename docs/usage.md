@@ -99,7 +99,7 @@ Using this technique, you can have full control over all aspects of the MQ insta
 
 ## Supplying TLS certificates
 
-If you wish to supply TLS Certificates that the queue manager and MQ Console should use for TLS operations then you must supply the unencrypted PEM files for both the certificates and private keys in the following directories:
+If you wish to supply TLS Certificates that the queue manager and MQ Console should use for TLS operations then you must supply a PKCS#1 or unencrypted PKCS#8 PEM files for both the certificates and private keys in the following directories:
 
  * `/etc/mqm/pki/keys/<Label>` - for certificates with public and private keys
  * `/etc/mqm/pki/trust/<index>` - for certificates with only the public key

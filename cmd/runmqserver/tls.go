@@ -27,7 +27,7 @@ import (
 )
 
 // Location to store the keystores
-const keystoreDir = "/run/runmqserver/tls/"
+const keyStoreDir = "/run/runmqserver/tls/"
 
 // KeyDir is the location of the certificate keys to import
 const keyDir = "/etc/mqm/pki/keys"
@@ -124,10 +124,10 @@ func configureTLS(certLabel string, cmsKeystore tls.KeyStoreData, devmode bool) 
 func configureSSOTLS(p12TrustStore tls.KeyStoreData) (string, error) {
 	// TODO find way to supply this
 	// Override the webstore variables to hard coded defaults
-	webkeyStoreName := tls.IntegrationDefaultLabel + ".p12"
+	webKeyStoreName := tls.IntegrationDefaultLabel + ".p12"
 
 	// Check keystore exists
-	ks := filepath.Join(keystoreDir, webkeyStoreName)
+	ks := filepath.Join(keyStoreDir, webKeyStoreName)
 	_, err := os.Stat(ks)
 	if err != nil {
 		return "", fmt.Errorf("Failed to find existing keystore %s: %v", ks, err)
@@ -145,5 +145,5 @@ func configureSSOTLS(p12TrustStore tls.KeyStoreData) (string, error) {
 		return "", err
 	}
 
-	return webkeyStoreName, nil
+	return webKeyStoreName, nil
 }

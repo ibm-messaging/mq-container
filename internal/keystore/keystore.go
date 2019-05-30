@@ -216,7 +216,7 @@ func (ks *KeyStore) RenameCertificate(from, to string) error {
 	return nil
 }
 
-// ListCertificates Lists all certificates in hte keystore
+// ListCertificates Lists all certificates in the keystore
 func (ks *KeyStore) ListAllCertificates() ([]string, error) {
 	out, _, err := command.Run(ks.command, "-cert", "-list", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
 	if err != nil {
