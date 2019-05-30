@@ -98,8 +98,11 @@ ENTRYPOINT ["runmqserver"]
 ###############################################################################
 # Add default developer config
 ###############################################################################
+# Lines between "start-podman" and "end-podman" will be removed when using Podman from "make"
+# start-podman
 FROM mq-server AS mq-dev-server
 ARG MQM_UID=888
+# end-podman
 # Enable MQ developer default configuration
 ENV MQ_DEV=true
 # Default administrator password
