@@ -30,7 +30,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
-	"github.com/ibm-messaging/mq-container/internal/copy"
 	"github.com/ibm-messaging/mq-container/internal/keystore"
 	pkcs "software.sslmate.com/src/go-pkcs12"
 )
@@ -399,11 +398,6 @@ func ConfigureTLSKeystores(keyDir, certDir, outputDir string) (string, KeyStoreD
 		return returnLabel, cmsKeyDB, p12TrustDB, keyFiles, err
 	}
 
-	err = handleIntegrationGeneratedCerts(keyDir)
-	if err != nil {
-		return returnLabel, cmsKeyDB, p12TrustDB, keyFiles, err
-	}
-
 	returnLabel, err = expandOldTLSVariable(keyDir, outputDir, &cmsKeyDB, &p12TrustDB)
 	if err != nil {
 		return returnLabel, cmsKeyDB, p12TrustDB, keyFiles, err
@@ -423,51 +417,6 @@ func ConfigureTLSKeystores(keyDir, certDir, outputDir string) (string, KeyStoreD
 	}
 
 	return returnLabel, cmsKeyDB, p12TrustDB, keyFiles, err
-}
-
-// This function supports an old mechanism of importing certificates
-func handleIntegrationGeneratedCerts(keyDir string) error {
-	dir := "/mnt/tls"
-	outputdir := filepath.Join(keyDir, IntegrationDefaultLabel)
-	keyfile := "tls.key"
-	crtfile := "tls.crt"
-
-	// check that the files exist, if not just quietly leave as there's nothing to import
-	_, err := os.Stat(filepath.Join(dir, keyfile))
-	if err != nil {
-		return nil
-	}
-
-	_, err = os.Stat(filepath.Join(dir, crtfile))
-	if err != nil {
-		return nil
-	}
-
-	// Check the destination directory DOES not exist ahead of time
-	_, err = os.Stat(outputdir)
-	if err == nil {
-		return fmt.Errorf("Found CIP certificates to import but a TLS secret called %s is already present", IntegrationDefaultLabel)
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("Failed to check that %s does not exist: %v", outputdir, err)
-	}
-
-	err = os.MkdirAll(outputdir, 0775)
-	if err != nil {
-		return fmt.Errorf("Could not create %s: %v", outputdir, err)
-	}
-
-	err = copy.CopyFileMode(filepath.Join(dir, keyfile), filepath.Join(outputdir, keyfile), 0644)
-	if err != nil {
-		return fmt.Errorf("Could not copy %s: %v", keyfile, err)
-	}
-
-	err = copy.CopyFileMode(filepath.Join(dir, crtfile), filepath.Join(outputdir, crtfile), 0644)
-	if err != nil {
-		return fmt.Errorf("Could not copy %s: %v", keyfile, err)
-	}
-
-	// With certificates copied into place the rest of the TLS handling code will import them into the correct place
-	return nil
 }
 
 // This function supports the old mechanism of importing certificates supplied by the MQ_TLS_KEYSTORE envvar

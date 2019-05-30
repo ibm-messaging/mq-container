@@ -139,11 +139,5 @@ func configureSSOTLS(p12TrustStore tls.KeyStoreData) (string, error) {
 		return "", fmt.Errorf("Failed to find existing truststore %s: %v", p12TrustStore.Keystore.Filename, err)
 	}
 
-	// Add OIDC cert to the truststore
-	err = p12TrustStore.Keystore.Add(os.Getenv("MQ_OIDC_CERTIFICATE"), "OIDC")
-	if err != nil {
-		return "", err
-	}
-
 	return webKeyStoreName, nil
 }
