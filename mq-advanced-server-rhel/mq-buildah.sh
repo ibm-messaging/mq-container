@@ -86,7 +86,6 @@ buildah run ${ctr_mq} -- microdnf ${microdnf_opts} install \
   shadow-utils \
   tar \
   util-linux \
-  openssl \
   which
 
 # Install "sudo" if using MQ Advanced for Developers
