@@ -59,12 +59,11 @@ if ($UBUNTU); then
     procps \
     sed \
     tar \
-    util-linux \
-    openssl
+    util-linux 
 fi
 
 if ($RPM); then
-  EXTRA_RPMS="bash bc ca-certificates coreutils file findutils gawk glibc-common grep passwd procps-ng sed shadow-utils tar util-linux which openssl"
+  EXTRA_RPMS="bash bc ca-certificates coreutils file findutils gawk glibc-common grep passwd procps-ng sed shadow-utils tar util-linux which"
   # Install additional packages required by MQ, this install process and the runtime scripts
   $YUM && yum -y install --setopt install_weak_deps=false ${EXTRA_RPMS}
   $MICRODNF && microdnf install --nodocs ${EXTRA_RPMS}
