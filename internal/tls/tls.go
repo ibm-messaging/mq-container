@@ -350,7 +350,7 @@ func processTrustCertificates(trustDir string, cmsKeyDB, p12TrustDB *KeyStoreDat
 		// We need to relabel everything because liberty doesn't play nicely with autolabelled certs
 		allCerts, err := p12TrustDB.Keystore.ListAllCertificates()
 		if err != nil || len(allCerts) <= 0 {
-			return fmt.Errorf("Could not get all certificates from PKCS#12 Truststore: %v", err)
+			return fmt.Errorf("Could not get any certificates from PKCS#12 Truststore: %v", err)
 		}
 
 		for i, cert := range allCerts {
@@ -360,7 +360,7 @@ func processTrustCertificates(trustDir string, cmsKeyDB, p12TrustDB *KeyStoreDat
 
 			err = p12TrustDB.Keystore.RenameCertificate(cert, newLabel)
 			if err != nil || len(allCerts) <= 0 {
-				return fmt.Errorf("Could not get rename certificate %s to %s in PKCS#12 Truststore: %v", cert, newLabel, err)
+				return fmt.Errorf("Could not rename certificate %s to %s in PKCS#12 Truststore: %v", cert, newLabel, err)
 			}
 		}
 	}
