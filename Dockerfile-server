@@ -86,7 +86,6 @@ RUN chmod ug+x /usr/local/bin/runmqserver \
   && chmod ug+xs /usr/local/bin/chkmq* \
   && chown -R mqm:mqm /etc/mqm/* \
   && install --directory --mode 0775 --owner mqm --group root /run/runmqserver \
-  && install --directory --mode 0775 --owner mqm --group root /run/tls \
   && touch /run/termination-log \
   && chown mqm:root /run/termination-log \
   && chmod 0660 /run/termination-log
