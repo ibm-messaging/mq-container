@@ -218,10 +218,10 @@ define build-mq
 	  --build-arg MQM_UID=$(MQM_UID) \
 	  --label version=$(MQ_VERSION) \
 	  --label name=$1 \
-		--label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
-		--label release="$(RELEASE)" \
-		--label architecture="$(ARCH)" \
-		--label run="docker run -d -e LICENSE=accept --name ibm-mq $1:$2" \
+	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
+	  --label release="$(RELEASE)" \
+	  --label architecture="$(ARCH)" \
+	  --label run="docker run -d -e LICENSE=accept $1:$2" \
 	  --label vcs-ref=$(IMAGE_REVISION) \
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
@@ -241,9 +241,9 @@ define build-mq-ctr
 	  --label version=$(MQ_VERSION) \
 	  --label name=$1 \
 	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
-		--label release="$(RELEASE)" \
-		--label architecture="$(ARCH)" \
-		--label run="docker run -d -e LICENSE=accept --name ibm-mq $1:$2" \
+	  --label release="$(RELEASE)" \
+	  --label architecture="$(ARCH)" \
+	  --label run="docker run -d -e LICENSE=accept $1:$2" \
 	  --label vcs-ref=$(IMAGE_REVISION) \
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \

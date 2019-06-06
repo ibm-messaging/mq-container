@@ -103,4 +103,4 @@ $UBUNTU && dpkg --list || true
 
 # Copy MQ Licenses into the correct location
 mkdir -p /licenses
-cp /opt/mqm/licenses/notices.txt /opt/mqm/licenses/non_ibm_license.txt /opt/mqm/licenses/English.txt /licenses/
+cp /opt/mqm/licenses/*.txt /licenses/
