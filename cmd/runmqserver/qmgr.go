@@ -171,8 +171,10 @@ func configureQueueManager() error {
 			abs := filepath.Join(configDir, file.Name())
 			// #nosec G204
 			verify := exec.Command("runmqsc", "-v", "-e")
+			// #nosec G204 - command is fixed, no injection vector
 			cmd := exec.Command("runmqsc")
 			// Read mqsc file into variable
+			// #nosec G304 - filename variable is derived from contents of 'configDir' which is a defined constant
 			mqsc, err := ioutil.ReadFile(abs)
 			if err != nil {
 				log.Printf("Error reading file %v: %v", abs, err)
