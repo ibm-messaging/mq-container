@@ -23,7 +23,7 @@ import (
 
 func TestCheckFileSource(t *testing.T) {
 
-	invalidFilenames := []string{"/bin", "/boot", "/dev", "/lib", "/lib64", "/proc", "/sbin", "/sys"}
+	invalidFilenames := []string{"/bin", "/boot", "/dev", "/lib", "/lib64", "/proc", "/sbin", "/sys", "/bin/myfile", "/boot/mydir/myfile", "/var/../dev", "/var/../lib/myfile"}
 	for _, invalidFilename := range invalidFilenames {
 		err := CheckFileSource(invalidFilename)
 		if err == nil {
@@ -32,7 +32,7 @@ func TestCheckFileSource(t *testing.T) {
 		}
 	}
 
-	validFilenames := []string{"/var", "/mydir/dev"}
+	validFilenames := []string{"/var", "/mydir/dev", "/mydir/dev/myfile"}
 	for _, validFilename := range validFilenames {
 		err := CheckFileSource(validFilename)
 		if err != nil {
