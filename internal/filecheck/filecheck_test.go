@@ -17,7 +17,6 @@ limitations under the License.
 package filecheck
 
 import (
-	"path/filepath"
 	"testing"
 )
 
@@ -27,8 +26,7 @@ func TestCheckFileSource(t *testing.T) {
 	for _, invalidFilename := range invalidFilenames {
 		err := CheckFileSource(invalidFilename)
 		if err == nil {
-			bob, _ := filepath.Abs(invalidFilename)
-			t.Errorf("Expected to receive an error for filename '%v' '%v'", invalidFilename, bob)
+			t.Errorf("Expected to receive an error for filename '%v'", invalidFilename)
 		}
 	}
 
