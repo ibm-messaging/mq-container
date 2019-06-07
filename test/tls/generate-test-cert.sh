@@ -39,3 +39,6 @@ keytool -import \
 	-keystore client-trust.jks \
 	-storepass ${PASSWORD} \
 	-noprompt
+
+cp $KEY testcert1/
+cp $CERT testcert1/

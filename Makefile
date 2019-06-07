@@ -164,7 +164,7 @@ build-devjmstest:
 test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell docker --version)"$(END)))
 	docker inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER) 
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER) -run TestTLSGoldenPath
 
 .PHONY: coverage
 coverage:

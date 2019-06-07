@@ -27,7 +27,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -74,11 +73,6 @@ func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls
 	}
 }
 
-// tlsDir returns the host directory where the test certificate(s) are located
-func tlsDir(t *testing.T, unixPath bool) string {
-	return filepath.Join(getCwd(t, unixPath), "../tls")
-}
-
 // runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID
 func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, password string) {
 	containerConfig := container.Config{
@@ -105,7 +99,7 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, pa
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
-			tlsDir(t, false) + ":/var/tls",
+			TlsDir(t, false) + ":/var/tls",
 		},
 	}
 	networkingConfig := network.NetworkingConfig{}

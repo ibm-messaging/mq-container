@@ -747,3 +747,8 @@ func countTarLines(t *testing.T, b []byte) int {
 	}
 	return total
 }
+
+// tlsDir returns the host directory where the test certificate(s) are located
+func TlsDir(t *testing.T, unixPath bool) string {
+	return filepath.Join(getCwd(t, unixPath), "../tls")
+}
