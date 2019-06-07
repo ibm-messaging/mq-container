@@ -21,6 +21,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -200,10 +201,21 @@ func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
 
 // RenameCertificate renames the specified certificate
 func (ks *KeyStore) RenameCertificate(from, to string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
-	if err != nil {
-		return fmt.Errorf("error running \"%v -cert -rename\": %v %s", ks.command, err, out)
+	if ks.command == "/opt/mqm/bin/runmqakm" {
+		// runmqakm can't handle certs with ' in them so just use capicmd
+		cmd := exec.Command("/opt/mqm/gskit8/bin/gsk8capicmd_64", "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
+		cmd.Env = append(os.Environ(), "LD_LIBRARY_PATH=/opt/mqm/gskit8/lib64/:/opt/mqm/gskit8/lib")
+		out, _, err := command.RunCmd(cmd)
+		if err != nil {
+			return fmt.Errorf("error running \"%v -cert -rename\": %v %s", "/opt/mqm/gskit8/bin/gsk8capicmd_64", err, out)
+		}
+	} else {
+		out, _, err := command.Run(ks.command, "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
+		if err != nil {
+			return fmt.Errorf("error running \"%v -cert -rename\": %v %s", ks.command, err, out)
+		}
 	}
+
 	return nil
 }
 
