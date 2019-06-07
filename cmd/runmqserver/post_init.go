@@ -33,7 +33,10 @@ func postInit(name, keylabel string, p12Trust tls.KeyStoreData) error {
 		// Start the web server, in the background (if installed)
 		// WARNING: No error handling or health checking available for the web server
 		go func() {
-			startWebServer(keystore, p12Trust.Password)
+			err = startWebServer(keystore, p12Trust.Password)
+			if err != nil {
+				log.Printf("Error starting web server: %v", err)
+			}
 		}()
 	}
 	return nil

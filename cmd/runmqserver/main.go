@@ -24,7 +24,7 @@ import (
 	"os"
 	"sync"
 
-	containerruntimelogger "github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
+	"github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"

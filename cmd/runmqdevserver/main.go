@@ -23,7 +23,7 @@ import (
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	containerruntimelogger "github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
+	"github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/name"
