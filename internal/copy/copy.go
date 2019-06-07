@@ -20,9 +20,18 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/ibm-messaging/mq-container/internal/filecheck"
 )
 
 func CopyFileMode(src, dest string, perm os.FileMode) error {
+
+	err := filecheck.CheckFileSource(src)
+	if err != nil {
+		return fmt.Errorf("failed to open %s for copy: %v", src, err)
+	}
+
+	// #nosec G304 - filename variable 'src' is checked above to ensure it is valid
 	in, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("failed to open %s for copy: %v", src, err)

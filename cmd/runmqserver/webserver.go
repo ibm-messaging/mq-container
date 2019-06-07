@@ -38,6 +38,7 @@ func startWebServer(keystore, keystorepw string) error {
 		return nil
 	}
 	log.Println("Starting web server")
+	// #nosec G204 - command is fixed, no injection vector
 	cmd := exec.Command("strmqweb")
 	// Set a default app password for the web server, if one isn't already set
 	_, set := os.LookupEnv("MQ_APP_PASSWORD")
@@ -175,6 +176,7 @@ func configureWebServer(keyLabel string, p12Trust tls.KeyStoreData) (string, err
 		}
 		if info.IsDir() {
 			if !exists {
+				// #nosec G301 - write group permissions are required
 				err := os.MkdirAll(to, 0770)
 				if err != nil {
 					return err

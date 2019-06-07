@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package logruntime
+package containerruntimelogger
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ import (
 	"runtime"
 	"strings"
 
-	containerruntime "github.com/ibm-messaging/mq-container/internal/containerruntime"
+	"github.com/ibm-messaging/mq-container/internal/containerruntime"
 	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/ibm-messaging/mq-container/internal/user"
 )
