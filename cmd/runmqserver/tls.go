@@ -120,7 +120,7 @@ func configureTLS(certLabel string, cmsKeystore tls.KeyStoreData, devmode bool) 
 	return nil
 }
 
-// configureSSOTLS configures TLS for the Cloud Integration Platform Single Sign-On
+// configureSSOTLS configures MQ Console TLS for Single Sign-On
 func configureSSOTLS(p12TrustStore tls.KeyStoreData) (string, error) {
 	// TODO find way to supply this
 	// Override the webstore variables to hard coded defaults
