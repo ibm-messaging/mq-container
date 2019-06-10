@@ -100,3 +100,7 @@ sed -i 's/password\t\[success=1 default=ignore\]\tpam_unix\.so obscure sha512/pa
 # List all the installed packages, for the build log
 $RPM && rpm -q --all || true
 $UBUNTU && dpkg --list || true
+
+# Copy MQ Licenses into the correct location
+mkdir -p /licenses
+cp /opt/mqm/licenses/*.txt /licenses/
