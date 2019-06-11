@@ -85,6 +85,11 @@ else
 	DOWNLOADS_DIR=$(realpath ./downloads/)
 endif
 
+#Try to pick up the downloads directory if rnning in windows
+ifneq (,$(findstring Windows,$(shell echo ${OS})))
+	DOWNLOADS_DIR=$(shell pwd)/downloads/
+endif
+
 # Try to figure out which archive to use from the architecture
 ifeq "$(ARCH)" "amd64"
 	MQ_ARCHIVE_ARCH=X86-64
