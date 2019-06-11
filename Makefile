@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2017, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,63 @@
 # limitations under the License.
 
 ###############################################################################
-# Variables
+# Conditional variables - you can override the values of these variables from
+# the command line
+###############################################################################
+# MQ_VERSION is the fully qualified MQ version number to build
+MQ_VERSION ?= 9.1.2.0
+# RELEASE shows what release of the container code has been built
+RELEASE ?= 3
+# MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
+# be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
+# Does not apply to MQ Advanced for Developers.
+MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION_VRM)_$(MQ_ARCHIVE_TYPE)_$(MQ_ARCHIVE_ARCH).tar.gz
+# MQ_ARCHIVE_DEV is the name of the file, under the downloads directory, from which MQ Advanced
+# for Developers can be installed
+MQ_ARCHIVE_DEV ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
+# MQ_SDK_ARCHIVE specifies the archive to use for building the golang programs.  Defaults vary on developer or advanced.
+MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
+# Options to `go test` for the Docker tests
+TEST_OPTS_DOCKER ?=
+# MQ_IMAGE_ADVANCEDSERVER is the name of the built MQ Advanced image
+MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server
+# MQ_IMAGE_DEVSERVER is the name of the built MQ Advanced for Developers image
+MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev
+# MQ_TAG is the tag of the built MQ Advanced image & MQ Advanced for Developers image
+MQ_TAG ?=$(MQ_VERSION)-$(ARCH)
+# DOCKER is the Docker command to run.  Defaults to "podman" if it's available, otherwise "docker"
+DOCKER ?= $(shell type -p podman || echo docker)
+# MQ_PACKAGES specifies the MQ packages (.deb or .rpm) to install.  Defaults vary on base image.
+MQ_PACKAGES ?=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesWeb*.rpm MQSeriesAMS-*.rpm
+# MQM_UID is the UID to use for the "mqm" user
+MQM_UID ?= 888
+
+###############################################################################
+# Other variables
 ###############################################################################
 GO_PKG_DIRS = ./cmd ./internal ./test
+MQ_ARCHIVE_TYPE=LINUX
+MQ_ARCHIVE_DEV_PLATFORM=linux
+# ARCH is the platform architecture (e.g. amd64, ppc64le or s390x)
+ARCH=$(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
+# BUILD_SERVER_CONTAINER is the name of the web server container used at build time
+BUILD_SERVER_CONTAINER=build-server
+# NUM_CPU is the number of CPUs available to Docker.  Used to control how many
+# test run in parallel
+NUM_CPU = $(or $(shell docker info --format "{{ .NCPU }}"),2)
+# BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
+BASE_IMAGE_TAG=$(lastword $(subst /, ,$(subst :,-,$(BASE_IMAGE))))
+#BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
+MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base
+# Docker image name to use for JMS tests
+DEV_JMS_IMAGE=mq-dev-jms-test
+# Variables for versioning
+IMAGE_REVISION=$(shell git rev-parse HEAD)
+IMAGE_SOURCE=$(shell git config --get remote.origin.url)
+EMPTY:=
+SPACE:= $(EMPTY) $(EMPTY)
+# MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.2 instead of 9.1.2.0
+MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
 
 # Set variable if running on a Red Hat Enterprise Linux host
 ifneq ($(wildcard /etc/redhat-release),)
@@ -25,94 +79,243 @@ ifeq "$(findstring Red Hat,$(REDHAT_RELEASE))" "Red Hat"
 endif
 endif
 
+ifneq (,$(findstring Microsoft,$(shell uname -r)))
+	DOWNLOADS_DIR=$(patsubst /mnt/c%,C:%,$(realpath ./downloads/))
+else
+	DOWNLOADS_DIR=$(realpath ./downloads/)
+endif
+
+# Try to figure out which archive to use from the architecture
+ifeq "$(ARCH)" "amd64"
+	MQ_ARCHIVE_ARCH=X86-64
+	MQ_DEV_ARCH=x86-64
+else ifeq "$(ARCH)" "ppc64le"
+	MQ_ARCHIVE_ARCH=LE_POWER
+	MQ_DEV_ARCH=ppcle
+else ifeq "$(ARCH)" "s390x"
+	MQ_ARCHIVE_ARCH=SYSTEM_Z
+	MQ_DEV_ARCH=s390x
+endif
+# Archive names for IBM MQ Advanced for Developers
+MQ_ARCHIVE_DEV_9.1.0.0=mqadv_dev910_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
+MQ_ARCHIVE_DEV_9.1.1.0=mqadv_dev911_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
+MQ_ARCHIVE_DEV_9.1.2.0=mqadv_dev912_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
+
 ###############################################################################
 # Build targets
 ###############################################################################
+.PHONY: vars
+vars:
+	@echo $(MQ_ARCHIVE_ARCH)
+	@echo $(MQ_ARCHIVE_TYPE)
+	@echo $(MQ_ARCHIVE)
 
-# Targets default to a RHEL image on a RHEL host, or an Ubuntu image everywhere else
+.PHONY: default
+default: build-devserver test
 
-.PHONY: build-devserver
-ifdef RHEL_HOST
-build-devserver: build-devserver-rhel
-else
-build-devserver: build-devserver-ubuntu
-endif
+# Build all components (except incubating ones)
+.PHONY: all
+all: build-devserver build-advancedserver
+
+.PHONY: test-all
+test-all: build-devjmstest test-devserver test-advancedserver
+
+.PHONY: devserver
+devserver: build-devserver build-devjmstest test-devserver
+
+# Build incubating components
+.PHONY: incubating
+incubating: build-explorer
+
+downloads/$(MQ_ARCHIVE_DEV):
+	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
+	mkdir -p downloads
+	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV)
+
+downloads/$(MQ_SDK_ARCHIVE):
+	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
+	mkdir -p downloads
+	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_SDK_ARCHIVE)
+
+.PHONY: downloads
+downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
+
+# Vendor Go dependencies for the Docker tests
+test/docker/vendor:
+	cd test/docker && dep ensure -vendor-only
+
+# Shortcut to just run the unit tests
+.PHONY: test-unit
+test-unit:
+	docker build --target builder --file Dockerfile-server .
+
+.PHONY: test-advancedserver
+test-advancedserver: test/docker/vendor
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) on $(shell docker --version)"$(END)))
+	docker inspect $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
+
+.PHONY: build-devjmstest
+build-devjmstest:
+	$(info $(SPACER)$(shell printf $(TITLE)"Build JMS tests for developer config"$(END)))
+	cd test/messaging && docker build --tag $(DEV_JMS_IMAGE) .
+
+.PHONY: test-devserver
+test-devserver: test/docker/vendor
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell docker --version)"$(END)))
+	docker inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER) 
+
+.PHONY: coverage
+coverage:
+	mkdir coverage
+
+.PHONY: test-advancedserver-cover
+test-advancedserver-cover: test/docker/vendor coverage
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) with code coverage on $(shell docker --version)"$(END)))
+	rm -f ./coverage/unit*.cov
+	# Run unit tests with coverage, for each package under 'internal'
+	go list -f '{{.Name}}' ./internal/... | xargs -I {} go test -cover -covermode count -coverprofile ./coverage/unit-{}.cov ./internal/{}
+#	ls -1 ./cmd | xargs -I {} go test -cover -covermode count -coverprofile ./coverage/unit-{}.cov ./cmd/{}/...
+	echo 'mode: count' > ./coverage/unit.cov
+	tail -q -n +2 ./coverage/unit-*.cov >> ./coverage/unit.cov
+	go tool cover -html=./coverage/unit.cov -o ./coverage/unit.html
+
+	rm -f ./test/docker/coverage/*.cov
+	rm -f ./coverage/docker.*
+	mkdir -p ./test/docker/coverage/
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover TEST_COVER=true go test $(TEST_OPTS_DOCKER)
+	echo 'mode: count' > ./coverage/docker.cov
+	tail -q -n +2 ./test/docker/coverage/*.cov >> ./coverage/docker.cov
+	go tool cover -html=./coverage/docker.cov -o ./coverage/docker.html
+
+	echo 'mode: count' > ./coverage/combined.cov
+	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
+	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
+
+define build-mq
+	# Create a temporary network to use for the build
+	$(DOCKER) network create build
+	# Start a web server to host the MQ downloadable (tar.gz) file
+	$(DOCKER) run \
+	  --rm \
+	  --name $(BUILD_SERVER_CONTAINER) \
+	  --network build \
+	  --network-alias build \
+	  --volume $(DOWNLOADS_DIR):/usr/share/nginx/html:ro \
+	  --detach \
+	  docker.io/nginx:alpine
+	# Build the new image
+	$(DOCKER) build \
+	  --tag $1:$2 \
+	  --file $3 \
+	  --network build \
+	  --build-arg MQ_URL=http://build:80/$4 \
+	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
+	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
+	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
+	  --build-arg IMAGE_TAG="$1:$2" \
+	  --build-arg MQM_UID=$(MQM_UID) \
+	  --label version=$(MQ_VERSION) \
+	  --label name=$1 \
+	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
+	  --label release="$(RELEASE)" \
+	  --label architecture="$(ARCH)" \
+	  --label run="docker run -d -e LICENSE=accept $1:$2" \
+	  --label vcs-ref=$(IMAGE_REVISION) \
+	  --label vcs-type=git \
+	  --label vcs-url=$(IMAGE_SOURCE) \
+	  --target $5 \
+	  . ; $(DOCKER) kill $(BUILD_SERVER_CONTAINER) && $(DOCKER) network rm build
+endef
+
+define build-mq-ctr
+	buildah/mq-buildah $1 $2 \
+	  --file /src/Dockerfile-server \
+	  --build-arg MQ_URL="file:///src/downloads/$3" \
+	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
+	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
+	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
+	  --build-arg IMAGE_TAG="$1:$2" \
+	  --build-arg MQM_UID=$(MQM_UID) \
+	  --label version=$(MQ_VERSION) \
+	  --label name=$1 \
+	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
+	  --label release="$(RELEASE)" \
+	  --label architecture="$(ARCH)" \
+	  --label run="docker run -d -e LICENSE=accept $1:$2" \
+	  --label vcs-ref=$(IMAGE_REVISION) \
+	  --label vcs-type=git \
+	  --label vcs-url=$(IMAGE_SOURCE) \
+	  --target $4
+endef
+
+DOCKER_SERVER_VERSION=$(shell docker version --format "{{ .Server.Version }}")
+DOCKER_CLIENT_VERSION=$(shell docker version --format "{{ .Client.Version }}")
+.PHONY: docker-version
+docker-version:
+	@test "$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
+	@test "$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
 
 .PHONY: build-advancedserver
 ifdef RHEL_HOST
-build-advancedserver: build-advancedserver-rhel
+# Build using Buildah inside a container on RHEL hosts
+build-advancedserver: build-advancedserver-ctr
 else
-build-advancedserver: build-advancedserver-ubuntu
+build-advancedserver: build-advancedserver-host
 endif
 
+.PHONY: build-advancedserver-host
+build-advancedserver-host: downloads/$(MQ_ARCHIVE) docker-version
+	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
+	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
 
-.PHONY: test-devserver
+.PHONY: build-advancedserver-ctr
+build-advancedserver-ctr: downloads/$(MQ_ARCHIVE)
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) in a container"$(END)))
+	$(call build-mq-ctr,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),$(MQ_ARCHIVE),mq-server)
+
+.PHONY: build-devserver
 ifdef RHEL_HOST
-test-devserver: test-devserver-rhel
+# Build using Buildah inside a container on RHEL hosts
+build-devserver: build-devserver-ctr
 else
-test-devserver: test-devserver-ubuntu
+build-devserver: build-devserver-host
 endif
 
-.PHONY: test-advancedserver
-ifdef RHEL_HOST
-test-advancedserver: test-advancedserver-rhel
-else
-test-advancedserver: test-advancedserver-ubuntu
-endif
+.PHONY: build-devserver-host
+build-devserver-host: downloads/$(MQ_ARCHIVE_DEV) docker-version
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
+	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
 
-.PHONY: build-devjmstest
-ifdef RHEL_HOST
-build-devjmstest: build-devjmstest-rhel
-else
-build-devjmstest: build-devjmstest-ubuntu
-endif
+.PHONY: build-devserver-ctr
+build-devserver-ctr: downloads/$(MQ_ARCHIVE_DEV)
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) in a container"$(END)))
+	$(call build-mq-ctr,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),$(MQ_ARCHIVE_DEV),mq-dev-server)
 
-# UBUNTU building targets
-.PHONY: build-devserver-ubuntu
-build-devserver-ubuntu: 
-	$(MAKE) -f Makefile-UBUNTU build-devserver
+.PHONY: build-advancedserver-cover
+build-advancedserver-cover: docker-version
+	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover -f Dockerfile-server.cover .
 
-.PHONY: test-devserver-ubuntu
-test-devserver-ubuntu: 
-	$(MAKE) -f Makefile-UBUNTU test-devserver
+.PHONY: build-explorer
+build-explorer: downloads/$(MQ_ARCHIVE_DEV)
+	$(call build-mq,mq-explorer,latest-$(ARCH),incubating/mq-explorer/Dockerfile,$(MQ_ARCHIVE_DEV),mq-explorer)
 
-.PHONY: build-devjmstest-ubuntu
-	$(MAKE) -f Makefile-UBUNTU build-devjmstest
+.PHONY: build-sdk
+build-sdk: downloads/$(MQ_ARCHIVE_DEV)
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
+	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
 
-.PHONY: build-advancedserver-ubuntu
-build-advancedserver-ubuntu: 
-	$(MAKE) -f Makefile-UBUNTU build-advancedserver
+.PHONY: debug-vars
+debug-vars:
+	@echo MQ_VERSION=$(MQ_VERSION)
+	@echo MQ_VERSION_VRM=$(MQ_VERSION_VRM)
+	@echo MQ_ARCHIVE=$(MQ_ARCHIVE)
+	@echo MQ_IMAGE_DEVSERVER=$(MQ_IMAGE_DEVSERVER)
+	@echo MQ_IMAGE_ADVANCEDSERVER=$(MQ_IMAGE_ADVANCEDSERVER)
 
-.PHONY: test-advancedserver-ubuntu
-test-advancedserver-ubuntu: 
-	$(MAKE) -f Makefile-UBUNTU test-advancedserver
+include formatting.mk
 
-.PHONY: build-devjmstest-ubuntu
-build-devjmstest-ubuntu:
-	$(MAKE) -f Makefile-UBUNTU build-devjmstest
-
-# RHEL building targets
-.PHONY: build-devserver-rhel
-build-devserver-rhel: 
-	$(MAKE) -f Makefile-RHEL build-devserver
-
-.PHONY: test-devserver-rhel
-test-devserver-rhel: 
-	$(MAKE) -f Makefile-RHEL test-devserver
-
-.PHONY: build-advancedserver-rhel
-build-advancedserver-rhel: 
-	$(MAKE) -f Makefile-RHEL build-advancedserver
-
-.PHONY: test-advancedserver-rhel
-test-advancedserver-rhel: 
-	$(MAKE) -f Makefile-RHEL test-advancedserver
-
-.PHONY: build-devjmstest-rhel
-build-devjmstest-rhel:
-	$(MAKE) -f Makefile-RHEL build-devjmstest
-
-# Common targets
 .PHONY: clean
 clean:
 	rm -rf ./coverage
@@ -142,7 +345,7 @@ lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
 	golint -set_exit_status $(sort $(dir $(wildcard $(addsuffix /*/*.go, $(GO_PKG_DIRS)))))
 
 .PHONY: gosec
-gosec: $(info $(SPACER)$(shell printf "Running gosec test"$(END))) 
+gosec: $(info $(SPACER)$(shell printf "Running gosec test"$(END)))
 	@gosec -fmt=json -out=gosec_results.json cmd/... internal/... 2> /dev/null ;\
 	cat "gosec_results.json" ;\
 	cat gosec_results.json | grep HIGH | grep severity > /dev/null ;\
@@ -166,10 +369,5 @@ gosec: $(info $(SPACER)$(shell printf "Running gosec test"$(END)))
 	else \
 		printf "\ngosec found no LOW severity issues\n" ;\
 fi ;\
-
-.PHONY: unknownos
-unknownos:
-	$(info $(SPACER)$(shell printf "ERROR: Unknown OS ("$(BASE_OS)") please run specific make targets"$(END)))
-	exit 1
 
 include formatting.mk

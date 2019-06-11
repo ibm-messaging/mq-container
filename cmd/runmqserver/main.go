@@ -24,9 +24,11 @@ import (
 	"os"
 	"sync"
 
+	"github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
+	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
 func doMain() error {
@@ -45,7 +47,7 @@ func doMain() error {
 	// Check whether they only want debug info
 	if *infoFlag {
 		logVersionInfo()
-		err = logContainerDetails()
+		err = containerruntimelogger.LogContainerDetails(log)
 		if err != nil {
 			log.Printf("Error displaying container details: %v", err)
 		}
@@ -86,22 +88,56 @@ func doMain() error {
 	collectDiagOnFail = true
 
 	if *devFlag == false {
-		err = logContainerDetails()
+		err = containerruntimelogger.LogContainerDetails(log)
 		if err != nil {
 			logTermination(err)
 			return err
 		}
 	}
 
-	err = createVolume("/mnt/mqm")
+	err = createVolume("/mnt/mqm/data")
 	if err != nil {
 		logTermination(err)
 		return err
 	}
+	err = createVolume("/mnt/mqm-log/log")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+	err = createVolume("/mnt/mqm-data/qmgrs")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
 	err = createDirStructure()
 	if err != nil {
 		logTermination(err)
 		return err
+	}
+
+	// handle /var/mqm/ permissions in upgrade to UBI
+	if *initFlag {
+		varMqmDirs := []string{
+			"/var/mqm/config",
+			"/var/mqm/conv",
+			"/var/mqm/errors",
+			"/var/mqm/exits",
+			"/var/mqm/exits64",
+			"/var/mqm/log",
+			"/var/mqm/mqft",
+			"/var/mqm/qmgrs",
+			"/var/mqm/shared",
+			"/var/mqm/sockets",
+			"/var/mqm/trace",
+			"/var/mqm/web",
+		}
+		err = configureOwnership(varMqmDirs)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	// If init flag is set, exit now
@@ -112,7 +148,19 @@ func doMain() error {
 	// Print out versioning information
 	logVersionInfo()
 
-	err = postInit(name)
+	keylabel, cmsDB, p12Trust, _, err := tls.ConfigureTLSKeystores(keyDir, trustDir, keyStoreDir)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	err = configureTLS(keylabel, cmsDB, *devFlag)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	err = postInit(name, keylabel, p12Trust)
 	if err != nil {
 		logTermination(err)
 		return err
@@ -149,15 +197,17 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
-	err = startQueueManager()
+	err = startQueueManager(name)
 	if err != nil {
 		logTermination(err)
 		return err
 	}
-	err = configureQueueManager()
-	if err != nil {
-		logTermination(err)
-		return err
+	if standby, _ := ready.IsRunningAsStandbyQM(name); !standby {
+		err = configureQueueManager()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	enableMetrics := os.Getenv("MQ_ENABLE_METRICS")

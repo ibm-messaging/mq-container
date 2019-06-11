@@ -61,7 +61,8 @@ before_script:
   - make deps
   - echo -en 'travis_fold:end:deps\\r'
   - echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
-  - make build-devserver
+  # Use the containerized build explicitly
+  - make build-devserver-ctr
   - echo -en 'travis_fold:end:build-devserver\\r'
   - echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
   - make build-devjmstest

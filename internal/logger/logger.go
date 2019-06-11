@@ -114,11 +114,6 @@ func (l *Logger) log(level string, msg string) {
 	l.mutex.Unlock()
 }
 
-// LogDirect logs a message directly to stdout
-func (l *Logger) LogDirect(msg string) {
-	fmt.Println(msg)
-}
-
 // Debug logs a line as debug
 func (l *Logger) Debug(args ...interface{}) {
 	if l.debug {

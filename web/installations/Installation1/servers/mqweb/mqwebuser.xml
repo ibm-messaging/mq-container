@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server>
+    <featureManager>
+        <feature>appSecurity-2.0</feature>
+    </featureManager>
+    <enterpriseApplication id="com.ibm.mq.console">
+        <application-bnd>
+            <security-role name="MQWebAdmin">
+                <group name="MQWebUI" realm="defaultRealm"/>
+            </security-role>
+        </application-bnd>
+    </enterpriseApplication>
+    <enterpriseApplication id="com.ibm.mq.rest">
+        <application-bnd>
+            <security-role name="MQWebAdmin">
+                <group name="MQWebUI" realm="defaultRealm"/>
+            </security-role>
+            <security-role name="MQWebUser">
+                <group name="MQWebMessaging" realm="defaultRealm"/>
+            </security-role>
+        </application-bnd>
+    </enterpriseApplication>
+    <variable name="httpHost" value="*"/>
+    <include location="tls.xml"/>
+</server>

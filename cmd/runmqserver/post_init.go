@@ -1,7 +1,5 @@
-// +build mqdev
-
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,23 +17,26 @@ package main
 
 import (
 	"os"
+
+	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
 // postInit is run after /var/mqm is set up
-// This version of postInit is only included as part of the MQ Advanced for Developers build
-func postInit(name string) error {
-	disable := os.Getenv("MQ_DISABLE_WEB_CONSOLE")
-	if disable != "true" && disable != "1" {
-		// Configure the web server (if installed)
-		err := configureWebServer()
+func postInit(name, keylabel string, p12Trust tls.KeyStoreData) error {
+	enableWebServer := os.Getenv("MQ_ENABLE_EMBEDDED_WEB_SERVER")
+	if enableWebServer == "true" || enableWebServer == "1" {
+		// Configure the web server (if enabled)
+		keystore, err := configureWebServer(keylabel, p12Trust)
 		if err != nil {
 			return err
 		}
 		// Start the web server, in the background (if installed)
-		// WARNING: No error handling or health checking available for the web server,
-		// which is why it's limited to use with MQ Advanced for Developers only
+		// WARNING: No error handling or health checking available for the web server
 		go func() {
-			startWebServer()
+			err = startWebServer(keystore, p12Trust.Password)
+			if err != nil {
+				log.Printf("Error starting web server: %v", err)
+			}
 		}()
 	}
 	return nil

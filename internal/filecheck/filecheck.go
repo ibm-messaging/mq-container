@@ -1,7 +1,5 @@
-// +build !mqdev
-
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,8 +13,25 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
 
-func postInit(name string) error {
+package filecheck
+
+import (
+	"fmt"
+	"path/filepath"
+	"strings"
+)
+
+// CheckFileSource checks the filename is valid
+func CheckFileSource(fileName string) error {
+
+	absFile, _ := filepath.Abs(fileName)
+
+	prefixes := []string{"bin", "boot", "dev", "lib", "lib64", "proc", "sbin", "sys"}
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(absFile, filepath.Join("/", prefix)) {
+			return fmt.Errorf("Filename resolves to invalid path '%v'", absFile)
+		}
+	}
 	return nil
 }

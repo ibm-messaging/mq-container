@@ -1,7 +1,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ func TestDevWebDisabled(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
-			"MQ_DISABLE_WEB_CONSOLE=true",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)

@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2015, 2019
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,9 @@
 # Fail on any non-zero return code
 set -ex
 
-test -f /usr/bin/yum && RHEL=true || RHEL=false
+test -f /usr/bin/yum && YUM=true || YUM=false
+test -f /usr/bin/microdnf && MICRODNF=true || MICRODNF=false
+test -f /usr/bin/rpm && RPM=true || RPM=false
 test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
 
 if ($UBUNTU); then
@@ -37,37 +39,43 @@ if ($UBUNTU); then
   # This ensures no unsupported code gets installed, and makes the build faster
   echo "deb ${APT_URL} ${UBUNTU_CODENAME} main restricted" > /etc/apt/sources.list
   echo "deb ${APT_URL} ${UBUNTU_CODENAME}-updates main restricted" >> /etc/apt/sources.list
-  echo "deb ${APT_URL} ${UBUNTU_CODENAME}-backports main restricted universe" >> /etc/apt/sources.list;
   echo "deb ${APT_URL} ${UBUNTU_CODENAME}-security main restricted" >> /etc/apt/sources.list
-  
-  apt-get update 
-  apt-get install -y --no-install-recommends \
-    golang-${GO_VERSION} \
-    git \
-    ca-certificates
-fi
-
-if ($RHEL); then
   # Install additional packages required by MQ, this install process and the runtime scripts
-  yum -y install \
-    git \
+  apt-get update
+  apt-get install -y --no-install-recommends \
+    bash \
+    bc \
+    ca-certificates \
+    coreutils \
     curl \
+    debianutils \
+    file \
+    findutils \
+    gawk \
+    grep \
+    libc-bin \
+    mount \
+    passwd \
+    procps \
+    sed \
     tar \
-    gcc
-
-    cd /tmp
-    curl -LO https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
-    tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+    util-linux 
 fi
 
-# Remove any orphaned packages
-$UBUNTU && apt-get autoremove -y
+if ($RPM); then
+  EXTRA_RPMS="bash bc ca-certificates coreutils file findutils gawk glibc-common grep passwd procps-ng sed shadow-utils tar util-linux which"
+  # Install additional packages required by MQ, this install process and the runtime scripts
+  $YUM && yum -y install --setopt install_weak_deps=false ${EXTRA_RPMS}
+  $MICRODNF && microdnf install --nodocs ${EXTRA_RPMS}
+fi
+
+# Apply any bug fixes not included in base Ubuntu or MQ image.
+# Don't upgrade everything based on Docker best practices https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#run
+$UBUNTU && apt-get install -y libapparmor1 libsystemd0 systemd systemd-sysv libudev1 perl-base --only-upgrade
+# End of bug fixes
 
 # Clean up cached files
 $UBUNTU && rm -rf /var/lib/apt/lists/*
-$RHEL && yum -y clean all
-$RHEL && rm -rf /var/cache/yum/*
-
-# Make the GOLANG directories 
-mkdir -p $GOPATH/src $GOPATH/bin
-chmod -R 777 $GOPATH
+$YUM && yum -y clean all
+$YUM && rm -rf /var/cache/yum/*
+$MICRODNF && microdnf clean all

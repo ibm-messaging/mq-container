@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017
+# © Copyright IBM Corporation 2017, 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,3 +26,5 @@ import:
   version: 2.0.0
 - package: github.com/genuinetools/amicontained
   version: 0.4.0
+- package: software.sslmate.com/src/go-pkcs12
+  commit: 6e380ad96778cc63c6ea17649a9b74224bceafe9

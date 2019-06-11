@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
 
@@ -31,14 +32,25 @@ func main() {
 	if !r || err != nil {
 		os.Exit(1)
 	}
-	// Check if the queue manager has a running listener
-	conn, err := net.Dial("tcp", "127.0.0.1:1414")
+	name, err := name.GetQueueManagerName()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	err = conn.Close()
-	if err != nil {
-		fmt.Println(err)
+
+	// Check if the queue manager has a running listener
+	if standby, _ := ready.IsRunningAsStandbyQM(name); !standby {
+		conn, err := net.Dial("tcp", "127.0.0.1:1414")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		err = conn.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Printf("Detected queue manager running in standby mode")
+		os.Exit(10)
 	}
 }

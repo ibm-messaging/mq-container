@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,12 +13,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package main
+
+// Package keystore contains code to create and update keystores
+package keystore
 
 import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -53,13 +56,22 @@ func NewCMSKeyStore(filename, password string) *KeyStore {
 	}
 }
 
+// NewPKCS12KeyStore creates a new PKCS12 Key Store, managed by the runmqakm command
+func NewPKCS12KeyStore(filename, password string) *KeyStore {
+	return &KeyStore{
+		Filename:     filename,
+		Password:     password,
+		keyStoreType: "p12",
+		command:      "/opt/mqm/bin/runmqakm",
+	}
+}
+
 // Create a key store, if it doesn't already exist
 func (ks *KeyStore) Create() error {
 	_, err := os.Stat(ks.Filename)
 	if err == nil {
 		// Keystore already exists so we should refresh it by deleting it.
 		extension := filepath.Ext(ks.Filename)
-		log.Debugf("Refreshing keystore: %v", ks.Filename)
 		if ks.keyStoreType == "cms" {
 			// Only delete these when we are refreshing the kdb keystore
 			stashFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".sth"
@@ -67,23 +79,19 @@ func (ks *KeyStore) Create() error {
 			crlFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".crl"
 			err = os.Remove(stashFile)
 			if err != nil {
-				log.Errorf("Error removing %s: %v", stashFile, err)
 				return err
 			}
 			err = os.Remove(rdbFile)
 			if err != nil {
-				log.Errorf("Error removing %s: %v", rdbFile, err)
 				return err
 			}
 			err = os.Remove(crlFile)
 			if err != nil {
-				log.Errorf("Error removing %s: %v", crlFile, err)
 				return err
 			}
 		}
 		err = os.Remove(ks.Filename)
 		if err != nil {
-			log.Errorf("Error removing %s: %v", ks.Filename, err)
 			return err
 		}
 	} else if !os.IsNotExist(err) {
@@ -99,12 +107,10 @@ func (ks *KeyStore) Create() error {
 
 	mqmUID, mqmGID, err := command.LookupMQM()
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	err = os.Chown(ks.Filename, mqmUID, mqmGID)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	return nil
@@ -114,7 +120,6 @@ func (ks *KeyStore) Create() error {
 func (ks *KeyStore) CreateStash() error {
 	extension := filepath.Ext(ks.Filename)
 	stashFile := ks.Filename[0:len(ks.Filename)-len(extension)] + ".sth"
-	log.Debugf("TLS stash file: %v", stashFile)
 	_, err := os.Stat(stashFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -127,12 +132,10 @@ func (ks *KeyStore) CreateStash() error {
 	}
 	mqmUID, mqmGID, err := command.LookupMQM()
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	err = os.Chown(stashFile, mqmUID, mqmGID)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	return nil
@@ -143,6 +146,33 @@ func (ks *KeyStore) Import(inputFile, password string) error {
 	out, _, err := command.Run(ks.command, "-cert", "-import", "-file", inputFile, "-pw", password, "-target", ks.Filename, "-target_pw", ks.Password, "-target_type", ks.keyStoreType)
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -import\": %v %s", ks.command, err, out)
+	}
+	return nil
+}
+
+// CreateSelfSignedCertificate creates a self-signed certificate in the keystore
+func (ks *KeyStore) CreateSelfSignedCertificate(label, dn string) error {
+	out, _, err := command.Run(ks.command, "-cert", "-create", "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn)
+	if err != nil {
+		return fmt.Errorf("error running \"%v -cert -create\": %v %s", ks.command, err, out)
+	}
+	return nil
+}
+
+// Add adds a CA certificate to the keystore
+func (ks *KeyStore) Add(inputFile, label string) error {
+	out, _, err := command.Run(ks.command, "-cert", "-add", "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile, "-label", label)
+	if err != nil {
+		return fmt.Errorf("error running \"%v -cert -add\": %v %s", ks.command, err, out)
+	}
+	return nil
+}
+
+// Add adds a CA certificate to the keystore
+func (ks *KeyStore) AddNoLabel(inputFile string) error {
+	out, _, err := command.Run(ks.command, "-cert", "-add", "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile)
+	if err != nil {
+		return fmt.Errorf("error running \"%v -cert -add\": %v %s", ks.command, err, out)
 	}
 	return nil
 }
@@ -171,9 +201,42 @@ func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
 
 // RenameCertificate renames the specified certificate
 func (ks *KeyStore) RenameCertificate(from, to string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
-	if err != nil {
-		return fmt.Errorf("error running \"%v -cert -rename\": %v %s", ks.command, err, out)
+	if ks.command == "/opt/mqm/bin/runmqakm" {
+		// runmqakm can't handle certs with ' in them so just use capicmd
+		cmd := exec.Command("/opt/mqm/gskit8/bin/gsk8capicmd_64", "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
+		cmd.Env = append(os.Environ(), "LD_LIBRARY_PATH=/opt/mqm/gskit8/lib64/:/opt/mqm/gskit8/lib")
+		out, _, err := command.RunCmd(cmd)
+		if err != nil {
+			return fmt.Errorf("error running \"%v -cert -rename\": %v %s", "/opt/mqm/gskit8/bin/gsk8capicmd_64", err, out)
+		}
+	} else {
+		out, _, err := command.Run(ks.command, "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
+		if err != nil {
+			return fmt.Errorf("error running \"%v -cert -rename\": %v %s", ks.command, err, out)
+		}
 	}
+
 	return nil
+}
+
+// ListCertificates Lists all certificates in the keystore
+func (ks *KeyStore) ListAllCertificates() ([]string, error) {
+	out, _, err := command.Run(ks.command, "-cert", "-list", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
+	if err != nil {
+		return nil, fmt.Errorf("error running \"%v -cert -list\": %v %s", ks.command, err, out)
+	}
+	scanner := bufio.NewScanner(strings.NewReader(out))
+	var labels []string
+	for scanner.Scan() {
+		s := scanner.Text()
+		if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "*-") || strings.HasPrefix(s, "!") {
+			s := strings.TrimLeft(s, "-*!")
+			labels = append(labels, strings.TrimSpace(s))
+		}
+	}
+	err = scanner.Err()
+	if err != nil {
+		return nil, err
+	}
+	return labels, nil
 }

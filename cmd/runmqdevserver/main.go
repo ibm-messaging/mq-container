@@ -23,7 +23,9 @@ import (
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/internal/logger"
+	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/name"
 )
 
@@ -90,7 +92,7 @@ func configureLogger() error {
 
 func configureWeb(qmName string) error {
 	out := "/etc/mqm/web/installations/Installation1/angular.persistence/admin.json"
-	return processTemplateFile("/etc/mqm/admin.json.tpl", out, map[string]string{"QueueManagerName": qmName})
+	return mqtemplate.ProcessTemplateFile("/etc/mqm/admin.json.tpl", out, map[string]string{"QueueManagerName": qmName}, log)
 }
 
 func logTerminationf(format string, args ...interface{}) {
@@ -117,7 +119,11 @@ func doMain() error {
 		return err
 	}
 
-	logContainerDetails()
+	err = containerruntimelogger.LogContainerDetails(log)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
 
 	adminPassword, set := os.LookupEnv("MQ_ADMIN_PASSWORD")
 	if set {
@@ -146,14 +152,6 @@ func doMain() error {
 	if err != nil {
 		logTerminationf("Error getting queue manager name: %v", err)
 		return err
-	}
-	ks, set := os.LookupEnv("MQ_TLS_KEYSTORE")
-	if set {
-		err = configureTLS(name, ks, os.Getenv("MQ_TLS_PASSPHRASE"))
-		if err != nil {
-			logTerminationf("Error configuring TLS: %v", err)
-			return err
-		}
 	}
 
 	err = configureWeb(name)

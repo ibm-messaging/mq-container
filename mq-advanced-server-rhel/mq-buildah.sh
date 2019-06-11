@@ -121,6 +121,13 @@ buildah run --user root $ctr_mq -- chmod 0660 /run/termination-log
 install --mode 0550 --owner root --group root ./mq-advanced-server-rhel/writePackages.sh ${mnt_mq}/usr/local/bin/writePackages
 buildah run --user root $ctr_mq -- /usr/local/bin/writePackages
 
+# Copy web XML files
+cp -R web ${mnt_mq}/etc/mqm/web
+
+# Make "mqm" the owner of all the config files
+chown --recursive ${mqm_uid}:${mqm_gid} ${mnt_mq}/etc/mqm/*
+chmod --recursive 0750 ${mnt_mq}/etc/mqm/*
+
 ###############################################################################
 # Final Buildah commands
 ###############################################################################
@@ -138,8 +145,9 @@ fi
 buildah config \
   --port 1414/tcp \
   --port 9157/tcp \
+  --port 9443/tcp \
   --os linux \
-  --label architecture=x86_64 \
+  --label architecture=amd64 \
   --label io.openshift.tags="$OSTAG" \
   --label io.k8s.display-name="$DISNAME" \
   --label io.k8s.description="IBM MQ is messaging middleware that simplifies and accelerates the integration of diverse applications and business data across multiple platforms.  It uses message queues to facilitate the exchanges of information and offers a single messaging solution for cloud, mobile, Internet of Things (IoT) and on-premises environments." \

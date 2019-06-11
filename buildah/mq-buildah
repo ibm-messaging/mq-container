@@ -1,0 +1,51 @@
+#!/bin/bash
+# -*- mode: sh -*-
+# © Copyright IBM Corporation 2019
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Build and run a container image with Buildah installed
+
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 imageName imageTag buildah-options"
+  exit 1
+fi
+
+readonly SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
+readonly DIR=${SCRIPT_DIR}/..
+readonly BUILDAH_IMAGE=mq-buildah
+RUN_OPTS="--volume ${DIR}:/src --cap-add SYS_ADMIN --rm --interactive --tty"
+CMD="docker"
+
+# If Docker is installed, then map the Docker socket into the container, to
+# allow buildah to push the resulting image into Docker's image store
+# WARNING: This means that the buildah container can do anything the "docker"
+# can do.
+command -v docker
+if [[ $? == 0 && -e /var/run/docker.sock ]]; then
+  RUN_OPTS="${RUN_OPTS} --volume /var/run/docker.sock:/var/run/docker.sock"
+fi
+
+command -v podman
+if [[ $? -eq 0 ]]; then
+  CMD="podman"
+  OCI_DIR="/tmp/mq-buildah"
+  mkdir -p ${OCI_DIR}
+  RUN_OPTS="${RUN_OPTS} --volume ${OCI_DIR}:/var/oci"
+  echo "Image archives will be written to ${OCI_DIR}"
+fi
+
+${CMD} build --tag ${BUILDAH_IMAGE} --file ${SCRIPT_DIR}/Dockerfile ${SCRIPT_DIR}
+set -x
+${CMD} run ${RUN_OPTS} ${BUILDAH_IMAGE} "$@"

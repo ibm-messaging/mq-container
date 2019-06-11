@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
@@ -66,7 +67,7 @@ func formatSimple(datetime string, message string) string {
 // mirrorSystemErrorLogs starts a goroutine to mirror the contents of the MQ system error logs
 func mirrorSystemErrorLogs(ctx context.Context, wg *sync.WaitGroup, mf mirrorFunc) (chan error, error) {
 	// Always use the JSON log as the source
-	return mirrorLog(ctx, wg, "/var/mqm/errors/AMQERR01.json", false, mf)
+	return mirrorLog(ctx, wg, "/var/mqm/errors/AMQERR01.json", false, mf, false)
 }
 
 // mirrorQueueManagerErrorLogs starts a goroutine to mirror the contents of the MQ queue manager error logs
@@ -78,7 +79,7 @@ func mirrorQueueManagerErrorLogs(ctx context.Context, wg *sync.WaitGroup, name s
 		return nil, err
 	}
 	f := filepath.Join(mqini.GetErrorLogDirectory(qm), "AMQERR01.json")
-	return mirrorLog(ctx, wg, f, fromStart, mf)
+	return mirrorLog(ctx, wg, f, fromStart, mf, true)
 }
 
 func getDebug() bool {
@@ -99,21 +100,35 @@ func configureLogger(name string) (mirrorFunc, error) {
 		if err != nil {
 			return nil, err
 		}
-		return log.LogDirect, nil
+		return func(msg string, isQMLog bool) bool {
+			obj, err := processLogMessage(msg)
+			if err == nil && isQMLog && filterQMLogMessage(obj) {
+				return false
+			}
+			if err != nil {
+				log.Printf("Failed to unmarshall JSON - %v", msg)
+			} else {
+				fmt.Println(msg)
+			}
+			return true
+		}, nil
 	case "basic":
 		log, err = logger.NewLogger(os.Stderr, d, false, name)
 		if err != nil {
 			return nil, err
 		}
-		return func(msg string) {
+		return func(msg string, isQMLog bool) bool {
 			// Parse the JSON message, and print a simplified version
-			var obj map[string]interface{}
-			err := json.Unmarshal([]byte(msg), &obj)
+			obj, err := processLogMessage(msg)
+			if err == nil && isQMLog && filterQMLogMessage(obj) {
+				return false
+			}
 			if err != nil {
-				fmt.Printf("Failed to Unmarshall JSON - %v", err)
+				log.Printf("Failed to unmarshall JSON - %v", err)
 			} else {
 				fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
 			}
+			return true
 		}, nil
 	default:
 		log, err = logger.NewLogger(os.Stdout, d, false, name)
@@ -122,6 +137,20 @@ func configureLogger(name string) (mirrorFunc, error) {
 		}
 		return nil, fmt.Errorf("invalid value for LOG_FORMAT: %v", f)
 	}
+}
+
+func processLogMessage(msg string) (map[string]interface{}, error) {
+	var obj map[string]interface{}
+	err := json.Unmarshal([]byte(msg), &obj)
+	return obj, err
+}
+
+func filterQMLogMessage(obj map[string]interface{}) bool {
+	hostname, err := os.Hostname()
+	if os.Getenv("MQ_MULTI_INSTANCE") == "true" && err == nil && !strings.Contains(obj["host"].(string), hostname) {
+		return true
+	}
+	return false
 }
 
 func logDiagnostics() {
@@ -138,11 +167,20 @@ func logDiagnostics() {
 	out, _, _ = command.Run("ls", "-l", "/mnt/mqm/data")
 	log.Debugf("/mnt/mqm/data:\n%s", out)
 	// #nosec G104
+	out, _, _ = command.Run("ls", "-l", "/mnt/mqm-log/log")
+	log.Debugf("/mnt/mqm-log/log:\n%s", out)
+	// #nosec G104
+	out, _, _ = command.Run("ls", "-l", "/mnt/mqm-data/qmgrs")
+	log.Debugf("/mnt/mqm-data/qmgrs:\n%s", out)
+	// #nosec G104
 	out, _, _ = command.Run("ls", "-l", "/var/mqm")
 	log.Debugf("/var/mqm:\n%s", out)
 	// #nosec G104
 	out, _, _ = command.Run("ls", "-l", "/var/mqm/errors")
 	log.Debugf("/var/mqm/errors:\n%s", out)
+	// #nosec G104
+	out, _, _ = command.Run("ls", "-l", "/etc/mqm")
+	log.Debugf("/etc/mqm:\n%s", out)
 
 	// Print out summary of any FDCs
 	// #nosec G204

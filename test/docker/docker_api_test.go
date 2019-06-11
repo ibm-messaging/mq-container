@@ -24,7 +24,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -34,8 +33,6 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-
-	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 func TestLicenseNotSet(t *testing.T) {
@@ -112,75 +109,41 @@ func goldenPath(t *testing.T, metric bool) {
 	stopContainer(t, cli, id)
 }
 
-// TestSecurityVulnerabilitiesUbuntu checks for any vulnerabilities in the image, as reported
-// by Ubuntu
-func TestSecurityVulnerabilitiesUbuntu(t *testing.T) {
-	t.Parallel()
-
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "test -d /etc/apt")
-	if rc != 0 {
-		t.Skip("Skipping test because container is not Ubuntu-based")
-	}
-	// Override the entrypoint to make "apt" only receive security updates, then check for updates
-	var url string
-	if runtime.GOARCH == "amd64" {
-		url = "http://security.ubuntu.com/ubuntu/"
-	} else {
-		url = "http://ports.ubuntu.com/ubuntu-ports/"
-	}
-	rc, log := runContainerOneShot(t, cli, "bash", "-c", "source /etc/os-release && echo \"deb "+url+" ${VERSION_CODENAME}-security main restricted\" > /etc/apt/sources.list && apt-get update 2>&1 >/dev/null && apt-get --simulate -qq upgrade")
-	if rc != 0 {
-		t.Fatalf("Expected success, got %v", rc)
-	}
-	lines := strings.Split(strings.TrimSpace(log), "\n")
-	if len(lines) > 0 && lines[0] != "" {
-		t.Errorf("Expected no vulnerabilities, found the following:\n%v", log)
-	}
-}
-
-// TestSecurityVulnerabilitiesRedHat checks for any vulnerabilities in the image, as reported
+// TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
 // by Red Hat
-func TestSecurityVulnerabilitiesRedHat(t *testing.T) {
+func TestSecurityVulnerabilities(t *testing.T) {
 	t.Parallel()
 
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, ret, _ := command.Run("bash", "-c", "test -f /etc/redhat-release")
-	if ret != 0 {
-		t.Skip("Skipping test because host is not RedHat-based")
-	}
-	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "test -f /etc/redhat-release")
+	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "command -v microdnf && test -e /etc/yum.repos.d/ubi.repo")
 	if rc != 0 {
-		t.Skip("Skipping test because container is not RedHat-based")
+		t.Skip("Skipping test because container is based on ubi-minimal, which doesn't include yum")
 	}
-	id, _, err := command.Run("sudo", "buildah", "from", imageName())
-	if err != nil {
-		t.Log(id)
-		t.Fatal(err)
-	}
-	id = strings.TrimSpace(id)
-	defer command.Run("buildah", "rm", id)
-	mnt, _, err := command.Run("sudo", "buildah", "mount", id)
-	if err != nil {
-		t.Log(mnt)
-		t.Fatal(err)
-	}
-	mnt = strings.TrimSpace(mnt)
-	out, _, err := command.Run("bash", "-c", "sudo cp /etc/yum.repos.d/* "+filepath.Join(mnt, "/etc/yum.repos.d/"))
-	if err != nil {
-		t.Log(out)
-		t.Fatal(err)
-	}
-	out, ret, _ = command.Run("bash", "-c", "yum --installroot="+mnt+" updateinfo list sec | grep /Sec")
-	if ret != 1 {
-		t.Errorf("Expected no vulnerabilities, found the following:\n%v", out)
-	}
+	// id, _, err := command.Run("sudo", "buildah", "from", imageName())
+	// if err != nil {
+	// 	t.Log(id)
+	// 	t.Fatal(err)
+	// }
+	// id = strings.TrimSpace(id)
+	// defer command.Run("buildah", "rm", id)
+	// mnt, _, err := command.Run("sudo", "buildah", "mount", id)
+	// if err != nil {
+	// 	t.Log(mnt)
+	// 	t.Fatal(err)
+	// }
+	// mnt = strings.TrimSpace(mnt)
+	// out, _, err := command.Run("bash", "-c", "sudo cp /etc/yum.repos.d/* "+filepath.Join(mnt, "/etc/yum.repos.d/"))
+	// if err != nil {
+	// 	t.Log(out)
+	// 	t.Fatal(err)
+	// }
+	// out, ret, _ := command.Run("bash", "-c", "yum --installroot="+mnt+" updateinfo list sec | grep /Sec")
+	// if ret != 1 {
+	// 	t.Errorf("Expected no vulnerabilities, found the following:\n%v", out)
+	// }
 }
 
 func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName string) {
@@ -235,7 +198,7 @@ func withVolume(t *testing.T, metric bool) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vol := createVolume(t, cli)
+	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol.Name)
 	containerConfig := container.Config{
 		Image: imageName(),
@@ -273,6 +236,62 @@ func withVolume(t *testing.T, metric bool) {
 	waitForReady(t, cli, ctr2.ID)
 }
 
+// TestWithSplitVolumesLogsData starts a queue manager with separate log/data mounts
+func TestWithSplitVolumesLogsData(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
+	defer removeVolume(t, cli, qmsharedlogs.Name)
+	qmshareddata := createVolume(t, cli, "qmshareddata")
+	defer removeVolume(t, cli, qmshareddata.Name)
+
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, qmshareddata.Name, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
+
+	defer removeVolume(t, cli, qmVol)
+	defer cleanContainer(t, cli, qmID)
+
+	waitForReady(t, cli, qmID)
+}
+
+// TestWithSplitVolumesLogsOnly starts a queue manager with a separate log mount
+func TestWithSplitVolumesLogsOnly(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
+	defer removeVolume(t, cli, qmsharedlogs.Name)
+
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, "", []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
+
+	defer removeVolume(t, cli, qmVol)
+	defer cleanContainer(t, cli, qmID)
+
+	waitForReady(t, cli, qmID)
+}
+
+// TestWithSplitVolumesDataOnly starts a queue manager with a separate data mount
+func TestWithSplitVolumesDataOnly(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	qmshareddata := createVolume(t, cli, "qmshareddata")
+	defer removeVolume(t, cli, qmshareddata.Name)
+
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata.Name, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
+
+	defer removeVolume(t, cli, qmVol)
+	defer cleanContainer(t, cli, qmID)
+
+	waitForReady(t, cli, qmID)
+}
+
 // TestNoVolumeWithRestart ensures a queue manager container can be stopped
 // and restarted cleanly
 func TestNoVolumeWithRestart(t *testing.T) {
@@ -298,12 +317,11 @@ func TestNoVolumeWithRestart(t *testing.T) {
 // where `runmqserver -i` is run to initialize the storage.  Then the
 // container can be run as normal.
 func TestVolumeRequiresRoot(t *testing.T) {
-
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	vol := createVolume(t, cli)
+	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol.Name)
 
 	// Set permissions on the volume to only allow root to write it
@@ -439,7 +457,7 @@ func TestVolumeUnmount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vol := createVolume(t, cli)
+	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol.Name)
 	containerConfig := container.Config{
 		Image: imageName(),
@@ -554,41 +572,237 @@ func TestMQSC(t *testing.T) {
 	}
 }
 
+// TestLargeMQSC creates a new image with a large MQSC file in, starts a container based
+// on that image, and checks that the MQSC has been applied correctly.
+func TestLargeMQSC(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const numQueues = 1000
+	var buf bytes.Buffer
+	for i := 1; i <= numQueues; i++ {
+		fmt.Fprintf(&buf, "* Test processing of a large MQSC file, defining queue test%v\nDEFINE QLOCAL(test%v)\n", i, i)
+	}
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+          FROM %v
+          USER root
+          RUN rm -f /etc/mqm/*.mqsc
+          ADD test.mqsc /etc/mqm/
+          RUN chmod 0660 /etc/mqm/test.mqsc
+          USER mqm`, imageName())},
+		{"test.mqsc", buf.String()},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	rc, mqscOutput := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test" + strconv.Itoa(numQueues) + ")' | runmqsc"})
+	if rc != 0 {
+		r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
+		t.Fatalf("Expected runmqsc to exit with rc=0, got %v with error %v", rc, r.FindString(mqscOutput))
+	}
+}
+
+// TestRedactValidMQSC creates a new image with a Valid MQSC file that contains sensitive information, starts a container based
+// on that image, and checks that the MQSC has been redacted in the logs.
+func TestRedactValidMQSC(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	passwords := "hippoman4567"
+	sslcryp := fmt.Sprintf("GSK_PKCS11=/usr/lib/pkcs11/PKCS11_API.so;token-label;%s;SYMMETRIC_CIPHER_ON;", passwords)
+
+	/* LDAPPWD*/
+	fmt.Fprintf(&buf, "DEFINE AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) CONNAME('test(24)') SHORTUSR('sn') LDAPUSER('user') LDAPPWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) ldappwd('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) lDaPpWd('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD \t('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) +\n LDAP+\n PWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) -\nLDAPP-\nWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) +\n*test comment\n LDAPP-\n*test comment2\nWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD(%v)\n", passwords)
+
+	/* PASSWORD */
+	fmt.Fprintf(&buf, "DEFINE CHANNEL(TEST2) CHLTYPE(SDR) CONNAME('test(24)') XMITQ('fake') PASSWORD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) CHLTYPE(SDR) password('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) CHLTYPE(SDR) pAsSwOrD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) CHLTYPE(SDR) PASSWORD \t('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) +\n CHLTYPE(SDR) PASS+\n WORD+\n ('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) -\nCHLTYPE(SDR) PASS-\nWORD-\n('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) +\n CHLTYPE(SDR) PASS-\n*comemnt 2\nWORD+\n*test comment\n ('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER CHANNEL(TEST2) CHLTYPE(SDR) PASSWORD(%s)\n", passwords)
+
+	/* SSLCRYP */
+	fmt.Fprintf(&buf, "ALTER QMGR SSLCRYP('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR sslcryp('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR SsLcRyP('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR SSLCRYP \t('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR +\n SSL+\n CRYP+\n ('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR -\nSSLC-\nRYP-\n('%v')\n", sslcryp)
+	fmt.Fprintf(&buf, "ALTER QMGR +\n*commenttime\n SSL-\n*commentagain\nCRYP+\n*last comment\n ('%v')\n", sslcryp)
+
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		  FROM %v
+		  USER root
+		  RUN rm -f /etc/mqm/*.mqsc
+		  ADD test.mqsc /etc/mqm/
+		  RUN chmod 0660 /etc/mqm/test.mqsc
+		  USER mqm`, imageName())},
+		{"test.mqsc", buf.String()},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	stopContainer(t, cli, id)
+	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
+	for scanner.Scan() {
+		s := scanner.Text()
+		if strings.Contains(s, sslcryp) || strings.Contains(s, passwords) {
+			t.Fatalf("Expected redacted MQSC output, got: %v", s)
+		}
+	}
+	err = scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestRedactValidMQSC creates a new image with a Invalid MQSC file that contains sensitive information, starts a container based
+// on that image, and checks that the MQSC has been redacted in the logs.
+func TestRedactInvalidMQSC(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	passwords := "hippoman4567"
+	sslcryp := fmt.Sprintf("GSK_PKCS11=/usr/lib/pkcs11/PKCS11_API.so;token-label;%s;SYMMETRIC_CIPHER_ON;", passwords)
+
+	/* LDAPPWD*/
+	fmt.Fprintf(&buf, "DEFINE AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) CONNAME('test(24)') SHORTUSR('sn') LDAPUSER('user') LDAPPWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPPPPPP('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD['%v']\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(ARGHHH) LDAPPWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) LDAPPWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) ARGHAHA(IDPWLDAP) LDAPPWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD '%v'\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD('%v') badvalues\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) badvales LDAPPWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD{'%v'}\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD<'%v'>\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD('%v'+\n p['il6])\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) AUTHTYPE(IDPWLDAP) LDAPPWD('%v'/653***)\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) LDAPPWD('%v'\n DISPLAY QMGR", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) LDAPPWD('%v💩')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) LDAPPWD💩('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) LDAP+\n 💩PWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) 💩 LDAPPWD('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) LDAPPWD 💩 ('%v')\n", passwords)
+	fmt.Fprintf(&buf, "ALTER AUTHINFO(TEST) LDAPPWD('%v') 💩\n", passwords)
+	fmt.Fprintf(&buf, "ALTER 💩 AUTHINFO(TEST) LDAPPWD('%v')\n", passwords)
+
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		  FROM %v
+		  USER root
+		  RUN rm -f /etc/mqm/*.mqsc
+		  ADD test.mqsc /etc/mqm/
+		  RUN chmod 0660 /etc/mqm/test.mqsc
+		  USER mqm`, imageName())},
+		{"test.mqsc", buf.String()},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	rc := waitForContainer(t, cli, id, 20*time.Second)
+	if rc != 1 {
+		t.Errorf("Expected rc=1, got rc=%v", rc)
+	}
+	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
+	for scanner.Scan() {
+		s := scanner.Text()
+		if strings.Contains(s, sslcryp) || strings.Contains(s, passwords) {
+			t.Fatalf("Expected redacted MQSC output, got: %v", s)
+		}
+	}
+	err = scanner.Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 // TestInvalidMQSC creates a new image with an MQSC file containing invalid MQSC,
 // tries to start a container based on that image, and checks that container terminates
-// func TestInvalidMQSC(t *testing.T) {
-// 	t.Parallel()
-// 	cli, err := client.NewEnvClient()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	var files = []struct {
-// 		Name, Body string
-// 	}{
-// 		{"Dockerfile", fmt.Sprintf(`
-// 		FROM %v
-// 		USER root
-// 		RUN rm -f /etc/mqm/*.mqsc
-// 		ADD mqscTest.mqsc /etc/mqm/
-// 		RUN chmod 0660 /etc/mqm/mqscTest.mqsc
-// 		USER mqm`, imageName())},
-// 		{"mqscTest.mqsc", "DEFINE INVALIDLISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE"},
-// 	}
-// 	tag := createImage(t, cli, files)
-// 	defer deleteImage(t, cli, tag)
+func TestInvalidMQSC(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		RUN rm -f /etc/mqm/*.mqsc
+		ADD mqscTest.mqsc /etc/mqm/
+		RUN chmod 0660 /etc/mqm/mqscTest.mqsc
+		USER mqm`, imageName())},
+		{"mqscTest.mqsc", "DEFINE INVALIDLISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE"},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
 
-// 	containerConfig := container.Config{
-// 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
-// 		Image: tag,
-// 	}
-// 	id := runContainer(t, cli, &containerConfig)
-// 	defer cleanContainer(t, cli, id)
-// 	rc := waitForContainer(t, cli, id, 60*time.Second)
-// 	if rc != 1 {
-// 		t.Errorf("Expected rc=1, got rc=%v", rc)
-// 	}
-// 	expectTerminationMessage(t, cli, id)
-// }
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	rc := waitForContainer(t, cli, id, 60*time.Second)
+	if rc != 1 {
+		t.Errorf("Expected rc=1, got rc=%v", rc)
+	}
+	expectTerminationMessage(t, cli, id)
+}
 
 // TestReadiness creates a new image with large amounts of MQSC in, to
 // ensure that the readiness check doesn't pass until configuration has finished.

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -71,5 +71,8 @@ func GetQueueManager(name string) (*QueueManager, error) {
 // GetErrorLogDirectory returns the directory holding the error logs for the
 // specified queue manager
 func GetErrorLogDirectory(qm *QueueManager) string {
+	if qm.DataPath != "" {
+		return filepath.Join(qm.DataPath, "errors")
+	}
 	return filepath.Join(qm.Prefix, "qmgrs", qm.Directory, "errors")
 }
