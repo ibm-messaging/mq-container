@@ -85,7 +85,7 @@ else
 	DOWNLOADS_DIR=$(realpath ./downloads/)
 endif
 
-#Try to pick up the downloads directory if rnning in windows
+#Try to pick up the downloads directory if running in windows
 ifneq (,$(findstring Windows,$(shell echo ${OS})))
 	DOWNLOADS_DIR=$(shell pwd)/downloads/
 endif
