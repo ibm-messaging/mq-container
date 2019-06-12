@@ -1391,3 +1391,199 @@ func TestTLSWithSingleQuoteCert(t *testing.T) {
 	// Stop the container cleanly
 	stopContainer(t, cli, ctr.ID)
 }
+
+func TestTrustStoreLoad(t *testing.T) {
+	CertificateDN := "CN=clientcert"
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			filepath.Join(TlsDir(t, false), "testcert1") + ":/etc/mqm/pki/keys/testcert1",
+			filepath.Join(TlsDir(t, false), "clientcert", "certonly") + ":/etc/mqm/pki/trust/0",
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+
+	rc, out := execContainer(t, cli, ctr.ID, "mqm", []string{"runmqakm", "-cert", "-list", "-db", "/run/runmqserver/tls/key.kdb", "-stashed"})
+	if rc != 0 {
+		t.Fatalf("Expected cert list to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+
+	certificates, err := parseCertificateOutput(out)
+
+	foundit := false
+	debugLabels := []string{}
+	for _, cert := range certificates {
+		if !cert.Key {
+			if cert.Label == CertificateDN {
+				foundit = true
+				break
+			}
+		}
+		debugLabels = append(debugLabels, cert.Label)
+	}
+
+	if !foundit {
+		t.Errorf("Could not find trusted certificate in keystore. Found %v", debugLabels)
+	}
+}
+
+func TestCorrectLabel(t *testing.T) {
+	LabelToFind := "funnylabel"
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			filepath.Join(TlsDir(t, false), "testcert1") + ":/etc/mqm/pki/keys/" + LabelToFind,
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+
+	rc, out := execContainer(t, cli, ctr.ID, "mqm", []string{"runmqakm", "-cert", "-list", "-db", "/run/runmqserver/tls/key.kdb", "-stashed"})
+	if rc != 0 {
+		t.Fatalf("Expected cert list to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+
+	certificates, err := parseCertificateOutput(out)
+
+	foundit := false
+	debugLabels := []string{}
+	for _, cert := range certificates {
+		if cert.Key && cert.Label == LabelToFind {
+			foundit = true
+			break
+		}
+		debugLabels = append(debugLabels, cert.Label)
+	}
+
+	if !foundit {
+		t.Errorf("Could not find personal certificate with label %s in keystore. Found: %v", LabelToFind, debugLabels)
+	}
+
+	// Verify MQ got set with the correct one
+	l := inspectLogs(t, cli, ctr.ID)
+	if !strings.Contains(l, "ALTER QMGR CERTLABL('"+LabelToFind+"')") {
+		// QM was not set with correct label
+		t.Errorf("Expected QM to set CERTLABL to %s", LabelToFind)
+	}
+
+}
+
+func TestCorrectLabels(t *testing.T) {
+	Label1 := "label1"
+	Label2 := "anotherlabel"
+	Label3 := "thislabel"
+	Label4 := "whatalabel"
+	CertificateDN := "CN=clientcert"
+
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			filepath.Join(TlsDir(t, false), "testcert1") + ":/etc/mqm/pki/keys/" + Label1,
+			filepath.Join(TlsDir(t, false), "testcert2") + ":/etc/mqm/pki/keys/" + Label2,
+			filepath.Join(TlsDir(t, false), "testcertca1") + ":/etc/mqm/pki/keys/" + Label3,
+			filepath.Join(TlsDir(t, false), "singlequotecert") + ":/etc/mqm/pki/keys/" + Label4,
+			filepath.Join(TlsDir(t, false), "clientcert", "certonly") + ":/etc/mqm/pki/trust/0",
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+
+	rc, out := execContainer(t, cli, ctr.ID, "mqm", []string{"runmqakm", "-cert", "-list", "-db", "/run/runmqserver/tls/key.kdb", "-stashed"})
+	if rc != 0 {
+		t.Fatalf("Expected cert list to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+
+	certificates, err := parseCertificateOutput(out)
+
+	found1 := false
+	found2 := false
+	found3 := false
+	found4 := false
+	foundclient := false
+
+	debugLabels := []string{}
+
+	for _, cert := range certificates {
+		if cert.Key && cert.Label == Label1 {
+			found1 = true
+		} else if cert.Key && cert.Label == Label2 {
+			found2 = true
+		} else if cert.Key && cert.Label == Label3 {
+			found3 = true
+		} else if cert.Key && cert.Label == Label4 {
+			found4 = true
+		} else if !cert.Key && cert.Label == CertificateDN {
+			foundclient = true
+		}
+		debugLabels = append(debugLabels, cert.Label)
+	}
+
+	if !found1 || !found2 || !found3 || !found4 || !foundclient {
+		t.Errorf("Could not find all the required certificates in keystore. Found: %v", debugLabels)
+	}
+
+	// Verify MQ got set with the correct one
+	l := inspectLogs(t, cli, ctr.ID)
+	if !strings.Contains(l, "ALTER QMGR CERTLABL('anotherlabel')") {
+		// QM was not set with correct label
+		t.Error("Expected QM to set CERTLABL to anotherlabel")
+	}
+}

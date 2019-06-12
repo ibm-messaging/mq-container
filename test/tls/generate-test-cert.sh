@@ -28,6 +28,8 @@ rm singlequotecert/*
 rm testcert1/*
 rm testcert2/*
 rm testcertca1/*
+rm clientcert/*
+rm clientcert/certonly/*
 
 # Create a private key and certificate in PEM format, for the server to use
 openssl req \
@@ -87,3 +89,11 @@ rm rootCA.crt
 rm rootCA.key
 rm cert.csr
 rm rootCA.srl
+
+# Create certificates for a client test
+openssl req \
+       -newkey rsa:4098 -nodes -keyout clientcert/${KEY} \
+       -subj "/CN=clientcert" \
+       -x509 -days 3650 -out clientcert/${CERT}
+
+cp clientcert/${CERT} clientcert/certonly/${CERT}

@@ -58,6 +58,11 @@ type containerDetails struct {
 	Env     []string
 }
 
+type certificateDetails struct {
+	Label string
+	Key   bool
+}
+
 func imageName() string {
 	image, ok := os.LookupEnv("TEST_IMAGE")
 	if !ok {
@@ -812,4 +817,29 @@ func badTLSError(err error) bool {
 
 	// We didn't match the approved errors so we're a bad error.
 	return true
+}
+
+func parseCertificateOutput(input string) ([]certificateDetails, error) {
+	certificates := []certificateDetails{}
+	scanner := bufio.NewScanner(strings.NewReader(input))
+	for scanner.Scan() {
+		s := scanner.Text()
+		// IS it a personal one?
+		if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "*-") {
+			s := strings.TrimLeft(s, "-*")
+			certificates = append(certificates, certificateDetails{
+				Label: strings.TrimSpace(s),
+				Key:   true,
+			})
+		} else if strings.HasPrefix(s, "!") {
+			s := strings.TrimLeft(s, "!")
+			certificates = append(certificates, certificateDetails{
+				Label: strings.TrimSpace(s),
+				Key:   false,
+			})
+		}
+	}
+	err := scanner.Err()
+
+	return certificates, err
 }
