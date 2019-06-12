@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -113,30 +112,6 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, pa
 		t.Errorf("JUnit container failed with rc=%v", rc)
 	}
 	defer cleanContainer(t, cli, ctr.ID)
-}
-
-// createTLSConfig creates a tls.Config which trusts the specified certificate
-func createTLSConfig(t *testing.T, certFile, password string) *tls.Config {
-	// Get the SystemCertPool, continue with an empty pool on error
-	certs, err := x509.SystemCertPool()
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Read in the cert file
-	cert, err := ioutil.ReadFile(certFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Append our cert to the system pool
-	ok := certs.AppendCertsFromPEM(cert)
-	if !ok {
-		t.Fatal("No certs appended")
-	}
-	// Trust the augmented cert pool in our client
-	return &tls.Config{
-		InsecureSkipVerify: false,
-		RootCAs:            certs,
-	}
 }
 
 func testRESTAdmin(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config) {

@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -1193,13 +1192,21 @@ func TestTLSGoldenPath(t *testing.T) {
 	}
 
 	containerConfig := container.Config{
-		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
 
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
 			filepath.Join(TlsDir(t, false), "testcert1") + ":/etc/mqm/pki/keys/testcert1",
+		},
+		PortBindings: nat.PortMap{
+			"1414/tcp": []nat.PortBinding{
+				{
+					HostIP: "0.0.0.0",
+				},
+			},
 		},
 	}
 	networkingConfig := network.NetworkingConfig{}
@@ -1212,40 +1219,174 @@ func TestTLSGoldenPath(t *testing.T) {
 	defer cleanContainer(t, cli, ctr.ID)
 	waitForReady(t, cli, ctr.ID)
 
-	// Actually test we got the right certificate
-	rootPEM := `
-	-----BEGIN CERTIFICATE-----
-MIICpDCCAYwCCQC6vpJFnfYO6TANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
-b2NhbGhvc3QwHhcNMTkwMzIxMTYxMzUxWhcNMjkwMzE4MTYxMzUxWjAUMRIwEAYD
-VQQDDAlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCu
-48qtIDwmihFqj2HY3dZjPfROA1MJ+D0c6aEA08ooOczthLB7XdZBQDapj8LFldyt
-4ZMbTkqtF5QtPXmJY0wi39foLYlcGXPL1b7y3mypaFou88BcSM3VmfILKXhNeAlt
-rXevnuT5kDU7sLVgKGhGwas20T1MU7d0I3bQ5z5c7egL76Hk9fYucjN6RkbwlrJ3
-TrCXrGIziofn3Zq1t51ygv21c80JD3XJ44YmuCrede4rhOS/4NpwRuZyiwpJ6tlv
-0L0QSDGCmt2JT3ty28UAsGznFzC5Qu9KyaR+9Gk4aftiyKxrYWZkgtJmMRU+C1X2
-kFLOHsucGmJswjwubSR7AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAEdlmXVGy86P
-XIX5a4ZmHQ5Ns4wm7rY8vzUxlymEQ86En1PN1zAO9gV94tLyNeMptjsFEEo/uJhC
-Yvg3l5TIr/WCiY2+2XsSHvnbXrlbF3S0fRHa9VaCMRKjzRT68uq2Y891906YGtUE
-m6fCjHqVzX8qaplDf79aVkPydYaYOIZ1a/mCfQcD9XMZ/v5zI9IUDhdoq97bgPhB
-gBOzWLI+hkzyU8jxKAFw1Hwi9lD/P6RXL5arNb/+arOgA3vTW+xGWGevgjVK1Ay9
-81beWiQmn0KbeLZxj+WJ9Nntlf1M4EqPYgsSYs/IlJTYS8W1B0mDJEoovPdFTryY
-GyIuQEVcjUE=
------END CERTIFICATE-----
-`
-
-	roots := x509.NewCertPool()
-	ok := roots.AppendCertsFromPEM([]byte(rootPEM))
-	if !ok {
-		t.Fatal("failed to parse root certificate")
+	// Test we got the right certificate for the queue manager
+	tlsConf := createTLSConfig(t, []string{filepath.Join(TlsDir(t, false), "testcert1", "server.crt")}, "", false)
+	conname := fmt.Sprintf("localhost:%s", getPort(t, cli, ctr.ID, 1414))
+	conn, err := tls.Dial("tcp", conname, tlsConf)
+	if badTLSError(err) {
+		t.Fatal("Failed to connect to queue manager with TLS: " + err.Error())
+	}
+	// Conn may be nil if we have accepted an error above
+	if conn != nil {
+		conn.Close()
 	}
 
-	conn, err := tls.Dial("tcp", getIPAddress(t, cli, ctr.ID)+":1414", &tls.Config{
-		RootCAs: roots,
-	})
+	// Stop the container cleanly
+	stopContainer(t, cli, ctr.ID)
+}
+
+func TestTLSAlphabetical(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
 	if err != nil {
-		t.Fatal("failed to connect: " + err.Error())
+		t.Fatal(err)
 	}
-	conn.Close()
+
+	containerConfig := container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			filepath.Join(TlsDir(t, false), "testcert1") + ":/etc/mqm/pki/keys/alpha1",
+			filepath.Join(TlsDir(t, false), "testcert2") + ":/etc/mqm/pki/keys/zeta2",
+		},
+		PortBindings: nat.PortMap{
+			"1414/tcp": []nat.PortBinding{
+				{
+					HostIP: "0.0.0.0",
+				},
+			},
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+
+	// Test we got the right certificate for the queue manager
+	tlsConf := createTLSConfig(t, []string{filepath.Join(TlsDir(t, false), "testcert1", "server.crt")}, "", false)
+	conname := fmt.Sprintf("localhost:%s", getPort(t, cli, ctr.ID, 1414))
+	conn, err := tls.Dial("tcp", conname, tlsConf)
+	if badTLSError(err) {
+		t.Fatal("Failed to connect to queue manager with TLS: " + err.Error())
+	}
+	// Conn may be nil if we have accepted an error above
+	if conn != nil {
+		conn.Close()
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, ctr.ID)
+}
+
+func TestTLSWithCA(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			filepath.Join(TlsDir(t, false), "testcertca1") + ":/etc/mqm/pki/keys/testcertca1",
+		},
+		PortBindings: nat.PortMap{
+			"1414/tcp": []nat.PortBinding{
+				{
+					HostIP: "0.0.0.0",
+				},
+			},
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+
+	// Test we got the right certificate for the queue manager
+	tlsConf := createTLSConfig(t, []string{filepath.Join(TlsDir(t, false), "testcertca1", "ca.crt")}, "", false)
+	conname := fmt.Sprintf("localhost:%s", getPort(t, cli, ctr.ID, 1414))
+	conn, err := tls.Dial("tcp", conname, tlsConf)
+	if badTLSError(err) {
+		t.Fatal("Failed to connect to queue manager with TLS: " + err.Error())
+	}
+	// Conn may be nil if we have accepted an error above
+	if conn != nil {
+		conn.Close()
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, ctr.ID)
+}
+
+func TestTLSWithSingleQuoteCert(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			filepath.Join(TlsDir(t, false), "singlequotecert") + ":/etc/mqm/pki/keys/singlequotecert",
+		},
+		PortBindings: nat.PortMap{
+			"1414/tcp": []nat.PortBinding{
+				{
+					HostIP: "0.0.0.0",
+				},
+			},
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+
+	// Test we got the right certificate for the queue manager
+	tlsConf := createTLSConfig(t, []string{filepath.Join(TlsDir(t, false), "singlequotecert", "cert.crt")}, "", false)
+	conname := fmt.Sprintf("localhost:%s", getPort(t, cli, ctr.ID, 1414))
+	conn, err := tls.Dial("tcp", conname, tlsConf)
+	if badTLSError(err) {
+		t.Fatal("Failed to connect to queue manager with TLS: " + err.Error())
+	}
+	// Conn may be nil if we have accepted an error above
+	if conn != nil {
+		conn.Close()
+	}
 
 	// Stop the container cleanly
 	stopContainer(t, cli, ctr.ID)

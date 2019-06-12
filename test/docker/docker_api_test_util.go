@@ -20,6 +20,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -27,6 +29,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -748,7 +751,65 @@ func countTarLines(t *testing.T, b []byte) int {
 	return total
 }
 
-// tlsDir returns the host directory where the test certificate(s) are located
+// TlsDir returns the host directory where the test certificate(s) are located
 func TlsDir(t *testing.T, unixPath bool) string {
 	return filepath.Join(getCwd(t, unixPath), "../tls")
+}
+
+// createTLSConfig creates a tls.Config which trusts the specified certificate
+func createTLSConfig(t *testing.T, certFile []string, password string, usesystem bool) *tls.Config {
+	// Get the SystemCertPool, continue with an empty pool on error
+	var certs *x509.CertPool
+	var err error
+	if usesystem {
+		certs, err = x509.SystemCertPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		certs = x509.NewCertPool()
+	}
+	// Read in the cert file
+	for _, cf := range certFile {
+		cert, err := ioutil.ReadFile(cf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Append our cert to the system pool
+		ok := certs.AppendCertsFromPEM(cert)
+		if !ok {
+			t.Fatal("No certs appended")
+		}
+	}
+	// Trust the augmented cert pool in our client
+	return &tls.Config{
+		InsecureSkipVerify: false,
+		RootCAs:            certs,
+	}
+}
+
+// Checks whether the error we've received is on the list of accepted errors.
+func badTLSError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errString := err.Error()
+	// Checks if the error is because we have a mismatching distinguished name
+	matched, err := regexp.Match("x509: certificate is valid for .+?, not localhost", []byte(errString))
+	if err != nil {
+		return true
+	}
+	if matched {
+		return false
+	}
+	matched, err = regexp.Match("x509: certificate is not valid for any names, but wanted to match localhost", []byte(errString))
+	if err != nil {
+		return true
+	}
+	if matched {
+		return false
+	}
+
+	// We didn't match the approved errors so we're a bad error.
+	return true
 }
