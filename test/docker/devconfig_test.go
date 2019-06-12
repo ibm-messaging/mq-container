@@ -384,7 +384,7 @@ func TestWebTLSWithSingleQuoteCert(t *testing.T) {
 	waitForWebReady(t, cli, ctr.ID, insecureTLSConfig)
 
 	// Test we got the right certificate for the queue manager
-	tlsConf := createTLSConfig(t, []string{filepath.Join(TlsDir(t, false), "singlequotecert", "cert.crt")}, "", false)
+	tlsConf := createTLSConfig(t, []string{filepath.Join(TlsDir(t, false), "singlequotecert", "server.crt")}, "", false)
 	conname := fmt.Sprintf("localhost:%s", getPort(t, cli, ctr.ID, 9443))
 	conn, err := tls.Dial("tcp", conname, tlsConf)
 	if badTLSError(err) {
