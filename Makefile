@@ -81,13 +81,10 @@ endif
 
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
 	DOWNLOADS_DIR=$(patsubst /mnt/c%,C:%,$(realpath ./downloads/))
-else 
-ifneq (,$(findstring Windows,$(shell echo ${OS})))
+else ifneq (,$(findstring Windows,$(shell echo ${OS})))
 	DOWNLOADS_DIR=$(shell pwd)/downloads/
 else
 	DOWNLOADS_DIR=$(realpath ./downloads/)
-endif
-
 endif
 
 # Try to figure out which archive to use from the architecture
