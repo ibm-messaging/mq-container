@@ -6,6 +6,7 @@ You need to have the following tools installed:
 
 * [Docker](https://www.docker.com/) V17.06.1 or later
 * [GNU make](https://www.gnu.org/software/make/)
+* [dep](https://github.com/golang/dep) (official Go dependency management tool)
 
 If you are working in the Windows Subsystem for Linux, follow [this guide by Microsoft to set up Docker](https://blogs.msdn.microsoft.com/commandline/2017/12/08/cross-post-wsl-interoperability-with-docker/) first.
 
@@ -16,6 +17,7 @@ This procedure works for building the MQ Continuous Delivery release, on `amd64`
 1. Create a `downloads` directory in the root of this repository
 2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.1.2_UBUNTU_X86-64.tar.gz`) in the `downloads` directory
 3. Run `make build-advancedserver`
+4. Alternatively, to skip copying MQ to a local path, you can also provide an url(to be set as MQ_DOWNLOAD_URL) to download MQ during the build. For ex:`MQ_DOWNLOAD_URL=http://localhost/IBM_MQ_9.1.2_UBUNTU_X86-64.tar.gz make build-advancedserver`
 
 > **Warning**: Note that MQ offers two different sets of packaging on Linux: one is called "MQ for Linux" and contains RPM files for installing on Red Hat Enterprise Linux and SUSE Linux Enterprise Server.  The MQ container build uses a Red Hat Universal Base Image, so you need the "MQ for Linux" RPM files.
 
@@ -32,9 +34,9 @@ MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 ```
 
 ## Building a developer image
-Run `make build-devserver`, which will download the latest version of MQ Advanced for Developers from IBM developerWorks.  This is currently only available on the `amd64` architecture.
-
-You can use the environment variable `MQ_ARCHIVE_DEV` to specify an alternative local file to install from (which must be in the `downloads` directory).
+Run `make build-devserver`, which will download the latest version of MQ Advanced for Developers from IBM developerWorks.  This is currently only available on the `amd64` architecture. Alternatively, 
+1. You can provide an url(to be set as MQ_DOWNLOAD_URL) from which MQ can be downloaded during build. For ex: `MQ_DOWNLOAD_URL=http://localhost/mqadv_dev912_linux_x86-64.tar.gz make build-devserver`
+2. You can use the environment variable `MQ_ARCHIVE_DEV` to specify local file to install from (which must be in the `downloads` directory).
 
 ## Building from a Red Hat Enterprise Linux host
 Red Hat Enterprise Linux (RHEL) offers a suite of container tools, including Buildah for building container images, and Podman for running containers.  Buildah can accept input described in a [Dockerfile](https://docs.docker.com/engine/reference/builder/).  This MQ sample uses a multi-stage build, which requires a recent version of Podman, which is not yet available in Red Hat Enterprise Linux V7.  Therefore, if you are on a RHEL host, then the `build-devserver` and `build-advancedserver` targets are run using a more recent version of Buildah from inside a container.

@@ -70,6 +70,7 @@ EMPTY:=
 SPACE:= $(EMPTY) $(EMPTY)
 # MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.2 instead of 9.1.2.0
 MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
+MQ_DOWNLOAD_URL ?= NOT_SET
 
 # Set variable if running on a Red Hat Enterprise Linux host
 ifneq ($(wildcard /etc/redhat-release),)
@@ -130,14 +131,18 @@ devserver: build-devserver build-devjmstest test-devserver
 incubating: build-explorer
 
 downloads/$(MQ_ARCHIVE_DEV):
+ifeq ($(MQ_DOWNLOAD_URL), NOT_SET)
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
 	mkdir -p downloads
 	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV)
+endif
 
 downloads/$(MQ_SDK_ARCHIVE):
+ifeq ($(MQ_DOWNLOAD_URL), NOT_SET)
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
 	mkdir -p downloads
 	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_SDK_ARCHIVE)
+endif
 
 .PHONY: downloads
 downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
@@ -197,8 +202,8 @@ test-advancedserver-cover: test/docker/vendor coverage
 
 define build-mq
 	# Create a temporary network to use for the build
-	$(DOCKER) network create build
-	# Start a web server to host the MQ downloadable (tar.gz) file
+    $(if $(findstring NOT_SET,$(MQ_DOWNLOAD_URL)),$(DOCKER) network create build,@echo "Using hosted image:"$(MQ_DOWNLOAD_URL))
+	$(if $(findstring NOT_SET,$(MQ_DOWNLOAD_URL)),
 	$(DOCKER) run \
 	  --rm \
 	  --name $(BUILD_SERVER_CONTAINER) \
@@ -206,13 +211,13 @@ define build-mq
 	  --network-alias build \
 	  --volume $(DOWNLOADS_DIR):/usr/share/nginx/html:ro \
 	  --detach \
-	  docker.io/nginx:alpine
+	  docker.io/nginx:alpine,)
 	# Build the new image
 	$(DOCKER) build \
 	  --tag $1:$2 \
 	  --file $3 \
-	  --network build \
-	  --build-arg MQ_URL=http://build:80/$4 \
+	  --network $(if $(findstring NOT_SET,$(MQ_DOWNLOAD_URL)),build,host) \
+	  --build-arg MQ_URL=$(if $(findstring NOT_SET,$(MQ_DOWNLOAD_URL)),http://build:80/$4,$(MQ_DOWNLOAD_URL)) \
 	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
 	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
@@ -228,13 +233,15 @@ define build-mq
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
 	  --target $5 \
-	  . ; $(DOCKER) kill $(BUILD_SERVER_CONTAINER) && $(DOCKER) network rm build
+	  .
+	  $(if $(findstring NOT_SET,$(MQ_DOWNLOAD_URL)),$(DOCKER) kill $(BUILD_SERVER_CONTAINER),)
+	  $(if $(findstring NOT_SET,$(MQ_DOWNLOAD_URL)),$(DOCKER) network rm build,)
 endef
 
 define build-mq-ctr
 	buildah/mq-buildah $1 $2 \
 	  --file /src/Dockerfile-server \
-	  --build-arg MQ_URL="file:///src/downloads/$3" \
+	  --build-arg MQ_URL=$(if $(findstring NOT_SET,$(MQ_DOWNLOAD_URL)),"file:///src/downloads/$3",$(MQ_DOWNLOAD_URL)) \
 	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
 	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
@@ -268,12 +275,12 @@ build-advancedserver: build-advancedserver-host
 endif
 
 .PHONY: build-advancedserver-host
-build-advancedserver-host: downloads/$(MQ_ARCHIVE) docker-version
+build-advancedserver-host: $(if $(findstring NOT_SET,$(MQ_DOWNLOAD_URL)),downloads/$(MQ_ARCHIVE),) docker-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
 
 .PHONY: build-advancedserver-ctr
-build-advancedserver-ctr: downloads/$(MQ_ARCHIVE)
+build-advancedserver-ctr: $(if $(findstring NOT_SET,$(MQ_DOWNLOAD_URL)),downloads/$(MQ_ARCHIVE),) docker-version
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) in a container"$(END)))
 	$(call build-mq-ctr,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),$(MQ_ARCHIVE),mq-server)
 
@@ -323,6 +330,8 @@ clean:
 	rm -rf ./coverage
 	rm -rf ./build
 	rm -rf ./deps
+	@echo $(shell docker stop build-server)
+	@echo $(shell docker network rm build)
 
 .PHONY: deps
 deps:
