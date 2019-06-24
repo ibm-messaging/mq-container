@@ -1,13 +1,13 @@
 # Change log
 
-<!-- ## vNext
-
-**Breaking changes**: -->
-
 ## 9.1.2.0-UBI (2019-06-21)
+
+**Breaking changes**:
 
 * UID of the mqm user is now 888.  You need to run the container with an entrypoint of `runmqserver -i` under the root user to update any existing files.
 * MQSC files supplied will be verified before being run. Files containing invalid MQSC will cause the container to fail to start
+
+**Other changes**:
 * Security fixes
 * Web console added to production image
 * Container built on RedHat host
