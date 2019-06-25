@@ -1,5 +1,15 @@
 # Change log
 
+## 9.1.3.0 (2019-07-19)
+
+* Updated to MQ version 9.1.3.0
+* Allow generation of TLS certificate with given hostname
+* Fixes for the following issues:
+  * `MQ_EPHEMERAL_PREFIX` UNIX sockets fix
+  * Fix Makefile for Windows
+  * Use -a option on crtmqdir
+  * Remove check for certificate environment variable
+
 ## 9.1.2.0-UBI (2019-06-21)
 
 **Breaking changes**:
@@ -13,6 +23,7 @@
   
 ## 9.1.2.0 (2019-03-21)
 
+* Updated to MQ version 9.1.2.0
 * Now runs using the "mqm" user instead of root.  See new [security doc](https://github.com/ibm-messaging/mq-container/blob/master/docs/security.md)
 * New [IGNSTATE](https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.1.0/com.ibm.mq.pro.doc/q132310_.htm#q132310___ignstateparm) parameter used in default developer config
 * Termination log moved from `/dev/termination-log` to `/run/termination-log`, to make permissions easier to handle
