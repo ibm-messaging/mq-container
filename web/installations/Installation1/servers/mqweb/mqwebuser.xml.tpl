@@ -38,7 +38,7 @@
     </openidConnectClient>
     <variable name="httpHost" value="*"/>
     <variable name="managementMode" value="externallyprovisioned"/>
-    <jndiEntry jndiName="xframeAllowedSourceList" value="${env.MQ_HOSTS}"/>
+    <variable name="mqConsoleFrameAncestors" value="${env.MQ_HOSTS}"/> 
     <httpDispatcher enableWelcomePage="false" appOrContextRootMissingMessage='&lt;script&gt;document.location.href="/ibmmq/console";&lt;/script&gt;' />
     <include location="tls.xml"/>
 </server>
