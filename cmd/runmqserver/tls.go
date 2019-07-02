@@ -136,7 +136,7 @@ func configureSSOTLS(p12TrustStore tls.KeyStoreData) (string, error) {
 	if genHostName != "" {
 		// We've got to generate the certificate with the hostname given
 		if err == nil {
-			return "", fmt.Errorf("We were told to generate a certificate but a keystore %s already exists", ks)
+			log.Printf("Replacing existing keystore %s - generating new certificate", ks)
 		}
 		// Keystore doesn't exist so create it and populate a certificate
 		newKS := keystore.NewPKCS12KeyStore(ks, p12TrustStore.Password)
@@ -145,7 +145,7 @@ func configureSSOTLS(p12TrustStore tls.KeyStoreData) (string, error) {
 			return "", fmt.Errorf("Failed to create keystore %s: %v", ks, err)
 		}
 
-		err = newKS.CreateSelfSignedCertificate("default", fmt.Sprintf("CN=%s", genHostName))
+		err = newKS.CreateSelfSignedCertificate("default", fmt.Sprintf("CN=%s", genHostName), genHostName)
 		if err != nil {
 			return "", fmt.Errorf("Failed to generate certificate in keystore %s with DN of 'CN=%s': %v", ks, genHostName, err)
 		}
