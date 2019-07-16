@@ -18,9 +18,12 @@ limitations under the License.
 package mqini
 
 import (
+	"fmt"
 	"bufio"
 	"path/filepath"
 	"strings"
+	"io/ioutil"
+	"os"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 )
@@ -75,4 +78,112 @@ func GetErrorLogDirectory(qm *QueueManager) string {
 		return filepath.Join(qm.DataPath, "errors")
 	}
 	return filepath.Join(qm.Prefix, "qmgrs", qm.Directory, "errors")
+}
+
+//Update qm.ini file with the user supplied stanzas.
+func AddStanzas(qmname string) error {
+	inifilepath, _ := GetQueueManagerIniFile(qmname)
+	
+	apiexitStanzaL := make(map[string]string)
+	apiexitStanzaQM := make(map[string]string)
+	var userconfig string
+
+	//Find the ini file
+	files, err := ioutil.ReadDir("/etc/MQOpenTracing/")
+    if err != nil {
+        return err
+	}
+	//If we are given ini file, read it.
+    for _, infile := range files {
+		if strings.HasSuffix(infile.Name(), ".ini") {
+			iniFileBytes, err := ioutil.ReadFile(filepath.Join("/etc/MQOpenTracing/",infile.Name()))
+			if err != nil {
+				return err
+			}
+			userconfig = string(iniFileBytes)
+		}
+	}
+
+	//No ini file supplied, so nothing to do.
+	if len(userconfig) == 0 {
+		return nil
+	}
+	
+	//mat := "ApiExitLocal: \n  Sequence=100 \n  Function=EntryPoint \n  Module=/opt/MQOpenTracing/MQOpenTracingExit.so \n  Name=MQOpenTracingExit \n"
+	scanner := bufio.NewScanner(strings.NewReader(userconfig))
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		if (strings.Contains(scanner.Text(), "ApiExitLocal:")) {
+			for scanner.Scan() {
+				line := scanner.Text()
+				if strings.Contains(line,":"){
+					break;
+				}
+				keyvalue := strings.Split(line,"=")
+				apiexitStanzaL[keyvalue[0]]=keyvalue[1]
+			}
+		}
+	}
+
+	//Next read from the qm.ini file.
+	iniFileBytes,  err := ioutil.ReadFile(inifilepath)
+	if err != nil {
+		return err
+	}
+	curFile := string(iniFileBytes)
+	if strings.Contains(curFile, "ApiExitLocal:") {
+		scanner = bufio.NewScanner(strings.NewReader(curFile))
+		scanner.Split(bufio.ScanLines)
+
+		for scanner.Scan() {
+			if (strings.Contains(scanner.Text(), "ApiExitLocal:")) {
+				for scanner.Scan() {
+					line := scanner.Text()
+					if strings.Contains(line,":"){
+						break;
+					}
+					keyvalue := strings.Split(line,"=")
+					apiexitStanzaQM[keyvalue[0]]=keyvalue[1]
+				}
+			}
+		}
+
+		//Prepare the text to write.
+		for key, _ := range apiexitStanzaL {
+			_, ok := apiexitStanzaQM[key]
+			old := fmt.Sprintf("%s=%s", key, apiexitStanzaQM[key])
+			if ok {
+				apiexitStanzaQM[key]=apiexitStanzaL[key]
+			}
+		
+			new := fmt.Sprintf("%s=%s", key, apiexitStanzaQM[key])
+			curFile = strings.Replace(curFile,old, new, 5)
+		}
+
+		//Rewrite qm.ini file
+		err := ioutil.WriteFile(inifilepath, []byte(curFile), 0644)
+		if err != nil {
+			return err
+		}
+	} else {
+		f, err := os.OpenFile(inifilepath, os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		if _, err = f.WriteString(userconfig); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//Gets the ini file location
+func GetQueueManagerIniFile(qmname string) (string, error) {
+	qm, err := GetQueueManager(qmname)
+	if err != nil {
+		return "", err
+	}
+	qmINIFile := filepath.Join(qm.Prefix, "qmgrs", qm.Directory, "qm.ini")
+	return qmINIFile, nil
 }
