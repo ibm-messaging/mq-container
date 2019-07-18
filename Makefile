@@ -35,8 +35,8 @@ MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server
 MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev
 # MQ_TAG is the tag of the built MQ Advanced image & MQ Advanced for Developers image
 MQ_TAG ?=$(MQ_VERSION)-$(ARCH)
-# DOCKER is the Docker command to run.  Defaults to "podman" if it's available, otherwise "docker"
-DOCKER ?= $(shell type -p podman || echo docker)
+# COMMAND is the container command to run.  Defaults to "podman" if it's available, otherwise "docker"
+COMMAND ?= $(shell type -p podman || echo docker)
 # MQ_PACKAGES specifies the MQ packages (.deb or .rpm) to install.  Defaults vary on base image.
 MQ_PACKAGES ?=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesWeb*.rpm MQSeriesAMS-*.rpm
 # MQM_UID is the UID to use for the "mqm" user
@@ -193,9 +193,9 @@ test-advancedserver-cover: test/docker/vendor coverage
 
 define build-mq
 	# Create a temporary network to use for the build
-	$(DOCKER) network create build
+	$(COMMAND) network create build
 	# Start a web server to host the MQ downloadable (tar.gz) file
-	$(DOCKER) run \
+	$(COMMAND) run \
 	  --rm \
 	  --name $(BUILD_SERVER_CONTAINER) \
 	  --network build \
@@ -204,7 +204,7 @@ define build-mq
 	  --detach \
 	  docker.io/nginx:alpine
 	# Build the new image
-	$(DOCKER) build \
+	$(COMMAND) build \
 	  --tag $1:$2 \
 	  --file $3 \
 	  --network build \
@@ -222,7 +222,7 @@ define build-mq
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
 	  --target $5 \
-	  . ; $(DOCKER) kill $(BUILD_SERVER_CONTAINER) && $(DOCKER) network rm build
+	  . ; $(COMMAND) kill $(BUILD_SERVER_CONTAINER) && $(COMMAND) network rm build
 endef
 
 define build-mq-ctr
@@ -254,9 +254,9 @@ docker-version:
 .PHONY: build-advancedserver
 ifdef RHEL_HOST
 # Build using Buildah inside a container on RHEL hosts
-build-advancedserver: build-advancedserver-ctr
+build-advancedserver: log-build-env build-advancedserver-ctr
 else
-build-advancedserver: build-advancedserver-host
+build-advancedserver: log-build-env build-advancedserver-host
 endif
 
 .PHONY: build-advancedserver-host
@@ -289,7 +289,7 @@ build-devserver-ctr: downloads/$(MQ_ARCHIVE_DEV)
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: docker-version
-	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover -f Dockerfile-server.cover .
+	$(COMMAND) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover -f Dockerfile-server.cover .
 
 .PHONY: build-explorer
 build-explorer: downloads/$(MQ_ARCHIVE_DEV)
@@ -300,13 +300,24 @@ build-sdk: downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
 	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
 
-.PHONY: debug-vars
-debug-vars:
+.PHONY: log-build-env
+log-build-vars:
+	$(info $(SPACER)$(shell printf $(TITLE)"Build environment"$(END)))
+	@echo ARCH=$(ARCH)
 	@echo MQ_VERSION=$(MQ_VERSION)
 	@echo MQ_VERSION_VRM=$(MQ_VERSION_VRM)
 	@echo MQ_ARCHIVE=$(MQ_ARCHIVE)
 	@echo MQ_IMAGE_DEVSERVER=$(MQ_IMAGE_DEVSERVER)
 	@echo MQ_IMAGE_ADVANCEDSERVER=$(MQ_IMAGE_ADVANCEDSERVER)
+	@echo COMMAND=$(COMMAND)
+	@echo MQM_UID=$(MQM_UID)
+	@echo RHEL_HOST=$(RHEL_HOST)
+
+.PHONY: log-build-env
+log-build-env: log-build-vars
+	$(info $(SPACER)$(shell printf $(TITLE)"Build environment - $(COMMAND) info"$(END)))
+	@echo Command version: $(shell $(COMMAND) --version)
+	$(COMMAND) info
 
 include formatting.mk
 
