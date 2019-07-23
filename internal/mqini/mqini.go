@@ -18,12 +18,13 @@ limitations under the License.
 package mqini
 
 import (
-	"fmt"
 	"bufio"
 	"path/filepath"
 	"strings"
 	"io/ioutil"
 	"os"
+	"regexp"
+	"errors"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 )
@@ -36,6 +37,14 @@ type QueueManager struct {
 	DataPath         string
 	InstallationName string
 }
+
+var isUnitTest bool
+
+func SetUnitTestFlag(){
+	isUnitTest = true
+}
+
+var qmconfigStr string
 
 // getQueueManagerFromStanza parses a queue manager stanza
 func getQueueManagerFromStanza(stanza string) (*QueueManager, error) {
@@ -82,108 +91,166 @@ func GetErrorLogDirectory(qm *QueueManager) string {
 
 //Update qm.ini file with the user supplied stanzas.
 func AddStanzas(qmname string) error {
-	inifilepath, _ := GetQueueManagerIniFile(qmname)
-	
-	apiexitStanzaL := make(map[string]string)
-	apiexitStanzaQM := make(map[string]string)
-	var userconfig string
 
-	//Find the ini file
-	files, err := ioutil.ReadDir("/etc/MQOpenTracing/")
-    if err != nil {
-        return err
-	}
-	//If we are given ini file, read it.
-    for _, infile := range files {
-		if strings.HasSuffix(infile.Name(), ".ini") {
-			iniFileBytes, err := ioutil.ReadFile(filepath.Join("/etc/MQOpenTracing/",infile.Name()))
-			if err != nil {
-				return err
-			}
-			userconfig = string(iniFileBytes)
-		}
-	}
-
-	//No ini file supplied, so nothing to do.
-	if len(userconfig) == 0 {
-		return nil
-	}
-	
-	//mat := "ApiExitLocal: \n  Sequence=100 \n  Function=EntryPoint \n  Module=/opt/MQOpenTracing/MQOpenTracingExit.so \n  Name=MQOpenTracingExit \n"
-	scanner := bufio.NewScanner(strings.NewReader(userconfig))
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		if (strings.Contains(scanner.Text(), "ApiExitLocal:")) {
-			for scanner.Scan() {
-				line := scanner.Text()
-				if strings.Contains(line,":"){
-					break;
-				}
-				keyvalue := strings.Split(line,"=")
-				apiexitStanzaL[keyvalue[0]]=keyvalue[1]
-			}
-		}
-	}
-
-	//Next read from the qm.ini file.
-	iniFileBytes,  err := ioutil.ReadFile(inifilepath)
+	qm, err := GetQueueManager(qmname)
 	if err != nil {
 		return err
 	}
-	curFile := string(iniFileBytes)
-	if strings.Contains(curFile, "ApiExitLocal:") {
-		scanner = bufio.NewScanner(strings.NewReader(curFile))
-		scanner.Split(bufio.ScanLines)
 
-		for scanner.Scan() {
-			if (strings.Contains(scanner.Text(), "ApiExitLocal:")) {
-				for scanner.Scan() {
-					line := scanner.Text()
-					if strings.Contains(line,":"){
-						break;
-					}
-					keyvalue := strings.Split(line,"=")
-					apiexitStanzaQM[keyvalue[0]]=keyvalue[1]
-				}
-			}
-		}
-
-		//Prepare the text to write.
-		for key, _ := range apiexitStanzaL {
-			_, ok := apiexitStanzaQM[key]
-			old := fmt.Sprintf("%s=%s", key, apiexitStanzaQM[key])
-			if ok {
-				apiexitStanzaQM[key]=apiexitStanzaL[key]
-			}
-		
-			new := fmt.Sprintf("%s=%s", key, apiexitStanzaQM[key])
-			curFile = strings.Replace(curFile,old, new, 5)
-		}
-
-		//Rewrite qm.ini file
-		err := ioutil.WriteFile(inifilepath, []byte(curFile), 0644)
+    //Find the ini file
+    files := getIniFileList()
+	
+	//If we are given ini file, read it.
+    for _, infile := range files {
+        iniFileBytes, err := ioutil.ReadFile(infile)
 		if err != nil {
 			return err
 		}
-	} else {
-		f, err := os.OpenFile(inifilepath, os.O_APPEND|os.O_WRONLY, 0600)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		if _, err = f.WriteString(userconfig); err != nil {
-			return err
-		}
+		userconfig := string(iniFileBytes)
+
+	    //No ini file supplied, so nothing to do.
+	    if len(userconfig) == 0 {
+		    continue
+	    } else {
+			//find the corresponding qmgrs config file.
+			inifilepath := GetIniFilePath(infile, qm)
+			if err != nil {
+				return err
+			}
+			iniFileBytes, err := ioutil.ReadFile(inifilepath)
+			if err != nil {
+				return err
+			}
+			//read the initial version.
+			qmconfigStr = string(iniFileBytes)
+			if err != nil {
+				return err
+			}
+			//Update the qmgr ini file with user config.
+            WriteToIniFile(userconfig, inifilepath)
+        }
 	}
 	return nil
 }
 
-//Gets the ini file location
-func GetQueueManagerIniFile(qmname string) (string, error) {
-	qm, err := GetQueueManager(qmname)
-	if err != nil {
-		return "", err
+// read through /etc/ and check if user provided any .ini file 
+// to update.
+func getIniFileList() []string {
+
+    fileList := []string{}
+    filepath.Walk("/etc", func(path string, f os.FileInfo, err error) error {
+        if strings.HasSuffix(path, ".ini") {
+            fileList = append(fileList, path)
+            return nil
+		}
+		return nil       
+	})
+	return nil
+}
+
+// Based on the ini file(qm.ini or mqs.ini or mqat.ini), return corresponding
+// qmgr's ini file path
+func GetIniFilePath(inifilename string, qm *QueueManager) string {
+	var inipath string
+
+    if strings.HasSuffix(inifilename, "qm.ini") {
+		return filepath.Join(qm.Prefix, "qmgrs", qm.Directory, "qm.ini")
+    } else if strings.HasSuffix(inifilename, "mqs.ini") {
+		return filepath.Join(qm.Prefix,"/mqs.ini")
+    } else if strings.HasSuffix(inifilename, "mqat.ini") {
+		return filepath.Join(qm.Prefix,"/mqat.ini")
+	} 
+	return inipath
+}
+
+func SetQMConfigStr(config string) {
+	qmconfigStr = config
+}
+func GetQMConfigStr() string {
+	return qmconfigStr
+}
+
+func WriteToIniFile(userconfig string, inifilepath string) error {
+
+	stanzaList := make(map[string]strings.Builder)
+	var sbAppend strings.Builder
+	var sbMerger strings.Builder
+
+    //No ini file supplied, so nothing to do.
+	if len(userconfig) == 0 {
+		return errors.New("User config supplied was empty")
 	}
-	qmINIFile := filepath.Join(qm.Prefix, "qmgrs", qm.Directory, "qm.ini")
-	return qmINIFile, nil
+
+    scanner := bufio.NewScanner(strings.NewReader(userconfig))
+	scanner.Split(bufio.ScanLines)
+    consumetoAppend := false
+    consumeToMerge := false
+	var stanza string
+
+    //read through the user file and prepare what we want.
+	for scanner.Scan() {
+		if (strings.Contains(scanner.Text(), ":")) {
+            consumetoAppend=false
+			consumeToMerge=false			
+			stanza = scanner.Text()
+			
+            //check if this stanza exists in the qm.ini
+            if strings.Contains(qmconfigStr,stanza){
+				consumeToMerge=true
+				sbMerger = strings.Builder{}
+				stanzaList[stanza]= sbMerger
+			} else {
+                sbAppend.WriteString(stanza+"\n")
+                consumetoAppend=true
+            }
+        } else {
+            if consumetoAppend {
+                sbAppend.WriteString(scanner.Text()+"\n")
+            }
+            if consumeToMerge {
+				sb := stanzaList[stanza]
+				sb.WriteString(scanner.Text()+"\n")
+				stanzaList[stanza]=sb
+            }
+        }
+    }
+
+	//merge if stanza exits.
+	if len(stanzaList) > 0 {
+		for key, _ := range stanzaList {
+			attrList := stanzaList[key]
+			lineScanner := bufio.NewScanner(strings.NewReader(attrList.String()))
+			lineScanner.Split(bufio.ScanLines)
+			for lineScanner.Scan() {
+		                                                   		attrLine := lineScanner.Text()
+				keyvalue := strings.Split(attrLine,"=")
+				//this line present in qm.ini, update value.
+				if strings.Contains(qmconfigStr, keyvalue[0]) {
+					re := regexp.MustCompile(keyvalue[0]+"=.*")
+					qmconfigStr = re.ReplaceAllString(qmconfigStr, attrLine)
+				} else { //this line not present in qm.ini file, add it.
+					re := regexp.MustCompile(key)
+					newVal := key+"\n"+attrLine
+					qmconfigStr = re.ReplaceAllString(qmconfigStr, newVal)
+				}
+			}
+		}
+	}
+
+	//append if stanza doesn't exist.
+	if len(sbAppend.String()) > 0 {
+       qmconfigStr = qmconfigStr + sbAppend.String()
+	}
+
+	//If this is a unit-test call, we don't write, just return.
+	if isUnitTest {
+		return nil
+	}
+
+	//all done - now write the qm config.
+	err := ioutil.WriteFile(inifilepath, []byte(qmconfigStr), 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
