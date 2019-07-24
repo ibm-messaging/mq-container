@@ -141,11 +141,10 @@ func getIniFileList() []string {
     filepath.Walk("/etc", func(path string, f os.FileInfo, err error) error {
         if strings.HasSuffix(path, ".ini") {
             fileList = append(fileList, path)
-            return nil
 		}
 		return nil       
 	})
-	return nil
+	return fileList
 }
 
 // Based on the ini file(qm.ini or mqs.ini or mqat.ini), return corresponding
