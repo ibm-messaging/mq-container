@@ -73,14 +73,6 @@ SPACE:= $(EMPTY) $(EMPTY)
 # MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.3 instead of 9.1.3.0
 MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
 
-# Set variable if running on a Red Hat Enterprise Linux host
-ifneq ($(wildcard /etc/redhat-release),)
-REDHAT_RELEASE = $(shell cat /etc/redhat-release)
-ifeq "$(findstring Red Hat,$(REDHAT_RELEASE))" "Red Hat"
-    RHEL_HOST = "true"
-endif
-endif
-
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
 	DOWNLOADS_DIR=$(patsubst /mnt/c%,C:%,$(realpath ./downloads/))
 else ifneq (,$(findstring Windows,$(shell echo ${OS})))
@@ -109,14 +101,8 @@ MQ_ARCHIVE_DEV_9.1.3.0=mqadv_dev913_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).ta
 ###############################################################################
 # Build targets
 ###############################################################################
-.PHONY: vars
-vars:
-	@echo $(MQ_ARCHIVE_ARCH)
-	@echo $(MQ_ARCHIVE_TYPE)
-	@echo $(MQ_ARCHIVE)
-
 .PHONY: default
-default: build-devserver test
+default: build-devserver
 
 # Build all components (except incubating ones)
 .PHONY: all
@@ -228,27 +214,6 @@ define build-mq
 	$(if $(findstring docker,$(COMMAND)), @docker network rm build)
 endef
 
-define build-mq-ctr
-	buildah/mq-buildah $1 $2 \
-	  --file /src/Dockerfile-server \
-	  --build-arg MQ_URL="file:///src/downloads/$3" \
-	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
-	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
-	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
-	  --build-arg IMAGE_TAG="$1:$2" \
-	  --build-arg MQM_UID=$(MQM_UID) \
-	  --label version=$(MQ_VERSION) \
-	  --label name=$1 \
-	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
-	  --label release="$(RELEASE)" \
-	  --label architecture="$(ARCH)" \
-	  --label run="docker run -d -e LICENSE=accept $1:$2" \
-	  --label vcs-ref=$(IMAGE_REVISION) \
-	  --label vcs-type=git \
-	  --label vcs-url=$(IMAGE_SOURCE) \
-	  --target $4
-endef
-
 DOCKER_SERVER_VERSION=$(shell docker version --format "{{ .Server.Version }}")
 DOCKER_CLIENT_VERSION=$(shell docker version --format "{{ .Client.Version }}")
 PODMAN_VERSION=$(shell podman version --format "{{ .Version }}")
@@ -264,40 +229,14 @@ ifneq (,$(findstring podman,$(COMMAND)))
 endif
 
 .PHONY: build-advancedserver
-ifdef RHEL_HOST
-# Build using Buildah inside a container on RHEL hosts
-build-advancedserver: log-build-env build-advancedserver-ctr
-else
-build-advancedserver: log-build-env build-advancedserver-host
-endif
-
-.PHONY: build-advancedserver-host
-build-advancedserver-host: downloads/$(MQ_ARCHIVE) command-version
+build-advancedserver: log-build-env downloads/$(MQ_ARCHIVE) command-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
 
-.PHONY: build-advancedserver-ctr
-build-advancedserver-ctr: downloads/$(MQ_ARCHIVE)
-	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) in a container"$(END)))
-	$(call build-mq-ctr,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),$(MQ_ARCHIVE),mq-server)
-
 .PHONY: build-devserver
-ifdef RHEL_HOST
-# Build using Buildah inside a container on RHEL hosts
-build-devserver: build-devserver-ctr
-else
-build-devserver: build-devserver-host
-endif
-
-.PHONY: build-devserver-host
-build-devserver-host: downloads/$(MQ_ARCHIVE_DEV) command-version
+build-devserver: log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
-
-.PHONY: build-devserver-ctr
-build-devserver-ctr: downloads/$(MQ_ARCHIVE_DEV)
-	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) in a container"$(END)))
-	$(call build-mq-ctr,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),$(MQ_ARCHIVE_DEV),mq-dev-server)
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: command-version
@@ -323,7 +262,6 @@ log-build-vars:
 	@echo MQ_IMAGE_ADVANCEDSERVER=$(MQ_IMAGE_ADVANCEDSERVER)
 	@echo COMMAND=$(COMMAND)
 	@echo MQM_UID=$(MQM_UID)
-	@echo RHEL_HOST=$(RHEL_HOST)
 
 .PHONY: log-build-env
 log-build-env: log-build-vars
