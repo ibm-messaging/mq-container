@@ -24,7 +24,7 @@ import (
 	"os"
 	"sync"
 
-	containerruntimelogger "github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
+	"github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
@@ -115,29 +115,6 @@ func doMain() error {
 	if err != nil {
 		logTermination(err)
 		return err
-	}
-
-	// handle /var/mqm/ permissions in upgrade to UBI
-	if *initFlag {
-		varMqmDirs := []string{
-			"/var/mqm/config",
-			"/var/mqm/conv",
-			"/var/mqm/errors",
-			"/var/mqm/exits",
-			"/var/mqm/exits64",
-			"/var/mqm/log",
-			"/var/mqm/mqft",
-			"/var/mqm/qmgrs",
-			"/var/mqm/shared",
-			"/var/mqm/sockets",
-			"/var/mqm/trace",
-			"/var/mqm/web",
-		}
-		err = configureOwnership(varMqmDirs)
-		if err != nil {
-			logTermination(err)
-			return err
-		}
 	}
 
 	// If init flag is set, exit now

@@ -26,10 +26,11 @@ import (
 	"time"
 
 	"crypto/rand"
-	"crypto/sha1"
+	"crypto/sha512"
 	"crypto/x509"
 	"encoding/pem"
 
+	"github.com/ibm-messaging/mq-container/internal/filecheck"
 	"github.com/ibm-messaging/mq-container/internal/keystore"
 	pkcs "software.sslmate.com/src/go-pkcs12"
 )
@@ -62,22 +63,22 @@ func getCertFingerPrint(block *pem.Block) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("could not parse x509 certificate: %v", err)
 	}
-	sha1Sum := sha1.Sum(cert.Raw)
-	sha1str := string(sha1Sum[:])
+	sha512Sum := sha512.Sum512(cert.Raw)
+	sha512str := string(sha512Sum[:])
 
-	return sha1str, nil
+	return sha512str, nil
 }
 
 // Add to Keystores known certs (if not already there) and add to the
 // Keystore if "addToKeystore" is true.
 func addCertToKeyData(block *pem.Block, keyData *KeyStoreData, addToKeystore bool) error {
-	sha1str, err := getCertFingerPrint(block)
+	sha512str, err := getCertFingerPrint(block)
 	if err != nil {
 		return err
 	}
 	known := false
 	for _, fingerprint := range keyData.KnownFingerPrints {
-		if fingerprint == sha1str {
+		if fingerprint == sha512str {
 			known = true
 			break
 		}
@@ -89,7 +90,7 @@ func addCertToKeyData(block *pem.Block, keyData *KeyStoreData, addToKeystore boo
 		if addToKeystore {
 			keyData.TrustedCerts = append(keyData.TrustedCerts, block)
 		}
-		keyData.KnownFingerPrints = append(keyData.KnownFingerPrints, sha1str)
+		keyData.KnownFingerPrints = append(keyData.KnownFingerPrints, sha512str)
 	}
 	return nil
 }
@@ -116,10 +117,14 @@ func generateAllStores(dir string) (KeyStoreData, KeyStoreData, error) {
 	p12TrustStore.Password = pw
 
 	// Create the keystore Directory (if it doesn't already exist)
-	os.MkdirAll(dir, 0775)
+	// #nosec G301 - write group permissions are required
+	err := os.MkdirAll(dir, 0770)
+	if err != nil {
+		return cmsKeystore, p12TrustStore, fmt.Errorf("Failed to create keystore directory: %v", err)
+	}
 
 	p12TrustStore.Keystore = keystore.NewPKCS12KeyStore(filepath.Join(dir, P12TrustStoreName), p12TrustStore.Password)
-	err := p12TrustStore.Keystore.Create()
+	err = p12TrustStore.Keystore.Create()
 	if err != nil {
 		return cmsKeystore, p12TrustStore, fmt.Errorf("Failed to create PKCS#12 TrustStore: %v", err)
 	}
@@ -161,6 +166,7 @@ func processKeys(keyDir, outputDir string, cmsKeyDB, p12TrustDB *KeyStoreData) (
 			// find the keyfile name
 			for _, a := range keys {
 				if strings.HasSuffix(a.Name(), ".key") {
+					// #nosec G304 - filename variable is derived from contents of 'keyDir' which is a defined constant
 					keyFile, err := ioutil.ReadFile(filepath.Join(keyDir, key.Name(), a.Name()))
 					if err != nil {
 						return firstLabel, p12s, fmt.Errorf("Could not read keyfile %s: %v", filepath.Join(keyDir, key.Name(), a.Name()), err)
@@ -196,6 +202,7 @@ func processKeys(keyDir, outputDir string, cmsKeyDB, p12TrustDB *KeyStoreData) (
 					continue
 				}
 				if strings.HasPrefix(a.Name(), prefix) && strings.HasSuffix(a.Name(), ".crt") {
+					// #nosec G304 - filename variable is derived from contents of 'keyDir' which is a defined constant
 					cert, err := ioutil.ReadFile(filepath.Join(keyDir, key.Name(), a.Name()))
 					if err != nil {
 						return firstLabel, p12s, fmt.Errorf("Could not read file %s: %v", filepath.Join(keyDir, key.Name(), a.Name()), err)
@@ -212,6 +219,7 @@ func processKeys(keyDir, outputDir string, cmsKeyDB, p12TrustDB *KeyStoreData) (
 					err = addCertToKeyData(block, cmsKeyDB, false)
 
 				} else if strings.HasSuffix(a.Name(), ".crt") {
+					// #nosec G304 - filename variable is derived from contents of 'keyDir' which is a defined constant
 					remainder, err := ioutil.ReadFile(filepath.Join(keyDir, key.Name(), a.Name()))
 					if err != nil {
 						return firstLabel, p12s, fmt.Errorf("Could not read file %s: %v", filepath.Join(keyDir, key.Name(), a.Name()), err)
@@ -309,6 +317,7 @@ func processTrustCertificates(trustDir string, cmsKeyDB, p12TrustDB *KeyStoreDat
 			certs, _ := ioutil.ReadDir(filepath.Join(trustDir, cert.Name()))
 			for _, a := range certs {
 				if strings.HasSuffix(a.Name(), ".crt") {
+					// #nosec G304 - filename variable is derived from contents of 'trustDir' which is a defined constant
 					remainder, err := ioutil.ReadFile(filepath.Join(trustDir, cert.Name(), a.Name()))
 					if err != nil {
 						return fmt.Errorf("Could not read file %s: %v", filepath.Join(trustDir, cert.Name(), a.Name()), err)
@@ -335,9 +344,15 @@ func processTrustCertificates(trustDir string, cmsKeyDB, p12TrustDB *KeyStoreDat
 	if len(p12TrustDB.TrustedCerts) > 0 {
 		// Do P12 TrustStore first
 		temporaryPemFile := filepath.Join("/tmp", "trust.pem")
-		os.Remove(temporaryPemFile)
+		_, err := os.Stat(temporaryPemFile)
+		if err == nil {
+			err = os.Remove(temporaryPemFile)
+			if err != nil {
+				return fmt.Errorf("Could not remove file %v: %v", temporaryPemFile, err)
+			}
+		}
 
-		err := writeCertsToFile(temporaryPemFile, p12TrustDB.TrustedCerts)
+		err = writeCertsToFile(temporaryPemFile, p12TrustDB.TrustedCerts)
 		if err != nil {
 			return err
 		}
@@ -368,7 +383,13 @@ func processTrustCertificates(trustDir string, cmsKeyDB, p12TrustDB *KeyStoreDat
 	if len(cmsKeyDB.TrustedCerts) > 0 {
 		// Now the CMS Keystore
 		temporaryPemFile := filepath.Join("/tmp", "cmsTrust.pem")
-		os.Remove(temporaryPemFile)
+		_, err := os.Stat(temporaryPemFile)
+		if err == nil {
+			err = os.Remove(temporaryPemFile)
+			if err != nil {
+				return fmt.Errorf("Could not remove file %v: %v", temporaryPemFile, err)
+			}
+		}
 
 		err = writeCertsToFile(temporaryPemFile, cmsKeyDB.TrustedCerts)
 		if err != nil {
@@ -398,7 +419,10 @@ func writeCertsToFile(file string, certs []*pem.Block) error {
 		if err != nil {
 			return fmt.Errorf("writeCertsToFile: Could not encode certificate number %d: %v", i, err)
 		}
-		w.Flush()
+		err = w.Flush()
+		if err != nil {
+			return fmt.Errorf("writeCertsToFile: Failed to write to file %s: %v", file, err)
+		}
 	}
 	return nil
 }
@@ -459,6 +483,12 @@ func expandOldTLSVariable(keyDir, outputDir string, cmsKeyDB, p12TrustDB *KeySto
 		return "", fmt.Errorf("File %s referenced by MQ_TLS_KEYSTORE does not exist", keyfile)
 	}
 
+	err = filecheck.CheckFileSource(keyfile)
+	if err != nil {
+		return "", fmt.Errorf("File %s referenced by MQ_TLS_KEYSTORE is invalid: %v", keyfile, err)
+	}
+
+	// #nosec G304 - filename variable 'keyfile' is checked above to ensure it is valid
 	readkey, err := ioutil.ReadFile(keyfile)
 	if err != nil {
 		return "", fmt.Errorf("Failed to read %s: %v", keyfile, err)

@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/keystore"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/tls"
 )
@@ -38,7 +39,7 @@ const trustDir = "/etc/mqm/pki/trust"
 // configureWebTLS configures TLS for Web Console
 func configureWebTLS(label string) error {
 	// Return immediately if we have no certificate to use as identity
-	if label == "" {
+	if label == "" && os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") == "" {
 		return nil
 	}
 
@@ -120,7 +121,7 @@ func configureTLS(certLabel string, cmsKeystore tls.KeyStoreData, devmode bool) 
 	return nil
 }
 
-// configureSSOTLS configures TLS for the Cloud Integration Platform Single Sign-On
+// configureSSOTLS configures MQ Console TLS for Single Sign-On
 func configureSSOTLS(p12TrustStore tls.KeyStoreData) (string, error) {
 	// TODO find way to supply this
 	// Override the webstore variables to hard coded defaults
@@ -129,8 +130,30 @@ func configureSSOTLS(p12TrustStore tls.KeyStoreData) (string, error) {
 	// Check keystore exists
 	ks := filepath.Join(keyStoreDir, webKeyStoreName)
 	_, err := os.Stat(ks)
-	if err != nil {
-		return "", fmt.Errorf("Failed to find existing keystore %s: %v", ks, err)
+	// Now we know if the file exists let's check whether we should have it or not.
+	// Check if we're being told to generate the certificate
+	genHostName := os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME")
+	if genHostName != "" {
+		// We've got to generate the certificate with the hostname given
+		if err == nil {
+			log.Printf("Replacing existing keystore %s - generating new certificate", ks)
+		}
+		// Keystore doesn't exist so create it and populate a certificate
+		newKS := keystore.NewPKCS12KeyStore(ks, p12TrustStore.Password)
+		err = newKS.Create()
+		if err != nil {
+			return "", fmt.Errorf("Failed to create keystore %s: %v", ks, err)
+		}
+
+		err = newKS.CreateSelfSignedCertificate("default", fmt.Sprintf("CN=%s", genHostName), genHostName)
+		if err != nil {
+			return "", fmt.Errorf("Failed to generate certificate in keystore %s with DN of 'CN=%s': %v", ks, genHostName, err)
+		}
+	} else {
+		// Keystore should already exist
+		if err != nil {
+			return "", fmt.Errorf("Failed to find existing keystore %s: %v", ks, err)
+		}
 	}
 
 	// Check truststore exists

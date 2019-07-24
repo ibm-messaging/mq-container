@@ -17,7 +17,9 @@
 # the command line
 ###############################################################################
 # MQ_VERSION is the fully qualified MQ version number to build
-MQ_VERSION ?= 9.1.2.0
+MQ_VERSION ?= 9.1.3.0
+# RELEASE shows what release of the container code has been built
+RELEASE ?= 1
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
@@ -68,7 +70,7 @@ IMAGE_REVISION=$(shell git rev-parse HEAD)
 IMAGE_SOURCE=$(shell git config --get remote.origin.url)
 EMPTY:=
 SPACE:= $(EMPTY) $(EMPTY)
-# MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.2 instead of 9.1.2.0
+# MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.3 instead of 9.1.3.0
 MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
 
 # Set variable if running on a Red Hat Enterprise Linux host
@@ -81,6 +83,8 @@ endif
 
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
 	DOWNLOADS_DIR=$(patsubst /mnt/c%,C:%,$(realpath ./downloads/))
+else ifneq (,$(findstring Windows,$(shell echo ${OS})))
+	DOWNLOADS_DIR=$(shell pwd)/downloads/
 else
 	DOWNLOADS_DIR=$(realpath ./downloads/)
 endif
@@ -100,6 +104,7 @@ endif
 MQ_ARCHIVE_DEV_9.1.0.0=mqadv_dev910_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 MQ_ARCHIVE_DEV_9.1.1.0=mqadv_dev911_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 MQ_ARCHIVE_DEV_9.1.2.0=mqadv_dev912_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
+MQ_ARCHIVE_DEV_9.1.3.0=mqadv_dev913_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 
 ###############################################################################
 # Build targets
@@ -211,7 +216,9 @@ define build-mq
 	  --label version=$(MQ_VERSION) \
 	  --label name=$1 \
 	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
-	  --label release="" \
+	  --label release="$(RELEASE)" \
+	  --label architecture="$(ARCH)" \
+	  --label run="docker run -d -e LICENSE=accept $1:$2" \
 	  --label vcs-ref=$(IMAGE_REVISION) \
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
@@ -233,7 +240,9 @@ define build-mq-ctr
 	  --label version=$(MQ_VERSION) \
 	  --label name=$1 \
 	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
-	  --label release="" \
+	  --label release="$(RELEASE)" \
+	  --label architecture="$(ARCH)" \
+	  --label run="docker run -d -e LICENSE=accept $1:$2" \
 	  --label vcs-ref=$(IMAGE_REVISION) \
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \

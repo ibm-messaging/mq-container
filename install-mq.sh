@@ -84,6 +84,9 @@ install --directory --mode 0775 --owner mqm --group root /mnt/mqm-data/qmgrs
 # Create the directory for MQ configuration files
 install --directory --mode 0775 --owner mqm --group root /etc/mqm
 
+# Create the directory for MQ runtime files
+install --directory --mode 0775 --owner mqm --group root /run/mqm
+
 # Create a symlink for /var/mqm -> /mnt/mqm/data
 ln -s /mnt/mqm/data /var/mqm
 
@@ -97,17 +100,10 @@ $UBUNTU && PAM_FILE=/etc/pam.d/common-password
 $RPM && PAM_FILE=/etc/pam.d/password-auth
 sed -i 's/password\t\[success=1 default=ignore\]\tpam_unix\.so obscure sha512/password\t[success=1 default=ignore]\tpam_unix.so obscure sha512 minlen=8/' $PAM_FILE
 
-if ($RPM); then
-  install --directory --mode 0444 --owner mqm --group root /licenses
-  NOTICES="/licenses/installed_package_notices"
-  touch ${NOTICES}
-  chmod 0444 ${NOTICES}
-  set +x
-  for p in $(rpm -qa | sort)
-  do 
-    rpm -qi $p >> ${NOTICES}
-    printf "\n" >> ${NOTICES}
-    printf "$p\n"
-  done
-  set -x
-fi
+# List all the installed packages, for the build log
+$RPM && rpm -q --all || true
+$UBUNTU && dpkg --list || true
+
+# Copy MQ Licenses into the correct location
+mkdir -p /licenses
+cp /opt/mqm/licenses/*.txt /licenses/

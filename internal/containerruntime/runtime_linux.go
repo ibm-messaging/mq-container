@@ -15,7 +15,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package runtime
+package containerruntime
 
 import (
 	"golang.org/x/sys/unix"
@@ -112,23 +112,4 @@ func GetFilesystem(path string) (string, error) {
 		return "unknown", nil
 	}
 	return t, nil
-}
-
-// SupportedFilesystem returns true if the supplied filesystem type is supported for MQ data
-func SupportedFilesystem(fsType string) bool {
-	switch fsType {
-	case "aufs", "overlayfs", "tmpfs":
-		return false
-	default:
-		return true
-	}
-}
-
-// ValidMultiInstanceFilesystem returns true if the supplied filesystem type is valid for a multi-instance queue manager
-func ValidMultiInstanceFilesystem(fsType string) bool {
-	if !SupportedFilesystem(fsType) {
-		return false
-	}
-	// TODO : check for non-shared filesystems & shared filesystems which are known not to work
-	return true
 }

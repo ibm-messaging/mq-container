@@ -38,6 +38,7 @@ func startWebServer(keystore, keystorepw string) error {
 		return nil
 	}
 	log.Println("Starting web server")
+	// #nosec G204 - command is fixed, no injection vector
 	cmd := exec.Command("strmqweb")
 	// Set a default app password for the web server, if one isn't already set
 	_, set := os.LookupEnv("MQ_APP_PASSWORD")
@@ -91,7 +92,6 @@ func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
 		"MQ_OIDC_TOKEN_ENDPOINT",
 		"MQ_OIDC_JWK_ENDPOINT",
 		"MQ_OIDC_ISSUER_IDENTIFIER",
-		"MQ_OIDC_CERTIFICATE",
 	}
 	for _, envVar := range requiredEnvVars {
 		if len(os.Getenv(envVar)) == 0 {
@@ -175,6 +175,7 @@ func configureWebServer(keyLabel string, p12Trust tls.KeyStoreData) (string, err
 		}
 		if info.IsDir() {
 			if !exists {
+				// #nosec G301 - write group permissions are required
 				err := os.MkdirAll(to, 0770)
 				if err != nil {
 					return err
