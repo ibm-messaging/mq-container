@@ -24,3 +24,11 @@ sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download
 sudo chmod +x /usr/local/bin/dep
 
 go get -u golang.org/x/lint/golint
+
+if [[ "${COMMAND}" == "podman" ]]; then
+    sudo apt-get update -qq
+    sudo apt-get install -qq -y software-properties-common uidmap
+    sudo add-apt-repository -y ppa:projectatomic/ppa
+    sudo apt-get update -qq
+    sudo apt-get -qq -y install podman
+fi
