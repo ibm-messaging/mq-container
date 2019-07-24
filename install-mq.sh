@@ -84,6 +84,9 @@ install --directory --mode 0775 --owner mqm --group root /mnt/mqm-data/qmgrs
 # Create the directory for MQ configuration files
 install --directory --mode 0775 --owner mqm --group root /etc/mqm
 
+# Create the directory for MQ runtime files
+install --directory --mode 0775 --owner mqm --group root /run/mqm
+
 # Create a symlink for /var/mqm -> /mnt/mqm/data
 ln -s /mnt/mqm/data /var/mqm
 
