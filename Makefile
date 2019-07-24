@@ -41,6 +41,8 @@ COMMAND ?= $(shell type -p podman || echo docker)
 MQ_PACKAGES ?=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesWeb*.rpm MQSeriesAMS-*.rpm
 # MQM_UID is the UID to use for the "mqm" user
 MQM_UID ?= 888
+# COMMAND is the container command to run.  "podman" or "docker"
+COMMAND ?=$(shell type -p podman 2>&1 >/dev/null && echo podman || echo docker)
 
 ###############################################################################
 # Other variables
@@ -191,24 +193,16 @@ test-advancedserver-cover: test/docker/vendor coverage
 	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
 	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
 
+# Build an MQ image.  The commands used are slightly different between Docker and Podman
 define build-mq
-	# Create a temporary network to use for the build
-	$(COMMAND) network create build
-	# Start a web server to host the MQ downloadable (tar.gz) file
-	$(COMMAND) run \
-	  --rm \
-	  --name $(BUILD_SERVER_CONTAINER) \
-	  --network build \
-	  --network-alias build \
-	  --volume $(DOWNLOADS_DIR):/usr/share/nginx/html:ro \
-	  --detach \
-	  docker.io/nginx:alpine
+	$(if $(findstring docker,$(COMMAND)), @docker network create build,)
+	$(if $(findstring docker,$(COMMAND)), @docker run --rm --name $(BUILD_SERVER_CONTAINER) --network build --network-alias build --volume $(DOWNLOADS_DIR):/usr/share/nginx/html:ro --detach docker.io/nginx:alpine,)
+	$(eval EXTRA_ARGS=$(if $(findstring docker,$(COMMAND)), --network build --build-arg MQ_URL=http://build:80/$4, --volume $(DOWNLOADS_DIR):/var/downloads --build-arg MQ_URL=file:///var/downloads/$4))
 	# Build the new image
 	$(COMMAND) build \
 	  --tag $1:$2 \
 	  --file $3 \
-	  --network build \
-	  --build-arg MQ_URL=http://build:80/$4 \
+		$(EXTRA_ARGS) \
 	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
 	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
@@ -222,7 +216,9 @@ define build-mq
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
 	  --target $5 \
-	  . ; $(COMMAND) kill $(BUILD_SERVER_CONTAINER) && $(COMMAND) network rm build
+	  .
+	$(if $(findstring docker,$(COMMAND)), @docker kill $(BUILD_SERVER_CONTAINER))
+	$(if $(findstring docker,$(COMMAND)), @docker network rm build)
 endef
 
 define build-mq-ctr
@@ -246,10 +242,17 @@ endef
 
 DOCKER_SERVER_VERSION=$(shell docker version --format "{{ .Server.Version }}")
 DOCKER_CLIENT_VERSION=$(shell docker version --format "{{ .Client.Version }}")
-.PHONY: docker-version
-docker-version:
+PODMAN_VERSION=$(shell podman version --format "{{ .Version }}")
+.PHONY: command-version
+command-version:
+# If we're using Docker, then check it's recent enough to support multi-stage builds
+ifneq (,$(findstring docker,$(COMMAND)))
 	@test "$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
 	@test "$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
+endif
+ifneq (,$(findstring podman,$(COMMAND)))
+	@test "$(word 1,$(subst ., ,$(PODMAN_VERSION)))" -ge "1" || (echo "Error: Podman version 1.0 or greater is required" && exit 1)
+endif
 
 .PHONY: build-advancedserver
 ifdef RHEL_HOST
@@ -260,7 +263,7 @@ build-advancedserver: log-build-env build-advancedserver-host
 endif
 
 .PHONY: build-advancedserver-host
-build-advancedserver-host: downloads/$(MQ_ARCHIVE) docker-version
+build-advancedserver-host: downloads/$(MQ_ARCHIVE) command-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
 
@@ -278,7 +281,7 @@ build-devserver: build-devserver-host
 endif
 
 .PHONY: build-devserver-host
-build-devserver-host: downloads/$(MQ_ARCHIVE_DEV) docker-version
+build-devserver-host: downloads/$(MQ_ARCHIVE_DEV) command-version
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
 
@@ -288,7 +291,7 @@ build-devserver-ctr: downloads/$(MQ_ARCHIVE_DEV)
 	$(call build-mq-ctr,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),$(MQ_ARCHIVE_DEV),mq-dev-server)
 
 .PHONY: build-advancedserver-cover
-build-advancedserver-cover: docker-version
+build-advancedserver-cover: command-version
 	$(COMMAND) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover -f Dockerfile-server.cover .
 
 .PHONY: build-explorer
