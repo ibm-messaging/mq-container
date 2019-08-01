@@ -19,12 +19,13 @@ package mqini
 
 import (
 	"bufio"
-	"path/filepath"
-	"strings"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
-	"errors"
+	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 )
@@ -38,13 +39,11 @@ type QueueManager struct {
 	InstallationName string
 }
 
-var isUnitTest bool
+var qmgrDir string
 
-func SetUnitTestFlag(){
-	isUnitTest = true
-}
+var stanzasQMINI []string
 
-var qmconfigStr string
+var stanzasMQATINI []string
 
 // getQueueManagerFromStanza parses a queue manager stanza
 func getQueueManagerFromStanza(stanza string) (*QueueManager, error) {
@@ -89,165 +88,235 @@ func GetErrorLogDirectory(qm *QueueManager) string {
 	return filepath.Join(qm.Prefix, "qmgrs", qm.Directory, "errors")
 }
 
-//Update qm.ini file with the user supplied stanzas.
+//AddStanzas Reads supplied mq ini configuration files and updates the stanzas
+//into queue manager's ini configuration files.
 func AddStanzas(qmname string) error {
 
+	//find the qmgr directory.
 	qm, err := GetQueueManager(qmname)
 	if err != nil {
 		return err
 	}
+	qmgrDir = filepath.Join(qm.Prefix, "qmgrs", qm.Directory)
 
-    //Find the ini file
-    files := getIniFileList()
-	
-	//If we are given ini file, read it.
-    for _, infile := range files {
-        iniFileBytes, err := ioutil.ReadFile(infile)
-		if err != nil {
-			return err
-		}
-		userconfig := string(iniFileBytes)
-
-	    //No ini file supplied, so nothing to do.
-	    if len(userconfig) == 0 {
-		    continue
-	    } else {
-			//find the corresponding qmgrs config file.
-			inifilepath := GetIniFilePath(infile, qm)
-			if err != nil {
-				return err
-			}
-			iniFileBytes, err := ioutil.ReadFile(inifilepath)
-			if err != nil {
-				return err
-			}
-			//read the initial version.
-			qmconfigStr = string(iniFileBytes)
-			if err != nil {
-				return err
-			}
-			//Update the qmgr ini file with user config.
-            WriteToIniFile(userconfig, inifilepath)
-        }
+	//Find the users ini configuration file
+	files := getIniFileList()
+	if len(files) > 1 {
+		msg := fmt.Sprintf("[ %v ]", files)
+		return errors.New("Only a single ini file can be provided. Following ini files are found:" + msg)
 	}
+
+	iniFileBytes, err := ioutil.ReadFile(files[0])
+	if err != nil {
+		return err
+	}
+	userconfig := string(iniFileBytes)
+	if len(userconfig) == 0 {
+		return nil
+	}
+
+	//Prepare a list of all supported stanzas
+	PopulateAllAvailableStanzas()
+
+	//Update the qmgr ini file with user config.
+	qmConfig, atConfig, err := PrepareConfigStanzasToWrite(userconfig)
+	if err != nil {
+		return err
+	}
+	err = writeConfigStanzas(qmConfig, atConfig)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// read through /etc/ and check if user provided any .ini file 
-// to update.
+// PopulateAllAvailableStanzas initializes the ini stanzas prescribed by mq specification.
+func PopulateAllAvailableStanzas() {
+	stanzasQMINI = []string{"ExitPath",
+		"Log",
+		"Service",
+		"ServiceComponent",
+		"Channels",
+		"TCP",
+		"ApiExitLocal",
+		"AccessMode",
+		"RestrictedMode",
+		"XAResourceManager",
+		"DefaultBindType",
+		"SSL",
+		"DiagnosticMessages",
+		"Filesystem",
+		"Security",
+		"TuningParameters",
+		"ExitPropertiesLocal",
+		"LU62",
+		"NETBIOS"}
+
+	stanzasMQATINI = []string{"AllActivityTrace", "ApplicationTrace"}
+}
+
+// getIniFileList Checks for the user supplied ini file in /etc/mqm directory.
 func getIniFileList() []string {
 
-    fileList := []string{}
-    filepath.Walk("/etc", func(path string, f os.FileInfo, err error) error {
-        if strings.HasSuffix(path, ".ini") {
-            fileList = append(fileList, path)
+	fileList := []string{}
+	filepath.Walk("/etc/mqm", func(path string, f os.FileInfo, err error) error {
+		if strings.HasSuffix(path, ".ini") {
+			fileList = append(fileList, path)
 		}
-		return nil       
+		return nil
 	})
 	return fileList
 }
 
-// Based on the ini file(qm.ini or mqs.ini or mqat.ini), return corresponding
-// qmgr's ini file path
-func GetIniFilePath(inifilename string, qm *QueueManager) string {
-	var inipath string
+//PrepareConfigStanzasToWrite Reads through the user supplied ini config file and prepares list of
+//updates to be written into corresponding mq ini files (qm.ini and/or mqat.ini files.)
+func PrepareConfigStanzasToWrite(userconfig string) (string, string, error) {
 
-    if strings.HasSuffix(inifilename, "qm.ini") {
-		return filepath.Join(qm.Prefix, "qmgrs", qm.Directory, "qm.ini")
-    } else if strings.HasSuffix(inifilename, "mqs.ini") {
-		return filepath.Join(qm.Prefix,"/mqs.ini")
-    } else if strings.HasSuffix(inifilename, "mqat.ini") {
-		return filepath.Join(qm.Prefix,"/mqat.ini")
-	} 
-	return inipath
-}
+	var qminiConfigStr string
+	var mqatiniConfigStr string
 
-func SetQMConfigStr(config string) {
-	qmconfigStr = config
-}
-func GetQMConfigStr() string {
-	return qmconfigStr
-}
+	//read the initial version.
+	iniFileBytes, err := ioutil.ReadFile(filepath.Join(qmgrDir, "qm.ini"))
+	if err != nil {
+		return "", "", err
+	}
+	qminiConfigStr = string(iniFileBytes)
 
-func WriteToIniFile(userconfig string, inifilepath string) error {
+	iniFileBytes, err = ioutil.ReadFile(filepath.Join(qmgrDir, "mqat.ini"))
+	if err != nil {
+		return "", "", err
+	}
+	mqatiniConfigStr = string(iniFileBytes)
 
-	stanzaList := make(map[string]strings.Builder)
+	stanzaListMerge := make(map[string]strings.Builder)
+	stanzaListAppend := make(map[string]strings.Builder)
 	var sbAppend strings.Builder
 	var sbMerger strings.Builder
 
-    //No ini file supplied, so nothing to do.
-	if len(userconfig) == 0 {
-		return errors.New("User config supplied was empty")
-	}
-
-    scanner := bufio.NewScanner(strings.NewReader(userconfig))
+	scanner := bufio.NewScanner(strings.NewReader(userconfig))
 	scanner.Split(bufio.ScanLines)
-    consumetoAppend := false
-    consumeToMerge := false
+	consumetoAppend := false
+	consumeToMerge := false
 	var stanza string
 
-    //read through the user file and prepare what we want.
+	//read through the user file and prepare what we want.
 	for scanner.Scan() {
-		if (strings.Contains(scanner.Text(), ":")) {
-            consumetoAppend=false
-			consumeToMerge=false			
+		if strings.Contains(scanner.Text(), ":") {
+			consumetoAppend = false
+			consumeToMerge = false
 			stanza = scanner.Text()
-			
-            //check if this stanza exists in the qm.ini
-            if strings.Contains(qmconfigStr,stanza){
-				consumeToMerge=true
+			//check if this stanza exists in the qm.ini/mqat.ini files
+			if strings.Contains(qminiConfigStr, stanza) ||
+				(strings.Contains(mqatiniConfigStr, stanza) && !(strings.Contains(stanza, "ApplicationTrace"))) {
+				consumeToMerge = true
 				sbMerger = strings.Builder{}
-				stanzaList[stanza]= sbMerger
+
+				stanzaListMerge[stanza] = sbMerger
 			} else {
-                sbAppend.WriteString(stanza+"\n")
-                consumetoAppend=true
-            }
-        } else {
-            if consumetoAppend {
-                sbAppend.WriteString(scanner.Text()+"\n")
-            }
-            if consumeToMerge {
-				sb := stanzaList[stanza]
-				sb.WriteString(scanner.Text()+"\n")
-				stanzaList[stanza]=sb
-            }
-        }
-    }
+				consumetoAppend = true
+				sbAppend = strings.Builder{}
+				stanzaListAppend[stanza] = sbAppend
+			}
+		} else {
+			if consumetoAppend {
+				sb := stanzaListAppend[stanza]
+				sb.WriteString(scanner.Text() + "\n")
+				stanzaListAppend[stanza] = sb
+			}
+			if consumeToMerge {
+				sb := stanzaListMerge[stanza]
+				sb.WriteString(scanner.Text() + "\n")
+				stanzaListMerge[stanza] = sb
+			}
+		}
+	}
 
 	//merge if stanza exits.
-	if len(stanzaList) > 0 {
-		for key, _ := range stanzaList {
-			attrList := stanzaList[key]
-			lineScanner := bufio.NewScanner(strings.NewReader(attrList.String()))
-			lineScanner.Split(bufio.ScanLines)
-			for lineScanner.Scan() {
-		                                                   		attrLine := lineScanner.Text()
-				keyvalue := strings.Split(attrLine,"=")
-				//this line present in qm.ini, update value.
-				if strings.Contains(qmconfigStr, keyvalue[0]) {
-					re := regexp.MustCompile(keyvalue[0]+"=.*")
-					qmconfigStr = re.ReplaceAllString(qmconfigStr, attrLine)
-				} else { //this line not present in qm.ini file, add it.
-					re := regexp.MustCompile(key)
-					newVal := key+"\n"+attrLine
-					qmconfigStr = re.ReplaceAllString(qmconfigStr, newVal)
+	if len(stanzaListMerge) > 0 {
+		for key := range stanzaListMerge {
+			toWrite, filename := ValidateStanzaToWrite(key)
+			if toWrite {
+				attrList := stanzaListMerge[key]
+				switch filename {
+				case "qm.ini":
+					qminiConfigStr = prepareStanzasToMerge(key, attrList, qminiConfigStr)
+				case "mqat.ini":
+					mqatiniConfigStr = prepareStanzasToMerge(key, attrList, mqatiniConfigStr)
+				default:
 				}
 			}
 		}
 	}
 
-	//append if stanza doesn't exist.
-	if len(sbAppend.String()) > 0 {
-       qmconfigStr = qmconfigStr + sbAppend.String()
+	//append new stanzas.
+	if len(stanzaListAppend) > 0 {
+		for key := range stanzaListAppend {
+			attrList := stanzaListAppend[key]
+			if strings.Contains(strings.Join(stanzasMQATINI, ", "), strings.TrimSuffix(strings.TrimSpace(key), ":")) {
+				mqatiniConfigStr = prepareStanzasToAppend(key, attrList, mqatiniConfigStr)
+			} else {
+				qminiConfigStr = prepareStanzasToAppend(key, attrList, qminiConfigStr)
+			}
+		}
 	}
 
-	//If this is a unit-test call, we don't write, just return.
-	if isUnitTest {
-		return nil
+	return qminiConfigStr, mqatiniConfigStr, nil
+}
+
+//ValidateStanzaToWrite Validates stanza to be written and the file it belongs to.
+func ValidateStanzaToWrite(stanza string) (bool, string) {
+	stanza = strings.TrimSpace(stanza)
+	if strings.Contains(stanza, ":") {
+		stanza = stanza[:len(stanza)-1]
 	}
 
-	//all done - now write the qm config.
-	err := ioutil.WriteFile(inifilepath, []byte(qmconfigStr), 0644)
+	if strings.Contains(strings.Join(stanzasQMINI, ", "), stanza) {
+		return true, "qm.ini"
+	} else if strings.Contains(strings.Join(stanzasMQATINI, ", "), stanza) {
+		return true, "mqat.ini"
+	} else {
+		return false, ""
+	}
+}
+
+//prepareStanzasToAppend Prepares list of stanzas that are to be appended into qm ini files(qm.ini/mqat.ini)
+func prepareStanzasToAppend(key string, attrList strings.Builder, iniConfig string) string {
+	newVal := key + "\n" + attrList.String()
+	iniConfig = iniConfig + newVal
+	return iniConfig
+}
+
+//prepareStanzasToMerge Prepares list of stanzas that are to be updated into qm ini files(qm.ini/mqat.ini)
+//These stanzas are already present in mq ini files and their values have to be updated with user supplied ini.
+func prepareStanzasToMerge(key string, attrList strings.Builder, iniConfig string) string {
+	lineScanner := bufio.NewScanner(strings.NewReader(attrList.String()))
+	lineScanner.Split(bufio.ScanLines)
+	for lineScanner.Scan() {
+		attrLine := lineScanner.Text()
+		keyvalue := strings.Split(attrLine, "=")
+		//this line present in qm.ini, update value.
+		if strings.Contains(iniConfig, keyvalue[0]) {
+			re := regexp.MustCompile(keyvalue[0] + "=.*")
+			iniConfig = re.ReplaceAllString(iniConfig, attrLine)
+		} else { //this line not present in qm.ini file, add it.
+			re := regexp.MustCompile(key)
+			newVal := key + "\n" + attrLine
+			iniConfig = re.ReplaceAllString(iniConfig, newVal)
+		}
+	}
+	return iniConfig
+}
+
+//writeConfigStanzas Writes the ini file updates into corresponding mq ini files.
+func writeConfigStanzas(qmConfig string, atConfig string) error {
+
+	err := ioutil.WriteFile(filepath.Join(qmgrDir, "qm.ini"), []byte(qmConfig), 0644)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filepath.Join(qmgrDir, "mqat.ini"), []byte(atConfig), 0644)
 	if err != nil {
 		return err
 	}

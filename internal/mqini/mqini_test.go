@@ -16,10 +16,10 @@ limitations under the License.
 package mqini
 
 import (
+	"bufio"
 	"io/ioutil"
-	"testing"
-	"path/filepath"
 	"strings"
+	"testing"
 )
 
 var getQueueManagerTests = []struct {
@@ -28,11 +28,10 @@ var getQueueManagerTests = []struct {
 	prefix      string
 	directory   string
 	errorLogDir string
-	inifile     string
 }{
-	{"dspmqinf1.txt", "foo", "/var/mqm", "foo", "/var/mqm/qmgrs/foo/errors","sample1qm.ini"},
-	{"dspmqinf2.txt", "a/b", "/var/mqm", "a&b", "/var/mqm/qmgrs/a&b/errors","sample2qm.ini"},
-	{"dspmqinf3.txt", "..", "/var/mqm", "!!", "/var/mqm/qmgrs/!!/errors","sample3qm.ini"},
+	{"dspmqinf1.txt", "foo", "/var/mqm", "foo", "/var/mqm/qmgrs/foo/errors"},
+	{"dspmqinf2.txt", "a/b", "/var/mqm", "a&b", "/var/mqm/qmgrs/a&b/errors"},
+	{"dspmqinf3.txt", "..", "/var/mqm", "!!", "/var/mqm/qmgrs/!!/errors"},
 }
 
 func TestGetQueueManager(t *testing.T) {
@@ -62,60 +61,163 @@ func TestGetQueueManager(t *testing.T) {
 			if d != table.errorLogDir {
 				t.Errorf("Expected error log directory=%v; got %v", table.errorLogDir, d)
 			}
-
-			SetUnitTestFlag()
-
-			//qm.ini
-			path := GetIniFilePath("qm.ini", qm)
-			if path != filepath.Join(qm.Prefix, "qmgrs", qm.Directory, "qm.ini") {
-				t.Errorf("Unexpected directory=%s", path)
-			}
-
-			path = GetIniFilePath("/etc/mqm/1/2/3/4/5/qm.ini", qm)
-			if path != filepath.Join(qm.Prefix, "qmgrs",qm.Directory, "qm.ini") {
-				t.Errorf("Unexpected directory=%s", path)
-			}
-
-			path = GetIniFilePath("/var/mqm/qm.ini", qm)
-			if path != filepath.Join("/var/mqm/qmgrs", qm.Directory, "qm.ini") {
-				t.Errorf("Unexpected directory=%s", path)
-			}
-
-			//mqs.ini
-			path = GetIniFilePath("mqs.ini", qm)
-			if path != filepath.Join("/var/mqm/", "mqs.ini") {
-				t.Errorf("Unexpected directory=%s", path)
-			}
-
-			path = GetIniFilePath("/etc/mqm/a/x/b/c/y/mqs.ini", qm)
-			if path != filepath.Join(qm.Prefix, "mqs.ini") {
-				t.Errorf("Unexpected directory=%s", path)
-			}
-
-			//mqat.ini
-			path = GetIniFilePath("mqat.ini", qm)
-			if path != filepath.Join("/var/mqm/", "mqat.ini") {
-				t.Errorf("Unexpected directory=%s", path)
-			}
-
-			userconfigbytes, err := ioutil.ReadFile(table.inifile)
-			if err != nil {
-				t.Errorf("Error occured while reading userconfig file=%s", err.Error())
-			}
-			userconfigstring := string(userconfigbytes)
-
-			qmconfigbytes, err := ioutil.ReadFile("qm.ini")
-			if err != nil {
-				t.Errorf("Error occured while reading qmconfig file=%s", err.Error())
-			}
-			qmconfigstring := string(qmconfigbytes)
-			SetQMConfigStr(qmconfigstring)
-			WriteToIniFile(userconfigstring,"")
-			qmconfigstring = GetQMConfigStr()
-
-			if !strings.ContainsAny(qmconfigstring,userconfigstring ) {
-				t.Errorf("Expected stanza not found. \n qmconfig:\n%s\n userconfig:%s\n", qmconfigstring, userconfigstring)
-			}
 		})
+	}
+}
+
+func TestIniFileStanzas(t *testing.T) {
+	PopulateAllAvailableStanzas()
+
+	checkReturns("ApiExitLocal", true, true, t)
+	checkReturns("Channels", true, true, t)
+	checkReturns("TCP", true, true, t)
+	checkReturns("ServiceComponent", true, true, t)
+	checkReturns("Service", true, true, t)
+	checkReturns("AccessMode", true, true, t)
+	checkReturns("RestrictedMode", true, true, t)
+	checkReturns("XAResourceManager", true, true, t)
+	checkReturns("SSL", true, true, t)
+	checkReturns("Security", true, true, t)
+	checkReturns("TuningParameters", true, true, t)
+	checkReturns("ABC", false, false, t)
+	checkReturns("#1234ABD", true, false, t)
+	checkReturns("AllActivityTrace", false, true, t)
+	checkReturns("ApplicationTrace", false, true, t)
+	checkReturns("xyz123abvc", false, false, t)
+}
+
+func TestIniFile1Update(t *testing.T) {
+
+	iniFileBytes, err := ioutil.ReadFile("sample1qm.ini")
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+	userconfig := string(iniFileBytes)
+	qmConfig, atConfig, err := PrepareConfigStanzasToWrite(userconfig)
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+	if len(atConfig) == 0 {
+		t.Errorf("Unexpected stanza file update: mqat.ini[%s]\n", atConfig)
+	}
+	if len(qmConfig) == 0 {
+		t.Errorf("Expected stanza file not found: qm.ini\n")
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(userconfig))
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.Contains(qmConfig, line) {
+			t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
+			break
+		}
+	}
+}
+
+func TestIniFile2Update(t *testing.T) {
+
+	iniFileBytes, err := ioutil.ReadFile("sample2qm.ini")
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+	userconfig := string(iniFileBytes)
+	qmConfig, atConfig, err := PrepareConfigStanzasToWrite(userconfig)
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+	if len(atConfig) == 0 {
+		t.Errorf("Unexpected stanza file update: mqat.ini[%s]\n", atConfig)
+	}
+	if len(qmConfig) == 0 {
+		t.Errorf("Expected stanza file not found: qm.ini\n")
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(userconfig))
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.Contains(qmConfig, line) {
+			t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
+			break
+		}
+	}
+}
+
+func TestIniFile3Update(t *testing.T) {
+
+	iniFileBytes, err := ioutil.ReadFile("sample3qm.ini")
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+	userconfig := string(iniFileBytes)
+	qmConfig, atConfig, err := PrepareConfigStanzasToWrite(userconfig)
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+	if len(atConfig) == 0 {
+		t.Errorf("Expected stanza file not found: mqat.ini\n")
+	}
+	if len(qmConfig) == 0 {
+		t.Errorf("Expected stanza file not found: qm.ini\n")
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(userconfig))
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.Contains(atConfig, line) {
+			t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
+			break
+		}
+	}
+}
+
+func TestIniFile4Update(t *testing.T) {
+
+	iniFileBytes, err := ioutil.ReadFile("sample4qm.ini")
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+	userconfig := string(iniFileBytes)
+	qmConfig, atConfig, err := PrepareConfigStanzasToWrite(userconfig)
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+	if len(qmConfig) == 0 {
+		t.Errorf("Unexpected stanza file update: qm.ini[%s]\n", atConfig)
+	}
+	if len(atConfig) == 0 {
+		t.Errorf("Expected stanza file not found: mqat.ini\n")
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(userconfig))
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.Contains(qmConfig, line) && !strings.Contains(atConfig, line) {
+			t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
+			break
+		}
+	}
+}
+
+func checkReturns(stanza string, isqmini bool, shouldexist bool, t *testing.T) {
+
+	exists, filename := ValidateStanzaToWrite(stanza)
+	if exists != shouldexist {
+		t.Errorf("Stanza should exist %t but found was %t", shouldexist, exists)
+	}
+
+	if shouldexist {
+		if isqmini {
+			if filename != "qm.ini" {
+				t.Errorf("Expected filename:qm.ini for stanza:%s. But got %s", stanza, filename)
+			}
+		} else {
+			if filename != "mqat.ini" {
+				t.Errorf("Expected filename:mqat.ini for stanza:%s. But got %s", stanza, filename)
+			}
+		}
 	}
 }
