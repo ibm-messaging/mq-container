@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ func TestIniFileStanzas(t *testing.T) {
 
 func TestIniFile1Update(t *testing.T) {
 
-	iniFileBytes, err := ioutil.ReadFile("sample1qm.ini")
+	iniFileBytes, err := ioutil.ReadFile("test1qm.ini")
 	if err != nil {
 		t.Errorf("Unexpected error: [%s]\n", err.Error())
 	}
@@ -117,36 +117,7 @@ func TestIniFile1Update(t *testing.T) {
 
 func TestIniFile2Update(t *testing.T) {
 
-	iniFileBytes, err := ioutil.ReadFile("sample2qm.ini")
-	if err != nil {
-		t.Errorf("Unexpected error: [%s]\n", err.Error())
-	}
-	userconfig := string(iniFileBytes)
-	qmConfig, atConfig, err := PrepareConfigStanzasToWrite(userconfig)
-	if err != nil {
-		t.Errorf("Unexpected error: [%s]\n", err.Error())
-	}
-	if len(atConfig) == 0 {
-		t.Errorf("Unexpected stanza file update: mqat.ini[%s]\n", atConfig)
-	}
-	if len(qmConfig) == 0 {
-		t.Errorf("Expected stanza file not found: qm.ini\n")
-	}
-
-	scanner := bufio.NewScanner(strings.NewReader(userconfig))
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !strings.Contains(qmConfig, line) {
-			t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
-			break
-		}
-	}
-}
-
-func TestIniFile3Update(t *testing.T) {
-
-	iniFileBytes, err := ioutil.ReadFile("sample3qm.ini")
+	iniFileBytes, err := ioutil.ReadFile("test2qm.ini")
 	if err != nil {
 		t.Errorf("Unexpected error: [%s]\n", err.Error())
 	}
@@ -173,9 +144,10 @@ func TestIniFile3Update(t *testing.T) {
 	}
 }
 
-func TestIniFile4Update(t *testing.T) {
+func TestIniFile3Update(t *testing.T) {
 
-	iniFileBytes, err := ioutil.ReadFile("sample4qm.ini")
+	i := 0
+	iniFileBytes, err := ioutil.ReadFile("test3qm.ini")
 	if err != nil {
 		t.Errorf("Unexpected error: [%s]\n", err.Error())
 	}
@@ -195,9 +167,16 @@ func TestIniFile4Update(t *testing.T) {
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if !strings.Contains(qmConfig, line) && !strings.Contains(atConfig, line) {
-			t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
-			break
+		i++
+		//first 20 lines of test3qm.ini shall go into qm.ini file and rest into mqat.ini file.
+		if i < 20 {
+			if !strings.Contains(qmConfig, line) {
+				t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
+			}
+		} else if i > 20 {
+			if !strings.Contains(atConfig, line) {
+				t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
+			}
 		}
 	}
 }
