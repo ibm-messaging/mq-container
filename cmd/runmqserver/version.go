@@ -38,11 +38,11 @@ func logDateStamp() {
 }
 
 func logGitRepo() {
-	log.Printf("Image revision: %v", ImageRevision)
+	// log.Printf("Image revision: %v", ImageRevision)
 }
 
 func logGitCommit() {
-	log.Printf("Image source: %v", ImageSource)
+	// log.Printf("Image source: %v", ImageSource)
 }
 
 func logImageTag() {
