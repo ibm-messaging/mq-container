@@ -14,7 +14,7 @@ If you are working in the Windows Subsystem for Linux, follow [this guide by Mic
 This procedure works for building the MQ Continuous Delivery release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.1.2_UBUNTU_X86-64.tar.gz`) in the `downloads` directory
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.1.3_LINUX_X86-64.tar.gz`) in the `downloads` directory
 3. Run `make build-advancedserver`
 
 > **Warning**: Note that MQ offers two different sets of packaging on Linux: one is called "MQ for Linux" and contains RPM files for installing on Red Hat Enterprise Linux and SUSE Linux Enterprise Server.  The MQ container build uses a Red Hat Universal Base Image, so you need the "MQ for Linux" RPM files.

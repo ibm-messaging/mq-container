@@ -151,8 +151,8 @@ func (ks *KeyStore) Import(inputFile, password string) error {
 }
 
 // CreateSelfSignedCertificate creates a self-signed certificate in the keystore
-func (ks *KeyStore) CreateSelfSignedCertificate(label, dn string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-create", "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn)
+func (ks *KeyStore) CreateSelfSignedCertificate(label, dn, hostname string) error {
+	out, _, err := command.Run(ks.command, "-cert", "-create", "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn, "-san_dnsname", hostname)
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -create\": %v %s", ks.command, err, out)
 	}
@@ -203,6 +203,8 @@ func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
 func (ks *KeyStore) RenameCertificate(from, to string) error {
 	if ks.command == "/opt/mqm/bin/runmqakm" {
 		// runmqakm can't handle certs with ' in them so just use capicmd
+		// Overriding gosec here as this function is in an internal package and only callable by our internal functions.
+		// #nosec G204
 		cmd := exec.Command("/opt/mqm/gskit8/bin/gsk8capicmd_64", "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
 		cmd.Env = append(os.Environ(), "LD_LIBRARY_PATH=/opt/mqm/gskit8/lib64/:/opt/mqm/gskit8/lib")
 		out, _, err := command.RunCmd(cmd)
@@ -219,7 +221,7 @@ func (ks *KeyStore) RenameCertificate(from, to string) error {
 	return nil
 }
 
-// ListCertificates Lists all certificates in the keystore
+// ListAllCertificates Lists all certificates in the keystore
 func (ks *KeyStore) ListAllCertificates() ([]string, error) {
 	out, _, err := command.Run(ks.command, "-cert", "-list", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
 	if err != nil {

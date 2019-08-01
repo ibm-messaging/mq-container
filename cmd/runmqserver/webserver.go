@@ -92,7 +92,6 @@ func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
 		"MQ_OIDC_TOKEN_ENDPOINT",
 		"MQ_OIDC_JWK_ENDPOINT",
 		"MQ_OIDC_ISSUER_IDENTIFIER",
-		"MQ_OIDC_CERTIFICATE",
 	}
 	for _, envVar := range requiredEnvVars {
 		if len(os.Getenv(envVar)) == 0 {
