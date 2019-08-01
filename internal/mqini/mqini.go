@@ -105,6 +105,10 @@ func AddStanzas(qmname string) error {
 		msg := fmt.Sprintf("[ %v ]", files)
 		return errors.New("Only a single ini file can be provided. Following ini files are found:" + msg)
 	}
+	if len(files) == 0 {
+		//no ini file update required.
+		return nil
+	}
 
 	iniFileBytes, err := ioutil.ReadFile(files[0])
 	if err != nil {
