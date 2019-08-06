@@ -29,6 +29,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/internal/tls"
+	"github.com/ibm-messaging/mq-container/internal/mqini"
 )
 
 func doMain() error {
@@ -174,6 +175,13 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
+	err = mqini.AddStanzas(name)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
 	err = startQueueManager(name)
 	if err != nil {
 		logTermination(err)
