@@ -31,6 +31,7 @@ if [[ "${COMMAND}" == "podman" ]]; then
     sudo add-apt-repository -y ppa:projectatomic/ppa
     sudo apt-get update -qq
     sudo apt-get -qq -y install podman
+    # Travis doesn't have enough storage in $HOME, so tell Podman to put its storage elsewhere
     CONTAINER_STORAGE=/var/run/containers/storage
     sudo mkdir -p ${CONTAINER_STORAGE}
     sudo chown root:$(id -g) ${CONTAINER_STORAGE}
@@ -38,7 +39,7 @@ if [[ "${COMMAND}" == "podman" ]]; then
     mkdir -p $HOME/.config/containers
     cat << EOF > $HOME/.config/containers/storage.conf
 [storage]
-driver = "overlay"
+driver = "vfs"
 runroot = "${CONTAINER_STORAGE}"
 graphroot = "${CONTAINER_STORAGE}"
 EOF
