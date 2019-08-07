@@ -35,7 +35,7 @@ if [[ "${COMMAND}" == "podman" ]]; then
     sudo mkdir -p ${CONTAINER_STORAGE}
     sudo chown root:$(id -g) ${CONTAINER_STORAGE}
     sudo chmod 0770 ${CONTAINER_STORAGE}
-    mkdir -p $HOME/config/containers
+    mkdir -p $HOME/.config/containers
     cat << EOF > $HOME/.config/containers/storage.conf
 [storage]
 driver = "overlay"
