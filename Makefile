@@ -252,7 +252,6 @@ build-sdk: downloads/$(MQ_ARCHIVE_DEV)
 .PHONY: log-build-env
 log-build-vars:
 	$(info $(SPACER)$(shell printf $(TITLE)"Build environment"$(END)))
-	@echo USERID=$(shell id)
 	@echo ARCH=$(ARCH)
 	@echo MQ_VERSION=$(MQ_VERSION)
 	@echo MQ_ARCHIVE=$(MQ_ARCHIVE)
