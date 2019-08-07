@@ -31,4 +31,15 @@ if [[ "${COMMAND}" == "podman" ]]; then
     sudo add-apt-repository -y ppa:projectatomic/ppa
     sudo apt-get update -qq
     sudo apt-get -qq -y install podman
+    CONTAINER_STORAGE=/var/run/containers/storage
+    sudo mkdir -p ${CONTAINER_STORAGE}
+    sudo chown root:$(id -g) ${CONTAINER_STORAGE}
+    sudo chmod 0770 ${CONTAINER_STORAGE}
+    mkdir -p $HOME/config/containers
+    cat << EOF > $HOME/.config/containers/storage.conf
+[storage]
+driver = "overlay"
+runroot = "${CONTAINER_STORAGE}"
+graphroot = "${CONTAINER_STORAGE}"
+EOF
 fi

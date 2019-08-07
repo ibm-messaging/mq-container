@@ -35,9 +35,6 @@ jobs:
       env:
         - BASE_IMAGE=ubuntu:16.04
         - DOCKER_DOWNGRADE="echo nothing to be done"
-    - env:
-        - BASE_IMAGE=centos:7
-        - DOCKER_DOWNGRADE="echo nothing to be done"
     - env: 
         # Test using Podman instead of Docker
         - COMMAND="podman"
