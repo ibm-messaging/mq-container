@@ -19,7 +19,7 @@
 # MQ_VERSION is the fully qualified MQ version number to build
 MQ_VERSION ?= 9.1.3.0
 # RELEASE shows what release of the container code has been built
-RELEASE ?= 1
+RELEASE ?= 2
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
