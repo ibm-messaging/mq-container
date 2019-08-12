@@ -18,7 +18,7 @@ sudo: required
 language: go
 
 go:
-  - "1.10"
+  - "1.11"
 
 services:
   - docker
@@ -52,6 +52,7 @@ jobs:
 
 before_install:
   - ./install-build-deps-ubuntu.sh
+  - df -h
 
 install:
   - echo nothing
