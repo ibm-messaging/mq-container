@@ -73,12 +73,9 @@ func configureWebTLS(label string) error {
 func configureTLSDev() error {
 	const mqsc string = "/etc/mqm/20-dev-tls.mqsc"
 	const mqscTemplate string = mqsc + ".tpl"
-	const sslCipherSpec string = "TLS_RSA_WITH_AES_128_CBC_SHA256"
 
 	if os.Getenv("MQ_DEV") == "true" {
-		err := mqtemplate.ProcessTemplateFile(mqscTemplate, mqsc, map[string]string{
-			"SSLCipherSpec": sslCipherSpec,
-		}, log)
+		err := mqtemplate.ProcessTemplateFile(mqscTemplate, mqsc, map[string]string{}, log)
 		if err != nil {
 			return err
 		}
