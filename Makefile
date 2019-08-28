@@ -17,9 +17,9 @@
 # the command line
 ###############################################################################
 # MQ_VERSION is the fully qualified MQ version number to build
-MQ_VERSION ?= 9.1.2.0
+MQ_VERSION ?= 9.1.3.0
 # RELEASE shows what release of the container code has been built
-RELEASE ?= 3
+RELEASE ?= 2
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
@@ -37,12 +37,12 @@ MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server
 MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev
 # MQ_TAG is the tag of the built MQ Advanced image & MQ Advanced for Developers image
 MQ_TAG ?=$(MQ_VERSION)-$(ARCH)
-# DOCKER is the Docker command to run.  Defaults to "podman" if it's available, otherwise "docker"
-DOCKER ?= $(shell type -p podman || echo docker)
 # MQ_PACKAGES specifies the MQ packages (.deb or .rpm) to install.  Defaults vary on base image.
 MQ_PACKAGES ?=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesWeb*.rpm MQSeriesAMS-*.rpm
 # MQM_UID is the UID to use for the "mqm" user
 MQM_UID ?= 888
+# COMMAND is the container command to run.  "podman" or "docker"
+COMMAND ?=$(shell type -p podman 2>&1 >/dev/null && echo podman || echo docker)
 
 ###############################################################################
 # Other variables
@@ -68,19 +68,13 @@ IMAGE_REVISION=$(shell git rev-parse HEAD)
 IMAGE_SOURCE=$(shell git config --get remote.origin.url)
 EMPTY:=
 SPACE:= $(EMPTY) $(EMPTY)
-# MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.2 instead of 9.1.2.0
+# MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.3 instead of 9.1.3.0
 MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
-
-# Set variable if running on a Red Hat Enterprise Linux host
-ifneq ($(wildcard /etc/redhat-release),)
-REDHAT_RELEASE = $(shell cat /etc/redhat-release)
-ifeq "$(findstring Red Hat,$(REDHAT_RELEASE))" "Red Hat"
-    RHEL_HOST = "true"
-endif
-endif
 
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
 	DOWNLOADS_DIR=$(patsubst /mnt/c%,C:%,$(realpath ./downloads/))
+else ifneq (,$(findstring Windows,$(shell echo ${OS})))
+	DOWNLOADS_DIR=$(shell pwd)/downloads/
 else
 	DOWNLOADS_DIR=$(realpath ./downloads/)
 endif
@@ -100,18 +94,13 @@ endif
 MQ_ARCHIVE_DEV_9.1.0.0=mqadv_dev910_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 MQ_ARCHIVE_DEV_9.1.1.0=mqadv_dev911_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 MQ_ARCHIVE_DEV_9.1.2.0=mqadv_dev912_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
+MQ_ARCHIVE_DEV_9.1.3.0=mqadv_dev913_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 
 ###############################################################################
 # Build targets
 ###############################################################################
-.PHONY: vars
-vars:
-	@echo $(MQ_ARCHIVE_ARCH)
-	@echo $(MQ_ARCHIVE_TYPE)
-	@echo $(MQ_ARCHIVE)
-
 .PHONY: default
-default: build-devserver test
+default: build-devserver
 
 # Build all components (except incubating ones)
 .PHONY: all
@@ -193,24 +182,16 @@ test-advancedserver-cover: test/docker/vendor coverage
 	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
 	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
 
+# Build an MQ image.  The commands used are slightly different between Docker and Podman
 define build-mq
-	# Create a temporary network to use for the build
-	$(DOCKER) network create build
-	# Start a web server to host the MQ downloadable (tar.gz) file
-	$(DOCKER) run \
-	  --rm \
-	  --name $(BUILD_SERVER_CONTAINER) \
-	  --network build \
-	  --network-alias build \
-	  --volume $(DOWNLOADS_DIR):/usr/share/nginx/html:ro \
-	  --detach \
-	  docker.io/nginx:alpine
+	$(if $(findstring docker,$(COMMAND)), @docker network create build,)
+	$(if $(findstring docker,$(COMMAND)), @docker run --rm --name $(BUILD_SERVER_CONTAINER) --network build --network-alias build --volume $(DOWNLOADS_DIR):/usr/share/nginx/html:ro --detach docker.io/nginx:alpine,)
+	$(eval EXTRA_ARGS=$(if $(findstring docker,$(COMMAND)), --network build --build-arg MQ_URL=http://build:80/$4, --volume $(DOWNLOADS_DIR):/var/downloads --build-arg MQ_URL=file:///var/downloads/$4))
 	# Build the new image
-	$(DOCKER) build \
+	$(COMMAND) build \
 	  --tag $1:$2 \
 	  --file $3 \
-	  --network build \
-	  --build-arg MQ_URL=http://build:80/$4 \
+		$(EXTRA_ARGS) \
 	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
 	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
@@ -226,76 +207,44 @@ define build-mq
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
 	  --target $5 \
-	  . ; $(DOCKER) kill $(BUILD_SERVER_CONTAINER) && $(DOCKER) network rm build
-endef
-
-define build-mq-ctr
-	buildah/mq-buildah $1 $2 \
-	  --file /src/Dockerfile-server \
-	  --build-arg MQ_URL="file:///src/downloads/$3" \
-	  --build-arg MQ_PACKAGES="$(MQ_PACKAGES)" \
-	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
-	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
-	  --build-arg IMAGE_TAG="$1:$2" \
-	  --build-arg MQM_UID=$(MQM_UID) \
-	  --label version=$(MQ_VERSION) \
-	  --label name=$1 \
-	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
-	  --label release="$(RELEASE)" \
-	  --label architecture="$(ARCH)" \
-	  --label run="docker run -d -e LICENSE=accept $1:$2" \
-	  --label vcs-ref=$(IMAGE_REVISION) \
-	  --label vcs-type=git \
-	  --label vcs-url=$(IMAGE_SOURCE) \
-	  --target $4
+	  .
+	$(if $(findstring docker,$(COMMAND)), @docker kill $(BUILD_SERVER_CONTAINER))
+	$(if $(findstring docker,$(COMMAND)), @docker network rm build)
 endef
 
 DOCKER_SERVER_VERSION=$(shell docker version --format "{{ .Server.Version }}")
 DOCKER_CLIENT_VERSION=$(shell docker version --format "{{ .Client.Version }}")
-.PHONY: docker-version
-docker-version:
+PODMAN_VERSION=$(shell podman version --format "{{ .Version }}")
+.PHONY: command-version
+command-version:
+# If we're using Docker, then check it's recent enough to support multi-stage builds
+ifneq (,$(findstring docker,$(COMMAND)))
 	@test "$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
 	@test "$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
-
-.PHONY: build-advancedserver
-ifdef RHEL_HOST
-# Build using Buildah inside a container on RHEL hosts
-build-advancedserver: build-advancedserver-ctr
-else
-build-advancedserver: build-advancedserver-host
+endif
+ifneq (,$(findstring podman,$(COMMAND)))
+	@test "$(word 1,$(subst ., ,$(PODMAN_VERSION)))" -ge "1" || (echo "Error: Podman version 1.0 or greater is required" && exit 1)
 endif
 
 .PHONY: build-advancedserver-host
-build-advancedserver-host: downloads/$(MQ_ARCHIVE) docker-version
+build-advancedserver-host: build-advancedserver
+
+.PHONY: build-advancedserver
+build-advancedserver: log-build-env downloads/$(MQ_ARCHIVE) command-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
 
-.PHONY: build-advancedserver-ctr
-build-advancedserver-ctr: downloads/$(MQ_ARCHIVE)
-	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) in a container"$(END)))
-	$(call build-mq-ctr,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),$(MQ_ARCHIVE),mq-server)
+.PHONY: build-devserver-host
+build-devserver-host: build-devserver
 
 .PHONY: build-devserver
-ifdef RHEL_HOST
-# Build using Buildah inside a container on RHEL hosts
-build-devserver: build-devserver-ctr
-else
-build-devserver: build-devserver-host
-endif
-
-.PHONY: build-devserver-host
-build-devserver-host: downloads/$(MQ_ARCHIVE_DEV) docker-version
+build-devserver: log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
 
-.PHONY: build-devserver-ctr
-build-devserver-ctr: downloads/$(MQ_ARCHIVE_DEV)
-	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) in a container"$(END)))
-	$(call build-mq-ctr,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),$(MQ_ARCHIVE_DEV),mq-dev-server)
-
 .PHONY: build-advancedserver-cover
-build-advancedserver-cover: docker-version
-	$(DOCKER) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover -f Dockerfile-server.cover .
+build-advancedserver-cover: command-version
+	$(COMMAND) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover -f Dockerfile-server.cover .
 
 .PHONY: build-explorer
 build-explorer: downloads/$(MQ_ARCHIVE_DEV)
@@ -306,13 +255,22 @@ build-sdk: downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
 	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
 
-.PHONY: debug-vars
-debug-vars:
+.PHONY: log-build-env
+log-build-vars:
+	$(info $(SPACER)$(shell printf $(TITLE)"Build environment"$(END)))
+	@echo ARCH=$(ARCH)
 	@echo MQ_VERSION=$(MQ_VERSION)
-	@echo MQ_VERSION_VRM=$(MQ_VERSION_VRM)
 	@echo MQ_ARCHIVE=$(MQ_ARCHIVE)
 	@echo MQ_IMAGE_DEVSERVER=$(MQ_IMAGE_DEVSERVER)
 	@echo MQ_IMAGE_ADVANCEDSERVER=$(MQ_IMAGE_ADVANCEDSERVER)
+	@echo COMMAND=$(COMMAND)
+	@echo MQM_UID=$(MQM_UID)
+
+.PHONY: log-build-env
+log-build-env: log-build-vars
+	$(info $(SPACER)$(shell printf $(TITLE)"Build environment - $(COMMAND) info"$(END)))
+	@echo Command version: $(shell $(COMMAND) --version)
+	$(COMMAND) info
 
 include formatting.mk
 

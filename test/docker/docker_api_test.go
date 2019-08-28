@@ -1087,8 +1087,8 @@ func TestVersioning(t *testing.T) {
 
 	total := 6
 	foundCreated := false
-	foundRevision := false
-	foundSource := false
+	// foundRevision := false
+	// foundSource := false
 	foundMQVersion := false
 	foundMQLevel := false
 	foundMQLicense := false
@@ -1109,30 +1109,30 @@ func TestVersioning(t *testing.T) {
 			}
 		}
 
-		if strings.Contains(line, "Image revision:") && !foundRevision {
-			total--
-			foundRevision = true
-			dataAr := strings.Split(line, " ")
-			data := dataAr[len(dataAr)-1]
+		// if strings.Contains(line, "Image revision:") && !foundRevision {
+		// 	total--
+		// 	foundRevision = true
+		// 	dataAr := strings.Split(line, " ")
+		// 	data := dataAr[len(dataAr)-1]
 
-			// Verify revision
-			pattern := regexp.MustCompile("^[a-fA-F0-9]{40}$")
-			if !pattern.MatchString(data) {
-				t.Errorf("Failed to validate revision (%v)", data)
-			}
-		}
+		// 	// Verify revision
+		// 	pattern := regexp.MustCompile("^[a-fA-F0-9]{40}$")
+		// 	if !pattern.MatchString(data) {
+		// 		t.Errorf("Failed to validate revision (%v)", data)
+		// 	}
+		// }
 
-		if strings.Contains(line, "Image source:") && !foundSource {
-			total--
-			foundSource = true
-			dataAr := strings.Split(line, " ")
-			data := dataAr[len(dataAr)-1]
+		// if strings.Contains(line, "Image source:") && !foundSource {
+		// 	total--
+		// 	foundSource = true
+		// 	dataAr := strings.Split(line, " ")
+		// 	data := dataAr[len(dataAr)-1]
 
-			// Verify source
-			if !strings.Contains(data, "github") {
-				t.Errorf("Failed to validate source (%v)", data)
-			}
-		}
+		// 	// Verify source
+		// 	if !strings.Contains(data, "github") {
+		// 		t.Errorf("Failed to validate source (%v)", data)
+		// 	}
+		// }
 
 		if strings.Contains(line, "MQ version:") && !foundMQVersion {
 			total--
@@ -1178,8 +1178,12 @@ func TestVersioning(t *testing.T) {
 		}
 	}
 
-	if !foundCreated || !foundRevision || !foundSource || !foundMQVersion || !foundMQLevel || !foundMQLicense {
-		t.Errorf("Failed to find one or more version strings: created(%v) revision(%v) source(%v) mqversion(%v) mqlevel(%v) mqlicense(%v)", foundCreated, foundRevision, foundSource, foundMQVersion, foundMQLevel, foundMQLicense)
+	// if !foundCreated || !foundRevision || !foundSource || !foundMQVersion || !foundMQLevel || !foundMQLicense {
+	if !foundCreated || !foundMQVersion || !foundMQLevel || !foundMQLicense {
+
+		// t.Errorf("Failed to find one or more version strings: created(%v) revision(%v) source(%v) mqversion(%v) mqlevel(%v) mqlicense(%v)", foundCreated, foundRevision, foundSource, foundMQVersion, foundMQLevel, foundMQLicense)
+		t.Errorf("Failed to find one or more version strings: created(%v) mqversion(%v) mqlevel(%v) mqlicense(%v)", foundCreated, foundMQVersion, foundMQLevel, foundMQLicense)
+
 	}
 }
 

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ARG BASE_IMAGE=registry.access.redhat.com/ubi7/ubi-minimal
+ARG BASE_TAG=7.7-98
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
@@ -50,12 +52,14 @@ RUN go vet ./cmd/... ./internal/...
 ###############################################################################
 # Main build stage, to build MQ image
 ###############################################################################
-FROM registry.access.redhat.com/ubi7/ubi-minimal AS mq-server
+FROM $BASE_IMAGE:$BASE_TAG AS mq-server
 # The MQ packages to install - see install-mq.sh for default value
 ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev912_linux_x86-64.tar.gz"
 ARG MQ_PACKAGES="MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesWeb*.rpm MQSeriesAMS-*.rpm"
 #ARG MQ_PACKAGES="ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-web ibmmq-ams"
 ARG MQM_UID=888
+ARG BASE_IMAGE
+ARG BASE_TAG
 LABEL summary="IBM MQ Advanced Server"
 LABEL description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
 LABEL vendor="IBM"
@@ -65,6 +69,8 @@ LABEL url="https://www.ibm.com/products/mq/advanced"
 LABEL io.openshift.tags="mq messaging"
 LABEL io.k8s.display-name="IBM MQ Advanced Server"
 LABEL io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
+LABEL base-image=$BASE_IMAGE
+LABEL base-image-release=$BASE_TAG
 COPY install-mq.sh /usr/local/bin/
 COPY install-mq-server-prereqs.sh /usr/local/bin/
 # Install MQ.  To avoid a "text file busy" error here, we sleep before installing.
@@ -100,6 +106,8 @@ ENTRYPOINT ["runmqserver"]
 ###############################################################################
 FROM mq-server AS mq-dev-server
 ARG MQM_UID=888
+ARG BASE_IMAGE
+ARG BASE_TAG
 # Enable MQ developer default configuration
 ENV MQ_DEV=true
 # Default administrator password
@@ -113,6 +121,8 @@ LABEL url="https://www.ibm.com/products/mq/advanced"
 LABEL io.openshift.tags="mq messaging"
 LABEL io.k8s.display-name="IBM MQ Advanced for Developers Server"
 LABEL io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
+LABEL base-image=$BASE_IMAGE
+LABEL base-image-release=$BASE_TAG
 USER 0
 COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
 RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
