@@ -16,4 +16,4 @@
 * Set the keystore location for the queue manager
 ALTER QMGR SSLKEYR('{{ .SSLKeyR }}')
 ALTER QMGR CERTLABL('{{ .CertificateLabel }}')
-
+REFRESH SECURITY(*) TYPE(SSL)
