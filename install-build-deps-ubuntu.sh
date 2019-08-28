@@ -24,23 +24,3 @@ sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download
 sudo chmod +x /usr/local/bin/dep
 
 go get -u golang.org/x/lint/golint
-
-if [[ "${COMMAND}" == "podman" ]]; then
-    sudo apt-get update -qq
-    sudo apt-get install -qq -y software-properties-common uidmap
-    sudo add-apt-repository -y ppa:projectatomic/ppa
-    sudo apt-get update -qq
-    sudo apt-get -qq -y install podman
-    # Travis doesn't have enough storage in $HOME, so tell Podman to put its storage elsewhere
-    CONTAINER_STORAGE=/var/run/containers/storage
-    sudo mkdir -p ${CONTAINER_STORAGE}
-    sudo chown root:$(id -g) ${CONTAINER_STORAGE}
-    sudo chmod 0770 ${CONTAINER_STORAGE}
-    mkdir -p $HOME/.config/containers
-    cat << EOF > $HOME/.config/containers/storage.conf
-[storage]
-driver = "vfs"
-runroot = "${CONTAINER_STORAGE}"
-graphroot = "${CONTAINER_STORAGE}"
-EOF
-fi

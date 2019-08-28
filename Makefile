@@ -226,10 +226,16 @@ ifneq (,$(findstring podman,$(COMMAND)))
 	@test "$(word 1,$(subst ., ,$(PODMAN_VERSION)))" -ge "1" || (echo "Error: Podman version 1.0 or greater is required" && exit 1)
 endif
 
+.PHONY: build-advancedserver-host
+build-advancedserver-host: build-advancedserver
+
 .PHONY: build-advancedserver
 build-advancedserver: log-build-env downloads/$(MQ_ARCHIVE) command-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
+
+.PHONY: build-devserver-host
+build-devserver-host: build-devserver
 
 .PHONY: build-devserver
 build-devserver: log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
