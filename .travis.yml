@@ -35,17 +35,18 @@ jobs:
       env:
         - BASE_IMAGE=ubuntu:16.04
         - DOCKER_DOWNGRADE="echo nothing to be done"
-    - if: type IN (pull_request) OR tag IS present
-      env: 
-        - BASE_IMAGE=ubuntu:16.04
-        - DOCKER_DOWNGRADE="docker save -o images.tar mqadvanced-server-dev mq-dev-jms-test &&
-          sudo apt-get autoremove -y docker-ce &&
-          curl -fsSL \"https://apt.dockerproject.org/gpg\" | sudo apt-key add - &&
-          sudo apt-add-repository \"deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main\" &&
-          sudo apt-get update &&
-          sudo apt-get install docker-engine=1.12.6-0~ubuntu-$(lsb_release -cs) &&
-          docker load -q -i images.tar &&
-          export DOCKER_API_VERSION=\"1.24\""
+    # TEMPORARY removal of Docker 1.12 test, due to errors from apt repository
+    # - if: type IN (pull_request) OR tag IS present
+    #   env: 
+    #     - BASE_IMAGE=ubuntu:16.04
+    #     - DOCKER_DOWNGRADE="docker save -o images.tar mqadvanced-server-dev mq-dev-jms-test &&
+    #       sudo apt-get autoremove -y docker-ce &&
+    #       curl -fsSL \"https://apt.dockerproject.org/gpg\" | sudo apt-key add - &&
+    #       sudo apt-add-repository \"deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main\" &&
+    #       sudo apt-get update &&
+    #       sudo apt-get install docker-engine=1.12.6-0~ubuntu-$(lsb_release -cs) &&
+    #       docker load -q -i images.tar &&
+    #       export DOCKER_API_VERSION=\"1.24\""
 
 before_install:
   - ./install-build-deps-ubuntu.sh
