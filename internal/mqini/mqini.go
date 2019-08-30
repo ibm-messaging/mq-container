@@ -98,6 +98,9 @@ func AddStanzas(qmname string) error {
 		return err
 	}
 	qmgrDir = filepath.Join(qm.Prefix, "qmgrs", qm.Directory)
+	if qm.DataPath != "" {
+		qmgrDir = qm.DataPath
+	}
 
 	//Find the users ini configuration file
 	files := getIniFileList()
