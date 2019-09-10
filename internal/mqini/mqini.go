@@ -103,7 +103,10 @@ func AddStanzas(qmname string) error {
 	}
 
 	//Find the users ini configuration file
-	files := getIniFileList()
+	files, err := getIniFileList()
+	if err != nil {
+		return err
+	}
 	if len(files) > 1 {
 		msg := fmt.Sprintf("[ %v ]", files)
 		return errors.New("Only a single ini file can be provided. Following ini files are found:" + msg)
@@ -164,16 +167,19 @@ func PopulateAllAvailableStanzas() {
 }
 
 // getIniFileList Checks for the user supplied ini file in /etc/mqm directory.
-func getIniFileList() []string {
+func getIniFileList() ([]string, error) {
 
 	fileList := []string{}
-	filepath.Walk("/etc/mqm", func(path string, f os.FileInfo, err error) error {
+	err := filepath.Walk("/etc/mqm", func(path string, f os.FileInfo, err error) error {
 		if strings.HasSuffix(path, ".ini") {
 			fileList = append(fileList, path)
 		}
 		return nil
 	})
-	return fileList
+	if err != nil {
+		return nil, err
+	}
+	return fileList, nil
 }
 
 //PrepareConfigStanzasToWrite Reads through the user supplied ini config file and prepares list of
@@ -184,12 +190,14 @@ func PrepareConfigStanzasToWrite(userconfig string) (string, string, error) {
 	var mqatiniConfigStr string
 
 	//read the initial version.
+	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
 	iniFileBytes, err := ioutil.ReadFile(filepath.Join(qmgrDir, "qm.ini"))
 	if err != nil {
 		return "", "", err
 	}
 	qminiConfigStr = string(iniFileBytes)
 
+	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
 	iniFileBytes, err = ioutil.ReadFile(filepath.Join(qmgrDir, "mqat.ini"))
 	if err != nil {
 		return "", "", err
@@ -228,12 +236,18 @@ func PrepareConfigStanzasToWrite(userconfig string) (string, string, error) {
 		} else {
 			if consumetoAppend {
 				sb := stanzaListAppend[stanza]
-				sb.WriteString(scanner.Text() + "\n")
+				_, err := sb.WriteString(scanner.Text() + "\n")
+				if err != nil {
+					return "", "", err
+				}
 				stanzaListAppend[stanza] = sb
 			}
 			if consumeToMerge {
 				sb := stanzaListMerge[stanza]
-				sb.WriteString(scanner.Text() + "\n")
+				_, err := sb.WriteString(scanner.Text() + "\n")
+				if err != nil {
+					return "", "", err
+				}
 				stanzaListMerge[stanza] = sb
 			}
 		}
