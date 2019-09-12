@@ -24,3 +24,4 @@ sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download
 sudo chmod +x /usr/local/bin/dep
 
 go get -u golang.org/x/lint/golint
+curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $GOPATH/bin 2.0.0

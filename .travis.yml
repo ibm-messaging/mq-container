@@ -18,7 +18,7 @@ sudo: required
 language: go
 
 go:
-  - "1.10"
+  - "1.11"
 
 services:
   - docker
@@ -72,6 +72,9 @@ script:
   - echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
   - make test-devserver
   - echo -en 'travis_fold:end:test-devserver\\r'
+  - echo 'Running gosec scan...' && echo -en 'travis_fold:start:gosec-scan\\r'
+  - make gosec
+  - echo -en 'travis_fold:end:gosec-scan\\r'
 
 after_success:
   - make lint
