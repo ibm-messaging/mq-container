@@ -22,8 +22,8 @@ import (
 	"net"
 	"os"
 
-	"github.com/ibm-messaging/mq-container/internal/name"
 	"github.com/ibm-messaging/mq-container/internal/ready"
+	"github.com/ibm-messaging/mq-container/pkg/name"
 )
 
 func main() {

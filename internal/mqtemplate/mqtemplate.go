@@ -23,7 +23,7 @@ import (
 	"text/template"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	"github.com/ibm-messaging/mq-container/internal/logger"
+	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
 // ProcessTemplateFile takes a Go templateFile, and processes it with the

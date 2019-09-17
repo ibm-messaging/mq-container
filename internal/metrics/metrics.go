@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ibm-messaging/mq-container/internal/logger"
+	"github.com/ibm-messaging/mq-container/pkg/logger"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/prometheus/client_golang/prometheus"
 )

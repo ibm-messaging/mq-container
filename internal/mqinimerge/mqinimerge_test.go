@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package mqini
+package mqinimerge
 
 import (
 	"bufio"
@@ -21,49 +21,6 @@ import (
 	"strings"
 	"testing"
 )
-
-var getQueueManagerTests = []struct {
-	file        string
-	name        string
-	prefix      string
-	directory   string
-	errorLogDir string
-}{
-	{"dspmqinf1.txt", "foo", "/var/mqm", "foo", "/var/mqm/qmgrs/foo/errors"},
-	{"dspmqinf2.txt", "a/b", "/var/mqm", "a&b", "/var/mqm/qmgrs/a&b/errors"},
-	{"dspmqinf3.txt", "..", "/var/mqm", "!!", "/var/mqm/qmgrs/!!/errors"},
-}
-
-func TestGetQueueManager(t *testing.T) {
-	for _, table := range getQueueManagerTests {
-		t.Run(table.file, func(t *testing.T) {
-			b, err := ioutil.ReadFile(table.file)
-			if err != nil {
-				t.Fatal(err)
-			}
-			qm, err := getQueueManagerFromStanza(string(b))
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Logf("%#v", qm)
-			if qm.Name != table.name {
-				t.Errorf("Expected name=%v; got %v", table.name, qm.Name)
-			}
-			if qm.Prefix != table.prefix {
-				t.Errorf("Expected prefix=%v; got %v", table.prefix, qm.Prefix)
-			}
-			if qm.Directory != table.directory {
-				t.Errorf("Expected directory=%v; got %v", table.directory, qm.Directory)
-			}
-
-			// Test
-			d := GetErrorLogDirectory(qm)
-			if d != table.errorLogDir {
-				t.Errorf("Expected error log directory=%v; got %v", table.errorLogDir, d)
-			}
-		})
-	}
-}
 
 func TestIniFileStanzas(t *testing.T) {
 	PopulateAllAvailableStanzas()
@@ -87,7 +44,6 @@ func TestIniFileStanzas(t *testing.T) {
 }
 
 func TestIniFile1Update(t *testing.T) {
-
 	iniFileBytes, err := ioutil.ReadFile("test1qm.ini")
 	if err != nil {
 		t.Errorf("Unexpected error: [%s]\n", err.Error())
@@ -116,7 +72,6 @@ func TestIniFile1Update(t *testing.T) {
 }
 
 func TestIniFile2Update(t *testing.T) {
-
 	iniFileBytes, err := ioutil.ReadFile("test2qm.ini")
 	if err != nil {
 		t.Errorf("Unexpected error: [%s]\n", err.Error())
@@ -145,7 +100,6 @@ func TestIniFile2Update(t *testing.T) {
 }
 
 func TestIniFile3Update(t *testing.T) {
-
 	i := 0
 	iniFileBytes, err := ioutil.ReadFile("test3qm.ini")
 	if err != nil {
@@ -182,7 +136,6 @@ func TestIniFile3Update(t *testing.T) {
 }
 
 func checkReturns(stanza string, isqmini bool, shouldexist bool, t *testing.T) {
-
 	exists, filename := ValidateStanzaToWrite(stanza)
 	if exists != shouldexist {
 		t.Errorf("Stanza should exist %t but found was %t", shouldexist, exists)

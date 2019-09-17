@@ -27,8 +27,8 @@ import (
 	"sync"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	"github.com/ibm-messaging/mq-container/internal/logger"
-	"github.com/ibm-messaging/mq-container/internal/mqini"
+	"github.com/ibm-messaging/mq-container/pkg/logger"
+	"github.com/ibm-messaging/mq-container/pkg/mqini"
 )
 
 // var debug = false

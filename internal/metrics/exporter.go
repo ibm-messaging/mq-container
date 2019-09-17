@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2019
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ limitations under the License.
 package metrics
 
 import (
-	"github.com/ibm-messaging/mq-container/internal/logger"
+	"github.com/ibm-messaging/mq-container/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

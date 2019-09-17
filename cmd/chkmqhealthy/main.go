@@ -23,7 +23,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/ibm-messaging/mq-container/internal/name"
+	"github.com/ibm-messaging/mq-container/pkg/name"
 )
 
 func queueManagerHealthy() (bool, error) {

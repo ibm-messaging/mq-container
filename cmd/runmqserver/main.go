@@ -24,18 +24,19 @@ import (
 	"os"
 	"sync"
 
-	"github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
-	"github.com/ibm-messaging/mq-container/internal/name"
+	"github.com/ibm-messaging/mq-container/internal/mqinimerge"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/internal/tls"
-	"github.com/ibm-messaging/mq-container/internal/mqini"
+	"github.com/ibm-messaging/mq-container/pkg/containerruntimelogger"
+	"github.com/ibm-messaging/mq-container/pkg/name"
 )
 
 func doMain() error {
 	var initFlag = flag.Bool("i", false, "initialize volume only, then exit")
 	var infoFlag = flag.Bool("info", false, "Display debug info, then exit")
-	var devFlag = flag.Bool("dev", false, "used when running this program from runmqdevserver to control log output")
+	var noLogRuntimeFlag = flag.Bool("nologruntime", false, "used when running this program from another program, to control log output")
+	var devFlag = flag.Bool("dev", false, "used when running this program from runmqdevserver to control how TLS is configured")
 	flag.Parse()
 
 	name, nameErr := name.GetQueueManagerName()
@@ -88,7 +89,7 @@ func doMain() error {
 	// Enable diagnostic collecting on failure
 	collectDiagOnFail = true
 
-	if *devFlag == false {
+	if *noLogRuntimeFlag == false {
 		err = containerruntimelogger.LogContainerDetails(log)
 		if err != nil {
 			logTermination(err)
@@ -176,7 +177,7 @@ func doMain() error {
 		return err
 	}
 
-	err = mqini.AddStanzas(name)
+	err = mqinimerge.AddStanzas(name)
 	if err != nil {
 		logTermination(err)
 		return err

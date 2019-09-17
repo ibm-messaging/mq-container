@@ -22,8 +22,8 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/containerruntime"
-	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/ibm-messaging/mq-container/internal/user"
+	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
 // LogContainerDetails logs details about the container runtime

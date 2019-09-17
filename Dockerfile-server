@@ -34,6 +34,7 @@ RUN chmod a+x /usr/local/bin/install-mq.sh \
 WORKDIR /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
 COPY internal/ ./internal
+COPY pkg/ ./pkg
 COPY vendor/ ./vendor
 ENV PATH="${PATH}:/opt/rh/go-toolset-7/root/usr/bin" \
     CGO_CFLAGS="-I/opt/mqm/inc/" \
@@ -46,6 +47,7 @@ RUN go test -v ./cmd/runmqdevserver/...
 RUN go test -v ./cmd/runmqserver/
 RUN go test -v ./cmd/chkmqready/
 RUN go test -v ./cmd/chkmqhealthy/
+RUN go test -v ./pkg/...
 RUN go test -v ./internal/...
 RUN go vet ./cmd/... ./internal/...
 

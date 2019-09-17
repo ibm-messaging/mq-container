@@ -23,10 +23,10 @@ import (
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	"github.com/ibm-messaging/mq-container/internal/containerruntimelogger"
-	"github.com/ibm-messaging/mq-container/internal/logger"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
-	"github.com/ibm-messaging/mq-container/internal/name"
+	"github.com/ibm-messaging/mq-container/pkg/containerruntimelogger"
+	"github.com/ibm-messaging/mq-container/pkg/logger"
+	"github.com/ibm-messaging/mq-container/pkg/name"
 )
 
 var log *logger.Logger
@@ -172,7 +172,7 @@ func main() {
 	} else {
 		// Replace this process with runmqserver
 		// #nosec G204
-		err = syscall.Exec("/usr/local/bin/runmqserver", []string{"runmqserver", "-dev"}, os.Environ())
+		err = syscall.Exec("/usr/local/bin/runmqserver", []string{"runmqserver", "-nologruntime", "-dev"}, os.Environ())
 		if err != nil {
 			log.Errorf("Error replacing this process with runmqserver: %v", err)
 		}
