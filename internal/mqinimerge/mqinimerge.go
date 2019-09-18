@@ -24,7 +24,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/pkg/mqini"
@@ -33,7 +32,6 @@ import (
 var qmgrDir string
 
 var stanzasQMINI []string
-
 var stanzasMQATINI []string
 
 // AddStanzas reads supplied MQ INI configuration files and updates the stanzas
@@ -59,6 +57,7 @@ func AddStanzas(qmname string) error {
 		return nil
 	}
 
+	//read user supplied config file.
 	iniFileBytes, err := ioutil.ReadFile(files[0])
 	if err != nil {
 		return err
@@ -72,11 +71,11 @@ func AddStanzas(qmname string) error {
 	PopulateAllAvailableStanzas()
 
 	// Update the qmgr ini file with user config.
-	qmConfig, atConfig, err := PrepareConfigStanzasToWrite(userconfig)
+	qminiConfiglist, qmatConfiglist, err := PrepareConfigStanzasToWrite(userconfig)
 	if err != nil {
 		return err
 	}
-	err = writeConfigStanzas(qmConfig, atConfig)
+	err = writeConfigStanzas(qminiConfiglist, qmatConfiglist)
 	if err != nil {
 		return err
 	}
@@ -126,7 +125,7 @@ func getIniFileList() ([]string, error) {
 
 // PrepareConfigStanzasToWrite Reads through the user supplied INI config file and prepares list of
 // updates to be written into corresponding mq ini files (qm.ini and/or mqat.ini files)
-func PrepareConfigStanzasToWrite(userconfig string) (string, string, error) {
+func PrepareConfigStanzasToWrite(userconfig string) ([]string, []string, error) {
 	var qminiConfigStr string
 	var mqatiniConfigStr string
 
@@ -134,16 +133,18 @@ func PrepareConfigStanzasToWrite(userconfig string) (string, string, error) {
 	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
 	iniFileBytes, err := ioutil.ReadFile(filepath.Join(qmgrDir, "qm.ini"))
 	if err != nil {
-		return "", "", err
+		return nil, nil, err
 	}
 	qminiConfigStr = string(iniFileBytes)
+	qminiConfiglist := strings.Split(qminiConfigStr, "\n")
 
 	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
 	iniFileBytes, err = ioutil.ReadFile(filepath.Join(qmgrDir, "mqat.ini"))
 	if err != nil {
-		return "", "", err
+		return nil, nil, err
 	}
 	mqatiniConfigStr = string(iniFileBytes)
+	qmatConfiglist := strings.Split(mqatiniConfigStr, "\n")
 
 	stanzaListMerge := make(map[string]strings.Builder)
 	stanzaListAppend := make(map[string]strings.Builder)
@@ -158,10 +159,16 @@ func PrepareConfigStanzasToWrite(userconfig string) (string, string, error) {
 
 	// Read through the user file and prepare what we want.
 	for scanner.Scan() {
+		//if this is comment or an empty line, ignore it.
+		if strings.HasPrefix(scanner.Text(), "#") || len(strings.TrimSpace(scanner.Text())) == 0 {
+			continue
+		}
+		//thumb rule - all stanzas have ":".
 		if strings.Contains(scanner.Text(), ":") {
+			stanza = strings.TrimSpace(scanner.Text())
 			consumetoAppend = false
 			consumeToMerge = false
-			stanza = scanner.Text()
+
 			// Check if this stanza exists in the qm.ini/mqat.ini files
 			if strings.Contains(qminiConfigStr, stanza) ||
 				(strings.Contains(mqatiniConfigStr, stanza) && !(strings.Contains(stanza, "ApplicationTrace"))) {
@@ -179,7 +186,7 @@ func PrepareConfigStanzasToWrite(userconfig string) (string, string, error) {
 				sb := stanzaListAppend[stanza]
 				_, err := sb.WriteString(scanner.Text() + "\n")
 				if err != nil {
-					return "", "", err
+					return nil, nil, err
 				}
 				stanzaListAppend[stanza] = sb
 			}
@@ -187,14 +194,14 @@ func PrepareConfigStanzasToWrite(userconfig string) (string, string, error) {
 				sb := stanzaListMerge[stanza]
 				_, err := sb.WriteString(scanner.Text() + "\n")
 				if err != nil {
-					return "", "", err
+					return nil, nil, err
 				}
 				stanzaListMerge[stanza] = sb
 			}
 		}
 	}
 
-	// Merge if stanza exits
+	// do merge.
 	if len(stanzaListMerge) > 0 {
 		for key := range stanzaListMerge {
 			toWrite, filename := ValidateStanzaToWrite(key)
@@ -202,37 +209,39 @@ func PrepareConfigStanzasToWrite(userconfig string) (string, string, error) {
 				attrList := stanzaListMerge[key]
 				switch filename {
 				case "qm.ini":
-					qminiConfigStr = prepareStanzasToMerge(key, attrList, qminiConfigStr)
+					qminiConfiglist, err = prepareStanzasToMerge(key, attrList, qminiConfiglist)
+					if err != nil {
+						return nil, nil, err
+					}
 				case "mqat.ini":
-					mqatiniConfigStr = prepareStanzasToMerge(key, attrList, mqatiniConfigStr)
+					qmatConfiglist, err = prepareStanzasToMerge(key, attrList, qmatConfiglist)
+					if err != nil {
+						return nil, nil, err
+					}
 				default:
 				}
 			}
 		}
 	}
 
-	// Append new stanzas.
+	// do append.
 	if len(stanzaListAppend) > 0 {
 		for key := range stanzaListAppend {
 			attrList := stanzaListAppend[key]
 			if strings.Contains(strings.Join(stanzasMQATINI, ", "), strings.TrimSuffix(strings.TrimSpace(key), ":")) {
-				mqatiniConfigStr = prepareStanzasToAppend(key, attrList, mqatiniConfigStr)
+				qmatConfiglist = prepareStanzasToAppend(key, attrList, qmatConfiglist)
 			} else {
-				qminiConfigStr = prepareStanzasToAppend(key, attrList, qminiConfigStr)
+				qminiConfiglist = prepareStanzasToAppend(key, attrList, qminiConfiglist)
 			}
 		}
 	}
 
-	return qminiConfigStr, mqatiniConfigStr, nil
+	return qminiConfiglist, qmatConfiglist, nil
 }
 
 // ValidateStanzaToWrite validates stanza to be written and the file it belongs to.
 func ValidateStanzaToWrite(stanza string) (bool, string) {
-	stanza = strings.TrimSpace(stanza)
-	if strings.Contains(stanza, ":") {
-		stanza = stanza[:len(stanza)-1]
-	}
-
+	stanza = strings.TrimSuffix(strings.TrimSpace(stanza), ":")
 	if strings.Contains(strings.Join(stanzasQMINI, ", "), stanza) {
 		return true, "qm.ini"
 	} else if strings.Contains(strings.Join(stanzasMQATINI, ", "), stanza) {
@@ -243,42 +252,80 @@ func ValidateStanzaToWrite(stanza string) (bool, string) {
 }
 
 // prepareStanzasToAppend Prepares list of stanzas that are to be appended into qm ini files(qm.ini/mqat.ini)
-func prepareStanzasToAppend(key string, attrList strings.Builder, iniConfig string) string {
+func prepareStanzasToAppend(key string, attrList strings.Builder, iniConfigList []string) []string {
 	newVal := key + "\n" + attrList.String()
-	iniConfig = iniConfig + newVal
-	return iniConfig
+	list := strings.Split(newVal, "\n")
+	iniConfigList = append(iniConfigList, list...)
+	return iniConfigList
 }
 
 // prepareStanzasToMerge Prepares list of stanzas that are to be updated into qm ini files(qm.ini/mqat.ini)
 // These stanzas are already present in mq ini files and their values have to be updated with user supplied ini.
-func prepareStanzasToMerge(key string, attrList strings.Builder, iniConfig string) string {
+func prepareStanzasToMerge(key string, attrList strings.Builder, iniConfigList []string) ([]string, error) {
+
+	pos := -1
+	//find the index of current stanza in qm's ini file.
+	for i := 0; i < len(iniConfigList); i++ {
+		if strings.Contains(iniConfigList[i], key) {
+			pos = i
+			break
+		}
+	}
+
+	var appList strings.Builder
 	lineScanner := bufio.NewScanner(strings.NewReader(attrList.String()))
 	lineScanner.Split(bufio.ScanLines)
+
+	//Now go through the array and merge the values.
 	for lineScanner.Scan() {
 		attrLine := lineScanner.Text()
 		keyvalue := strings.Split(attrLine, "=")
-		// This line present in qm.ini, update value.
-		if strings.Contains(iniConfig, keyvalue[0]) {
-			re := regexp.MustCompile(keyvalue[0] + "=.*")
-			iniConfig = re.ReplaceAllString(iniConfig, attrLine)
-		} else {
-			// This line not present in qm.ini file, add it.
-			re := regexp.MustCompile(key)
-			newVal := key + "\n" + attrLine
-			iniConfig = re.ReplaceAllString(iniConfig, newVal)
+		merged := false
+		for i := pos + 1; i < len(iniConfigList); i++ {
+			if strings.HasPrefix(iniConfigList[i], "#") {
+				continue
+			}
+			if strings.Contains(iniConfigList[i], ":") {
+				break
+			}
+			if strings.Contains(iniConfigList[i], keyvalue[0]) {
+				iniConfigList[i] = attrLine
+				merged = true
+				break
+			}
 		}
+		//If this is not merged, then its a new parameter in existing stanza.
+		if !merged && len(strings.TrimSpace(attrLine)) > 0 {
+			_, err := appList.WriteString(attrLine)
+			if err != nil {
+				return nil, err
+			}
+			merged = false
+		}
+
+		if len(appList.String()) > 0 {
+			temp := make([]string, pos+1)
+			for i := 0; i < pos+1; i++ {
+				temp[i] = iniConfigList[i]
+			}
+			list := strings.Split(appList.String(), "\n")
+			temp = append(temp, list...)
+			temp1 := iniConfigList[pos+1:]
+			iniConfigList = append(temp, temp1...)
+		}
+
 	}
-	return iniConfig
+	return iniConfigList, nil
 }
 
 // writeConfigStanzas writes the INI file updates into corresponding mq ini files.
-func writeConfigStanzas(qmConfig string, atConfig string) error {
-	err := ioutil.WriteFile(filepath.Join(qmgrDir, "qm.ini"), []byte(qmConfig), 0644)
+func writeConfigStanzas(qmConfig []string, atConfig []string) error {
+	err := ioutil.WriteFile(filepath.Join(qmgrDir, "qm.ini"), []byte(strings.Join(qmConfig, "\n")), 0644)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(filepath.Join(qmgrDir, "mqat.ini"), []byte(atConfig), 0644)
+	err = ioutil.WriteFile(filepath.Join(qmgrDir, "mqat.ini"), []byte(strings.Join(atConfig, "\n")), 0644)
 	if err != nil {
 		return err
 	}

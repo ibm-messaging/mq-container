@@ -60,14 +60,16 @@ func TestIniFile1Update(t *testing.T) {
 		t.Errorf("Expected stanza file not found: qm.ini\n")
 	}
 
-	scanner := bufio.NewScanner(strings.NewReader(userconfig))
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !strings.Contains(qmConfig, line) {
-			t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
-			break
+	count := 0
+	//we want this line to be present exactly one.
+	for _, item := range qmConfig {
+		item = strings.TrimSpace(item)
+		if strings.Contains(item, "mylib") {
+			count++
 		}
+	}
+	if count != 1 {
+		t.Errorf("Expected stanza line not found or appeared more than once in updated string. line=mylib\n config=%s\n count=%d\n", strings.Join(qmConfig, "\n"), count)
 	}
 }
 
@@ -88,14 +90,16 @@ func TestIniFile2Update(t *testing.T) {
 		t.Errorf("Expected stanza file not found: qm.ini\n")
 	}
 
-	scanner := bufio.NewScanner(strings.NewReader(userconfig))
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !strings.Contains(atConfig, line) {
-			t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
-			break
+	count := 0
+	//we want this line to be present exactly one.
+	for _, item := range atConfig {
+		item = strings.TrimSpace(item)
+		if strings.Contains(item, "amqsget") {
+			count++
 		}
+	}
+	if count != 1 {
+		t.Errorf("Expected stanza line not found or appeared more than once in updated string. line=amqsget, Config:%s\n", strings.Join(atConfig, "\n"))
 	}
 }
 
@@ -117,6 +121,9 @@ func TestIniFile3Update(t *testing.T) {
 		t.Errorf("Expected stanza file not found: mqat.ini\n")
 	}
 
+	qmConfigStr := strings.Join(qmConfig, "\n")
+	atConfigStr := strings.Join(atConfig, "\n")
+
 	scanner := bufio.NewScanner(strings.NewReader(userconfig))
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
@@ -124,14 +131,59 @@ func TestIniFile3Update(t *testing.T) {
 		i++
 		//first 20 lines of test3qm.ini shall go into qm.ini file and rest into mqat.ini file.
 		if i < 20 {
-			if !strings.Contains(qmConfig, line) {
-				t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
+			if !strings.Contains(qmConfigStr, strings.TrimSpace(line)) {
+				t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfigStr)
 			}
 		} else if i > 20 {
-			if !strings.Contains(atConfig, line) {
-				t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, qmConfig)
+			if !strings.Contains(atConfigStr, line) {
+				t.Errorf("Expected stanza line not found in updated string. line=%s\n, Stanza:%s\n", line, atConfigStr)
 			}
 		}
+	}
+}
+
+func TestIniFile4Update(t *testing.T) {
+	iniFileBytes, err := ioutil.ReadFile("test1qm.ini")
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+
+	//First merge
+	userconfig := string(iniFileBytes)
+	qmConfig, atConfig, err := PrepareConfigStanzasToWrite(userconfig)
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+	if len(atConfig) == 0 {
+		t.Errorf("Expected stanza file not found: mqat.ini\n")
+	}
+	if len(qmConfig) == 0 {
+		t.Errorf("Expected stanza file not found: qm.ini\n")
+	}
+
+	//second merge.
+	qmConfig, atConfig, err = PrepareConfigStanzasToWrite(userconfig)
+	if err != nil {
+		t.Errorf("Unexpected error: [%s]\n", err.Error())
+	}
+	if len(atConfig) == 0 {
+		t.Errorf("Expected stanza file not found: mqat.ini\n")
+	}
+	if len(qmConfig) == 0 {
+		t.Errorf("Expected stanza file not found: qm.ini\n")
+	}
+
+	count := 0
+	//we just did a double merge, however we want this line to be present exactly one.
+	for _, item := range qmConfig {
+		item = strings.TrimSpace(item)
+		if strings.Contains(item, "mylib") {
+			count++
+		}
+	}
+
+	if count != 1 {
+		t.Errorf("Expected stanza line not found or appeared more than once in updated string. line=mylib\n config=%s\n count=%d\n", strings.Join(qmConfig, "\n"), count)
 	}
 }
 
