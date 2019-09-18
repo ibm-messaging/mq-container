@@ -19,6 +19,8 @@ package mqini
 
 import (
 	"bufio"
+	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -60,6 +62,11 @@ func getQueueManagerFromStanza(stanza string) (*QueueManager, error) {
 
 // GetQueueManager returns queue manager configuration information
 func GetQueueManager(name string) (*QueueManager, error) {
+	_, err := os.Stat("/var/mqm/mqs.ini")
+	if err != nil {
+		// Don't run dspmqinf, which will generate an FDC if mqs.ini isn't there yet
+		return nil, errors.New("dspmqinf should not be run before crtmqdir")
+	}
 	// dspmqinf essentially returns a subset of mqs.ini, but it's simpler to parse
 	out, _, err := command.Run("dspmqinf", "-o", "stanza", name)
 	if err != nil {
