@@ -14,12 +14,10 @@
 
 ARG BASE_IMAGE=registry.access.redhat.com/ubi7/ubi-minimal
 ARG BASE_TAG=7.7-98
-ARG GO_TOOLSET_IMAGE=registry.access.redhat.com/devtools/go-toolset-rhel7
-ARG GO_TOOLSET_TAG=1.11.13
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
-FROM $GO_TOOLSET_IMAGE:$GO_TOOLSET_TAG as builder
+FROM registry.access.redhat.com/devtools/go-toolset-rhel7:1.11.13 as builder
 # FROM docker.io/centos/go-toolset-7-centos7 as builder
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ RPM install packages
