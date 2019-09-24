@@ -175,7 +175,7 @@ func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
 	isStandby, err := ready.IsRunningAsStandbyQM(name)
 	if err != nil {
-		log.Printf("Error getting status for queue manager %v: ", name, err.Error())
+		log.Printf("Error getting status for queue manager %v: %v", name, err.Error())
 		return err
 	}
 	args := []string{"-w", "-r", name}
