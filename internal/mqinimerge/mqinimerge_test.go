@@ -17,9 +17,13 @@ package mqinimerge
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestIniFileStanzas(t *testing.T) {
@@ -203,5 +207,50 @@ func checkReturns(stanza string, isqmini bool, shouldexist bool, t *testing.T) {
 				t.Errorf("Expected filename:mqat.ini for stanza:%s. But got %s", stanza, filename)
 			}
 		}
+	}
+}
+
+var writeFileIfChangedTests = []struct {
+	before []byte
+	after  []byte
+	same   bool
+}{
+	{[]byte("ABC€"), []byte("ABC€"), true},
+	{[]byte("ABC€"), []byte("ABC$"), false},
+	{[]byte("ABC€"), []byte("BBC€"), false},
+}
+
+func TestWriteFileIfChanged(t *testing.T) {
+	tmpFile := filepath.Join(os.TempDir(), t.Name())
+	t.Logf("Using temp file %v", tmpFile)
+	for i, table := range writeFileIfChangedTests {
+		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+			err := ioutil.WriteFile(tmpFile, table.before, 0600)
+			time.Sleep(time.Second * 1)
+			defer os.Remove(tmpFile)
+			fi, err := os.Stat(tmpFile)
+			if err != nil {
+				t.Fatal(err)
+			}
+			beforeMod := fi.ModTime()
+			err = writeFileIfChanged(tmpFile, table.after, 0600)
+			if err != nil {
+				t.Error(err)
+			}
+			fi, err = os.Stat(tmpFile)
+			if err != nil {
+				t.Error(err)
+			}
+			afterMod := fi.ModTime()
+			if table.same {
+				if beforeMod != afterMod {
+					t.Errorf("Expected file timestamps to be the same (%v); got %v", beforeMod, afterMod)
+				}
+			} else {
+				if beforeMod == afterMod {
+					t.Errorf("Expected file timestamp to be different got %v and %v", beforeMod, afterMod)
+				}
+			}
+		})
 	}
 }

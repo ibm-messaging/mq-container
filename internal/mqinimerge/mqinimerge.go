@@ -14,11 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package mqini provides information about queue managers
+// Package mqinimerge merges user-supplied INI files into qm.ini and mqat.ini
 package mqinimerge
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -318,14 +319,31 @@ func prepareStanzasToMerge(key string, attrList strings.Builder, iniConfigList [
 	return iniConfigList, nil
 }
 
-// writeConfigStanzas writes the INI file updates into corresponding mq ini files.
+// writeFileIfChanged writes the specified data to the specified file path
+// (just like ioutil.WriteFile), but first checks if this is needed
+func writeFileIfChanged(path string, data []byte, perm os.FileMode) error {
+	current, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	// Only write the new file if the it's different from the current file
+	if !bytes.Equal(current, data) {
+		err = ioutil.WriteFile(path, data, perm)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// writeConfigStanzas writes the INI file updates into corresponding MQ INI files.
 func writeConfigStanzas(qmConfig []string, atConfig []string) error {
-	err := ioutil.WriteFile(filepath.Join(qmgrDir, "qm.ini"), []byte(strings.Join(qmConfig, "\n")), 0644)
+	err := writeFileIfChanged(filepath.Join(qmgrDir, "qm.ini"), []byte(strings.Join(qmConfig, "\n")), 0644)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(filepath.Join(qmgrDir, "mqat.ini"), []byte(strings.Join(atConfig, "\n")), 0644)
+	err = writeFileIfChanged(filepath.Join(qmgrDir, "mqat.ini"), []byte(strings.Join(atConfig, "\n")), 0644)
 	if err != nil {
 		return err
 	}
