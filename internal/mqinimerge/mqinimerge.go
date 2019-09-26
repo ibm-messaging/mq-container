@@ -322,6 +322,7 @@ func prepareStanzasToMerge(key string, attrList strings.Builder, iniConfigList [
 // writeFileIfChanged writes the specified data to the specified file path
 // (just like ioutil.WriteFile), but first checks if this is needed
 func writeFileIfChanged(path string, data []byte, perm os.FileMode) error {
+	// #nosec G304 - internal utility using file name derived from dspmqinf
 	current, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
