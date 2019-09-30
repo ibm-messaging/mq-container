@@ -25,6 +25,7 @@ import (
 	"sync"
 
 	"github.com/ibm-messaging/mq-container/internal/metrics"
+	"github.com/ibm-messaging/mq-container/internal/mqinimerge"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/internal/tls"
 	"github.com/ibm-messaging/mq-container/pkg/containerruntimelogger"
@@ -176,11 +177,11 @@ func doMain() error {
 		return err
 	}
 
-	// err = mqinimerge.AddStanzas(name)
-	// if err != nil {
-	// 	logTermination(err)
-	// 	return err
-	// }
+	err = mqinimerge.AddStanzas(name)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
 
 	err = startQueueManager(name)
 	if err != nil {
