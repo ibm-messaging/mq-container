@@ -19,7 +19,6 @@
 # MQ_VERSION is the fully qualified MQ version number to build
 MQ_VERSION ?= 9.1.3.0
 # RELEASE shows what release of the container code has been built
-RELEASE ?= 2
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
@@ -200,12 +199,12 @@ define build-mq
 	  --label version=$(MQ_VERSION) \
 	  --label name=$1 \
 	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
-	  --label release="$(RELEASE)" \
 	  --label architecture="$(ARCH)" \
 	  --label run="docker run -d -e LICENSE=accept $1:$2" \
 	  --label vcs-ref=$(IMAGE_REVISION) \
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
+	  $(EXTRA_LABELS) \
 	  --target $5 \
 	  .
 	$(if $(findstring docker,$(COMMAND)), @docker kill $(BUILD_SERVER_CONTAINER))
