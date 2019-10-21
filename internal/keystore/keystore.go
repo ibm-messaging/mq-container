@@ -152,7 +152,7 @@ func (ks *KeyStore) Import(inputFile, password string) error {
 
 // CreateSelfSignedCertificate creates a self-signed certificate in the keystore
 func (ks *KeyStore) CreateSelfSignedCertificate(label, dn, hostname string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-create", "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn, "-san_dnsname", hostname)
+	out, _, err := command.Run(ks.command, "-cert", "-create", "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn, "-san_dnsname", hostname, "-size 2048 -sig_alg sha256 -eku serverAuth")
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -create\": %v %s", ks.command, err, out)
 	}
