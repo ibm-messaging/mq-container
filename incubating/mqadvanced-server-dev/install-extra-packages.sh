@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Fail on any non-zero return code
+set -ex
+
 test -f /usr/bin/yum && YUM=true || YUM=false
 test -f /usr/bin/microdnf && MICRODNF=true || MICRODNF=false
 test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
@@ -33,6 +36,6 @@ if ($YUM); then
 fi
 
 if ($MICRODNF); then
-    microdnf install --nodocs sudo
+    microdnf install sudo
     microdnf clean all
 fi

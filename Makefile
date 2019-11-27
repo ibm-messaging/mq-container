@@ -42,6 +42,10 @@ MQ_PACKAGES ?=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSer
 MQM_UID ?= 888
 # COMMAND is the container command to run.  "podman" or "docker"
 COMMAND ?=$(shell type -p podman 2>&1 >/dev/null && echo podman || echo docker)
+# REGISTRY_USER is the username used to login to the Red Hat registry
+REGISTRY_USER ?=
+# REGISTRY_PASS is the password used to login to the Red Hat registry
+REGISTRY_PASS ?=
 
 ###############################################################################
 # Other variables
@@ -229,7 +233,7 @@ endif
 build-advancedserver-host: build-advancedserver
 
 .PHONY: build-advancedserver
-build-advancedserver: log-build-env downloads/$(MQ_ARCHIVE) command-version
+build-advancedserver: registry-login log-build-env downloads/$(MQ_ARCHIVE) command-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
 
@@ -237,22 +241,28 @@ build-advancedserver: log-build-env downloads/$(MQ_ARCHIVE) command-version
 build-devserver-host: build-devserver
 
 .PHONY: build-devserver
-build-devserver: log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
+build-devserver: registry-login log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version 
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
 
 .PHONY: build-advancedserver-cover
-build-advancedserver-cover: command-version
+build-advancedserver-cover: registry-login command-version
 	$(COMMAND) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover -f Dockerfile-server.cover .
 
 .PHONY: build-explorer
-build-explorer: downloads/$(MQ_ARCHIVE_DEV)
+build-explorer: registry-login downloads/$(MQ_ARCHIVE_DEV)
 	$(call build-mq,mq-explorer,latest-$(ARCH),incubating/mq-explorer/Dockerfile,$(MQ_ARCHIVE_DEV),mq-explorer)
 
 .PHONY: build-sdk
-build-sdk: downloads/$(MQ_ARCHIVE_DEV)
+build-sdk: registry-login downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
 	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
+
+.PHONY: registry-login
+registry-login:
+ifneq ($(REGISTRY_USER),)
+	$(COMMAND) login -u $(REGISTRY_USER) -p $(REGISTRY_PASS) registry.redhat.io
+endif
 
 .PHONY: log-build-env
 log-build-vars:
@@ -264,6 +274,7 @@ log-build-vars:
 	@echo MQ_IMAGE_ADVANCEDSERVER=$(MQ_IMAGE_ADVANCEDSERVER)
 	@echo COMMAND=$(COMMAND)
 	@echo MQM_UID=$(MQM_UID)
+	@echo REGISTRY_USER=$(REGISTRY_USER)
 
 .PHONY: log-build-env
 log-build-env: log-build-vars

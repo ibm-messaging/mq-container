@@ -104,6 +104,10 @@ sed -i 's/password\t\[success=1 default=ignore\]\tpam_unix\.so obscure sha512/pa
 $RPM && rpm -q --all || true
 $UBUNTU && dpkg --list || true
 
+#Update the license file to include UBI 8 instead of UBI 7
+sed -i 's/v7.0/v8.0/g' /opt/mqm/licenses/non_ibm_license.txt
+
 # Copy MQ Licenses into the correct location
 mkdir -p /licenses
 cp /opt/mqm/licenses/*.txt /licenses/
+
