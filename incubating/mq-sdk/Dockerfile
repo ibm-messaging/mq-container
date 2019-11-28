@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM registry.redhat.io/rhscl/devtoolset-8-toolchain-rhel7  AS mq-sdk
+FROM registry.redhat.io/rhel8/llvm-toolset:8.0.1-10  AS mq-sdk
 #FROM docker.io/centos/devtoolset-7-toolchain-centos7 AS mq-sdk
 
 # The URL to download the MQ installer from in tar.gz format
