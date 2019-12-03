@@ -35,8 +35,8 @@ import (
 	pkcs "software.sslmate.com/src/go-pkcs12"
 )
 
-// IntegrationDefaultLabel is the default certificate label used by Cloud Integration Platform
-const IntegrationDefaultLabel = "default"
+// WebDefaultLabel is the default certificate label for the web console
+const WebDefaultLabel = "default"
 
 // P12TrustStoreName is the name of the PKCS#12 truststore used by the webconsole
 const P12TrustStoreName = "trust.p12"

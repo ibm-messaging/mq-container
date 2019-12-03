@@ -30,10 +30,15 @@ func postInit(name, keylabel string, p12Trust tls.KeyStoreData) error {
 		if err != nil {
 			return err
 		}
+		// If trust-store is empty, set reference to point to the key-store
+		p12TrustStoreRef := "MQWebTrustStore"
+		if len(p12Trust.TrustedCerts) == 0 {
+			p12TrustStoreRef = "MQWebKeyStore"
+		}
 		// Start the web server, in the background (if installed)
 		// WARNING: No error handling or health checking available for the web server
 		go func() {
-			err = startWebServer(keystore, p12Trust.Password)
+			err = startWebServer(keystore, p12Trust.Password, p12TrustStoreRef)
 			if err != nil {
 				log.Printf("Error starting web server: %v", err)
 			}

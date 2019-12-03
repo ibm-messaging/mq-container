@@ -118,11 +118,11 @@ func configureTLS(certLabel string, cmsKeystore tls.KeyStoreData, devmode bool) 
 	return nil
 }
 
-// configureSSOTLS configures MQ Console TLS for Single Sign-On
-func configureSSOTLS(p12TrustStore tls.KeyStoreData) (string, error) {
+// configureWebKeyStore configures the key stores for the web console
+func configureWebKeyStore(p12TrustStore tls.KeyStoreData) (string, error) {
 	// TODO find way to supply this
 	// Override the webstore variables to hard coded defaults
-	webKeyStoreName := tls.IntegrationDefaultLabel + ".p12"
+	webKeyStoreName := tls.WebDefaultLabel + ".p12"
 
 	// Check keystore exists
 	ks := filepath.Join(keyStoreDir, webKeyStoreName)

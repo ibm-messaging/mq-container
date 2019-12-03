@@ -31,7 +31,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
-func startWebServer(keystore, keystorepw string) error {
+func startWebServer(keystore, keystorepw, p12TrustStoreRef string) error {
 	_, err := os.Stat("/opt/mqm/bin/strmqweb")
 	if err != nil && os.IsNotExist(err) {
 		log.Debug("Skipping web server, because it's not installed")
@@ -53,6 +53,7 @@ func startWebServer(keystore, keystorepw string) error {
 	if keystore != "" {
 		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTORE="+keystore)
 		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTOREPW="+keystorepw)
+		cmd.Env = append(cmd.Env, "AMQ_WEBTRUSTSTOREREF="+p12TrustStoreRef)
 	}
 
 	uid, gid, err := command.LookupMQM()
@@ -117,11 +118,12 @@ func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
 	}
 
 	// Configure SSO TLS
-	return configureSSOTLS(p12TrustStore)
+	return configureWebKeyStore(p12TrustStore)
 }
 
 func configureWebServer(keyLabel string, p12Trust tls.KeyStoreData) (string, error) {
 	var keystore string
+
 	// Configure TLS for Web Console first if we have a certificate to use
 	err := configureWebTLS(keyLabel)
 	if err != nil {
@@ -138,7 +140,10 @@ func configureWebServer(keyLabel string, p12Trust tls.KeyStoreData) (string, err
 		if err != nil {
 			return keystore, err
 		}
+	} else if keyLabel == "" && os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") != "" {
+		keystore, err = configureWebKeyStore(p12Trust)
 	}
+
 	_, err = os.Stat("/opt/mqm/bin/strmqweb")
 	if err != nil {
 		if os.IsNotExist(err) {

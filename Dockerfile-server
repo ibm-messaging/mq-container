@@ -149,6 +149,6 @@ COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
 RUN chown -R mqm:mqm /etc/mqm/* \
   && chmod +x /usr/local/bin/runmq* \
   && install --directory --mode 0775 --owner mqm --group root /run/runmqdevserver
-ENV MQ_ENABLE_EMBEDDED_WEB_SERVER=1
+ENV MQ_ENABLE_EMBEDDED_WEB_SERVER=1 MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost
 USER $MQM_UID
 ENTRYPOINT ["runmqdevserver"]
