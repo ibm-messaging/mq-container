@@ -16,9 +16,11 @@
 
 set -e
 
-echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
-make test-devserver
-echo -en 'travis_fold:end:test-devserver\\r'
+if [ "$ARCH" = "amd64" ] ; then
+    echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
+    make test-devserver
+    echo -en 'travis_fold:end:test-devserver\\r'
+fi
 if [ "$BUILD_ALL" = true ] ; then
     echo 'Testing Production image...' && echo -en 'travis_fold:start:test-advancedserver\\r'
     make test-advancedserver

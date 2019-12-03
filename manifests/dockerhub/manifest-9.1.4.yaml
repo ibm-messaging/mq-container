@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # © Copyright IBM Corporation 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
-
-if [ ! -z $1 ]; then 
-    export ARCH=$1
-fi
-
-if [ "$ARCH" != "amd64" ] ; then
-    echo No developer image to push as we are not an amd64 build
-    exit 0
-fi
-
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-    echo Not pushing as we are a pull request
-    exit 0
-fi
-
-echo 'Pushing Developer image...' && echo -en 'travis_fold:start:push-devserver\\r'
-make push-devserver
-echo -en 'travis_fold:end:push-devserver\\r'
+image: ibmcom/mq:9.1.4.0-r1
+manifests:
+  - image: ibmcom/mq:9.1.4.0-r1-amd64
+    platform:
+      architecture: amd64
+      os: linux
+  - image: ibmcom/mq:9.1.4.0-r1-ppc64le
+    platform:
+      architecture: ppc64le
+      os: linux
+  - image: ibmcom/mq:9.1.4.0-r1-s390x
+    platform:
+      architecture: s390x
+      os: linux

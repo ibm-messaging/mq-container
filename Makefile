@@ -19,7 +19,7 @@
 # RELEASE shows what release of the container code has been built
 RELEASE ?=
 # MQ_VERSION is the fully qualified MQ version number to build
-MQ_VERSION ?= 9.1.3.0
+MQ_VERSION ?= 9.1.4.0
 # MQ_ARCHIVE_REPOSITORY is a remote repository from which to pull the MQ_ARCHIVE (if required)
 MQ_ARCHIVE_REPOSITORY ?= 
 # MQ_ARCHIVE_REPOSITORY_DEV is a remote repository from which to pull the MQ_ARCHIVE_DEV (if required)
@@ -88,7 +88,7 @@ IMAGE_REVISION=$(shell git rev-parse HEAD)
 IMAGE_SOURCE=$(shell git config --get remote.origin.url)
 EMPTY:=
 SPACE:= $(EMPTY) $(EMPTY)
-# MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.3 instead of 9.1.3.0
+# MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.4 instead of 9.1.4.0
 MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
 
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
@@ -115,6 +115,7 @@ MQ_ARCHIVE_DEV_9.1.0.0=mqadv_dev910_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).ta
 MQ_ARCHIVE_DEV_9.1.1.0=mqadv_dev911_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 MQ_ARCHIVE_DEV_9.1.2.0=mqadv_dev912_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 MQ_ARCHIVE_DEV_9.1.3.0=mqadv_dev913_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
+MQ_ARCHIVE_DEV_9.1.4.0=mqadv_dev914_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 
 ifneq "$(RELEASE)" "$(EMPTY)"
 	MQ_IMAGE_FULL_RELEASE_NAME=ibm-mqadvanced-server:$(MQ_VERSION)-$(RELEASE)-$(ARCH)

@@ -1,5 +1,11 @@
 # Change log
 
+## 9.1.4.0 (2019-12-06)
+
+* Updated to MQ version 9.1.4.0
+* Updated to use UBI8 as base image
+* Added required security settings to self signed certificates to align with macOS Catalina requirements
+  
 ## 9.1.3.0 (2019-07-19)
 
 * Updated to MQ version 9.1.3.0

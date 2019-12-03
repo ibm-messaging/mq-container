@@ -16,7 +16,7 @@ You will also need a [Red Hat Account](https://access.redhat.com) to be able to 
 This procedure works for building the MQ Continuous Delivery release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.1.3_LINUX_X86-64.tar.gz`) in the `downloads` directory
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.1.4_LINUX_X86-64.tar.gz`) in the `downloads` directory
 3. Login to the Red Hat Registry: `docker login registry.redhat.io` using your Customer Portal credentials.
 4. Run `make build-advancedserver`
 
