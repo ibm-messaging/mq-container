@@ -94,7 +94,7 @@ ln -s /mnt/mqm/data /var/mqm
 sed -i 's/PASS_MAX_DAYS\t99999/PASS_MAX_DAYS\t90/' /etc/login.defs
 sed -i 's/PASS_MIN_DAYS\t0/PASS_MIN_DAYS\t1/' /etc/login.defs
 sed -i 's/PASS_MIN_LEN\t5/PASS_MIN_LEN\t8/' /etc/login.defs
-sed -i 's/# minlen = 9/minlen = 8/' /etc/security/pwquality.conf
+$RPM && sed -i 's/# minlen/minlen/' /etc/security/pwquality.conf
 
 $UBUNTU && PAM_FILE=/etc/pam.d/common-password
 $RPM && PAM_FILE=/etc/pam.d/password-auth
