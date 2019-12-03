@@ -73,7 +73,8 @@ func startWebServer(keystore, keystorepw, p12TrustStoreRef string) error {
 		cmd.SysProcAttr = &syscall.SysProcAttr{}
 		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
 	}
-	out, rc, err := command.RunCmd(cmd)
+	out, err := cmd.CombinedOutput()
+	rc := cmd.ProcessState.ExitCode()
 	if err != nil {
 		log.Printf("Error %v starting web server: %v", rc, string(out))
 		return err

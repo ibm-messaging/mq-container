@@ -21,40 +21,24 @@ import (
 	"fmt"
 	"os/exec"
 	"os/user"
-	"runtime"
 	"strconv"
 	"syscall"
 )
-
-// RunCmd runs an OS command.  On Linux it waits for the command to
-// complete and returns the exit status (return code).
-// Do not use this function to run shell built-ins (like "cd"), because
-// the error handling works differently
-func RunCmd(cmd *exec.Cmd) (string, int, error) {
-	// Run the command and wait for completion
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		// Assert that this is an ExitError
-		exiterr, ok := err.(*exec.ExitError)
-		// If the type assertion was correct, and we're on Linux
-		if ok && runtime.GOOS == "linux" {
-			status, ok := exiterr.Sys().(syscall.WaitStatus)
-			if ok {
-				return string(out), status.ExitStatus(), fmt.Errorf("%v: %v", cmd.Path, err)
-			}
-		}
-		return string(out), -1, err
-	}
-	return string(out), 0, nil
-}
 
 // Run runs an OS command.  On Linux it waits for the command to
 // complete and returns the exit status (return code).
 // Do not use this function to run shell built-ins (like "cd"), because
 // the error handling works differently
 func Run(name string, arg ...string) (string, int, error) {
+	// Run the command and wait for completion
 	// #nosec G204
-	return RunCmd(exec.Command(name, arg...))
+	cmd := exec.Command(name, arg...)
+	out, err := cmd.CombinedOutput()
+	rc := cmd.ProcessState.ExitCode()
+	if err != nil {
+		return string(out), rc, fmt.Errorf("%v: %v", cmd.Path, err)
+	}
+	return string(out), rc, nil
 }
 
 // RunAsMQM runs the specified command as the mqm user
@@ -67,7 +51,7 @@ func RunAsMQM(name string, arg ...string) (string, int, error) {
 		return "", 0, err
 	}
 	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
-	return RunCmd(cmd)
+	return Run(name, arg...)
 }
 
 // LookupMQM looks up the UID & GID of the mqm user

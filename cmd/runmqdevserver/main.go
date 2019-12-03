@@ -22,7 +22,6 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/pkg/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
@@ -43,7 +42,7 @@ func setPassword(user string, password string) error {
 	if err != nil {
 		log.Errorf("Error closing password stdin: %v", err)
 	}
-	out, _, err := command.RunCmd(cmd)
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		// Include the command output in the error
 		return fmt.Errorf("%v: %v", err.Error(), out)
