@@ -34,11 +34,6 @@ Two channels are created, one for administration, the other for normal messaging
 * DEV.ADMIN.SVRCONN - configured to only allow the `admin` user to connect into it.  A user and password must be supplied.
 * DEV.APP.SVRCONN - does not allow administrative users to connect.  Password is optional unless you choose a password for app users.
 
-A new listener is created (the SYSTEM listener is fine, but system objects are not shown by default in the web console):
-
-* DEV.LISTENER.TCP - listens on port 1414.
-
-
 ## Web Console
 
 By default the MQ Advanced for Developers image will start the IBM MQ Web Console that allows you to administer your Queue Manager running on your container. When the web console has been started, you can access it by opening a web browser and navigating to https://<Container IP>:9443/ibmmq/console. Where <Container IP> is replaced by the IP address of your running container.
