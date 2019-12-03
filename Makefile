@@ -16,9 +16,18 @@
 # Conditional variables - you can override the values of these variables from
 # the command line
 ###############################################################################
+# RELEASE shows what release of the container code has been built
+RELEASE ?=
 # MQ_VERSION is the fully qualified MQ version number to build
 MQ_VERSION ?= 9.1.3.0
-# RELEASE shows what release of the container code has been built
+# MQ_ARCHIVE_REPOSITORY is a remote repository from which to pull the MQ_ARCHIVE (if required)
+MQ_ARCHIVE_REPOSITORY ?= 
+# MQ_ARCHIVE_REPOSITORY_DEV is a remote repository from which to pull the MQ_ARCHIVE_DEV (if required)
+MQ_ARCHIVE_REPOSITORY_DEV ?= 
+# MQ_ARCHIVE_REPOSITORY_USER is the user for the remote repository (if required)
+MQ_ARCHIVE_REPOSITORY_USER ?= 
+# MQ_ARCHIVE_REPOSITORY_CREDENTIAL is the password/API key for the remote repository (if required)
+MQ_ARCHIVE_REPOSITORY_CREDENTIAL ?= 
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
 # Does not apply to MQ Advanced for Developers.
@@ -42,10 +51,20 @@ MQ_PACKAGES ?=MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSer
 MQM_UID ?= 888
 # COMMAND is the container command to run.  "podman" or "docker"
 COMMAND ?=$(shell type -p podman 2>&1 >/dev/null && echo podman || echo docker)
+# MQ_DELIVERY_REGISTRY_HOSTNAME is a remote registry to push the MQ Image to (if required)
+MQ_DELIVERY_REGISTRY_HOSTNAME ?= 
+# MQ_DELIVERY_REGISTRY_NAMESPACE is the namespace/path on the delivery registry (if required)
+MQ_DELIVERY_REGISTRY_NAMESPACE ?= 
+# MQ_DELIVERY_REGISTRY_USER is the user for the remote registry (if required)
+MQ_DELIVERY_REGISTRY_USER ?= 
+# MQ_DELIVERY_REGISTRY_CREDENTIAL is the password/API key for the remote registry (if required)
+MQ_DELIVERY_REGISTRY_CREDENTIAL ?= 
 # REGISTRY_USER is the username used to login to the Red Hat registry
 REGISTRY_USER ?=
 # REGISTRY_PASS is the password used to login to the Red Hat registry
 REGISTRY_PASS ?=
+# ARCH is the platform architecture (e.g. amd64, ppc64le or s390x)
+ARCH ?= $(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
 
 ###############################################################################
 # Other variables
@@ -53,8 +72,6 @@ REGISTRY_PASS ?=
 GO_PKG_DIRS = ./cmd ./internal ./test
 MQ_ARCHIVE_TYPE=LINUX
 MQ_ARCHIVE_DEV_PLATFORM=linux
-# ARCH is the platform architecture (e.g. amd64, ppc64le or s390x)
-ARCH=$(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
 # BUILD_SERVER_CONTAINER is the name of the web server container used at build time
 BUILD_SERVER_CONTAINER=build-server
 # NUM_CPU is the number of CPUs available to Docker.  Used to control how many
@@ -99,6 +116,20 @@ MQ_ARCHIVE_DEV_9.1.1.0=mqadv_dev911_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).ta
 MQ_ARCHIVE_DEV_9.1.2.0=mqadv_dev912_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 MQ_ARCHIVE_DEV_9.1.3.0=mqadv_dev913_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 
+ifneq "$(RELEASE)" "$(EMPTY)"
+	MQ_IMAGE_FULL_RELEASE_NAME=ibm-mqadvanced-server:$(MQ_VERSION)-$(RELEASE)-$(ARCH)
+	MQ_IMAGE_DEV_FULL_RELEASE_NAME=ibm-mqadvanced-server-dev:$(MQ_VERSION)-$(RELEASE)-$(ARCH)
+else
+	MQ_IMAGE_FULL_RELEASE_NAME=ibm-mqadvanced-server:$(MQ_VERSION)-$(ARCH)
+	MQ_IMAGE_DEV_FULL_RELEASE_NAME=ibm-mqadvanced-server-dev:$(MQ_VERSION)-$(ARCH)
+endif
+
+ifneq "$(MQ_DELIVERY_REGISTRY_NAMESPACE)" "$(EMPTY)"
+	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)/$(MQ_DELIVERY_REGISTRY_NAMESPACE)
+else 
+	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)
+endif
+
 ###############################################################################
 # Build targets
 ###############################################################################
@@ -122,12 +153,18 @@ incubating: build-explorer
 downloads/$(MQ_ARCHIVE_DEV):
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
 	mkdir -p downloads
-	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV)
+ifneq "$(MQ_ARCHIVE_REPOSITORY_DEV)" "$(EMPTY)"
+	curl -u $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -X GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" -o downloads/$(MQ_ARCHIVE_DEV)
+else
+	curl -L https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV) -o downloads/$(MQ_ARCHIVE_DEV)
+endif
 
-downloads/$(MQ_SDK_ARCHIVE):
-	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
+downloads/$(MQ_ARCHIVE):
+	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced "$(MQ_VERSION)$(END)))
 	mkdir -p downloads
-	cd downloads; curl -LO https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_SDK_ARCHIVE)
+ifneq "$(MQ_ARCHIVE_REPOSITORY)" "$(EMPTY)"
+	curl -u $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -X GET "$(MQ_ARCHIVE_REPOSITORY)" -o downloads/$(MQ_ARCHIVE)
+endif
 
 .PHONY: downloads
 downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
@@ -156,7 +193,7 @@ build-devjmstest:
 test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell docker --version)"$(END)))
 	docker inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER) 
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
 
 .PHONY: coverage
 coverage:
@@ -270,6 +307,7 @@ log-build-vars:
 	@echo ARCH=$(ARCH)
 	@echo MQ_VERSION=$(MQ_VERSION)
 	@echo MQ_ARCHIVE=$(MQ_ARCHIVE)
+	@echo MQ_ARCHIVE_DEV=$(MQ_ARCHIVE_DEV)
 	@echo MQ_IMAGE_DEVSERVER=$(MQ_IMAGE_DEVSERVER)
 	@echo MQ_IMAGE_ADVANCEDSERVER=$(MQ_IMAGE_ADVANCEDSERVER)
 	@echo COMMAND=$(COMMAND)
@@ -284,15 +322,52 @@ log-build-env: log-build-vars
 
 include formatting.mk
 
+.PHONY: pull-mq-archive
+pull-mq-archive:
+	curl -u $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -X GET "$(MQ_ARCHIVE_REPOSITORY)" -o downloads/$(MQ_ARCHIVE)
+
+.PHONY: pull-mq-archive-dev
+pull-mq-archive-dev:
+	curl -u $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -X GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" -o downloads/$(MQ_ARCHIVE_DEV)
+
+.PHONY: push-advancedserver
+push-advancedserver:
+	$(info $(SPACER)$(shell printf $(TITLE)"Push production image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
+	docker login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
+	docker tag $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
+	docker push $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
+
+.PHONY: push-devserver
+push-devserver:
+	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
+	echo $(ARCH)
+	docker login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
+	docker tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
+	docker push $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
+
+.PHONY: pull-advancedserver
+pull-advancedserver:
+	$(info $(SPACER)$(shell printf $(TITLE)"Pull production image from $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
+	docker login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
+	docker pull $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
+	docker tag $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME) $(MQ_IMAGE_FULL_RELEASE_NAME)
+
+.PHONY: pull-devserver
+pull-devserver:
+	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
+	docker login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
+	docker pull $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
+	docker tag $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME) $(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
+
 .PHONY: clean
 clean:
 	rm -rf ./coverage
 	rm -rf ./build
 	rm -rf ./deps
 
-.PHONY: deps
-deps:
-	glide install --strip-vendor
+.PHONY: install-build-deps
+install-build-deps:
+	ARCH=$(ARCH) ./install-build-deps.sh
 
 .PHONY: build-cov
 build-cov:

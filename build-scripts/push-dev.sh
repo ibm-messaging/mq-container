@@ -1,7 +1,6 @@
 #!/bin/bash
-# -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2019
-#
+
+# © Copyright IBM Corporation 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,13 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Install Docker and dep, required by build (assumes Ubuntu host, as used by Travis build)
+set -e
 
-set -ex
+if [ ! -z $1 ]; then 
+    export ARCH=$1
+fi
 
-curl https://glide.sh/get | sh
-sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64
-sudo chmod +x /usr/local/bin/dep
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+    echo Not pushing as we are a pull request
+    exit 0
+fi
 
-go get -u golang.org/x/lint/golint
-curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $GOPATH/bin 2.0.0
+echo 'Pushing Developer image...' && echo -en 'travis_fold:start:push-devserver\\r'
+make push-devserver
+echo -en 'travis_fold:end:push-devserver\\r'

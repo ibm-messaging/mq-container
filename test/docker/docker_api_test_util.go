@@ -380,6 +380,78 @@ func runContainerOneShotWithVolume(t *testing.T, cli *client.Client, bind string
 	return rc, out
 }
 
+func startMultiVolumeQueueManager(t *testing.T, cli *client.Client, dataVol bool, qmsharedlogs string, qmshareddata string, env []string) (error, string, string) {
+	id := strconv.FormatInt(time.Now().UnixNano(), 10)
+	qmdata := createVolume(t, cli, id)
+	containerConfig := container.Config{
+		Image: imageName(),
+		Env:   env,
+	}
+	var hostConfig container.HostConfig
+
+	if !dataVol {
+		hostConfig = container.HostConfig{}
+	} else if qmsharedlogs == "" && qmshareddata == "" {
+		hostConfig = getHostConfig(t, 1, "", "", qmdata.Name)
+	} else if qmsharedlogs == "" {
+		hostConfig = getHostConfig(t, 2, "", qmshareddata, qmdata.Name)
+	} else if qmshareddata == "" {
+		hostConfig = getHostConfig(t, 3, qmsharedlogs, "", qmdata.Name)
+	} else {
+		hostConfig = getHostConfig(t, 4, qmsharedlogs, qmshareddata, qmdata.Name)
+	}
+	networkingConfig := network.NetworkingConfig{}
+	qm, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+id)
+	if err != nil {
+		return err, "", ""
+	}
+	startContainer(t, cli, qm.ID)
+
+	return nil, qm.ID, qmdata.Name
+}
+
+func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata string, qmdata string) container.HostConfig {
+
+	var hostConfig container.HostConfig
+
+	switch mounts {
+	case 1:
+		hostConfig = container.HostConfig{
+			Binds: []string{
+				coverageBind(t),
+				qmdata + ":/mnt/mqm",
+			},
+		}
+	case 2:
+		hostConfig = container.HostConfig{
+			Binds: []string{
+				coverageBind(t),
+				qmdata + ":/mnt/mqm",
+				qmshareddata + ":/mnt/mqm-data",
+			},
+		}
+	case 3:
+		hostConfig = container.HostConfig{
+			Binds: []string{
+				coverageBind(t),
+				qmdata + ":/mnt/mqm",
+				qmsharedlogs + ":/mnt/mqm-log",
+			},
+		}
+	case 4:
+		hostConfig = container.HostConfig{
+			Binds: []string{
+				coverageBind(t),
+				qmdata + ":/mnt/mqm",
+				qmsharedlogs + ":/mnt/mqm-log",
+				qmshareddata + ":/mnt/mqm-data",
+			},
+		}
+	}
+
+	return hostConfig
+}
+
 func startContainer(t *testing.T, cli *client.Client, ID string) {
 	t.Logf("Starting container: %v", ID)
 	startOptions := types.ContainerStartOptions{}

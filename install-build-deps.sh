@@ -1,4 +1,7 @@
-# © Copyright IBM Corporation 2017, 2019
+#!/bin/bash
+# -*- mode: sh -*-
+# © Copyright IBM Corporation 2015, 2019
+#
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,19 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package: github.com/ibm-messaging/mq-container
-license: Apache-2.0
-excludeDirs:
-- build
-- coverage
-- test
-import:
-- package: golang.org/x/sys/unix
-- package: github.com/prometheus/client_golang
-  version: 0.8.0
-- package: github.com/ibm-messaging/mq-golang
-  version: 2.0.0
-- package: github.com/genuinetools/amicontained
-  version: 0.4.0
-- package: software.sslmate.com/src/go-pkcs12
-  commit: 6e380ad96778cc63c6ea17649a9b74224bceafe9
+# Install Docker and dep, required by build (assumes Ubuntu host, as used by Travis build)
+
+set -ex
+
+sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.1/dep-linux-$ARCH
+sudo chmod +x /usr/local/bin/dep
+
+go get -u golang.org/x/lint/golint
+curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $GOPATH/bin 2.0.0 || echo "Gosec not installed. Platform may not be supported."

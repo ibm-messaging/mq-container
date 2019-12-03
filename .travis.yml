@@ -18,63 +18,73 @@ sudo: required
 language: go
 
 go:
-  - "1.11"
+  - "1.12"
 
 services:
   - docker
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
-cache:
+cache:	
   directories:
     - downloads
 
+env:
+  global:
+    - RELEASE=""
+
 jobs:
   include:
-    - stage: build and test
+    - stage: build
+      name: "Basic build"
+      if: branch != private-master
+      os: linux
+      script: bash -e build-scripts/build.sh
+    - if: branch = private-master
+      name: "Multi-Arch ADM64 build"
+      os: linux
       env:
-        - BASE_IMAGE=ubuntu:16.04
-        - DOCKER_DOWNGRADE="echo nothing to be done"
-    # TEMPORARY removal of Docker 1.12 test, due to errors from apt repository
-    # - if: type IN (pull_request) OR tag IS present
-    #   env: 
-    #     - BASE_IMAGE=ubuntu:16.04
-    #     - DOCKER_DOWNGRADE="docker save -o images.tar mqadvanced-server-dev mq-dev-jms-test &&
-    #       sudo apt-get autoremove -y docker-ce &&
-    #       curl -fsSL \"https://apt.dockerproject.org/gpg\" | sudo apt-key add - &&
-    #       sudo apt-add-repository \"deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main\" &&
-    #       sudo apt-get update &&
-    #       sudo apt-get install docker-engine=1.12.6-0~ubuntu-$(lsb_release -cs) &&
-    #       docker load -q -i images.tar &&
-    #       export DOCKER_API_VERSION=\"1.24\""
+        - BUILD_ALL=true
+        - MQ_ARCHIVE_REPOSITORY=$MQ_ARCHIVE_REPOSITORY_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_ARCHIVE_REPOSITORY_DEV_AMD64
+      script: bash -e build-scripts/build.sh
+    - if: branch = private-master
+      name: "Multi-Arch PPC64LE build"
+      os: linux-ppc64le
+      env:
+        - BUILD_ALL=true
+        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - MQ_ARCHIVE_REPOSITORY=$MQ_ARCHIVE_REPOSITORY_PPC64LE
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_ARCHIVE_REPOSITORY_DEV_PPC64LE
+      script: bash -e build-scripts/build.sh
+    - if: branch = private-master
+      name: "Multi-Arch S390X build"
+      os: linux-s390
+      env:
+        - BUILD_ALL=true
+        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - MQ_ARCHIVE_REPOSITORY=$MQ_ARCHIVE_REPOSITORY_S390X
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_ARCHIVE_REPOSITORY_DEV_S390X
+      script: bash -e build-scripts/build.sh
+    # - stage: deploy
+    #   name: "Pre-release deploy"
+    #   if: tag =~ ^pre-release*
+    #   deploy:
+    #     provider: script
+    #     script: bash -e build-scripts/release.sh staging
+    # - name: "Production release deploy"
+    #   if: tag =~ ^release-production*
+    #   deploy:
+    #     provider: script
+    #     script: bash -e build-scripts/release.sh production
 
 before_install:
-  - ./install-build-deps-ubuntu.sh
+  - make install-build-deps
 
 install:
   - echo nothing
 
-before_script:
-  - echo 'Downloading Go dependencies...' && echo -en 'travis_fold:start:deps\\r'
-  - make deps
-  - echo -en 'travis_fold:end:deps\\r'
-  - echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
-  - make build-devserver
-  - echo -en 'travis_fold:end:build-devserver\\r'
-  - echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
-  - make build-devjmstest
-  - echo -en 'travis_fold:end:build-devjmstest\\r'
-
-script:
-  - echo 'Downgrading Docker (if necessary)...' && echo -en 'travis_fold:start:docker-downgrade\\r'
-  - eval "$DOCKER_DOWNGRADE"
-  - echo -en 'travis_fold:end:docker-downgrade\\r'
-  - echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
-  - make test-devserver
-  - echo -en 'travis_fold:end:test-devserver\\r'
-  - echo 'Running gosec scan...' && echo -en 'travis_fold:start:gosec-scan\\r'
-  - make gosec
-  - echo -en 'travis_fold:end:gosec-scan\\r'
+before_script: echo nothing
 
 after_success:
   - make lint
