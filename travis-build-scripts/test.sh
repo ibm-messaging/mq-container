@@ -16,20 +16,18 @@
 
 set -e
 
-if [ ! -z $1 ]; then 
-    export ARCH=$1
+echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
+make test-devserver
+echo -en 'travis_fold:end:test-devserver\\r'
+if [ "$BUILD_ALL" = true ] ; then
+    echo 'Testing Production image...' && echo -en 'travis_fold:start:test-advancedserver\\r'
+    make test-advancedserver
+    echo -en 'travis_fold:end:test-advancedserver\\r'
 fi
-
-if [ "$ARCH" != "amd64" ] ; then
-    echo No developer image to push as we are not an amd64 build
-    exit 0
+echo 'Running gosec scan...' && echo -en 'travis_fold:start:gosec-scan\\r'
+if [ "$ARCH" = "amd64" ] ; then
+    make gosec
+else
+    echo "Gosec not available on ppc64le/s390x...skipping gosec scan"
 fi
-
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-    echo Not pushing as we are a pull request
-    exit 0
-fi
-
-echo 'Pushing Developer image...' && echo -en 'travis_fold:start:push-devserver\\r'
-make push-devserver
-echo -en 'travis_fold:end:push-devserver\\r'
+echo -en 'travis_fold:end:gosec-scan\\r'

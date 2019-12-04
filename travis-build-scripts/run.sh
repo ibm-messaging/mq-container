@@ -16,15 +16,21 @@
 
 set -e
 
-if [ ! -z $1 ]; then 
-    export ARCH=$1
+if [ "$(uname -m)" = "x86_64" ] ; then export ARCH="amd64" ; else export ARCH=$(uname -m) ; fi
+
+echo 'Downgrading Docker (if necessary)...' && echo -en 'travis_fold:start:docker-downgrade\\r'
+eval "$DOCKER_DOWNGRADE"
+echo -en 'travis_fold:end:docker-downgrade\\r'
+
+## Build images
+./travis-build-scripts/build.sh
+
+## Test images
+./travis-build-scripts/test.sh
+
+## Push images
+if [ "$BUILD_ALL" = true ] ; then
+    ./travis-build-scripts/push.sh developer
+    ./travis-build-scripts/push.sh production
 fi
 
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-    echo Not pushing as we are a pull request
-    exit 0
-fi
-
-echo 'Pushing Production image...' && echo -en 'travis_fold:start:push-advancedserver\\r'
-make push-advancedserver
-echo -en 'travis_fold:end:push-advancedserver\\r'

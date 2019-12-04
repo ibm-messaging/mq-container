@@ -37,47 +37,44 @@ jobs:
   include:
     - stage: build
       name: "Basic build"
-      if: branch != private-master
+      if: branch != private-master AND tag IS blank
       os: linux
       env:
-        - MQ_ARCHIVE_REPOSITORY=$MQ_914_ARCHIVE_REPOSITORY_AMD64
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_914_ARCHIVE_REPOSITORY_DEV_AMD64
-      script: bash -e build-scripts/build.sh
-    - if: branch = private-master
+      script: bash -e travis-build-scripts/run.sh
+    - if: branch = private-master OR tag =~ ^pre-release*
       name: "Multi-Arch AMD64 build"
       os: linux
       env:
         - BUILD_ALL=true
         - MQ_ARCHIVE_REPOSITORY=$MQ_914_ARCHIVE_REPOSITORY_AMD64
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_914_ARCHIVE_REPOSITORY_DEV_AMD64
-      script: bash -e build-scripts/build.sh
-    - if: branch = private-master
+      script: bash -e travis-build-scripts/run.sh
+    - if: branch = private-master OR tag =~ ^pre-release*
       name: "Multi-Arch PPC64LE build"
       os: linux-ppc64le
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=$MQ_914_ARCHIVE_REPOSITORY_PPC64LE
-      script: bash -e build-scripts/build.sh
-    - if: branch = private-master
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_914_ARCHIVE_REPOSITORY_DEV_PPC64LE
+      script: bash -e travis-build-scripts/run.sh
+    - if: branch = private-master OR tag =~ ^pre-release*
       name: "Multi-Arch S390X build"
       os: linux-s390
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=$MQ_914_ARCHIVE_REPOSITORY_S390X
-      script: bash -e build-scripts/build.sh
-    # - stage: deploy
-    #   name: "Pre-release deploy"
-    #   if: tag =~ ^pre-release*
-    #   deploy:
-    #     provider: script
-    #     script: bash -e build-scripts/release.sh staging
-    # - name: "Production release deploy"
-    #   if: tag =~ ^release-production*
-    #   deploy:
-    #     provider: script
-    #     script: bash -e build-scripts/release.sh production
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_914_ARCHIVE_REPOSITORY_DEV_S390X
+      script: bash -e travis-build-scripts/run.sh
+    - stage: deploy
+      name: "Pre-release deploy"
+      if: tag =~ ^pre-release*
+      script: bash -e travis-build-scripts/release.sh staging
+    - name: "Production release deploy"
+      if: tag =~ ^production-release*
+      script: bash -e travis-build-scripts/release.sh production
 
 before_install:
   - make install-build-deps
