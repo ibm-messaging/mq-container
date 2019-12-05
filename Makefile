@@ -132,8 +132,13 @@ else
 endif
 
 ifneq "$(RELEASE)" "$(EMPTY)"
+	MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server
+	MQ_IMAGE_DEVSERVER=ibm-mqadvanced-server-dev
+	MQ_TAG=$(MQ_VERSION)-$(RELEASE)-$(ARCH)
 	EXTRA_LABELS=--label release=$(RELEASE)
 endif
+MQ_IMAGE_FULL_RELEASE_NAME=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
+MQ_IMAGE_DEV_FULL_RELEASE_NAME=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
 
 ###############################################################################
 # Build targets
@@ -277,11 +282,7 @@ build-advancedserver-host: build-advancedserver
 .PHONY: build-advancedserver
 build-advancedserver: registry-login log-build-env downloads/$(MQ_ARCHIVE) command-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
-ifeq "$(RELEASE)" "$(EMPTY)"
 	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
-else
-	$(call build-mq,ibm-mqadvanced-server,$(MQ_VERSION)-$(RELEASE)-$(ARCH),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
-endif
 
 .PHONY: build-devserver-host
 build-devserver-host: build-devserver
@@ -289,11 +290,7 @@ build-devserver-host: build-devserver
 .PHONY: build-devserver
 build-devserver: registry-login log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version 
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
-ifeq "$(RELEASE)" "$(EMPTY)"
 	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
-else
-	$(call build-mq,ibm-mqadvanced-server-dev,$(MQ_VERSION)-$(RELEASE)-$(ARCH),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
-endif
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: registry-login command-version
