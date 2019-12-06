@@ -99,6 +99,9 @@ elif [ "$TYPE" = "production" ]; then
     ARCH=ppc64le make push-devserver-dockerhub
     ARCH=s390x make push-devserver-dockerhub
 
+    curl -LO https://github.com/estesp/manifest-tool/releases/download/v0.9.0/manifest-tool-linux-amd64
+    chmod a+x manifest-tool-linux-amd64
+
     docker login --username $MQ_DOCKERHUB_REGISTRY_USER --password $MQ_DOCKERHUB_REGISTRY_CREDENTIAL
     ./manifest-tool-linux-amd64 push from-spec manifests/dockerhub/$MANIFEST_FILE
     ./manifest-tool-linux-amd64 push from-spec manifests/dockerhub/manifest-latest.yaml
