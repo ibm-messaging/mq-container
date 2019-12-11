@@ -55,7 +55,7 @@ function set_staging_registry {
 
 function set_docker_hub {
     export MQ_DELIVERY_REGISTRY_HOSTNAME=ibmcom
-    export MQ_DELIVERY_REGISTRY_NAMESPACE=mq
+    export MQ_DELIVERY_REGISTRY_NAMESPACE=""
     export MQ_DELIVERY_REGISTRY_USER=$MQ_DOCKERHUB_REGISTRY_USER
     export MQ_DELIVERY_REGISTRY_CREDENTIAL=$MQ_DOCKERHUB_REGISTRY_CREDENTIAL
 }
@@ -95,9 +95,12 @@ elif [ "$TYPE" = "production" ]; then
     # release developer images with fat manifests
     set_docker_hub
 
-    ./travis-build-scripts/push.sh developer amd64
-    ./travis-build-scripts/push.sh developer ppc64le
-    ./travis-build-scripts/push.sh developer s390x
+    ARCH=amd64 make push-devserver-dockerhub
+    ARCH=ppc64le make push-devserver-dockerhub
+    ARCH=s390x make push-devserver-dockerhub
+
+    curl -LO https://github.com/estesp/manifest-tool/releases/download/v0.9.0/manifest-tool-linux-amd64
+    chmod a+x manifest-tool-linux-amd64
 
     docker login --username $MQ_DOCKERHUB_REGISTRY_USER --password $MQ_DOCKERHUB_REGISTRY_CREDENTIAL
     ./manifest-tool-linux-amd64 push from-spec manifests/dockerhub/$MANIFEST_FILE
@@ -105,9 +108,9 @@ elif [ "$TYPE" = "production" ]; then
 
     set_docker_store
 
-    ./travis-build-scripts/push.sh developer amd64
-    ./travis-build-scripts/push.sh developer ppc64le
-    ./travis-build-scripts/push.sh developer s390x
+    ARCH=amd64 make push-devserver-dockerhub
+    ARCH=ppc64le make push-devserver-dockerhub
+    ARCH=s390x make push-devserver-dockerhub
 
     docker login --username $MQ_DOCKERHUB_REGISTRY_USER --password $MQ_DOCKERHUB_REGISTRY_CREDENTIAL
     ./manifest-tool-linux-amd64 push from-spec manifests/dockerstore/$MANIFEST_FILE
