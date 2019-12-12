@@ -75,6 +75,29 @@ func TestLicenseView(t *testing.T) {
 	}
 }
 
+//Start a container with qm grace set to x seconds
+//Check that when the container is stopped that the command endmqm has option -tp and x
+func TestEndMQMOpts(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{"LICENSE=accept", "QMGRACEPERIOD=27"},
+	}
+
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	killContainer(t, cli, id, "SIGTERM")
+	_, out := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "ps -ef | grep 'endmqm -w -r -tp 27'"})
+	t.Log(out)
+	if !strings.Contains(out, "endmqm -w -r -tp 27") {
+		t.Errorf("Expected endmqm options endmqm -w -r -tp 27; got \"%v\"", out)
+	}
+}
+
 // TestGoldenPath starts a queue manager successfully when metrics are enabled
 func TestGoldenPathWithMetrics(t *testing.T) {
 	t.Parallel()

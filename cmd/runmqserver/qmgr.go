@@ -173,17 +173,18 @@ func configureQueueManager() error {
 
 func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
+	qmGracePeriod := os.Getenv("QMGRACEPERIOD")
 	isStandby, err := ready.IsRunningAsStandbyQM(name)
 	if err != nil {
 		log.Printf("Error getting status for queue manager %v: %v", name, err.Error())
 		return err
 	}
-	args := []string{"-w", "-r", name}
+	args := []string{"-w", "-r", "-tp", qmGracePeriod, name}
 	if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
 		if isStandby {
 			args = []string{"-x", name}
 		} else {
-			args = []string{"-s", "-w", "-r", name}
+			args = []string{"-s", "-w", "-r", "-tp", qmGracePeriod, name}
 		}
 	}
 	out, rc, err := command.Run("endmqm", args...)
