@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018,2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
 
 FROM ibmcom/ibmjava:jre
 
-ARG IPTFILE=ms81_2.1.0.4_amd64_linux_2.tar
+ARG IPTFILE=9.1.4.0-IBM-MQIPT-LinuxX64.tar.gz
 
 COPY $IPTFILE /opt/
 
 RUN rm -rf /var/lib/apt/lists/* \
   && cd /opt/ \
-  && tar xvf ./$IPTFILE \
+  && tar xvzf ./$IPTFILE \
   && chmod -R a-w /opt/mqipt
 
 ENV MQIPT_PATH=/opt/mqipt
