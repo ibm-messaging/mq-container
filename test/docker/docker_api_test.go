@@ -804,6 +804,187 @@ func TestInvalidMQSC(t *testing.T) {
 	expectTerminationMessage(t, cli, id)
 }
 
+func TestSimpleMQIniMerge(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		ADD test1.ini /etc/mqm/
+		RUN chmod 0660 /etc/mqm/test1.ini
+		USER mqm`, imageName())},
+		{"test1.ini",
+			"Log:\n   LogSecondaryFiles=28"},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
+	_, test := execContainer(t, cli, id, "mqm", []string{"bash", "-c", catIniFileCommand})
+	merged := strings.Contains(test, "LogSecondaryFiles=28")
+
+	if !merged {
+		t.Error("ERROR: The Files are not merged correctly")
+	}
+
+}
+func TestMultipleIniMerge(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		ADD test1.ini /etc/mqm/
+		ADD test2.ini /etc/mqm/
+		ADD test3.ini /etc/mqm/
+		RUN chmod 0660 /etc/mqm/test1.ini
+		RUN chmod 0660 /etc/mqm/test2.ini
+		RUN chmod 0660 /etc/mqm/test3.ini
+		USER mqm`, imageName())},
+		{"test1.ini",
+			"Log:\n LogSecondaryFiles=28"},
+		{"test2.ini",
+			"Log:\n LogSecondaryFiles=28"},
+		{"test3.ini",
+			"ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF"},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := container.Config{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Image: tag,
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
+	_, test := execContainer(t, cli, id, "mqm", []string{"bash", "-c", catIniFileCommand})
+
+	//checks that no duplicates are created by adding 2 ini files with the same line
+	numberOfDuplicates := strings.Count(test, "LogSecondaryFiles=28")
+
+	newStanza := strings.Contains(test, "ApplicationTrace:\n   ApplName=amqsact*")
+
+	if (numberOfDuplicates > 1) || !newStanza {
+		t.Error("ERROR: The Files are not merged correctly")
+	}
+}
+
+func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var filesFirstContainer = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		ADD test1.ini /etc/mqm/
+		RUN chmod 0660 /etc/mqm/test1.ini
+		USER mqm`, imageName())},
+		{"test1.ini",
+			"ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF"},
+	}
+	firstImage := createImage(t, cli, filesFirstContainer)
+	defer deleteImage(t, cli, firstImage)
+	vol := createVolume(t, cli, t.Name())
+	defer removeVolume(t, cli, vol.Name)
+
+	containerConfig := container.Config{
+		Image: firstImage,
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			vol.Name + ":/mnt/mqm",
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+	ctr1, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	startContainer(t, cli, ctr1.ID)
+	waitForReady(t, cli, ctr1.ID)
+
+	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
+	_, test := execContainer(t, cli, ctr1.ID, "mqm", []string{"bash", "-c", catIniFileCommand})
+	addedStanza := strings.Contains(test, "ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF")
+
+	if addedStanza != true {
+		t.Error("ERROR: The Files are not merged correctly")
+	}
+	// Delete the first container
+	cleanContainer(t, cli, ctr1.ID)
+
+	var filesSecondContainer = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		FROM %v
+		USER root
+		ADD test1.ini /etc/mqm/
+		RUN chmod 0660 /etc/mqm/test1.ini
+		USER mqm`, imageName())},
+		{"test1.ini",
+			"Log:\n   LogFilePages=5000"},
+	}
+
+	secondImage := createImage(t, cli, filesSecondContainer)
+	defer deleteImage(t, cli, secondImage)
+
+	containerConfig2 := container.Config{
+		Image: secondImage,
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+
+	ctr2, err := cli.ContainerCreate(context.Background(), &containerConfig2, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, ctr2.ID)
+	startContainer(t, cli, ctr2.ID)
+	waitForReady(t, cli, ctr2.ID)
+
+	_, test2 := execContainer(t, cli, ctr2.ID, "mqm", []string{"bash", "-c", catIniFileCommand})
+	changedStanza := strings.Contains(test2, "LogFilePages=5000")
+	//check if stanza that was merged in the first container doesnt exist in this one.
+	firstMergedStanza := strings.Contains(test2, "ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF")
+
+	if !changedStanza || firstMergedStanza {
+		t.Error("ERROR: The Files are not merged correctly after removing first container")
+	}
+
+}
+
 // TestReadiness creates a new image with large amounts of MQSC in, to
 // ensure that the readiness check doesn't pass until configuration has finished.
 // WARNING: This test is sensitive to the speed of the machine it's running on.

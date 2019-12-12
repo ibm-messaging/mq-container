@@ -228,7 +228,7 @@ func getQueueManagerDataDir(mounts map[string]string, name string) string {
 }
 
 func getCreateQueueManagerArgs(mounts map[string]string, name string) []string {
-	args := []string{"-q", "-p", "1414"}
+	args := []string{"-ii", "/etc/mqm/", "-q", "-p", "1414"}
 	if _, ok := mounts["/mnt/mqm-log"]; ok {
 		args = append(args, "-ld", "/mnt/mqm-log/log")
 	}
