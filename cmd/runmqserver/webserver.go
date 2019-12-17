@@ -31,7 +31,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
-func startWebServer(keystore, keystorepw, p12TrustStoreRef string) error {
+func startWebServer(webKeystore, webkeystorePW, webTruststoreRef string) error {
 	_, err := os.Stat("/opt/mqm/bin/strmqweb")
 	if err != nil && os.IsNotExist(err) {
 		log.Debug("Skipping web server, because it's not installed")
@@ -50,10 +50,10 @@ func startWebServer(keystore, keystorepw, p12TrustStoreRef string) error {
 	}
 
 	// TLS enabled
-	if keystore != "" {
-		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTORE="+keystore)
-		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTOREPW="+keystorepw)
-		cmd.Env = append(cmd.Env, "AMQ_WEBTRUSTSTOREREF="+p12TrustStoreRef)
+	if webKeystore != "" {
+		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTORE="+webKeystore)
+		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTOREPW="+webkeystorePW)
+		cmd.Env = append(cmd.Env, "AMQ_WEBTRUSTSTOREREF="+webTruststoreRef)
 	}
 
 	uid, gid, err := command.LookupMQM()
@@ -119,50 +119,53 @@ func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
 	}
 
 	// Configure SSO TLS
-	return configureWebKeyStore(p12TrustStore)
+	return tls.ConfigureWebKeystore(p12TrustStore)
 }
 
-func configureWebServer(keyLabel string, p12Trust tls.KeyStoreData) (string, error) {
-	var keystore string
+func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string, error) {
+	var webKeystore string
 
 	// Configure TLS for Web Console first if we have a certificate to use
-	err := configureWebTLS(keyLabel)
+	err := tls.ConfigureWebTLS(keyLabel)
 	if err != nil {
-		return keystore, err
+		return "", err
 	}
 	if keyLabel != "" {
-		keystore = keyLabel + ".p12"
+		webKeystore = keyLabel + ".p12"
 	}
 
 	// Configure Single-Sign-On for the web server (if enabled)
 	enableSSO := os.Getenv("MQ_BETA_ENABLE_SSO")
 	if enableSSO == "true" || enableSSO == "1" {
-		keystore, err = configureSSO(p12Trust)
+		webKeystore, err = configureSSO(p12Truststore)
 		if err != nil {
-			return keystore, err
+			return "", err
 		}
 	} else if keyLabel == "" && os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") != "" {
-		keystore, err = configureWebKeyStore(p12Trust)
+		webKeystore, err = tls.ConfigureWebKeystore(p12Truststore)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	_, err = os.Stat("/opt/mqm/bin/strmqweb")
 	if err != nil {
 		if os.IsNotExist(err) {
-			return keystore, nil
+			return "", nil
 		}
-		return keystore, err
+		return "", err
 	}
 	const webConfigDir string = "/etc/mqm/web"
 	_, err = os.Stat(webConfigDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return keystore, nil
+			return "", nil
 		}
-		return keystore, err
+		return "", err
 	}
 	uid, gid, err := command.LookupMQM()
 	if err != nil {
-		return keystore, err
+		return "", err
 	}
 	const prefix string = "/etc/mqm/web"
 	err = filepath.Walk(prefix, func(from string, info os.FileInfo, err error) error {
@@ -206,5 +209,6 @@ func configureWebServer(keyLabel string, p12Trust tls.KeyStoreData) (string, err
 		}
 		return nil
 	})
-	return keystore, err
+
+	return webKeystore, err
 }

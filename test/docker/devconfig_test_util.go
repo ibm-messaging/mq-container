@@ -82,7 +82,7 @@ func tlsDir(t *testing.T, unixPath bool) string {
 // runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID
 func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, password string) {
 	containerConfig := container.Config{
-		// -e MQ_PORT_1414_TCP_ADDR=9.145.14.173 -e MQ_USERNAME=app -e MQ_PASSWORD=passw0rd -e MQ_CHANNEL=DEV.APP.SVRCONN -e MQ_TLS_KEYSTORE=/tls/test.p12 -e MQ_TLS_PASSPHRASE=passw0rd -v /Users/arthurbarr/go/src/github.com/ibm-messaging/mq-container/test/tls:/tls msgtest
+		// -e MQ_PORT_1414_TCP_ADDR=9.145.14.173 -e MQ_USERNAME=app -e MQ_PASSWORD=passw0rd -e MQ_CHANNEL=DEV.APP.SVRCONN -e MQ_TLS_TRUSTSTORE=/tls/test.p12 -e MQ_TLS_PASSPHRASE=passw0rd -v /Users/arthurbarr/go/src/github.com/ibm-messaging/mq-container/test/tls:/tls msgtest
 		Env: []string{
 			"MQ_PORT_1414_TCP_ADDR=" + getIPAddress(t, cli, ID),
 			"MQ_USERNAME=" + user,

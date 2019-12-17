@@ -22,23 +22,23 @@ import (
 )
 
 // postInit is run after /var/mqm is set up
-func postInit(name, keylabel string, p12Trust tls.KeyStoreData) error {
+func postInit(name, keyLabel string, p12Truststore tls.KeyStoreData) error {
 	enableWebServer := os.Getenv("MQ_ENABLE_EMBEDDED_WEB_SERVER")
 	if enableWebServer == "true" || enableWebServer == "1" {
 		// Configure the web server (if enabled)
-		keystore, err := configureWebServer(keylabel, p12Trust)
+		webKeystore, err := configureWebServer(keyLabel, p12Truststore)
 		if err != nil {
 			return err
 		}
-		// If trust-store is empty, set reference to point to the key-store
-		p12TrustStoreRef := "MQWebTrustStore"
-		if len(p12Trust.TrustedCerts) == 0 {
-			p12TrustStoreRef = "MQWebKeyStore"
+		// If trust-store is empty, set reference to point to the keystore
+		webTruststoreRef := "MQWebTrustStore"
+		if len(p12Truststore.TrustedCerts) == 0 {
+			webTruststoreRef = "MQWebKeyStore"
 		}
 		// Start the web server, in the background (if installed)
 		// WARNING: No error handling or health checking available for the web server
 		go func() {
-			err = startWebServer(keystore, p12Trust.Password, p12TrustStoreRef)
+			err = startWebServer(webKeystore, p12Truststore.Password, webTruststoreRef)
 			if err != nil {
 				log.Printf("Error starting web server: %v", err)
 			}

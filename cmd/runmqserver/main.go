@@ -126,19 +126,19 @@ func doMain() error {
 	// Print out versioning information
 	logVersionInfo()
 
-	keylabel, cmsDB, p12Trust, _, err := tls.ConfigureTLSKeystores(keyDir, trustDir, keyStoreDir)
+	keyLabel, cmsKeystore, p12Truststore, err := tls.ConfigureTLSKeystores()
 	if err != nil {
 		logTermination(err)
 		return err
 	}
 
-	err = configureTLS(keylabel, cmsDB, *devFlag)
+	err = tls.ConfigureTLS(keyLabel, cmsKeystore, *devFlag, log)
 	if err != nil {
 		logTermination(err)
 		return err
 	}
 
-	err = postInit(name, keylabel, p12Trust)
+	err = postInit(name, keyLabel, p12Truststore)
 	if err != nil {
 		logTermination(err)
 		return err

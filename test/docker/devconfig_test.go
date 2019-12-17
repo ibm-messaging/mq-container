@@ -81,8 +81,6 @@ func TestDevSecure(t *testing.T) {
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qm,
 			"MQ_APP_PASSWORD=" + appPassword,
-			"MQ_TLS_KEYSTORE=/var/tls/server.p12",
-			"MQ_TLS_PASSPHRASE=" + tlsPassPhrase,
 			"DEBUG=1",
 		},
 		Image: imageName(),
@@ -90,7 +88,7 @@ func TestDevSecure(t *testing.T) {
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
-			tlsDir(t, false) + ":/var/tls",
+			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 		// Assign a random port for the web server on the host
 		// TODO: Don't do this for all tests
