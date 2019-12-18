@@ -173,7 +173,7 @@ func configureQueueManager() error {
 
 func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
-	qmGracePeriod := os.Getenv("QMGRACEPERIOD")
+	qmGracePeriod := os.Getenv("MQ_GRACE_PERIOD")
 	isStandby, err := ready.IsRunningAsStandbyQM(name)
 	if err != nil {
 		log.Printf("Error getting status for queue manager %v: %v", name, err.Error())

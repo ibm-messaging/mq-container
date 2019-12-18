@@ -99,7 +99,7 @@ RUN chmod ug+x /usr/local/bin/runmqserver \
   && chmod 0660 /run/termination-log
 # Always use port 1414 for MQ & 9157 for the metrics
 EXPOSE 1414 9157 9443
-ENV QMGRACEPERIOD=30
+ENV MQ_GRACE_PERIOD=30
 ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1 LOG_FORMAT=basic
 USER $MQM_UID
 ENTRYPOINT ["runmqserver"]

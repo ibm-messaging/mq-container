@@ -84,7 +84,7 @@ func TestEndMQMOpts(t *testing.T) {
 		t.Fatal(err)
 	}
 	containerConfig := container.Config{
-		Env: []string{"LICENSE=accept", "QMGRACEPERIOD=27"},
+		Env: []string{"LICENSE=accept", "MQ_GRACE_PERIOD=27"},
 	}
 
 	id := runContainer(t, cli, &containerConfig)
