@@ -402,7 +402,8 @@ lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
 	golint -set_exit_status $(sort $(dir $(wildcard $(addsuffix /*/*.go, $(GO_PKG_DIRS)))))
 
 .PHONY: gosec
-gosec: $(info $(SPACER)$(shell printf "Running gosec test"$(END)))
+gosec: 
+	$(info $(SPACER)$(shell printf "Running gosec test"$(END)))
 	@gosec -fmt=json -out=gosec_results.json cmd/... internal/... 2> /dev/null ;\
 	cat "gosec_results.json" ;\
 	cat gosec_results.json | grep HIGH | grep severity > /dev/null ;\
