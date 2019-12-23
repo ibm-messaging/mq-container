@@ -60,13 +60,6 @@ function set_docker_hub {
     export MQ_DELIVERY_REGISTRY_CREDENTIAL=$MQ_DOCKERHUB_REGISTRY_CREDENTIAL
 }
 
-function set_docker_store {
-    export MQ_DELIVERY_REGISTRY_HOSTNAME=ibmcorp
-    export MQ_DELIVERY_REGISTRY_NAMESPACE=""
-    export MQ_DELIVERY_REGISTRY_USER=$MQ_DOCKERHUB_REGISTRY_USER
-    export MQ_DELIVERY_REGISTRY_CREDENTIAL=$MQ_DOCKERHUB_REGISTRY_CREDENTIAL
-}
-
 function set_production_registry {
     export MQ_DELIVERY_REGISTRY_HOSTNAME=$MQ_PRODUCTION_REGISTRY
     export MQ_DELIVERY_REGISTRY_NAMESPACE=""
@@ -92,7 +85,7 @@ elif [ "$TYPE" = "production" ]; then
     ARCH=ppc64le make pull-advancedserver
     ARCH=s390x make pull-advancedserver
 
-    # release developer images with fat manifests
+    # release developer image with fat manifest
     set_docker_hub
 
     ARCH=amd64 make push-devserver-dockerhub
@@ -105,15 +98,6 @@ elif [ "$TYPE" = "production" ]; then
     docker login --username $MQ_DOCKERHUB_REGISTRY_USER --password $MQ_DOCKERHUB_REGISTRY_CREDENTIAL
     ./manifest-tool-linux-amd64 push from-spec manifests/dockerhub/$MANIFEST_FILE
     ./manifest-tool-linux-amd64 push from-spec manifests/dockerhub/manifest-latest.yaml
-
-    set_docker_store
-
-    ARCH=amd64 make push-devserver-dockerhub
-    ARCH=ppc64le make push-devserver-dockerhub
-    ARCH=s390x make push-devserver-dockerhub
-
-    docker login --username $MQ_DOCKERHUB_REGISTRY_USER --password $MQ_DOCKERHUB_REGISTRY_CREDENTIAL
-    ./manifest-tool-linux-amd64 push from-spec manifests/dockerstore/$MANIFEST_FILE
 
     # release production image
     set_production_registry
