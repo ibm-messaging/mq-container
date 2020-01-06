@@ -21,7 +21,7 @@ FROM registry.redhat.io/rhel8/go-toolset:1.12.8-11 as builder
 # FROM docker.io/centos/go-toolset-7-centos7 as builder
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ RPM install packages
-ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev912_linux_x86-64.tar.gz"
+ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev914_linux_x86-64.tar.gz"
 ARG IMAGE_REVISION="Not specified"
 ARG IMAGE_SOURCE="Not specified"
 ARG IMAGE_TAG="Not specified"
