@@ -26,8 +26,6 @@ import (
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
-	"github.com/ibm-messaging/mq-container/internal/copy"
-	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
