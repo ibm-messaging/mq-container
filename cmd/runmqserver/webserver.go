@@ -86,7 +86,6 @@ func startWebServer(webKeystore, webkeystorePW, webTruststoreRef string) error {
 func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
 	// Ensure all required environment variables are set for SSO
 	requiredEnvVars := []string{
-		"MQ_WEB_ADMIN_USERS",
 		"MQ_OIDC_CLIENT_ID",
 		"MQ_OIDC_CLIENT_SECRET",
 		"MQ_OIDC_UNIQUE_USER_IDENTIFIER",
@@ -108,13 +107,6 @@ func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
 		if os.IsNotExist(err) {
 			return "", nil
 		}
-		return "", err
-	}
-
-	// Process SSO template for generating file mqwebuser.xml
-	adminUsers := strings.Split(os.Getenv("MQ_WEB_ADMIN_USERS"), "\n")
-	err = mqtemplate.ProcessTemplateFile(mqwebDir+"/mqwebuser.xml.tpl", mqwebDir+"/mqwebuser.xml", map[string][]string{"AdminUser": adminUsers}, log)
-	if err != nil {
 		return "", err
 	}
 
