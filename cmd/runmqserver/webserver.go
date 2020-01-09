@@ -111,8 +111,6 @@ func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
 	}
 
 	// Process SSO template for generating file mqwebuser.xml
-	/* The variable adminUsers is expected to have a empty string as we are no longer 
-	passing any value in the charts */
 	adminUsers := strings.Split(os.Getenv("MQ_WEB_ADMIN_USERS"), "\n")
 	err = mqtemplate.ProcessTemplateFile(mqwebDir+"/mqwebuser.xml.tpl", mqwebDir+"/mqwebuser.xml", map[string][]string{"AdminUser": adminUsers}, log)
 	if err != nil {
