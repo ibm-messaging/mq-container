@@ -176,11 +176,29 @@ func doMain() error {
 		return err
 	}
 
+	enableTraceStrmqm := os.Getenv("MQ_ENABLE_TRACE_STRMQM")
+	if enableTraceStrmqm == "true" || enableTraceStrmqm == "1" {
+		err = startMQTrace()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+
 	err = startQueueManager(name)
 	if err != nil {
 		logTermination(err)
 		return err
 	}
+
+	if enableTraceStrmqm == "true" || enableTraceStrmqm == "1" {
+		err = endMQTrace()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+
 	if standby, _ := ready.IsRunningAsStandbyQM(name); !standby {
 		err = configureQueueManager()
 		if err != nil {

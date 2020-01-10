@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dist: xenial
+# Temporarily removing dist tag as not supported by power build
+# dist: xenial
 
 sudo: required
 language: go
