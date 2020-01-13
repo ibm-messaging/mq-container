@@ -1366,3 +1366,27 @@ func TestVersioning(t *testing.T) {
 
 	}
 }
+
+func TestTraceStrmqm(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_ENABLE_TRACE_STRMQM=1",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	rc, _ := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "ls -A /var/mqm/trace | grep .TRC"})
+	if rc != 0 {
+		t.Fatalf("No trace files found in trace directory /var/mqm/trace. RC=%d.", rc)
+	}
+}

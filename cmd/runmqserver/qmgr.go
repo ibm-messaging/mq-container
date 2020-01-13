@@ -199,6 +199,28 @@ func stopQueueManager(name string) error {
 	return nil
 }
 
+func startMQTrace() error {
+	log.Println("Starting MQ trace")
+	out, rc, err := command.Run("strmqtrc")
+	if err != nil {
+		log.Printf("Error %v starting trace: %v", rc, string(out))
+		return err
+	}
+	log.Println("Started MQ trace")
+	return nil
+}
+
+func endMQTrace() error {
+	log.Println("Ending MQ Trace")
+	out, rc, err := command.Run("endmqtrc")
+	if err != nil {
+		log.Printf("Error %v ending trace: %v", rc, string(out))
+		return err
+	}
+	log.Println("Ended MQ trace")
+	return nil
+}
+
 func formatMQSCOutput(out string) string {
 	// redact sensitive information
 	out, _ = mqscredact.Redact(out)
