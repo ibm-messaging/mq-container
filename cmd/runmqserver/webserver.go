@@ -86,7 +86,6 @@ func startWebServer(webKeystore, webkeystorePW, webTruststoreRef string) error {
 func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
 	// Ensure all required environment variables are set for SSO
 	requiredEnvVars := []string{
-		"MQ_WEB_ADMIN_USERS",
 		"MQ_OIDC_CLIENT_ID",
 		"MQ_OIDC_CLIENT_SECRET",
 		"MQ_OIDC_UNIQUE_USER_IDENTIFIER",
