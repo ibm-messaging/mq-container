@@ -79,6 +79,7 @@ jobs:
 
 before_install:
   - make install-build-deps
+  - make install-credential-helper
 
 install:
   - echo nothing

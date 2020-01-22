@@ -383,6 +383,12 @@ clean:
 install-build-deps:
 	ARCH=$(ARCH) ./install-build-deps.sh
 
+.PHONY: install-credential-helper
+install-credential-helper:	
+ifneq ($(ARCH),ppc64le)
+	ARCH=$(ARCH) ./travis-build-scripts/install-credential-helper.sh
+endif
+
 .PHONY: build-cov
 build-cov:
 	mkdir -p build
