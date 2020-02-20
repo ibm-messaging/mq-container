@@ -40,9 +40,9 @@ MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
 # MQ_IMAGE_ADVANCEDSERVER is the name of the built MQ Advanced image
-MQ_IMAGE_ADVANCEDSERVER ?=mqadvanced-server
+MQ_IMAGE_ADVANCEDSERVER ?=ibm-mqadvanced-server
 # MQ_IMAGE_DEVSERVER is the name of the built MQ Advanced for Developers image
-MQ_IMAGE_DEVSERVER ?=mqadvanced-server-dev
+MQ_IMAGE_DEVSERVER ?=ibm-mqadvanced-server-dev
 # MQ_TAG is the tag of the built MQ Advanced image & MQ Advanced for Developers image
 MQ_TAG ?=$(MQ_VERSION)-$(ARCH)
 # MQ_PACKAGES specifies the MQ packages (.deb or .rpm) to install.  Defaults vary on base image.
@@ -124,8 +124,6 @@ else
 endif
 
 ifneq "$(RELEASE)" "$(EMPTY)"
-	MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server
-	MQ_IMAGE_DEVSERVER=ibm-mqadvanced-server-dev
 	MQ_TAG=$(MQ_VERSION)-$(RELEASE)-$(ARCH)
 	EXTRA_LABELS=--label release=$(RELEASE)
 endif
@@ -134,8 +132,6 @@ MQ_IMAGE_DEV_FULL_RELEASE_NAME=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
 
 ifeq "$(MQ_DELIVERY_REGISTRY_HOSTNAME)" "ibmcom"
 	MQ_IMAGE_DEVSERVER_DOCKERHUB=mq
-else ifeq "$(MQ_DELIVERY_REGISTRY_HOSTNAME)" "ibmcorp"
-	MQ_IMAGE_DEVSERVER_DOCKERHUB=mqadvanced-server-dev
 endif
 
 ###############################################################################
