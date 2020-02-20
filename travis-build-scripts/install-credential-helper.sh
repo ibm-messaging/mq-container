@@ -25,7 +25,6 @@ git clone https://github.com/docker/docker-credential-helpers
 cd docker-credential-helpers
 make pass 
 cp bin/docker-credential-pass $GOPATH/bin/docker-credential-pass
-
 mkdir -p /home/travis/.docker
 echo '{ "credsStore": "pass" }' | tee /home/travis/.docker/config.json
 gpg --batch --gen-key <<-EOF

@@ -385,7 +385,7 @@ install-build-deps:
 
 .PHONY: install-credential-helper
 install-credential-helper:	
-ifneq ($(ARCH),ppc64le)
+ifeq ($(ARCH),amd64)
 	ARCH=$(ARCH) ./travis-build-scripts/install-credential-helper.sh
 endif
 
