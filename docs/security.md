@@ -33,7 +33,3 @@ docker run \
   --detach \
   ibm-mqadvanced-server-dev:9.1.4.0-amd64
 ```
-
-### SELinux
-
-The SELinux label "spc_t" (super-privileged container) is needed to run the MQ container on a host with SELinux enabled.  This is due to a current limitation in how MQ data is stored on volumes, which violates the usual policy applied when using the standard "container_t" label.
