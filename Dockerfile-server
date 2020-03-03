@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2019
+# © Copyright IBM Corporation 2015, 2020
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=registry.redhat.io/ubi8/ubi-minimal
-ARG BASE_TAG=8.1-279
+ARG BASE_TAG=8.1-398
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
-FROM registry.redhat.io/rhel8/go-toolset:1.12.8-11 as builder
+FROM registry.redhat.io/ubi8/go-toolset:1.12.8-32 as builder
 # FROM docker.io/centos/go-toolset-7-centos7 as builder
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ RPM install packages
