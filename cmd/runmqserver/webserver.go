@@ -19,13 +19,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
-	"strconv"
 	"strings"
-	"syscall"
 
-	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/copy"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/tls"
@@ -54,24 +50,6 @@ func startWebServer(webKeystore, webkeystorePW, webTruststoreRef string) error {
 		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTORE="+webKeystore)
 		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTOREPW="+webkeystorePW)
 		cmd.Env = append(cmd.Env, "AMQ_WEBTRUSTSTOREREF="+webTruststoreRef)
-	}
-
-	uid, gid, err := command.LookupMQM()
-	if err != nil {
-		return err
-	}
-	u, err := user.Current()
-	if err != nil {
-		return err
-	}
-	currentUID, err := strconv.Atoi(u.Uid)
-	if err != nil {
-		return fmt.Errorf("Error converting UID to string: %v", err)
-	}
-	// Add credentials to run as 'mqm', only if we aren't already 'mqm'
-	if currentUID != uid {
-		cmd.SysProcAttr = &syscall.SysProcAttr{}
-		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
 	}
 	out, err := cmd.CombinedOutput()
 	rc := cmd.ProcessState.ExitCode()
@@ -162,10 +140,6 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 		}
 		return "", err
 	}
-	uid, gid, err := command.LookupMQM()
-	if err != nil {
-		return "", err
-	}
 	const prefix string = "/etc/mqm/web"
 	err = filepath.Walk(prefix, func(from string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -201,10 +175,6 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 				log.Error(err)
 				return err
 			}
-		}
-		err = os.Chown(to, uid, gid)
-		if err != nil {
-			return err
 		}
 		return nil
 	})

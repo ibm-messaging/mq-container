@@ -25,12 +25,13 @@ ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messa
 ARG IMAGE_REVISION="Not specified"
 ARG IMAGE_SOURCE="Not specified"
 ARG IMAGE_TAG="Not specified"
-ARG MQM_UID=888
 USER 0
 COPY install-mq.sh /usr/local/bin/
-RUN chmod a+x /usr/local/bin/install-mq.sh \
+RUN mkdir /opt/mqm \
+  && chmod a+x /usr/local/bin/install-mq.sh \
   && sleep 1 \
-  && MQ_PACKAGES="MQSeriesRuntime-*.rpm MQSeriesSDK-*.rpm MQSeriesSamples*.rpm" install-mq.sh $MQM_UID
+  && install-mq.sh \
+  && chown -R 1001:root /opt/mqm/*
 WORKDIR /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
 COPY internal/ ./internal
@@ -59,7 +60,6 @@ FROM $BASE_IMAGE:$BASE_TAG AS mq-server
 ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev914_linux_x86-64.tar.gz"
 ARG MQ_PACKAGES="MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesWeb*.rpm MQSeriesAMS-*.rpm"
 #ARG MQ_PACKAGES="ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-web ibmmq-ams"
-ARG MQM_UID=888
 ARG BASE_IMAGE
 ARG BASE_TAG
 LABEL summary="IBM MQ Advanced Server"
@@ -76,13 +76,17 @@ LABEL base-image-release=$BASE_TAG
 COPY install-mq.sh /usr/local/bin/
 COPY install-mq-server-prereqs.sh /usr/local/bin/
 # Install MQ.  To avoid a "text file busy" error here, we sleep before installing.
-RUN env && chmod u+x /usr/local/bin/install-*.sh \
+RUN env \
+  && mkdir /opt/mqm \
+  && chmod u+x /usr/local/bin/install-*.sh \
   && sleep 1 \
-  && install-mq-server-prereqs.sh $MQM_UID \
-  && install-mq.sh $MQM_UID
+  && install-mq-server-prereqs.sh \
+  && install-mq.sh \
+  && /opt/mqm/bin/security/amqpamcf \
+  && chown -R 1001:root /opt/mqm/*
 # Create a directory for runtime data from runmqserver
 RUN mkdir -p /run/runmqserver \
-  && chown mqm:mqm /run/runmqserver
+  && chown 1001:root /run/runmqserver
 COPY --from=builder /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/runmqserver /usr/local/bin/
 COPY --from=builder /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/chkmq* /usr/local/bin/
 COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
@@ -90,31 +94,30 @@ COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
 COPY web /etc/mqm/web
 COPY etc/mqm/*.tpl /etc/mqm/
 RUN chmod ug+x /usr/local/bin/runmqserver \
-  && chown mqm:mqm /usr/local/bin/*mq* \
+  && chown 1001:root /usr/local/bin/*mq* \
   && chmod ug+xs /usr/local/bin/chkmq* \
-  && chown -R mqm:mqm /etc/mqm/* \
-  && install --directory --mode 0775 --owner mqm --group root /run/runmqserver \
+  && chown -R 1001:root /etc/mqm/* \
+  && install --directory --mode 0775 --owner 1001 --group root /run/runmqserver \
   && touch /run/termination-log \
-  && chown mqm:root /run/termination-log \
+  && chown 1001:root /run/termination-log \
   && chmod 0660 /run/termination-log
 # Always use port 1414 for MQ & 9157 for the metrics
 EXPOSE 1414 9157 9443
+ENV MQ_OVERRIDE_DATA_PATH=/mnt/mqm/data MQ_INSTALLATION_NAME=Installation1 MQ_USER_NAME="mqm" PATH="${PATH}:/opt/mqm/bin"
 ENV MQ_GRACE_PERIOD=30
 ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1 LOG_FORMAT=basic
-USER $MQM_UID
+# We can run as any UID
+USER 1001
 ENTRYPOINT ["runmqserver"]
 
 ###############################################################################
 # Add default developer config
 ###############################################################################
 FROM mq-server AS mq-dev-server
-ARG MQM_UID=888
 ARG BASE_IMAGE
 ARG BASE_TAG
 # Enable MQ developer default configuration
 ENV MQ_DEV=true
-# Default administrator password
-ENV MQ_ADMIN_PASSWORD=passw0rd
 LABEL summary="IBM MQ Advanced for Developers Server"
 LABEL description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
 LABEL vendor="IBM"
@@ -131,25 +134,17 @@ COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
 RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
   && sleep 1 \
   && install-extra-packages.sh
-# WARNING: This is what allows the mqm user to change the password of any other user
-# It's used by runmqdevserver to change the admin/app passwords.
-RUN echo "mqm    ALL = NOPASSWD: /usr/sbin/chpasswd" > /etc/sudoers.d/mq-dev-config
-## Add admin and app users, and set a default password for admin
-RUN useradd admin -G mqm \
-  && groupadd mqclient \
-  && useradd app -G mqclient \
-  && echo admin:$MQ_ADMIN_PASSWORD | chpasswd
 # Create a directory for runtime data from runmqserver
 RUN mkdir -p /run/runmqdevserver \
-  && chown mqm:mqm /run/runmqdevserver
+  && chown 1001:root /run/runmqdevserver
 COPY --from=builder /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/runmqdevserver /usr/local/bin/
 # Copy template files
 COPY incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
 # Copy web XML files for default developer configuration
 COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
-RUN chown -R mqm:mqm /etc/mqm/* \
+RUN chown -R 1001:root /etc/mqm/* \
   && chmod +x /usr/local/bin/runmq* \
-  && install --directory --mode 0775 --owner mqm --group root /run/runmqdevserver
+  && install --directory --mode 0775 --owner 1001 --group root /run/runmqdevserver
 ENV MQ_ENABLE_EMBEDDED_WEB_SERVER=1 MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost
-USER $MQM_UID
+USER 1001
 ENTRYPOINT ["runmqdevserver"]

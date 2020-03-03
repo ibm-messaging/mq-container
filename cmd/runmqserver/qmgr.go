@@ -32,10 +32,14 @@ import (
 
 // createDirStructure creates the default MQ directory structure under /var/mqm
 func createDirStructure() error {
-	out, _, err := command.Run("/opt/mqm/bin/crtmqdir", "-f", "-a")
+	out, rc, err := command.Run("/opt/mqm/bin/crtmqdir", "-f", "-a")
 	if err != nil {
-		log.Printf("Error creating directory structure: %v\n", string(out))
-		return err
+		if rc == 10 {
+			log.Printf("Warning creating directory structure: %v\n", string(out))
+		} else {
+			log.Printf("Error creating directory structure: %v\n", string(out))
+			return err
+		}
 	}
 	log.Println("Created directory structure under /var/mqm")
 	return nil

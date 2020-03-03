@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/keystore"
 )
 
@@ -50,14 +49,6 @@ func ConfigureWebTLS(keyLabel string) error {
 	err = os.Symlink(newTLSConfig, tlsConfig)
 	if err != nil {
 		return fmt.Errorf("Failed to create symlink %s->%s: %v", newTLSConfig, tlsConfig, err)
-	}
-	mqmUID, mqmGID, err := command.LookupMQM()
-	if err != nil {
-		return fmt.Errorf("Failed to find mqm user or group: %v", err)
-	}
-	err = os.Chown(tlsConfig, mqmUID, mqmGID)
-	if err != nil {
-		return fmt.Errorf("Failed to change ownership of %s to mqm: %v", tlsConfig, err)
 	}
 
 	return nil

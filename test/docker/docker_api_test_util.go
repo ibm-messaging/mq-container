@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2019
+© Copyright IBM Corporation 2017, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -259,6 +260,13 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	}
 }
 
+func generateRandomUID() string {
+	rand.Seed(time.Now().UnixNano())
+	min := 1000
+	max := 9999
+	return fmt.Sprint(rand.Intn(max-min) + min)
+}
+
 // runContainerWithPorts creates and starts a container, exposing the specified ports on the host.
 // If no image is specified in the container config, then the image name is retrieved from the TEST_IMAGE
 // environment variable.
@@ -266,9 +274,9 @@ func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *co
 	if containerConfig.Image == "" {
 		containerConfig.Image = imageName()
 	}
-	// Always run as the "mqm" user, unless the test has specified otherwise
+	// Always run as a random user, unless the test has specified otherwise
 	if containerConfig.User == "" {
-		containerConfig.User = "mqm"
+		containerConfig.User = generateRandomUID()
 	}
 	// if coverage
 	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
@@ -281,15 +289,9 @@ func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *co
 		CapDrop: []string{
 			"ALL",
 		},
+		Privileged: false,
 	}
 	if devImage(t, cli) {
-		t.Logf("Detected MQ Advanced for Developers image — adding extra Linux capabilities to container")
-		hostConfig.CapAdd = []string{
-			"CHOWN",
-			"SETUID",
-			"SETGID",
-			"AUDIT_WRITE",
-		}
 		// Only needed for a RHEL-based image
 		if baseImage(t, cli) != "ubuntu" {
 			hostConfig.CapAdd = append(hostConfig.CapAdd, "DAC_OVERRIDE")
@@ -592,13 +594,15 @@ func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd
 }
 
 func waitForReady(t *testing.T, cli *client.Client, ID string) {
+
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	for {
 		select {
 		case <-time.After(1 * time.Second):
-			rc, _ := execContainer(t, cli, ID, "mqm", []string{"chkmqready"})
+			rc, _ := execContainer(t, cli, ID, "", []string{"chkmqready"})
+
 			if rc == 0 {
 				t.Log("MQ is ready")
 				return

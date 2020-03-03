@@ -286,12 +286,12 @@ func TestQMRestart(t *testing.T) {
 
 	// Restart just the QM (to simulate a lost connection)
 	t.Log("Stopping queue manager\n")
-	rc, out := execContainer(t, cli, id, "mqm", []string{"endmqm", "-w", "-r", defaultMetricQMName})
+	rc, out := execContainer(t, cli, id, "", []string{"endmqm", "-w", "-r", defaultMetricQMName})
 	if rc != 0 {
 		t.Fatalf("Failed to stop the queue manager. rc=%d, err=%s", rc, out)
 	}
 	t.Log("starting queue manager\n")
-	rc, out = execContainer(t, cli, id, "mqm", []string{"strmqm", defaultMetricQMName})
+	rc, out = execContainer(t, cli, id, "", []string{"strmqm", defaultMetricQMName})
 	if rc != 0 {
 		t.Fatalf("Failed to start the queue manager. rc=%d, err=%s", rc, out)
 	}

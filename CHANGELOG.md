@@ -1,5 +1,10 @@
 # Change log
 
+## 9.1.5.0 (2020-04-02)
+
+* Updated to MQ version 9.1.5.0
+* Can now run as a random user, instead of the "mqm" user, which has now been removed. This adds compatability for the [Red Hat OpenShift restricted SCC](https://docs.openshift.com/container-platform/4.3/authentication/managing-security-context-constraints.html#security-context-constraints-about_configuring-internal-oauth). The default image UID is `1001`.
+
 ## 9.1.4.0 (2019-12-06)
 
 * Updated to MQ version 9.1.4.0

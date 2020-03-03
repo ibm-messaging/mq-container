@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,9 +20,6 @@ package command
 import (
 	"fmt"
 	"os/exec"
-	"os/user"
-	"strconv"
-	"syscall"
 )
 
 // Run runs an OS command.  On Linux it waits for the command to
@@ -39,34 +36,4 @@ func Run(name string, arg ...string) (string, int, error) {
 		return string(out), rc, fmt.Errorf("%v: %v", cmd.Path, err)
 	}
 	return string(out), rc, nil
-}
-
-// RunAsMQM runs the specified command as the mqm user
-func RunAsMQM(name string, arg ...string) (string, int, error) {
-	// #nosec G204
-	cmd := exec.Command(name, arg...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{}
-	uid, gid, err := LookupMQM()
-	if err != nil {
-		return "", 0, err
-	}
-	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
-	return Run(name, arg...)
-}
-
-// LookupMQM looks up the UID & GID of the mqm user
-func LookupMQM() (int, int, error) {
-	mqm, err := user.Lookup("mqm")
-	if err != nil {
-		return -1, -1, err
-	}
-	mqmUID, err := strconv.Atoi(mqm.Uid)
-	if err != nil {
-		return -1, -1, err
-	}
-	mqmGID, err := strconv.Atoi(mqm.Gid)
-	if err != nil {
-		return -1, -1, err
-	}
-	return mqmUID, mqmGID, nil
 }

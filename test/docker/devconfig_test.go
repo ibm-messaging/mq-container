@@ -143,7 +143,7 @@ func TestDevWebDisabled(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	t.Run("Web", func(t *testing.T) {
-		_, dspmqweb := execContainer(t, cli, id, "mqm", []string{"dspmqweb"})
+		_, dspmqweb := execContainer(t, cli, id, "", []string{"dspmqweb"})
 		if !strings.Contains(dspmqweb, "Server mqweb is not running.") && !strings.Contains(dspmqweb, "MQWB1125I") {
 			t.Errorf("Expected dspmqweb to say 'Server is not running' or 'MQWB1125I'; got \"%v\"", dspmqweb)
 		}
@@ -174,7 +174,7 @@ func TestDevConfigDisabled(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	waitForWebReady(t, cli, id, insecureTLSConfig)
-	rc, _ := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "echo 'display qlocal(DEV*)' | runmqsc"})
+	rc, _ := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'display qlocal(DEV*)' | runmqsc"})
 	if rc == 0 {
 		t.Errorf("Expected DEV queues to be missing")
 	}

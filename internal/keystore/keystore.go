@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -105,14 +105,6 @@ func (ks *KeyStore) Create() error {
 		return fmt.Errorf("error running \"%v -keydb -create\": %v %s", ks.command, err, out)
 	}
 
-	mqmUID, mqmGID, err := command.LookupMQM()
-	if err != nil {
-		return err
-	}
-	err = os.Chown(ks.Filename, mqmUID, mqmGID)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -128,14 +120,6 @@ func (ks *KeyStore) CreateStash() error {
 				return fmt.Errorf("error running \"%v -keydb -stashpw\": %v %s", ks.command, err, out)
 			}
 		}
-		return err
-	}
-	mqmUID, mqmGID, err := command.LookupMQM()
-	if err != nil {
-		return err
-	}
-	err = os.Chown(stashFile, mqmUID, mqmGID)
-	if err != nil {
 		return err
 	}
 	return nil

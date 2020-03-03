@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2019
+© Copyright IBM Corporation 2017, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,14 +17,10 @@ package main
 
 import (
 	"os"
-	"runtime"
-	"syscall"
-
-	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
 func createVolume(dataPath string) error {
-	fi, err := os.Stat(dataPath)
+	_, err := os.Stat(dataPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// #nosec G301
@@ -34,26 +30,6 @@ func createVolume(dataPath string) error {
 			}
 		} else {
 			return err
-		}
-	}
-	fi, err = os.Stat(dataPath)
-	if err != nil {
-		return err
-	}
-	sys := fi.Sys()
-	if sys != nil && runtime.GOOS == "linux" {
-		stat := sys.(*syscall.Stat_t)
-		mqmUID, mqmGID, err := command.LookupMQM()
-		if err != nil {
-			return err
-		}
-		log.Debugf("mqm user is %v (%v)", mqmUID, mqmGID)
-		if int(stat.Uid) != mqmUID || int(stat.Gid) != mqmGID {
-			err = os.Chown(dataPath, mqmUID, mqmGID)
-			if err != nil {
-				log.Printf("Error: Unable to change ownership of %v", dataPath)
-				return err
-			}
 		}
 	}
 	return nil

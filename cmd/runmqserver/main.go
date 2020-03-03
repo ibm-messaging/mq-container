@@ -112,10 +112,27 @@ func doMain() error {
 		return err
 	}
 
+	enableTraceCrtmqdir := os.Getenv("MQ_ENABLE_TRACE_CRTMQDIR")
+	if enableTraceCrtmqdir == "true" || enableTraceCrtmqdir == "1" {
+		err = startMQTrace()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+
 	err = createDirStructure()
 	if err != nil {
 		logTermination(err)
 		return err
+	}
+
+	if enableTraceCrtmqdir == "true" || enableTraceCrtmqdir == "1" {
+		err = endMQTrace()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	// If init flag is set, exit now
@@ -149,6 +166,7 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
 	var wg sync.WaitGroup
 	defer func() {
 		log.Debug("Waiting for log mirroring to complete")

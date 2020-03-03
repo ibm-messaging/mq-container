@@ -24,19 +24,18 @@ make test-advancedserver
 You can specify the image to use directly by using the `MQ_IMAGE_ADVANCEDSERVER` or `MQ_IMAGE_DEVSERVER` variables, for example:
 
 ```
-MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:9.1.4.0-amd64 make test-advancedserver
-```
+MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:9.1.5.0-amd64 make test-advancedserver
 
-You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command::
+You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command:
 
 ```
 TEST_OPTS_DOCKER="-run TestGoldenPath" make test-advancedserver
 ```
 
-You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `ibm-mqadvanced-server:9.1.4.0-amd64`:
+You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `ibm-mqadvanced-server:9.1.5.0-amd64`:
 
 ```
-MQ_VERSION=9.1.4.0 make test-advancedserver
+MQ_VERSION=9.1.5.0 make test-advancedserver
 ```
 
 ### Running the Docker tests with code coverage
@@ -48,12 +47,3 @@ make test-advancedserver-cover
 ```
 
 In order to generate code coverage metrics from the Docker tests, the build step creates a new Docker image with an instrumented version of the code.  Each test is then run individually, producing a coverage report each under `test/docker/coverage/`.  These individual reports are then combined.  The combined report is written to the `coverage` directory.
-
-
-### Running the Kubernetes tests
-
-For the Kubernetes tests, you need to have built the Docker image, and pushed it to the registry used by your Kubernetes cluster.  Most of the configuration used by the tests is picked up from your `kubectl` configuration, but you will typically need to specify the image details.  For example:
-
-```bash
-MQ_IMAGE=mycluster.icp:8500/default/mq-devserver make test-kubernetes-devserver
-```

@@ -91,7 +91,7 @@ func TestEndMQMOpts(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	killContainer(t, cli, id, "SIGTERM")
-	_, out := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "ps -ef | grep 'endmqm -w -r -tp 27'"})
+	_, out := execContainer(t, cli, id, "", []string{"bash", "-c", "ps -ef | grep 'endmqm -w -r -tp 27'"})
 	t.Log(out)
 	if !strings.Contains(out, "endmqm -w -r -tp 27") {
 		t.Errorf("Expected endmqm options endmqm -w -r -tp 27; got \"%v\"", out)
@@ -182,7 +182,7 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
-	_, out := execContainer(t, cli, id, "mqm", []string{"dspmq"})
+	_, out := execContainer(t, cli, id, "", []string{"dspmq"})
 	if !strings.Contains(out, search) {
 		t.Errorf("Expected result of running dspmq to contain name=%v, got name=%v", search, out)
 	}
@@ -414,9 +414,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 		FROM %v
 		USER root
 		RUN echo '#!/bin/bash\nexit 999' > /opt/mqm/bin/crtmqm
-		RUN chown mqm:mqm /opt/mqm/bin/crtmqm
-		RUN chmod 6550 /opt/mqm/bin/crtmqm
-		USER mqm`, imageName())},
+		USER 1001`, imageName())},
 	}
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
@@ -449,9 +447,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 		FROM %v
 		USER root
 		RUN echo '#!/bin/bash\ndltmqm $@ && strmqm $@' > /opt/mqm/bin/strmqm
-		RUN chown mqm:mqm /opt/mqm/bin/strmqm
-		RUN chmod 6550 /opt/mqm/bin/strmqm
-		USER mqm`, imageName())},
+		USER 1001`, imageName())},
 	}
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
@@ -510,12 +506,12 @@ func TestVolumeUnmount(t *testing.T) {
 		t.Fatalf("Expected umount to work with rc=0, got %v. Output was: %s", rc, out)
 	}
 	time.Sleep(3 * time.Second)
-	rc, _ = execContainer(t, cli, ctr.ID, "mqm", []string{"chkmqhealthy"})
+	rc, _ = execContainer(t, cli, ctr.ID, "", []string{"chkmqhealthy"})
 	if rc == 0 {
 		t.Errorf("Expected chkmqhealthy to fail")
-		_, df := execContainer(t, cli, ctr.ID, "mqm", []string{"df"})
+		_, df := execContainer(t, cli, ctr.ID, "", []string{"df"})
 		t.Logf(df)
-		_, ps := execContainer(t, cli, ctr.ID, "mqm", []string{"ps", "-ef"})
+		_, ps := execContainer(t, cli, ctr.ID, "", []string{"ps", "-ef"})
 		t.Logf(ps)
 	}
 }
@@ -541,14 +537,14 @@ func TestZombies(t *testing.T) {
 	waitForReady(t, cli, id)
 	// Kill an MQ process with children.  After it is killed, its children
 	// will be adopted by PID 1, and should then be reaped when they die.
-	_, out := execContainer(t, cli, id, "mqm", []string{"pkill", "--signal", "kill", "-c", "amqzxma0"})
+	_, out := execContainer(t, cli, id, "", []string{"pkill", "--signal", "kill", "-c", "amqzxma0"})
 	if out == "0" {
 		t.Log("Failed to kill process 'amqzxma0'")
-		_, out := execContainer(t, cli, id, "root", []string{"ps", "-lA"})
+		_, out := execContainer(t, cli, id, "", []string{"ps", "-lA"})
 		t.Fatalf("Here is a list of currently running processes:\n%s", out)
 	}
 	time.Sleep(3 * time.Second)
-	_, out = execContainer(t, cli, id, "mqm", []string{"bash", "-c", "ps -lA | grep '^. Z'"})
+	_, out = execContainer(t, cli, id, "", []string{"bash", "-c", "ps -lA | grep '^. Z'"})
 	if out != "" {
 		count := strings.Count(out, "\n") + 1
 		t.Errorf("Expected zombies=0, got %v", count)
@@ -575,7 +571,7 @@ func TestMQSC(t *testing.T) {
 		  RUN rm -f /etc/mqm/*.mqsc
 		  ADD test.mqsc /etc/mqm/
 		  RUN chmod 0660 /etc/mqm/test.mqsc
-		  USER mqm`, imageName())},
+		  USER 1001`, imageName())},
 		{"test.mqsc", "DEFINE QLOCAL(test)"},
 	}
 	tag := createImage(t, cli, files)
@@ -588,7 +584,7 @@ func TestMQSC(t *testing.T) {
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
-	rc, mqscOutput := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
+	rc, mqscOutput := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
 	if rc != 0 {
 		r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
 		t.Fatalf("Expected runmqsc to exit with rc=0, got %v with error %v", rc, r.FindString(mqscOutput))
@@ -618,7 +614,7 @@ func TestLargeMQSC(t *testing.T) {
           RUN rm -f /etc/mqm/*.mqsc
           ADD test.mqsc /etc/mqm/
           RUN chmod 0660 /etc/mqm/test.mqsc
-          USER mqm`, imageName())},
+          USER 1001`, imageName())},
 		{"test.mqsc", buf.String()},
 	}
 	tag := createImage(t, cli, files)
@@ -632,7 +628,7 @@ func TestLargeMQSC(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 
-	rc, mqscOutput := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test" + strconv.Itoa(numQueues) + ")' | runmqsc"})
+	rc, mqscOutput := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test" + strconv.Itoa(numQueues) + ")' | runmqsc"})
 	if rc != 0 {
 		r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
 		t.Fatalf("Expected runmqsc to exit with rc=0, got %v with error %v", rc, r.FindString(mqscOutput))
@@ -690,7 +686,7 @@ func TestRedactValidMQSC(t *testing.T) {
 		  RUN rm -f /etc/mqm/*.mqsc
 		  ADD test.mqsc /etc/mqm/
 		  RUN chmod 0660 /etc/mqm/test.mqsc
-		  USER mqm`, imageName())},
+		  USER 1001`, imageName())},
 		{"test.mqsc", buf.String()},
 	}
 	tag := createImage(t, cli, files)
@@ -762,7 +758,7 @@ func TestRedactInvalidMQSC(t *testing.T) {
 		  RUN rm -f /etc/mqm/*.mqsc
 		  ADD test.mqsc /etc/mqm/
 		  RUN chmod 0660 /etc/mqm/test.mqsc
-		  USER mqm`, imageName())},
+		  USER 1001`, imageName())},
 		{"test.mqsc", buf.String()},
 	}
 	tag := createImage(t, cli, files)
@@ -808,7 +804,7 @@ func TestInvalidMQSC(t *testing.T) {
 		RUN rm -f /etc/mqm/*.mqsc
 		ADD mqscTest.mqsc /etc/mqm/
 		RUN chmod 0660 /etc/mqm/mqscTest.mqsc
-		USER mqm`, imageName())},
+		USER 1001`, imageName())},
 		{"mqscTest.mqsc", "DEFINE INVALIDLISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE"},
 	}
 	tag := createImage(t, cli, files)
@@ -841,7 +837,7 @@ func TestSimpleMQIniMerge(t *testing.T) {
 		USER root
 		ADD test1.ini /etc/mqm/
 		RUN chmod 0660 /etc/mqm/test1.ini
-		USER mqm`, imageName())},
+		USER 1001`, imageName())},
 		{"test1.ini",
 			"Log:\n   LogSecondaryFiles=28"},
 	}
@@ -857,7 +853,7 @@ func TestSimpleMQIniMerge(t *testing.T) {
 	waitForReady(t, cli, id)
 
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
-	_, test := execContainer(t, cli, id, "mqm", []string{"bash", "-c", catIniFileCommand})
+	_, test := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
 	merged := strings.Contains(test, "LogSecondaryFiles=28")
 
 	if !merged {
@@ -883,7 +879,7 @@ func TestMultipleIniMerge(t *testing.T) {
 		RUN chmod 0660 /etc/mqm/test1.ini
 		RUN chmod 0660 /etc/mqm/test2.ini
 		RUN chmod 0660 /etc/mqm/test3.ini
-		USER mqm`, imageName())},
+		USER 1001`, imageName())},
 		{"test1.ini",
 			"Log:\n LogSecondaryFiles=28"},
 		{"test2.ini",
@@ -903,7 +899,7 @@ func TestMultipleIniMerge(t *testing.T) {
 	waitForReady(t, cli, id)
 
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
-	_, test := execContainer(t, cli, id, "mqm", []string{"bash", "-c", catIniFileCommand})
+	_, test := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
 
 	//checks that no duplicates are created by adding 2 ini files with the same line
 	numberOfDuplicates := strings.Count(test, "LogSecondaryFiles=28")
@@ -929,7 +925,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 		USER root
 		ADD test1.ini /etc/mqm/
 		RUN chmod 0660 /etc/mqm/test1.ini
-		USER mqm`, imageName())},
+		USER 1001`, imageName())},
 		{"test1.ini",
 			"ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF"},
 	}
@@ -959,7 +955,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 	waitForReady(t, cli, ctr1.ID)
 
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
-	_, test := execContainer(t, cli, ctr1.ID, "mqm", []string{"bash", "-c", catIniFileCommand})
+	_, test := execContainer(t, cli, ctr1.ID, "", []string{"bash", "-c", catIniFileCommand})
 	addedStanza := strings.Contains(test, "ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF")
 
 	if addedStanza != true {
@@ -976,7 +972,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 		USER root
 		ADD test1.ini /etc/mqm/
 		RUN chmod 0660 /etc/mqm/test1.ini
-		USER mqm`, imageName())},
+		USER 1001`, imageName())},
 		{"test1.ini",
 			"Log:\n   LogFilePages=5000"},
 	}
@@ -997,7 +993,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 	startContainer(t, cli, ctr2.ID)
 	waitForReady(t, cli, ctr2.ID)
 
-	_, test2 := execContainer(t, cli, ctr2.ID, "mqm", []string{"bash", "-c", catIniFileCommand})
+	_, test2 := execContainer(t, cli, ctr2.ID, "", []string{"bash", "-c", catIniFileCommand})
 	changedStanza := strings.Contains(test2, "LogFilePages=5000")
 	//check if stanza that was merged in the first container doesnt exist in this one.
 	firstMergedStanza := strings.Contains(test2, "ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF")
@@ -1032,7 +1028,7 @@ func TestReadiness(t *testing.T) {
 		RUN rm -f /etc/mqm/*.mqsc
 		ADD test.mqsc /etc/mqm/
 		RUN chmod 0660 /etc/mqm/test.mqsc
-		USER mqm`, imageName())},
+		USER 1001`, imageName())},
 		{"test.mqsc", buf.String()},
 	}
 	tag := createImage(t, cli, files)
@@ -1045,11 +1041,11 @@ func TestReadiness(t *testing.T) {
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	queueCheckCommand := fmt.Sprintf("echo 'DISPLAY QLOCAL(test%v)' | runmqsc", numQueues)
-	_, mqsc := execContainer(t, cli, id, "root", []string{"cat", "/etc/mqm/test.mqsc"})
+	_, mqsc := execContainer(t, cli, id, "", []string{"cat", "/etc/mqm/test.mqsc"})
 	t.Log(mqsc)
 	for {
-		readyRC, _ := execContainer(t, cli, id, "mqm", []string{"chkmqready"})
-		queueCheckRC, queueCheckOut := execContainer(t, cli, id, "mqm", []string{"bash", "-c", queueCheckCommand})
+		readyRC, _ := execContainer(t, cli, id, "", []string{"chkmqready"})
+		queueCheckRC, queueCheckOut := execContainer(t, cli, id, "", []string{"bash", "-c", queueCheckCommand})
 		t.Logf("readyRC=%v,queueCheckRC=%v\n", readyRC, queueCheckRC)
 
 		if readyRC == 0 {
@@ -1058,7 +1054,7 @@ func TestReadiness(t *testing.T) {
 				t.Fatalf("Runmqsc returned %v with error %v. chkmqready returned %v when MQSC had not finished", queueCheckRC, r.FindString(queueCheckOut), readyRC)
 			} else {
 				// chkmqready says OK, and the last queue exists, so return
-				_, runmqsc := execContainer(t, cli, id, "root", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"})
+				_, runmqsc := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test1)' | runmqsc"})
 				t.Log(runmqsc)
 				return
 			}
@@ -1107,7 +1103,7 @@ func TestErrorLogRotation(t *testing.T) {
 	for {
 		execContainer(t, cli, id, "fred", []string{"bash", "-c", "/opt/mqm/samp/bin/amqsput FAKE"})
 
-		_, atoiStr := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "wc -c < " + filepath.Join(dir, "AMQERR02.json")})
+		_, atoiStr := execContainer(t, cli, id, "", []string{"bash", "-c", "wc -c < " + filepath.Join(dir, "AMQERR02.json")})
 		amqerr02size, _ := strconv.Atoi(atoiStr)
 
 		if amqerr02size > 0 {
@@ -1115,7 +1111,7 @@ func TestErrorLogRotation(t *testing.T) {
 			break
 		}
 	}
-	_, out := execContainer(t, cli, id, "root", []string{"ls", "-l", dir})
+	_, out := execContainer(t, cli, id, "", []string{"ls", "-l", dir})
 	t.Log(out)
 	stopContainer(t, cli, id)
 	b := copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR01.json"))
@@ -1259,7 +1255,7 @@ func TestCorrectLicense(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 
-	rc, license := execContainer(t, cli, id, "mqm", []string{"dspmqver", "-f", "8192", "-b"})
+	rc, license := execContainer(t, cli, id, "", []string{"dspmqver", "-f", "8192", "-b"})
 	if rc != 0 {
 		t.Fatalf("Failed to get license string. RC=%d. Output=%s", rc, license)
 	}
@@ -1408,7 +1404,7 @@ func TestTraceStrmqm(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 
-	rc, _ := execContainer(t, cli, id, "mqm", []string{"bash", "-c", "ls -A /var/mqm/trace | grep .TRC"})
+	rc, _ := execContainer(t, cli, id, "", []string{"bash", "-c", "ls -A /var/mqm/trace | grep .TRC"})
 	if rc != 0 {
 		t.Fatalf("No trace files found in trace directory /var/mqm/trace. RC=%d.", rc)
 	}

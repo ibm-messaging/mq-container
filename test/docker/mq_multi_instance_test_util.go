@@ -76,7 +76,7 @@ func getActiveStandbyQueueManager(t *testing.T, cli *client.Client, qm1aId strin
 }
 
 func getQueueManagerStatus(t *testing.T, cli *client.Client, containerID string, queueManagerName string) string {
-	_, dspmqOut := execContainer(t, cli, containerID, "mqm", []string{"bash", "-c", "dspmq", "-m", queueManagerName})
+	_, dspmqOut := execContainer(t, cli, containerID, "", []string{"bash", "-c", "dspmq", "-m", queueManagerName})
 	regex := regexp.MustCompile(`STATUS\(.*\)`)
 	status := regex.FindString(dspmqOut)
 	status = strings.TrimSuffix(strings.TrimPrefix(status, "STATUS("), ")")
