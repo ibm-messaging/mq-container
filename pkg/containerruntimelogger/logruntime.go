@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2019
+© Copyright IBM Corporation 2017, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,11 +45,14 @@ func LogContainerDetails(log *logger.Logger) error {
 		log.Printf("Base image: %v", bi)
 	}
 	u, err := user.GetUser()
+	if err != nil {
+		log.Printf("Error: %v\nUser:\n  uid: %v\n  gid: %v\n  supGid: %v", err, u.UID, u.PrimaryGID, u.SupplementalGID)
+	}
 	if err == nil {
 		if len(u.SupplementalGID) == 0 {
-			log.Printf("Running as user ID %v (%v) with primary group %v", u.UID, u.Name, u.PrimaryGID)
+			log.Printf("Running as user ID %v with primary group %v", u.UID, u.PrimaryGID)
 		} else {
-			log.Printf("Running as user ID %v (%v) with primary group %v, and supplementary groups %v", u.UID, u.Name, u.PrimaryGID, strings.Join(u.SupplementalGID, ","))
+			log.Printf("Running as user ID %v with primary group %v, and supplementary groups %v", u.UID, u.PrimaryGID, strings.Trim(strings.Join(strings.Fields(fmt.Sprint(u.SupplementalGID)), ","), "[]"))
 		}
 	}
 	caps, err := containerruntime.GetCapabilities()
