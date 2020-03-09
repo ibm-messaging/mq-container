@@ -154,41 +154,43 @@ func filterQMLogMessage(obj map[string]interface{}) bool {
 }
 
 func logDiagnostics() {
-	log.Debug("--- Start Diagnostics ---")
+	if getDebug() {
+		log.Debug("--- Start Diagnostics ---")
 
-	// show the directory ownership/permissions
-	// #nosec G104
-	out, _, _ := command.Run("ls", "-l", "/mnt/")
-	log.Debugf("/mnt/:\n%s", out)
-	// #nosec G104
-	out, _, _ = command.Run("ls", "-l", "/mnt/mqm")
-	log.Debugf("/mnt/mqm:\n%s", out)
-	// #nosec G104
-	out, _, _ = command.Run("ls", "-l", "/mnt/mqm/data")
-	log.Debugf("/mnt/mqm/data:\n%s", out)
-	// #nosec G104
-	out, _, _ = command.Run("ls", "-l", "/mnt/mqm-log/log")
-	log.Debugf("/mnt/mqm-log/log:\n%s", out)
-	// #nosec G104
-	out, _, _ = command.Run("ls", "-l", "/mnt/mqm-data/qmgrs")
-	log.Debugf("/mnt/mqm-data/qmgrs:\n%s", out)
-	// #nosec G104
-	out, _, _ = command.Run("ls", "-l", "/var/mqm")
-	log.Debugf("/var/mqm:\n%s", out)
-	// #nosec G104
-	out, _, _ = command.Run("ls", "-l", "/var/mqm/errors")
-	log.Debugf("/var/mqm/errors:\n%s", out)
-	// #nosec G104
-	out, _, _ = command.Run("ls", "-l", "/etc/mqm")
-	log.Debugf("/etc/mqm:\n%s", out)
+		// show the directory ownership/permissions
+		// #nosec G104
+		out, _, _ := command.Run("ls", "-l", "/mnt/")
+		log.Debugf("/mnt/:\n%s", out)
+		// #nosec G104
+		out, _, _ = command.Run("ls", "-l", "/mnt/mqm")
+		log.Debugf("/mnt/mqm:\n%s", out)
+		// #nosec G104
+		out, _, _ = command.Run("ls", "-l", "/mnt/mqm/data")
+		log.Debugf("/mnt/mqm/data:\n%s", out)
+		// #nosec G104
+		out, _, _ = command.Run("ls", "-l", "/mnt/mqm-log/log")
+		log.Debugf("/mnt/mqm-log/log:\n%s", out)
+		// #nosec G104
+		out, _, _ = command.Run("ls", "-l", "/mnt/mqm-data/qmgrs")
+		log.Debugf("/mnt/mqm-data/qmgrs:\n%s", out)
+		// #nosec G104
+		out, _, _ = command.Run("ls", "-l", "/var/mqm")
+		log.Debugf("/var/mqm:\n%s", out)
+		// #nosec G104
+		out, _, _ = command.Run("ls", "-l", "/var/mqm/errors")
+		log.Debugf("/var/mqm/errors:\n%s", out)
+		// #nosec G104
+		out, _, _ = command.Run("ls", "-l", "/etc/mqm")
+		log.Debugf("/etc/mqm:\n%s", out)
 
-	// Print out summary of any FDCs
-	// #nosec G204
-	cmd := exec.Command("/opt/mqm/bin/ffstsummary")
-	cmd.Dir = "/var/mqm/errors"
-	// #nosec G104
-	outB, _ := cmd.CombinedOutput()
-	log.Debugf("ffstsummary:\n%s", string(outB))
+		// Print out summary of any FDCs
+		// #nosec G204
+		cmd := exec.Command("/opt/mqm/bin/ffstsummary")
+		cmd.Dir = "/var/mqm/errors"
+		// #nosec G104
+		outB, _ := cmd.CombinedOutput()
+		log.Debugf("ffstsummary:\n%s", string(outB))
 
-	log.Debug("---  End Diagnostics  ---")
+		log.Debug("---  End Diagnostics  ---")
+	}
 }

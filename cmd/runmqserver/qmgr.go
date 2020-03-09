@@ -32,6 +32,8 @@ import (
 
 // createDirStructure creates the default MQ directory structure under /var/mqm
 func createDirStructure() error {
+	// log file diagnostics before and after crtmqdir if DEBUG=true
+	logDiagnostics()
 	out, rc, err := command.Run("/opt/mqm/bin/crtmqdir", "-f", "-a")
 	if err != nil {
 		if rc == 10 {
@@ -42,6 +44,7 @@ func createDirStructure() error {
 		}
 	}
 	log.Println("Created directory structure under /var/mqm")
+	logDiagnostics()
 	return nil
 }
 
