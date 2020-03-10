@@ -143,6 +143,7 @@ COPY incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
 # Copy web XML files for default developer configuration
 COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
 RUN chown -R 1001:root /etc/mqm/* \
+  && chmod -R g+w /etc/mqm/web \
   && chmod +x /usr/local/bin/runmq* \
   && install --directory --mode 0775 --owner 1001 --group root /run/runmqdevserver
 ENV MQ_ENABLE_EMBEDDED_WEB_SERVER=1 MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost

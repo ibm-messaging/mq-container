@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/pkg/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 	"github.com/ibm-messaging/mq-container/pkg/name"
@@ -89,11 +88,6 @@ func configureLogger() error {
 	return nil
 }
 
-func configureWeb(qmName string) error {
-	out := "/etc/mqm/web/installations/Installation1/angular.persistence/admin.json"
-	return mqtemplate.ProcessTemplateFile("/etc/mqm/admin.json.tpl", out, map[string]string{"QueueManagerName": qmName}, log)
-}
-
 func logTerminationf(format string, args ...interface{}) {
 	logTermination(fmt.Sprintf(format, args...))
 }
@@ -144,18 +138,6 @@ func doMain() error {
 	err = updateMQSC(set)
 	if err != nil {
 		logTerminationf("Error updating MQSC: %v", err)
-		return err
-	}
-
-	name, err := name.GetQueueManagerName()
-	if err != nil {
-		logTerminationf("Error getting queue manager name: %v", err)
-		return err
-	}
-
-	err = configureWeb(name)
-	if err != nil {
-		logTermination("Error configuring admin.json")
 		return err
 	}
 
