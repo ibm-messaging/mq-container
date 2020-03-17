@@ -29,12 +29,11 @@ MQ_ARCHIVE_REPOSITORY_USER ?=
 # MQ_ARCHIVE_REPOSITORY_CREDENTIAL is the password/API key for the remote repository (if required)
 MQ_ARCHIVE_REPOSITORY_CREDENTIAL ?= 
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
-# be installed. The default value is derived from MQ_VERSION, BASE_IMAGE and architecture
-# Does not apply to MQ Advanced for Developers.
-MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION_VRM)_$(MQ_ARCHIVE_TYPE)_$(MQ_ARCHIVE_ARCH).tar.gz
+# be installed. Does not apply to MQ Advanced for Developers
+MQ_ARCHIVE ?= $(MQ_VERSION)-IBM-MQ-Advanced-$(MQ_ARCHIVE_TYPE)$(MQ_ARCHIVE_ARCH).tar.gz
 # MQ_ARCHIVE_DEV is the name of the file, under the downloads directory, from which MQ Advanced
 # for Developers can be installed
-MQ_ARCHIVE_DEV ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
+MQ_ARCHIVE_DEV ?= $(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-$(MQ_ARCHIVE_TYPE)$(MQ_ARCHIVE_ARCH).tar.gz
 # MQ_SDK_ARCHIVE specifies the archive to use for building the golang programs.  Defaults vary on developer or advanced.
 MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
@@ -66,8 +65,7 @@ ARCH ?= $(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
 # Other variables
 ###############################################################################
 GO_PKG_DIRS = ./cmd ./internal ./test
-MQ_ARCHIVE_TYPE=LINUX
-MQ_ARCHIVE_DEV_PLATFORM=linux
+MQ_ARCHIVE_TYPE=Linux
 # BUILD_SERVER_CONTAINER is the name of the web server container used at build time
 BUILD_SERVER_CONTAINER=build-server
 # NUM_CPU is the number of CPUs available to Docker.  Used to control how many
@@ -84,8 +82,6 @@ IMAGE_REVISION=$(shell git rev-parse HEAD)
 IMAGE_SOURCE=$(shell git config --get remote.origin.url)
 EMPTY:=
 SPACE:= $(EMPTY) $(EMPTY)
-# MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.1.5 instead of 9.1.5.0
-MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
 
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
 	DOWNLOADS_DIR=$(patsubst /mnt/c%,C:%,$(realpath ./downloads/))
@@ -97,22 +93,12 @@ endif
 
 # Try to figure out which archive to use from the architecture
 ifeq "$(ARCH)" "amd64"
-	MQ_ARCHIVE_ARCH=X86-64
-	MQ_DEV_ARCH=x86-64
+	MQ_ARCHIVE_ARCH=X64
 else ifeq "$(ARCH)" "ppc64le"
-	MQ_ARCHIVE_ARCH=LE_POWER
-	MQ_DEV_ARCH=ppcle
+	MQ_ARCHIVE_ARCH=PPC64LE
 else ifeq "$(ARCH)" "s390x"
-	MQ_ARCHIVE_ARCH=SYSTEM_Z
-	MQ_DEV_ARCH=s390x
+	MQ_ARCHIVE_ARCH=S390X
 endif
-# Archive names for IBM MQ Advanced for Developers
-MQ_ARCHIVE_DEV_9.1.0.0=mqadv_dev910_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
-MQ_ARCHIVE_DEV_9.1.1.0=mqadv_dev911_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
-MQ_ARCHIVE_DEV_9.1.2.0=mqadv_dev912_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
-MQ_ARCHIVE_DEV_9.1.3.0=mqadv_dev913_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
-MQ_ARCHIVE_DEV_9.1.4.0=mqadv_dev914_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
-MQ_ARCHIVE_DEV_9.1.5.0=mqadv_dev915_$(MQ_ARCHIVE_DEV_PLATFORM)_$(MQ_DEV_ARCH).tar.gz
 
 ifneq "$(MQ_DELIVERY_REGISTRY_NAMESPACE)" "$(EMPTY)"
 	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)/$(MQ_DELIVERY_REGISTRY_NAMESPACE)
