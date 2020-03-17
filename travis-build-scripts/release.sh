@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2019
+# © Copyright IBM Corporation 2019, 2020
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ set -e
 
 # staging or production
 TYPE=""
-MANIFEST_FILE=manifest-9.1.4.yaml
+MANIFEST_FILE=manifest-9.1.5.yaml
 
 # set type of release
 if [ ! -z $1 ]; then
@@ -42,8 +42,8 @@ ARCH=ppc64le make pull-devserver
 ARCH=s390x make pull-devserver
 
 ARCH=amd64 make pull-advancedserver
-ARCH=ppc64le make pull-advancedserver
-ARCH=s390x make pull-advancedserver
+# ARCH=ppc64le make pull-advancedserver
+# ARCH=s390x make pull-advancedserver
 
 
 function set_staging_registry {
@@ -73,8 +73,8 @@ if [ "$TYPE" = "staging" ]; then
 
     # push production images to staging registy
     ./travis-build-scripts/push.sh production amd64
-    ./travis-build-scripts/push.sh production ppc64le
-    ./travis-build-scripts/push.sh production s390x
+    # ./travis-build-scripts/push.sh production ppc64le
+    # ./travis-build-scripts/push.sh production s390x
 
 elif [ "$TYPE" = "production" ]; then
 
@@ -82,8 +82,8 @@ elif [ "$TYPE" = "production" ]; then
     set_staging_registry
 
     ARCH=amd64 make pull-advancedserver
-    ARCH=ppc64le make pull-advancedserver
-    ARCH=s390x make pull-advancedserver
+    # ARCH=ppc64le make pull-advancedserver
+    # ARCH=s390x make pull-advancedserver
 
     # release developer image with fat manifest
     set_docker_hub
@@ -103,6 +103,6 @@ elif [ "$TYPE" = "production" ]; then
     set_production_registry
 
     ./travis-build-scripts/push.sh production amd64
-    ./travis-build-scripts/push.sh production ppc64le
-    ./travis-build-scripts/push.sh production s390x
+    # ./travis-build-scripts/push.sh production ppc64le
+    # ./travis-build-scripts/push.sh production s390x
 fi

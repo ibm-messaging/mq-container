@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2019
+# © Copyright IBM Corporation 2019, 2020
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserve
 make build-devserver
 echo -en 'travis_fold:end:build-devserver\\r'
 if [ "$BUILD_ALL" = true ] ; then
-    echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
-    make build-advancedserver
-    echo -en 'travis_fold:end:build-advancedserver\\r'
+    if [ "$ARCH" = "amd64" ] ; then
+        echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
+        make build-advancedserver
+        echo -en 'travis_fold:end:build-advancedserver\\r'
+    fi
 fi

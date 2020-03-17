@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2019
+# © Copyright IBM Corporation 2019, 2020
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\
 make test-devserver
 echo -en 'travis_fold:end:test-devserver\\r'
 if [ "$BUILD_ALL" = true ] ; then
-    echo 'Testing Production image...' && echo -en 'travis_fold:start:test-advancedserver\\r'
-    make test-advancedserver
-    echo -en 'travis_fold:end:test-advancedserver\\r'
+    if [ "$ARCH" = "amd64" ] ; then
+        echo 'Testing Production image...' && echo -en 'travis_fold:start:test-advancedserver\\r'
+        make test-advancedserver
+        echo -en 'travis_fold:end:test-advancedserver\\r'
+    fi
 fi
 echo 'Running gosec scan...' && echo -en 'travis_fold:start:gosec-scan\\r'
 if [ "$ARCH" = "amd64" ] ; then

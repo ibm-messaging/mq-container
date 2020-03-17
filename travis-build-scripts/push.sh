@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2019
+# © Copyright IBM Corporation 2019, 2020
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,9 +32,11 @@ function push_developer {
 }
 
 function push_production {
-    echo 'Pushing Production image...' && echo -en 'travis_fold:start:push-advancedserver\\r'
-    make push-advancedserver
-    echo -en 'travis_fold:end:push-advancedserver\\r'
+    if [ "$ARCH" = "amd64" ] ; then
+        echo 'Pushing Production image...' && echo -en 'travis_fold:start:push-advancedserver\\r'
+        make push-advancedserver
+        echo -en 'travis_fold:end:push-advancedserver\\r'
+    fi
 }
 
 # call relevant push function
