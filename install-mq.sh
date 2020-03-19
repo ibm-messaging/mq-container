@@ -21,23 +21,49 @@ set -ex
 test -f /usr/bin/rpm && RPM=true || RPM=false
 test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
 
+# Only install the SDK package as part of the build stage
+INSTALL_SDK=${INSTALL_SDK:-0}
+
 # Download and extract the MQ unzippable server
 DIR_TMP=/tmp/mq
 mkdir -p ${DIR_TMP}
 cd ${DIR_TMP}
 curl -LO $MQ_URL
 
-INSTALLATION_DIR=/opt/mqm
-tar -C ${INSTALLATION_DIR} -xzf ./*.tar.gz
+tar -xzf ./*.tar.gz
+rm -f ./*.tar.gz
+ls -la ${DIR_TMP}
+
+# Generate MQ package in INSTALLATION_DIR
+export genmqpkg_inc32=0
+export genmqpkg_incadm=1
+export genmqpkg_incamqp=0
+export genmqpkg_incams=1
+export genmqpkg_inccbl=0
+export genmqpkg_inccics=0
+export genmqpkg_inccpp=0
+export genmqpkg_incdnet=0
+export genmqpkg_incjava=0
+export genmqpkg_incjre=1
+export genmqpkg_incman=0
+export genmqpkg_incmqbc=0
+export genmqpkg_incmqft=0
+export genmqpkg_incmqsf=0
+export genmqpkg_incmqxr=0
+export genmqpkg_incnls=1
+export genmqpkg_incras=1
+export genmqpkg_incsamp=1
+export genmqpkg_incsdk=$INSTALL_SDK
+export genmqpkg_inctls=1
+export genmqpkg_incunthrd=0
+export genmqpkg_incweb=1
+export INSTALLATION_DIR=/opt/mqm
+${DIR_TMP}/bin/genmqpkg.sh -b ${INSTALLATION_DIR}
 ls -la ${INSTALLATION_DIR}
 rm -rf ${DIR_TMP}
 
 # Accept the MQ license
 ${INSTALLATION_DIR}/bin/mqlicense -accept
-
-# Remove 32-bit libraries from 64-bit container
-# The "file" utility isn't installed by default in UBI, so only try this if it's installed
-which file && find ${INSTALLATION_DIR} /var/mqm -type f -exec file {} \; | awk -F: '/ELF 32-bit/{print $1}' | xargs --no-run-if-empty rm -f
 
 # Optional: Update the command prompt with the MQ version
 $UBUNTU && echo "mq:$(dspmqver -b -f 2)" > /etc/debian_chroot

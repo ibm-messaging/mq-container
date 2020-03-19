@@ -30,7 +30,7 @@ COPY install-mq.sh /usr/local/bin/
 RUN mkdir /opt/mqm \
   && chmod a+x /usr/local/bin/install-mq.sh \
   && sleep 1 \
-  && install-mq.sh \
+  && INSTALL_SDK=1 install-mq.sh \
   && chown -R 1001:root /opt/mqm/*
 WORKDIR /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/
 COPY cmd/ ./cmd
