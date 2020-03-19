@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ func startWebServer(webKeystore, webkeystorePW, webTruststoreRef string) error {
 	return nil
 }
 
-func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
+func configureSSO(p12TrustStore tls.KeyStoreData, webKeystore string) (string, error) {
 	// Ensure all required environment variables are set for SSO
 	requiredEnvVars := []string{
 		"MQ_OIDC_CLIENT_ID",
@@ -118,7 +118,7 @@ func configureSSO(p12TrustStore tls.KeyStoreData) (string, error) {
 	}
 
 	// Configure SSO TLS
-	return tls.ConfigureWebKeystore(p12TrustStore)
+	return tls.ConfigureWebKeystore(p12TrustStore, webKeystore)
 }
 
 func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string, error) {
@@ -136,12 +136,12 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 	// Configure Single-Sign-On for the web server (if enabled)
 	enableSSO := os.Getenv("MQ_BETA_ENABLE_SSO")
 	if enableSSO == "true" || enableSSO == "1" {
-		webKeystore, err = configureSSO(p12Truststore)
+		webKeystore, err = configureSSO(p12Truststore, webKeystore)
 		if err != nil {
 			return "", err
 		}
 	} else if keyLabel == "" && os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") != "" {
-		webKeystore, err = tls.ConfigureWebKeystore(p12Truststore)
+		webKeystore, err = tls.ConfigureWebKeystore(p12Truststore, webKeystore)
 		if err != nil {
 			return "", err
 		}

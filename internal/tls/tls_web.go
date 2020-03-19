@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019
+© Copyright IBM Corporation 2019, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/keystore"
 )
 
-// webServerKeystoreName is the name of the web server Keystore
-const webServerKeystoreName = "default.p12"
+// webKeystoreDefault is the name of the default web server Keystore
+const webKeystoreDefault = "default.p12"
 
 // ConfigureWebTLS configures TLS for the web server
 func ConfigureWebTLS(keyLabel string) error {
@@ -64,31 +64,35 @@ func ConfigureWebTLS(keyLabel string) error {
 }
 
 // ConfigureWebKeyStore configures the Web Keystore
-func ConfigureWebKeystore(p12Truststore KeyStoreData) (string, error) {
-	webKeystore := filepath.Join(keystoreDir, webServerKeystoreName)
+func ConfigureWebKeystore(p12Truststore KeyStoreData, webKeystore string) (string, error) {
+
+	if webKeystore == "" {
+		webKeystore = webKeystoreDefault
+	}
+	webKeystoreFile := filepath.Join(keystoreDir, webKeystore)
 
 	// Check if a new self-signed certificate should be generated
 	genHostName := os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME")
 	if genHostName != "" {
 
 		// Create the Web Keystore
-		newWebKeystore := keystore.NewPKCS12KeyStore(webKeystore, p12Truststore.Password)
+		newWebKeystore := keystore.NewPKCS12KeyStore(webKeystoreFile, p12Truststore.Password)
 		err := newWebKeystore.Create()
 		if err != nil {
-			return "", fmt.Errorf("Failed to create Web Keystore %s: %v", webKeystore, err)
+			return "", fmt.Errorf("Failed to create Web Keystore %s: %v", webKeystoreFile, err)
 		}
 
 		// Generate a new self-signed certificate in the Web Keystore
 		err = newWebKeystore.CreateSelfSignedCertificate("default", fmt.Sprintf("CN=%s", genHostName), genHostName)
 		if err != nil {
-			return "", fmt.Errorf("Failed to generate certificate in Web Keystore %s with DN of 'CN=%s': %v", webKeystore, genHostName, err)
+			return "", fmt.Errorf("Failed to generate certificate in Web Keystore %s with DN of 'CN=%s': %v", webKeystoreFile, genHostName, err)
 		}
 
 	} else {
 		// Check Web Keystore already exists
-		_, err := os.Stat(webKeystore)
+		_, err := os.Stat(webKeystoreFile)
 		if err != nil {
-			return "", fmt.Errorf("Failed to find existing Web Keystore %s: %v", webKeystore, err)
+			return "", fmt.Errorf("Failed to find existing Web Keystore %s: %v", webKeystoreFile, err)
 		}
 	}
 
@@ -98,5 +102,5 @@ func ConfigureWebKeystore(p12Truststore KeyStoreData) (string, error) {
 		return "", fmt.Errorf("Failed to find existing Web Truststore %s: %v", p12Truststore.Keystore.Filename, err)
 	}
 
-	return webServerKeystoreName, nil
+	return webKeystore, nil
 }
