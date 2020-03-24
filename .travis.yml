@@ -51,23 +51,23 @@ jobs:
         - MQ_ARCHIVE_REPOSITORY=$MQ_915_ARCHIVE_REPOSITORY_AMD64
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_915_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
-    - if: branch = private-master OR tag =~ ^pre-release*
-      name: "Multi-Arch PPC64LE build"
-      os: linux-ppc64le
-      env:
-        - BUILD_ALL=true
-        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        # - MQ_ARCHIVE_REPOSITORY=$MQ_915_ARCHIVE_REPOSITORY_PPC64LE
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_915_ARCHIVE_REPOSITORY_DEV_PPC64LE
-      script: bash -e travis-build-scripts/run.sh
-    - if: branch = private-master OR tag =~ ^pre-release*
-      name: "Multi-Arch S390X build"
-      os: linux-s390
-      env:
-        - BUILD_ALL=true
-        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        # - MQ_ARCHIVE_REPOSITORY=$MQ_915_ARCHIVE_REPOSITORY_S390X
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_915_ARCHIVE_REPOSITORY_DEV_S390X
+    # - if: branch = private-master OR tag =~ ^pre-release*
+    #   name: "Multi-Arch PPC64LE build"
+    #   os: linux-ppc64le
+    #   env:
+    #     - BUILD_ALL=true
+    #     - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+    #     # - MQ_ARCHIVE_REPOSITORY=$MQ_915_ARCHIVE_REPOSITORY_PPC64LE
+    #     - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_915_ARCHIVE_REPOSITORY_DEV_PPC64LE
+    #   script: bash -e travis-build-scripts/run.sh
+    # - if: branch = private-master OR tag =~ ^pre-release*
+    #   name: "Multi-Arch S390X build"
+    #   os: linux-s390
+    #   env:
+    #     - BUILD_ALL=true
+    #     - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+    #     # - MQ_ARCHIVE_REPOSITORY=$MQ_915_ARCHIVE_REPOSITORY_S390X
+    #     - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_915_ARCHIVE_REPOSITORY_DEV_S390X
       script: bash -e travis-build-scripts/run.sh
     - stage: deploy
       name: "Pre-release deploy"

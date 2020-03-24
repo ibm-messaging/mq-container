@@ -37,9 +37,10 @@ else
 fi
 
 ## Pull all images from default repository
-ARCH=amd64 make pull-devserver
-ARCH=ppc64le make pull-devserver
-ARCH=s390x make pull-devserver
+## BUILD PRODUCTION ONLY UNTIL DEV AUTH CONFIG COMPLETE
+# ARCH=amd64 make pull-devserver
+# ARCH=ppc64le make pull-devserver
+# ARCH=s390x make pull-devserver
 
 ARCH=amd64 make pull-advancedserver
 # ARCH=ppc64le make pull-advancedserver
@@ -88,16 +89,17 @@ elif [ "$TYPE" = "production" ]; then
     # release developer image with fat manifest
     set_docker_hub
 
-    ARCH=amd64 make push-devserver-dockerhub
-    ARCH=ppc64le make push-devserver-dockerhub
-    ARCH=s390x make push-devserver-dockerhub
+    ## BUILD PRODUCTION ONLY UNTIL DEV AUTH CONFIG COMPLETE 
+    # ARCH=amd64 make push-devserver-dockerhub
+    # ARCH=ppc64le make push-devserver-dockerhub
+    # ARCH=s390x make push-devserver-dockerhub
 
-    curl -LO https://github.com/estesp/manifest-tool/releases/download/v0.9.0/manifest-tool-linux-amd64
-    chmod a+x manifest-tool-linux-amd64
+    # curl -LO https://github.com/estesp/manifest-tool/releases/download/v0.9.0/manifest-tool-linux-amd64
+    # chmod a+x manifest-tool-linux-amd64
 
-    docker login --username $MQ_DOCKERHUB_REGISTRY_USER --password $MQ_DOCKERHUB_REGISTRY_CREDENTIAL
-    ./manifest-tool-linux-amd64 push from-spec manifests/dockerhub/$MANIFEST_FILE
-    ./manifest-tool-linux-amd64 push from-spec manifests/dockerhub/manifest-latest.yaml
+    # docker login --username $MQ_DOCKERHUB_REGISTRY_USER --password $MQ_DOCKERHUB_REGISTRY_CREDENTIAL
+    # ./manifest-tool-linux-amd64 push from-spec manifests/dockerhub/$MANIFEST_FILE
+    # ./manifest-tool-linux-amd64 push from-spec manifests/dockerhub/manifest-latest.yaml
 
     # release production image
     set_production_registry

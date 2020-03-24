@@ -16,9 +16,10 @@
 
 set -e
 
-echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
-make test-devserver
-echo -en 'travis_fold:end:test-devserver\\r'
+## BUILD PRODUCTION ONLY UNTIL DEV AUTH CONFIG COMPLETE
+# echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
+# make test-devserver
+# echo -en 'travis_fold:end:test-devserver\\r'
 if [ "$BUILD_ALL" = true ] ; then
     if [ "$ARCH" = "amd64" ] ; then
         echo 'Testing Production image...' && echo -en 'travis_fold:start:test-advancedserver\\r'
