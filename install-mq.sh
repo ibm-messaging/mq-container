@@ -69,16 +69,16 @@ ${INSTALLATION_DIR}/bin/mqlicense -accept
 $UBUNTU && echo "mq:$(dspmqver -b -f 2)" > /etc/debian_chroot
 
 # Create the mount point for volumes, ensuring MQ has permissions to all directories
-install --directory --mode 0775 --owner 1001 --group root /mnt
-install --directory --mode 0775 --owner 1001 --group root /mnt/mqm
-install --directory --mode 0775 --owner 1001 --group root /mnt/mqm/data
-install --directory --mode 0775 --owner 1001 --group root /mnt/mqm-log
-install --directory --mode 0775 --owner 1001 --group root /mnt/mqm-log/log
-install --directory --mode 0775 --owner 1001 --group root /mnt/mqm-data
-install --directory --mode 0775 --owner 1001 --group root /mnt/mqm-data/qmgrs
+install --directory --mode 2775 --owner 1001 --group root /mnt
+install --directory --mode 2775 --owner 1001 --group root /mnt/mqm
+install --directory --mode 2775 --owner 1001 --group root /mnt/mqm/data
+install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-log
+install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-log/log
+install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-data
+install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-data/qmgrs
 
 # Create the directory for MQ configuration files
-install --directory --mode 0775 --owner 1001 --group root /etc/mqm
+install --directory --mode 2775 --owner 1001 --group root /etc/mqm
 
 # Create the directory for MQ runtime files
 install --directory --mode 2775 --owner 1001 --group root /run/mqm

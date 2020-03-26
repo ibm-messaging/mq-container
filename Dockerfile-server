@@ -97,7 +97,7 @@ RUN chmod ug+x /usr/local/bin/runmqserver \
   && chown 1001:root /usr/local/bin/*mq* \
   && chmod ug+xs /usr/local/bin/chkmq* \
   && chown -R 1001:root /etc/mqm/* \
-  && install --directory --mode 0775 --owner 1001 --group root /run/runmqserver \
+  && install --directory --mode 2775 --owner 1001 --group root /run/runmqserver \
   && touch /run/termination-log \
   && chown 1001:root /run/termination-log \
   && chmod 0660 /run/termination-log
@@ -145,7 +145,7 @@ COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
 RUN chown -R 1001:root /etc/mqm/* \
   && chmod -R g+w /etc/mqm/web \
   && chmod +x /usr/local/bin/runmq* \
-  && install --directory --mode 0775 --owner 1001 --group root /run/runmqdevserver
+  && install --directory --mode 2775 --owner 1001 --group root /run/runmqdevserver
 ENV MQ_ENABLE_EMBEDDED_WEB_SERVER=1 MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost
 USER 1001
 ENTRYPOINT ["runmqdevserver"]
