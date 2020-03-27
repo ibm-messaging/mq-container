@@ -21,13 +21,13 @@ RELEASE ?=
 # MQ_VERSION is the fully qualified MQ version number to build
 MQ_VERSION ?= 9.1.5.0
 # MQ_ARCHIVE_REPOSITORY is a remote repository from which to pull the MQ_ARCHIVE (if required)
-MQ_ARCHIVE_REPOSITORY ?= 
+MQ_ARCHIVE_REPOSITORY ?=
 # MQ_ARCHIVE_REPOSITORY_DEV is a remote repository from which to pull the MQ_ARCHIVE_DEV (if required)
-MQ_ARCHIVE_REPOSITORY_DEV ?= 
+MQ_ARCHIVE_REPOSITORY_DEV ?=
 # MQ_ARCHIVE_REPOSITORY_USER is the user for the remote repository (if required)
-MQ_ARCHIVE_REPOSITORY_USER ?= 
+MQ_ARCHIVE_REPOSITORY_USER ?=
 # MQ_ARCHIVE_REPOSITORY_CREDENTIAL is the password/API key for the remote repository (if required)
-MQ_ARCHIVE_REPOSITORY_CREDENTIAL ?= 
+MQ_ARCHIVE_REPOSITORY_CREDENTIAL ?=
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. Does not apply to MQ Advanced for Developers
 MQ_ARCHIVE ?= $(MQ_VERSION)-IBM-MQ-Advanced-$(MQ_ARCHIVE_TYPE)$(MQ_ARCHIVE_ARCH).tar.gz
@@ -47,13 +47,13 @@ MQ_TAG ?=$(MQ_VERSION)-$(ARCH)
 # COMMAND is the container command to run.  "podman" or "docker"
 COMMAND ?=$(shell type -p podman 2>&1 >/dev/null && echo podman || echo docker)
 # MQ_DELIVERY_REGISTRY_HOSTNAME is a remote registry to push the MQ Image to (if required)
-MQ_DELIVERY_REGISTRY_HOSTNAME ?= 
+MQ_DELIVERY_REGISTRY_HOSTNAME ?=
 # MQ_DELIVERY_REGISTRY_NAMESPACE is the namespace/path on the delivery registry (if required)
-MQ_DELIVERY_REGISTRY_NAMESPACE ?= 
+MQ_DELIVERY_REGISTRY_NAMESPACE ?=
 # MQ_DELIVERY_REGISTRY_USER is the user for the remote registry (if required)
-MQ_DELIVERY_REGISTRY_USER ?= 
+MQ_DELIVERY_REGISTRY_USER ?=
 # MQ_DELIVERY_REGISTRY_CREDENTIAL is the password/API key for the remote registry (if required)
-MQ_DELIVERY_REGISTRY_CREDENTIAL ?= 
+MQ_DELIVERY_REGISTRY_CREDENTIAL ?=
 # REGISTRY_USER is the username used to login to the Red Hat registry
 REGISTRY_USER ?=
 # REGISTRY_PASS is the password used to login to the Red Hat registry
@@ -102,7 +102,7 @@ endif
 
 ifneq "$(MQ_DELIVERY_REGISTRY_NAMESPACE)" "$(EMPTY)"
 	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)/$(MQ_DELIVERY_REGISTRY_NAMESPACE)
-else 
+else
 	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)
 endif
 
@@ -263,7 +263,7 @@ build-advancedserver: registry-login log-build-env downloads/$(MQ_ARCHIVE) comma
 build-devserver-host: build-devserver
 
 .PHONY: build-devserver
-build-devserver: registry-login log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version 
+build-devserver: registry-login log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version patch-mq-dev
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
 
@@ -279,6 +279,12 @@ build-explorer: registry-login downloads/$(MQ_ARCHIVE_DEV)
 build-sdk: registry-login downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
 	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
+
+.PHONY: patch-mq-dev
+patch-mq-dev:
+	$(info $(shell printf $(TITLE)"Generate MQ Developer Patch"$(END)))
+	mkdir -p internal/qmgrauth/qmgroam/patch
+	cp internal/qmgrauth/qmgroam/$(ARCH)/* internal/qmgrauth/qmgroam/patch/
 
 .PHONY: registry-login
 registry-login:
@@ -360,7 +366,7 @@ install-build-deps:
 	ARCH=$(ARCH) ./install-build-deps.sh
 
 .PHONY: install-credential-helper
-install-credential-helper:	
+install-credential-helper:
 ifeq ($(ARCH),amd64)
 	ARCH=$(ARCH) ./travis-build-scripts/install-credential-helper.sh
 endif
@@ -384,7 +390,7 @@ lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
 	golint -set_exit_status $(sort $(dir $(wildcard $(addsuffix /*/*.go, $(GO_PKG_DIRS)))))
 
 .PHONY: gosec
-gosec: 
+gosec:
 	$(info $(SPACER)$(shell printf "Running gosec test"$(END)))
 	@gosec -fmt=json -out=gosec_results.json cmd/... internal/... 2> /dev/null ;\
 	cat "gosec_results.json" ;\

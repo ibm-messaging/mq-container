@@ -30,8 +30,6 @@ echo -en 'travis_fold:end:docker-downgrade\\r'
 
 ## Push images
 if [ "$BUILD_ALL" = true ] ; then
-    ## BUILD PRODUCTION ONLY UNTIL DEV AUTH CONFIG COMPLETE
-    # ./travis-build-scripts/push.sh developer
+    ./travis-build-scripts/push.sh developer
     ./travis-build-scripts/push.sh production
 fi
-

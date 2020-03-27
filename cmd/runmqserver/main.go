@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2019
+© Copyright IBM Corporation 2017, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ func doMain() error {
 		return err
 	}
 
-	newQM, err := createQueueManager(name)
+	newQM, err := createQueueManager(name, *devFlag)
 	if err != nil {
 		logTermination(err)
 		return err
@@ -197,6 +197,16 @@ func doMain() error {
 	enableTraceStrmqm := os.Getenv("MQ_ENABLE_TRACE_STRMQM")
 	if enableTraceStrmqm == "true" || enableTraceStrmqm == "1" {
 		err = startMQTrace()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+
+	// This is a developer image only change
+	// This workaround should be removed and handled via <crtmqm -ii>, when inimerge is ready to handle stanza ordering
+	if *devFlag {
+		err = updateQMini(name)
 		if err != nil {
 			logTermination(err)
 			return err

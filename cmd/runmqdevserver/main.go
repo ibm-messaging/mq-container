@@ -22,6 +22,7 @@ import (
 	"os/exec"
 	"syscall"
 
+	"github.com/ibm-messaging/mq-container/internal/htpasswd"
 	"github.com/ibm-messaging/mq-container/pkg/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 	"github.com/ibm-messaging/mq-container/pkg/name"
@@ -119,16 +120,23 @@ func doMain() error {
 	}
 
 	adminPassword, set := os.LookupEnv("MQ_ADMIN_PASSWORD")
-	if set {
-		err = setPassword("admin", adminPassword)
+	if !set {
+		adminPassword = "passw0rd"
+		err = os.Setenv("MQ_ADMIN_PASSWORD", adminPassword)
 		if err != nil {
-			logTerminationf("Error setting admin password: %v", err)
+			logTerminationf("Error setting admin password variable: %v", err)
 			return err
 		}
 	}
+	err = htpasswd.SetPassword("admin", adminPassword, false)
+	if err != nil {
+		logTerminationf("Error setting admin password: %v", err)
+		return err
+	}
+
 	appPassword, set := os.LookupEnv("MQ_APP_PASSWORD")
 	if set {
-		err = setPassword("app", appPassword)
+		err = htpasswd.SetPassword("app", appPassword, false)
 		if err != nil {
 			logTerminationf("Error setting app password: %v", err)
 			return err

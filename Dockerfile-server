@@ -44,6 +44,7 @@ RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"
 RUN go build ./cmd/chkmqready/
 RUN go build ./cmd/chkmqhealthy/
 RUN go build ./cmd/runmqdevserver/
+RUN go build -buildmode=c-shared -o amqpasdev.so ./internal/qmgrauth/pas.go
 RUN go test -v ./cmd/runmqdevserver/...
 RUN go test -v ./cmd/runmqserver/
 RUN go test -v ./cmd/chkmqready/
@@ -108,6 +109,7 @@ ENV MQ_GRACE_PERIOD=30
 ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1 LOG_FORMAT=basic
 # We can run as any UID
 USER 1001
+ENV MQ_CONNAUTH_USE_HTP=false
 ENTRYPOINT ["runmqserver"]
 
 ###############################################################################
@@ -130,6 +132,12 @@ LABEL io.k8s.description="Simplify, accelerate and facilitate the reliable excha
 LABEL base-image=$BASE_IMAGE
 LABEL base-image-release=$BASE_TAG
 USER 0
+COPY --from=builder /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/amqpas* /opt/mqm/lib64/
+COPY etc/mqm/*.ini /etc/mqm/
+COPY etc/mqm/mq.htpasswd /etc/mqm/
+COPY internal/qmgrauth/qmgroam/patch/* /opt/mqm/lib64/
+COPY etc/mqm/mqpatch.dat /opt/mqm/
+RUN chmod 0660 /etc/mqm/mq.htpasswd
 COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
 RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
   && sleep 1 \
@@ -147,5 +155,8 @@ RUN chown -R 1001:root /etc/mqm/* \
   && chmod +x /usr/local/bin/runmq* \
   && install --directory --mode 2775 --owner 1001 --group root /run/runmqdevserver
 ENV MQ_ENABLE_EMBEDDED_WEB_SERVER=1 MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost
+ENV LD_LIBRARY_PATH=/opt/mqm/lib64
+ENV MQS_PERMIT_UNKNOWN_ID=true
+ENV MQ_CONNAUTH_USE_HTP=true
 USER 1001
 ENTRYPOINT ["runmqdevserver"]

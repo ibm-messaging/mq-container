@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2019
+© Copyright IBM Corporation 2017, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
@@ -50,7 +52,7 @@ func createDirStructure() error {
 
 // createQueueManager creates a queue manager, if it doesn't already exist.
 // It returns true if one was created (or a standby was created), or false if one already existed
-func createQueueManager(name string) (bool, error) {
+func createQueueManager(name string, devMode bool) (bool, error) {
 	log.Printf("Creating queue manager %v", name)
 
 	// Run 'dspmqinf' to check if 'mqs.ini' configuration file exists
@@ -73,7 +75,7 @@ func createQueueManager(name string) (bool, error) {
 	_, err = os.Stat(filepath.Join(dataDir, "qm.ini"))
 	if err != nil {
 		// If 'qm.ini' is not found - run 'crtmqm' to create a new queue manager
-		args := getCreateQueueManagerArgs(mounts, name)
+		args := getCreateQueueManagerArgs(mounts, name, devMode)
 		out, rc, err := command.Run("crtmqm", args...)
 		if err != nil {
 			log.Printf("Error %v creating queue manager: %v", rc, string(out))
@@ -257,8 +259,11 @@ func getQueueManagerDataDir(mounts map[string]string, name string) string {
 	return dataDir
 }
 
-func getCreateQueueManagerArgs(mounts map[string]string, name string) []string {
+func getCreateQueueManagerArgs(mounts map[string]string, name string, devMode bool) []string {
 	args := []string{"-ii", "/etc/mqm/", "-q", "-p", "1414"}
+	if devMode {
+		args = append(args, "-oa", "user")
+	}
 	if _, ok := mounts["/mnt/mqm-log"]; ok {
 		args = append(args, "-ld", "/mnt/mqm-log/log")
 	}
@@ -276,4 +281,49 @@ func getCreateStandbyQueueManagerArgs(name string) []string {
 	args = append(args, "-v", "Prefix=/var/mqm")
 	args = append(args, "-v", fmt.Sprintf("DataPath=/mnt/mqm-data/qmgrs/%v", name))
 	return args
+}
+
+// updateQMini removes the original ServicecCmponent stanza so we can add a new one
+func updateQMini(qmname string) error {
+
+	val, set := os.LookupEnv("MQ_CONNAUTH_USE_HTP")
+	if !set {
+		//htpasswd mode not enabled.
+		return nil
+	}
+	bval, err := strconv.ParseBool(strings.ToLower(val))
+	if err != nil {
+		return err
+	}
+	if bval == false {
+		//htpasswd mode not enabled.
+		return nil
+	}
+
+	log.Printf("Removing existing ServiceComponent configuration")
+
+	mounts, err := containerruntime.GetMounts()
+	if err != nil {
+		log.Printf("Error getting mounts for queue manager")
+		return err
+	}
+	dataDir := getQueueManagerDataDir(mounts, qmname)
+	qmgrDir := filepath.Join(dataDir, "qm.ini")
+	//read the initial version.
+	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
+	iniFileBytes, err := ioutil.ReadFile(qmgrDir)
+	if err != nil {
+		return err
+	}
+	qminiConfigStr := string(iniFileBytes)
+	if strings.Contains(qminiConfigStr, "ServiceComponent:") {
+		var re = regexp.MustCompile(`(?m)^.*ServiceComponent.*$\s^.*Service.*$\s^.*Name.*$\s^.*Module.*$\s^.*ComponentDataSize.*$`)
+		curFile := re.ReplaceAllString(qminiConfigStr, "")
+		// #nosec G304 - qmgrDir filepath is derived from dspmqinf
+		err := ioutil.WriteFile(qmgrDir, []byte(curFile), 0660)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

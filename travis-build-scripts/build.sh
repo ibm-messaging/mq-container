@@ -16,13 +16,12 @@
 
 set -e
 
-## BUILD PRODUCTION ONLY UNTIL DEV AUTH CONFIG COMPLETE
-# echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
-# make build-devjmstest
-# echo -en 'travis_fold:end:build-devjmstest\\r'
-# echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
-# make build-devserver
-# echo -en 'travis_fold:end:build-devserver\\r'
+echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
+make build-devjmstest
+echo -en 'travis_fold:end:build-devjmstest\\r'
+echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
+make build-devserver
+echo -en 'travis_fold:end:build-devserver\\r'
 if [ "$BUILD_ALL" = true ] ; then
     if [ "$ARCH" = "amd64" ] ; then
         echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'

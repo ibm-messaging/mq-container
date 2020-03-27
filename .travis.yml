@@ -26,7 +26,7 @@ services:
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
-cache:	
+cache:
   directories:
     - downloads
 
