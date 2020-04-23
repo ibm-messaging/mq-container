@@ -9,7 +9,7 @@ This repository contains all of the resources you will need to create a Docker i
 
 1. Download MQIPT from [IBM Fix Central for IBM MQ](https://ibm.biz/mq91ipt).
 2. Ensure the MQIPT downloaded tar file is available in this directory.
-3. If the tar file is not called `9.1.4.0-IBM-MQIPT-LinuxX64.tar.gz` you will need to either:
+3. If the tar file is not called `9.1.5.0-IBM-MQIPT-LinuxX64.tar.gz` you will need to either:
     * Rename the file.
     * Supply the new name as a `--build-arg IPTFILE=<new name>` when executing the docker build command in the next step.
     * Alter the Dockerfile `IPTFILE` ARG to specify the new file name.
@@ -41,4 +41,4 @@ The Dockerfiles and associated code and scripts are provided as-is and licensed 
 
 ## Copyright
 
-© Copyright IBM Corporation 2018,2019
+© Copyright IBM Corporation 2018,2020

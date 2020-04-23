@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018,2019
+# © Copyright IBM Corporation 2018,2020
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 FROM ibmcom/ibmjava:jre
 
-ARG IPTFILE=9.1.4.0-IBM-MQIPT-LinuxX64.tar.gz
+ARG IPTFILE=9.1.5.0-IBM-MQIPT-LinuxX64.tar.gz
 
 COPY $IPTFILE /opt/
 
