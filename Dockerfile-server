@@ -66,6 +66,7 @@ ARG BASE_TAG
 LABEL summary="IBM MQ Advanced Server"
 LABEL description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
 LABEL vendor="IBM"
+LABEL maintainer="IBM"
 LABEL distribution-scope="private"
 LABEL authoritative-source-url="https://www.ibm.com/software/passportadvantage/"
 LABEL url="https://www.ibm.com/products/mq/advanced"
