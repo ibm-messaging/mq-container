@@ -102,7 +102,8 @@ RUN chmod ug+x /usr/local/bin/runmqserver \
   && install --directory --mode 2775 --owner 1001 --group root /run/runmqserver \
   && touch /run/termination-log \
   && chown 1001:root /run/termination-log \
-  && chmod 0660 /run/termination-log
+  && chmod 0660 /run/termination-log \
+  && chmod -R g+w /etc/mqm/web
 # Always use port 1414 for MQ & 9157 for the metrics
 EXPOSE 1414 9157 9443
 ENV MQ_OVERRIDE_DATA_PATH=/mnt/mqm/data MQ_INSTALLATION_NAME=Installation1 MQ_USER_NAME="mqm" PATH="${PATH}:/opt/mqm/bin"
