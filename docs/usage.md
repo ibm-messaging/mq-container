@@ -67,7 +67,7 @@ Note that a listener is always created on port 1414 inside the container.  This 
 The following is an *example* `Dockerfile` for creating your own pre-configured image, which adds a custom MQ configuration file:
 
 ```dockerfile
-FROM ibmcom/mq
+FROM ibmcom/mq:9.1.4.0-r1
 COPY 20-config.mqsc /etc/mqm/
 ```
 
