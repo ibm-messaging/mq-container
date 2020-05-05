@@ -64,18 +64,12 @@ You can customize the configuration in several ways:
 
 Note that a listener is always created on port 1414 inside the container.  This port can be mapped to any port on the Docker host.
 
-The following is an *example* `Dockerfile` for creating your own pre-configured image, which adds a custom MQ configuration file, and an administrative user `alice`.  Note that it is not normally recommended to include passwords in this way:
+The following is an *example* `Dockerfile` for creating your own pre-configured image, which adds a custom MQ configuration file:
 
 ```dockerfile
-FROM ibmcom/mq:9.1.4.0-r1
-USER root
-RUN useradd alice -G mqm && \
-    echo alice:passw0rd | chpasswd
-USER mqm
+FROM ibmcom/mq
 COPY 20-config.mqsc /etc/mqm/
 ```
-
-The `USER` instructions are necessary to ensure that the `useradd` and `chpasswd` commands are run as the root user.
 
 Here is an example corresponding `20-config.mqsc` script, which creates two local queues:
 
