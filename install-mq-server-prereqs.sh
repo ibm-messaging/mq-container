@@ -63,7 +63,7 @@ if ($UBUNTU); then
 fi
 
 if ($RPM); then
-  EXTRA_RPMS="bash bc ca-certificates file findutils gawk glibc-common grep passwd procps-ng sed shadow-utils tar util-linux which"
+  EXTRA_RPMS="bash bc ca-certificates file findutils gawk glibc-common grep passwd procps-ng sed shadow-utils tar util-linux which ncurses-compat-libs"
   # Install additional packages required by MQ, this install process and the runtime scripts
   $YUM && yum -y install --setopt install_weak_deps=false ${EXTRA_RPMS}
   $MICRODNF && microdnf install ${EXTRA_RPMS}
