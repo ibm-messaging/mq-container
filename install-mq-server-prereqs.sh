@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2019
+# © Copyright IBM Corporation 2015, 2020
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +63,7 @@ if ($UBUNTU); then
 fi
 
 if ($RPM); then
-  EXTRA_RPMS="bash bc ca-certificates file findutils gawk glibc-common grep passwd procps-ng sed shadow-utils tar util-linux which ncurses-compat-libs"
+  EXTRA_RPMS="bash bc ca-certificates file findutils gawk glibc-common grep ncurses-compat-libs passwd procps-ng sed shadow-utils tar util-linux which"
   # Install additional packages required by MQ, this install process and the runtime scripts
   $YUM && yum -y install --setopt install_weak_deps=false ${EXTRA_RPMS}
   $MICRODNF && microdnf install ${EXTRA_RPMS}
