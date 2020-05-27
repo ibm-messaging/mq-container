@@ -113,10 +113,6 @@ endif
 MQ_IMAGE_FULL_RELEASE_NAME=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
 MQ_IMAGE_DEV_FULL_RELEASE_NAME=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
 
-ifeq "$(MQ_DELIVERY_REGISTRY_HOSTNAME)" "ibmcom"
-	MQ_IMAGE_DEVSERVER_DOCKERHUB=mq
-endif
-
 ###############################################################################
 # Build targets
 ###############################################################################
@@ -333,13 +329,6 @@ push-devserver:
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
 	$(COMMAND) tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
 	$(COMMAND) push $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
-
-.PHONY: push-devserver-dockerhub
-push-devserver-dockerhub:
-	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
-	$(COMMAND) login -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
-	$(COMMAND) tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_HOSTNAME)/$(MQ_IMAGE_DEVSERVER_DOCKERHUB):$(MQ_TAG)
-	$(COMMAND) push $(MQ_DELIVERY_REGISTRY_HOSTNAME)/$(MQ_IMAGE_DEVSERVER_DOCKERHUB):$(MQ_TAG)
 
 .PHONY: pull-advancedserver
 pull-advancedserver:
