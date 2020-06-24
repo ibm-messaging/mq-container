@@ -41,15 +41,15 @@ jobs:
       if: branch != private-master AND tag IS blank
       os: linux
       env:
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_915_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_920_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
     - if: branch = private-master OR tag =~ ^release-candidate*
       name: "Multi-Arch AMD64 build"
       os: linux
       env:
         - BUILD_ALL=true
-        - MQ_ARCHIVE_REPOSITORY=$MQ_915_ARCHIVE_REPOSITORY_AMD64
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_915_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY=$MQ_920_ARCHIVE_REPOSITORY_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_920_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
     # - if: branch = private-master OR tag =~ ^release-candidate*
     #   name: "Multi-Arch PPC64LE build"
@@ -57,8 +57,8 @@ jobs:
     #   env:
     #     - BUILD_ALL=true
     #     - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-    #     # - MQ_ARCHIVE_REPOSITORY=$MQ_915_ARCHIVE_REPOSITORY_PPC64LE
-    #     - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_915_ARCHIVE_REPOSITORY_DEV_PPC64LE
+    #     # - MQ_ARCHIVE_REPOSITORY=$MQ_920_ARCHIVE_REPOSITORY_PPC64LE
+    #     - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_920_ARCHIVE_REPOSITORY_DEV_PPC64LE
     #   script: bash -e travis-build-scripts/run.sh
     # - if: branch = private-master OR tag =~ ^release-candidate*
     #   name: "Multi-Arch S390X build"
@@ -66,8 +66,8 @@ jobs:
     #   env:
     #     - BUILD_ALL=true
     #     - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-    #     # - MQ_ARCHIVE_REPOSITORY=$MQ_915_ARCHIVE_REPOSITORY_S390X
-    #     - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_915_ARCHIVE_REPOSITORY_DEV_S390X
+    #     # - MQ_ARCHIVE_REPOSITORY=$MQ_920_ARCHIVE_REPOSITORY_S390X
+    #     - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_920_ARCHIVE_REPOSITORY_DEV_S390X
     #   script: bash -e travis-build-scripts/run.sh
 
 before_install:

@@ -19,7 +19,7 @@
 # RELEASE shows what release of the container code has been built
 RELEASE ?=
 # MQ_VERSION is the fully qualified MQ version number to build
-MQ_VERSION ?= 9.1.5.0
+MQ_VERSION ?= 9.2.0.0
 # MQ_ARCHIVE_REPOSITORY is a remote repository from which to pull the MQ_ARCHIVE (if required)
 MQ_ARCHIVE_REPOSITORY ?=
 # MQ_ARCHIVE_REPOSITORY_DEV is a remote repository from which to pull the MQ_ARCHIVE_DEV (if required)
