@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2019
+© Copyright IBM Corporation 2017, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 
@@ -60,8 +61,25 @@ func getLogFormat() string {
 	return os.Getenv("LOG_FORMAT")
 }
 
-func formatSimple(datetime string, message string) string {
-	return fmt.Sprintf("%v %v\n", datetime, message)
+// formatBasic formats a log message parsed from JSON, as "basic" text
+func formatBasic(obj map[string]interface{}) string {
+	// Emulate the MQ "MessageDetail=Extended" option, by appending inserts to the message
+	// This is important for certain messages, where key details are only available in the extended message content
+	inserts := make([]string, 0)
+	for k, v := range obj {
+		if strings.HasPrefix(k, "ibm_commentInsert") {
+			inserts = append(inserts, fmt.Sprintf("%s(%v)", strings.Replace(k, "ibm_comment", "Comment", 1), obj[k]))
+		} else if strings.HasPrefix(k, "ibm_arithInsert") {
+			if v.(float64) != 0 {
+				inserts = append(inserts, fmt.Sprintf("%s(%v)", strings.Replace(k, "ibm_arith", "Arith", 1), obj[k]))
+			}
+		}
+	}
+	sort.Strings(inserts)
+	if len(inserts) > 0 {
+		return fmt.Sprintf("%s %s [%v]\n", obj["ibm_datetime"], obj["message"], strings.Join(inserts, ", "))
+	}
+	return fmt.Sprintf("%s %s\n", obj["ibm_datetime"], obj["message"])
 }
 
 // mirrorSystemErrorLogs starts a goroutine to mirror the contents of the MQ system error logs
@@ -126,7 +144,8 @@ func configureLogger(name string) (mirrorFunc, error) {
 			if err != nil {
 				log.Printf("Failed to unmarshall JSON - %v", err)
 			} else {
-				fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
+				fmt.Printf(formatBasic(obj))
+				// fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
 			}
 			return true
 		}, nil
