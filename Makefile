@@ -259,7 +259,7 @@ build-advancedserver: registry-login log-build-env downloads/$(MQ_ARCHIVE) comma
 build-devserver-host: build-devserver
 
 .PHONY: build-devserver
-build-devserver: registry-login log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version patch-mq-dev
+build-devserver: registry-login log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
 
@@ -275,12 +275,6 @@ build-explorer: registry-login downloads/$(MQ_ARCHIVE_DEV)
 build-sdk: registry-login downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
 	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
-
-.PHONY: patch-mq-dev
-patch-mq-dev:
-	$(info $(shell printf $(TITLE)"Generate MQ Developer Patch"$(END)))
-	mkdir -p internal/qmgrauth/qmgroam/patch
-	cp internal/qmgrauth/qmgroam/$(ARCH)/* internal/qmgrauth/qmgroam/patch/
 
 .PHONY: registry-login
 registry-login:

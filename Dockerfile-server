@@ -137,8 +137,6 @@ USER 0
 COPY --from=builder /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/amqpas* /opt/mqm/lib64/
 COPY etc/mqm/*.ini /etc/mqm/
 COPY etc/mqm/mq.htpasswd /etc/mqm/
-COPY internal/qmgrauth/qmgroam/patch/* /opt/mqm/lib64/
-COPY etc/mqm/mqpatch.dat /opt/mqm/
 RUN chmod 0660 /etc/mqm/mq.htpasswd
 COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
 RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
