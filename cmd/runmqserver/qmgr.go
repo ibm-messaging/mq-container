@@ -16,11 +16,9 @@ limitations under the License.
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -125,61 +123,6 @@ func startQueueManager(name string) error {
 	return nil
 }
 
-func configureQueueManager() error {
-	const configDir string = "/etc/mqm"
-	files, err := ioutil.ReadDir(configDir)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".mqsc") {
-			abs := filepath.Join(configDir, file.Name())
-			// #nosec G204
-			verify := exec.Command("runmqsc", "-v", "-e")
-			// #nosec G204 - command is fixed, no injection vector
-			cmd := exec.Command("runmqsc")
-			// Read mqsc file into variable
-			// #nosec G304 - filename variable is derived from contents of 'configDir' which is a defined constant
-			mqsc, err := ioutil.ReadFile(abs)
-			if err != nil {
-				log.Printf("Error reading file %v: %v", abs, err)
-				continue
-			}
-			// Write mqsc to buffer
-			var buffer bytes.Buffer
-			_, err = buffer.Write(mqsc)
-			if err != nil {
-				log.Printf("Error writing MQSC file %v to buffer: %v", abs, err)
-				continue
-			}
-			verifyBuffer := buffer
-
-			// Buffer mqsc to stdin of runmqsc
-			cmd.Stdin = &buffer
-			verify.Stdin = &verifyBuffer
-
-			// Verify the MQSC commands
-			out, err := verify.CombinedOutput()
-			if err != nil {
-				log.Errorf("Error verifying MQSC file %v (%v):\n\t%v", file.Name(), err, formatMQSCOutput(string(out)))
-				return fmt.Errorf("Error verifying MQSC file %v (%v):\n\t%v", file.Name(), err, formatMQSCOutput(string(out)))
-			}
-
-			// Run runmqsc command
-			out, err = cmd.CombinedOutput()
-			if err != nil {
-				log.Errorf("Error running MQSC file %v (%v):\n\t%v", file.Name(), err, formatMQSCOutput(string(out)))
-				continue
-			} else {
-				// Print the runmqsc output, adding tab characters to make it more readable as part of the log
-				log.Printf("Output for \"runmqsc\" with %v:\n\t%v", abs, formatMQSCOutput(string(out)))
-			}
-		}
-	}
-	return nil
-}
-
 func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
 	qmGracePeriod := os.Getenv("MQ_GRACE_PERIOD")
@@ -260,7 +203,7 @@ func getQueueManagerDataDir(mounts map[string]string, name string) string {
 }
 
 func getCreateQueueManagerArgs(mounts map[string]string, name string, devMode bool) []string {
-	args := []string{"-ii", "/etc/mqm/", "-q", "-p", "1414"}
+	args := []string{"-ii", "/etc/mqm/", "-ic", "/etc/mqm/", "-q", "-p", "1414"}
 	if devMode {
 		args = append(args, "-oa", "user")
 	}

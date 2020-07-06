@@ -227,14 +227,6 @@ func doMain() error {
 		}
 	}
 
-	if standby, _ := ready.IsRunningAsStandbyQM(name); !standby {
-		err = configureQueueManager()
-		if err != nil {
-			logTermination(err)
-			return err
-		}
-	}
-
 	enableMetrics := os.Getenv("MQ_ENABLE_METRICS")
 	if enableMetrics == "true" || enableMetrics == "1" {
 		go metrics.GatherMetrics(name, log)

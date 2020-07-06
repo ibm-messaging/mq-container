@@ -584,7 +584,16 @@ func TestMQSC(t *testing.T) {
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
-	rc, mqscOutput := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
+
+	rc := -1
+	mqscOutput := ""
+	for i := 0; i < 60; i++ {
+		rc, mqscOutput = execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test)' | runmqsc"})
+		if rc == 0 {
+			return
+		}
+		time.Sleep(1 * time.Second)
+	}
 	if rc != 0 {
 		r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
 		t.Fatalf("Expected runmqsc to exit with rc=0, got %v with error %v", rc, r.FindString(mqscOutput))
@@ -628,7 +637,15 @@ func TestLargeMQSC(t *testing.T) {
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 
-	rc, mqscOutput := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test" + strconv.Itoa(numQueues) + ")' | runmqsc"})
+	rc := -1
+	mqscOutput := ""
+	for i := 0; i < 60; i++ {
+		rc, mqscOutput = execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'DISPLAY QLOCAL(test" + strconv.Itoa(numQueues) + ")' | runmqsc"})
+		if rc == 0 {
+			return
+		}
+		time.Sleep(1 * time.Second)
+	}
 	if rc != 0 {
 		r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
 		t.Fatalf("Expected runmqsc to exit with rc=0, got %v with error %v", rc, r.FindString(mqscOutput))
@@ -1045,10 +1062,17 @@ func TestReadiness(t *testing.T) {
 	t.Log(mqsc)
 	for {
 		readyRC, _ := execContainer(t, cli, id, "", []string{"chkmqready"})
-		queueCheckRC, queueCheckOut := execContainer(t, cli, id, "", []string{"bash", "-c", queueCheckCommand})
-		t.Logf("readyRC=%v,queueCheckRC=%v\n", readyRC, queueCheckRC)
-
 		if readyRC == 0 {
+			queueCheckRC := -1
+			queueCheckOut := ""
+			for i := 1; i < 60; i++ {
+				queueCheckRC, queueCheckOut = execContainer(t, cli, id, "", []string{"bash", "-c", queueCheckCommand})
+				t.Logf("readyRC=%v,queueCheckRC=%v\n", readyRC, queueCheckRC)
+				if queueCheckRC == 0 {
+					break
+				}
+				time.Sleep(1 * time.Second)
+			}
 			if queueCheckRC != 0 {
 				r := regexp.MustCompile("AMQ[0-9][0-9][0-9][0-9]E")
 				t.Fatalf("Runmqsc returned %v with error %v. chkmqready returned %v when MQSC had not finished", queueCheckRC, r.FindString(queueCheckOut), readyRC)
