@@ -33,7 +33,7 @@ MQ_ARCHIVE_REPOSITORY_CREDENTIAL ?=
 MQ_ARCHIVE ?= $(MQ_VERSION)-IBM-MQ-Advanced-$(MQ_ARCHIVE_TYPE)$(MQ_ARCHIVE_ARCH).tar.gz
 # MQ_ARCHIVE_DEV is the name of the file, under the downloads directory, from which MQ Advanced
 # for Developers can be installed
-MQ_ARCHIVE_DEV ?= $(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-$(MQ_ARCHIVE_TYPE)$(MQ_ARCHIVE_ARCH).tar.gz
+MQ_ARCHIVE_DEV ?= $(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-$(MQ_ARCHIVE_TYPE)$(MQ_ARCHIVE_ARCH).tar.gz
 # MQ_SDK_ARCHIVE specifies the archive to use for building the golang programs.  Defaults vary on developer or advanced.
 MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
