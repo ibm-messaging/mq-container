@@ -17,7 +17,7 @@ ARG BASE_TAG=8.2-301.1593113563
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
-FROM registry.redhat.io/ubi8/go-toolset:1.13.4-15 as builder
+FROM registry.redhat.io/ubi8/go-toolset:1.13.4-22 as builder
 # FROM docker.io/centos/go-toolset-7-centos7 as builder
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ RPM install packages
