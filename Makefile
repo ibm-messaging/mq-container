@@ -30,10 +30,10 @@ MQ_ARCHIVE_REPOSITORY_USER ?=
 MQ_ARCHIVE_REPOSITORY_CREDENTIAL ?=
 # MQ_ARCHIVE is the name of the file, under the downloads directory, from which MQ Advanced can
 # be installed. Does not apply to MQ Advanced for Developers
-MQ_ARCHIVE ?= $(MQ_VERSION)-IBM-MQ-Advanced-$(MQ_ARCHIVE_TYPE)$(MQ_ARCHIVE_ARCH).tar.gz
+MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION_VRM)_$(MQ_ARCHIVE_TYPE)_$(MQ_ARCHIVE_ARCH)_NOINST.tar.gz
 # MQ_ARCHIVE_DEV is the name of the file, under the downloads directory, from which MQ Advanced
 # for Developers can be installed
-MQ_ARCHIVE_DEV ?= $(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-$(MQ_ARCHIVE_TYPE)$(MQ_ARCHIVE_ARCH).tar.gz
+MQ_ARCHIVE_DEV ?= $(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-$(MQ_ARCHIVE_DEV_TYPE)$(MQ_ARCHIVE_DEV_ARCH).tar.gz
 # MQ_SDK_ARCHIVE specifies the archive to use for building the golang programs.  Defaults vary on developer or advanced.
 MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
@@ -65,7 +65,8 @@ ARCH ?= $(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
 # Other variables
 ###############################################################################
 GO_PKG_DIRS = ./cmd ./internal ./test
-MQ_ARCHIVE_TYPE=Linux
+MQ_ARCHIVE_TYPE=LINUX
+MQ_ARCHIVE_DEV_TYPE=Linux
 # BUILD_SERVER_CONTAINER is the name of the web server container used at build time
 BUILD_SERVER_CONTAINER=build-server
 # NUM_CPU is the number of CPUs available to Docker.  Used to control how many
@@ -82,6 +83,8 @@ IMAGE_REVISION=$(shell git rev-parse HEAD)
 IMAGE_SOURCE=$(shell git config --get remote.origin.url)
 EMPTY:=
 SPACE:= $(EMPTY) $(EMPTY)
+# MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.2.0 instead of 9.2.0.0
+MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
 
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
 	DOWNLOADS_DIR=$(patsubst /mnt/c%,C:%,$(realpath ./downloads/))
@@ -93,7 +96,8 @@ endif
 
 # Try to figure out which archive to use from the architecture
 ifeq "$(ARCH)" "amd64"
-	MQ_ARCHIVE_ARCH=X64
+	MQ_ARCHIVE_ARCH=X86-64
+	MQ_ARCHIVE_DEV_ARCH=X64
 else ifeq "$(ARCH)" "ppc64le"
 	MQ_ARCHIVE_ARCH=PPC64LE
 else ifeq "$(ARCH)" "s390x"

@@ -14,7 +14,7 @@ The MQ Developer Defaults supports some customization options, these are all con
 
 The following users are created:
 
-* User **admin** for administration (in the `mqm` group).  Default password is **passw0rd**.
+* User **admin** for administration.  Default password is **passw0rd**.
 * User **app** for messaging (in a group called `mqclient`).  No password by default.
 
 Users in `mqclient` group have been given access connect to all queues and topics starting with `DEV.**` and have `put`, `get`, `pub`, `sub`, `browse` and `inq` permissions.

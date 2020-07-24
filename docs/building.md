@@ -16,11 +16,11 @@ You will also need a [Red Hat Account](https://access.redhat.com) to be able to 
 This procedure works for building the MQ Continuous Delivery release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.1.4_LINUX_X86-64.tar.gz`) in the `downloads` directory
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.2.0_LINUX_X86-64_NOINST.tar.gz`) in the `downloads` directory
 3. Login to the Red Hat Registry: `docker login registry.redhat.io` using your Customer Portal credentials.
 4. Run `make build-advancedserver`
 
-> **Warning**: Note that MQ offers two different sets of packaging on Linux: one is called "MQ for Linux" and contains RPM files for installing on Red Hat Enterprise Linux and SUSE Linux Enterprise Server; the other is for Ubuntu.  The MQ container build uses a Red Hat Universal Base Image, so you need the "MQ for Linux" RPM files.
+> **Warning**: Note that from MQ 9.2.X, the MQ container build uses a 'No-Install' MQ Package, available under `IBM MQ V9.2.x Continuous Delivery Release components eAssembly, part no. CJ7CNML`
 
 If you have an MQ archive file with a different file name, you can specify a particular file (which must be in the `downloads` directory).  You should also specify the MQ version, so that the resulting image is tagged correctly, for example:
 
@@ -37,4 +37,4 @@ You can use the environment variable `MQ_ARCHIVE_DEV` to specify an alternative 
 
 ## Installed components
 
-This image includes the core MQ server, Java, language packs, GSKit, and web server.  This can be configured by setting the `MQ_PACKAGES` argument to `make`.
+This image includes the core MQ server, Java, language packs, GSKit, and web server.  This is configured in the `Generate MQ package in INSTALLATION_DIR` section [here](../install-mq.sh), with the configured options being picked up at build time.

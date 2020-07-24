@@ -2,7 +2,7 @@
 
 ## 9.2.0.0 (2020-07-23)
 
-* Updated to MQ version 9.2.0.0
+* Updated to [MQ version 9.2.0.0](https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.2.0/com.ibm.mq.pro.doc/q113110_.htm)
 * Use `-ic` arguments with `crtmqm` to process MQSC files in `/etc/mqm`. Replaces previous use of "runmqsc" commands
 
 ## 9.1.5.0 (2020-04-02)
