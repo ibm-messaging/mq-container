@@ -14,12 +14,7 @@ There are two main sets of tests:
 2. Docker tests, which test a complete Docker image, using the Docker API
 
 ### Running the Docker tests
-Before running Docker tests, the following command must be run:
-
-```
-make build-devjmstest
-```
-
+ 
 The Docker tests can be run locally on a machine with Docker. For example:
 
 ```
