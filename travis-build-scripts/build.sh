@@ -23,7 +23,7 @@ echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserve
 make build-devserver
 echo -en 'travis_fold:end:build-devserver\\r'
 if [ "$BUILD_ALL" = true ] ; then
-    if [ "$ARCH" = "amd64" ] ; then
+    if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" ]] ; then
         echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
         make build-advancedserver
         echo -en 'travis_fold:end:build-advancedserver\\r'
