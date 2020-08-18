@@ -27,7 +27,7 @@ if [ "$BUILD_ALL" = true ] ; then
     fi
 fi
 echo 'Running gosec scan...' && echo -en 'travis_fold:start:gosec-scan\\r'
-if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" ]] ; then
+if [ "$ARCH" = "amd64" ] ; then
     make gosec
 else
     echo "Gosec not available on ppc64le/s390x...skipping gosec scan"

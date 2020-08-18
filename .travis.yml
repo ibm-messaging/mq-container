@@ -43,14 +43,6 @@ jobs:
       env:
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_920_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
-    - stage: build-s390x
-      if: branch != private-master AND tag IS blank
-      name: "Basic S390X build"
-      os: linux-s390
-      env:
-        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_920_ARCHIVE_REPOSITORY_DEV_S390X
-      script: travis_wait 60 bash -e travis-build-scripts/run.sh
     - if: branch = private-master OR tag =~ ^release-candidate*
       name: "Multi-Arch AMD64 build"
       os: linux
