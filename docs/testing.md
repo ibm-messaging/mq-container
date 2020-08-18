@@ -18,8 +18,8 @@ There are two main sets of tests:
 The Docker tests can be run locally on a machine with Docker. For example:
 
 ```
-make test-devserver
-make test-advancedserver
+make devserver
+make advancedserver
 ```
 
 You can specify the image to use directly by using the `MQ_IMAGE_ADVANCEDSERVER` or `MQ_IMAGE_DEVSERVER` variables, for example:
