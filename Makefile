@@ -78,7 +78,6 @@ BASE_IMAGE_TAG=$(lastword $(subst /, ,$(subst :,-,$(BASE_IMAGE))))
 MQ_IMAGE_DEVSERVER_BASE=mqadvanced-server-dev-base
 # Docker image name to use for JMS tests
 DEV_JMS_IMAGE=mq-dev-jms-test
-MQ_DELIVERY_REGISTRY_NAMESPACE=kd
 # Variables for versioning
 IMAGE_REVISION=$(shell git rev-parse HEAD)
 IMAGE_SOURCE=$(shell git config --get remote.origin.url)
