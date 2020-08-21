@@ -133,6 +133,9 @@ test-all: build-devjmstest test-devserver test-advancedserver
 .PHONY: devserver
 devserver: build-devserver build-devjmstest test-devserver
 
+.PHONY: advancedserver
+advancedserver: build-advancedserver test-advancedserver
+
 # Build incubating components
 .PHONY: incubating
 incubating: build-explorer
