@@ -43,9 +43,9 @@ func verifySingleProcess() error {
 // Verifies that there is only one instance running of the given program name.
 func verifyOnlyOne(programName string) (int, error) {
 	// #nosec G104
-	out, _, _ := command.Run("ps", "-e", "--format", "cmd")
+	out, _, _ := command.Run("pgrep", programName)
 	//if this goes wrong then assume we are the only one
-	numOfProg := strings.Count(out, programName)
+	numOfProg := strings.Count(out, "\n")
 	if numOfProg != 1 {
 		return numOfProg, fmt.Errorf("Expected there to be only 1 instance of %s but found %d", programName, numOfProg)
 	}
