@@ -32,8 +32,8 @@ func verifySingleProcess() error {
 	}
 
 	// Verify that there is only one runmqserver
-	_, err = verifyOnlyOne(programName)
-	if err != nil {
+	one := verifyOnlyOne(programName)
+	if !one {
 		return fmt.Errorf("You cannot run more than one instance of this program")
 	}
 
@@ -41,15 +41,26 @@ func verifySingleProcess() error {
 }
 
 // Verifies that there is only one instance running of the given program name.
-func verifyOnlyOne(programName string) (int, error) {
+func verifyOnlyOne(programName string) bool {
 	// #nosec G104
-	out, _, _ := command.Run("pgrep", programName)
-	//if this goes wrong then assume we are the only one
-	numOfProg := strings.Count(out, "\n")
-	if numOfProg != 1 {
-		return numOfProg, fmt.Errorf("Expected there to be only 1 instance of %s but found %d", programName, numOfProg)
+	out, _, err := command.Run("pgrep", programName)
+	if err != nil {
+		// unable to verify: bad, but not fatal
+		log.Debug(err.Error())
+		return true
 	}
-	return numOfProg, nil
+	numOfProg := strings.Count(out, "\n")
+	switch numOfProg {
+	case 0:
+		// unable to verify: bad, but not fatal
+		log.Debugf("can't find %s using pgrep", programName)
+		return true
+	case 1:
+		return true
+	}
+
+	log.Errorf("Expected to have 1 instance of %s, got %d", programName, numOfProg)
+	return false
 }
 
 // Determines the name of the currently running executable.
