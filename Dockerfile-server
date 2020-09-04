@@ -13,18 +13,20 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=registry.redhat.io/ubi8/ubi-minimal
-ARG BASE_TAG=8.2-301.1593113563
+ARG BASE_TAG=8.2-345
+ARG GO_WORKDIR=/go/src/github.com/ibm-messaging/mq-container
+ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.2.0.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
-FROM registry.redhat.io/ubi8/go-toolset:1.13.4-22 as builder
-# FROM docker.io/centos/go-toolset-7-centos7 as builder
+FROM golang:1.13.15 as builder
 # The URL to download the MQ installer from in tar.gz format
-# This assumes an archive containing the MQ RPM install packages
-ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev912_linux_x86-64.tar.gz"
+# This assumes an archive containing the MQ Non-Install packages
+ARG MQ_URL
 ARG IMAGE_REVISION="Not specified"
 ARG IMAGE_SOURCE="Not specified"
 ARG IMAGE_TAG="Not specified"
+ARG GO_WORKDIR
 USER 0
 COPY install-mq.sh /usr/local/bin/
 RUN mkdir /opt/mqm \
@@ -32,13 +34,12 @@ RUN mkdir /opt/mqm \
   && sleep 1 \
   && INSTALL_SDK=1 install-mq.sh \
   && chown -R 1001:root /opt/mqm/*
-WORKDIR /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/
+WORKDIR $GO_WORKDIR/
 COPY cmd/ ./cmd
 COPY internal/ ./internal
 COPY pkg/ ./pkg
 COPY vendor/ ./vendor
-ENV PATH="${PATH}:/opt/rh/go-toolset-1.11/root/usr/bin" \
-    CGO_CFLAGS="-I/opt/mqm/inc/" \
+ENV CGO_CFLAGS="-I/opt/mqm/inc/" \
     CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
 RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\" -X \"main.ImageTag=$IMAGE_TAG\"" ./cmd/runmqserver/
 RUN go build ./cmd/chkmqready/
@@ -58,11 +59,10 @@ RUN go vet ./cmd/... ./internal/...
 ###############################################################################
 FROM $BASE_IMAGE:$BASE_TAG AS mq-server
 # The MQ packages to install - see install-mq.sh for default value
-ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev914_linux_x86-64.tar.gz"
-ARG MQ_PACKAGES="MQSeriesRuntime-*.rpm MQSeriesServer-*.rpm MQSeriesJava*.rpm MQSeriesJRE*.rpm MQSeriesGSKit*.rpm MQSeriesMsg*.rpm MQSeriesSamples*.rpm MQSeriesWeb*.rpm MQSeriesAMS-*.rpm"
-#ARG MQ_PACKAGES="ibmmq-server ibmmq-java ibmmq-jre ibmmq-gskit ibmmq-msg-.* ibmmq-samples ibmmq-web ibmmq-ams"
+ARG MQ_URL
 ARG BASE_IMAGE
 ARG BASE_TAG
+ARG GO_WORKDIR
 LABEL summary="IBM MQ Advanced Server"
 LABEL description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
 LABEL vendor="IBM"
@@ -89,8 +89,8 @@ RUN env \
 # Create a directory for runtime data from runmqserver
 RUN mkdir -p /run/runmqserver \
   && chown 1001:root /run/runmqserver
-COPY --from=builder /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/runmqserver /usr/local/bin/
-COPY --from=builder /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/chkmq* /usr/local/bin/
+COPY --from=builder $GO_WORKDIR/runmqserver /usr/local/bin/
+COPY --from=builder $GO_WORKDIR/chkmq* /usr/local/bin/
 COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
 # Copy web XML files
 COPY web /etc/mqm/web
@@ -120,6 +120,7 @@ ENTRYPOINT ["runmqserver"]
 FROM mq-server AS mq-dev-server
 ARG BASE_IMAGE
 ARG BASE_TAG
+ARG GO_WORKDIR
 # Enable MQ developer default configuration
 ENV MQ_DEV=true
 LABEL summary="IBM MQ Advanced for Developers Server"
@@ -134,7 +135,7 @@ LABEL io.k8s.description="Simplify, accelerate and facilitate the reliable excha
 LABEL base-image=$BASE_IMAGE
 LABEL base-image-release=$BASE_TAG
 USER 0
-COPY --from=builder /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/amqpas* /opt/mqm/lib64/
+COPY --from=builder $GO_WORKDIR/amqpas* /opt/mqm/lib64/
 COPY etc/mqm/*.ini /etc/mqm/
 COPY etc/mqm/mq.htpasswd /etc/mqm/
 RUN chmod 0660 /etc/mqm/mq.htpasswd
@@ -145,7 +146,7 @@ RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
 # Create a directory for runtime data from runmqserver
 RUN mkdir -p /run/runmqdevserver \
   && chown 1001:root /run/runmqdevserver
-COPY --from=builder /opt/app-root/src/go/src/github.com/ibm-messaging/mq-container/runmqdevserver /usr/local/bin/
+COPY --from=builder $GO_WORKDIR/runmqdevserver /usr/local/bin/
 # Copy template files
 COPY incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
 # Copy web XML files for default developer configuration
