@@ -32,7 +32,7 @@ go_import_path: "github.com/ibm-messaging/mq-container"
 
 env:
   global:
-    - RELEASE=""
+    - RELEASE="r2"
 
 jobs:
   include:
