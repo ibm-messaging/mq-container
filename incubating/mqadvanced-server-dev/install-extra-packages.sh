@@ -25,17 +25,17 @@ test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
 if ($UBUNTU); then
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
-    apt-get install -y --no-install-recommends sudo
+    apt-get install -y --no-install-recommends libaprutil1
     rm -rf /var/lib/apt/lists/*
 fi
 
 if ($YUM); then
-    yum -y install sudo
+    yum -y install apr-util-openssl
     yum -y clean all
     rm -rf /var/cache/yum/*
 fi
 
 if ($MICRODNF); then
-    microdnf install sudo
+    microdnf install apr-util-openssl
     microdnf clean all
 fi
