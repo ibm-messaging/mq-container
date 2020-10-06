@@ -172,7 +172,7 @@ downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
 
 # Vendor Go dependencies for the Docker tests
 test/docker/vendor:
-	cd test/docker && dep ensure -vendor-only
+	cd test/docker && go mod vendor
 
 # Shortcut to just run the unit tests
 .PHONY: test-unit

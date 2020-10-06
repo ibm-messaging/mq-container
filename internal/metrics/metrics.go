@@ -23,9 +23,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ibm-messaging/mq-container/pkg/logger"
 	"github.com/ibm-messaging/mq-container/internal/ready"
+	"github.com/ibm-messaging/mq-container/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -83,7 +84,7 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 	}
 
 	// Setup HTTP server to handle requests from Prometheus
-	http.Handle("/metrics", prometheus.Handler())
+	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		// #nosec G104
