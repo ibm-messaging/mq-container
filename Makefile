@@ -18,6 +18,8 @@
 ###############################################################################
 # RELEASE shows what release of the container code has been built
 RELEASE ?=
+# RELEASE_CANDIDATE shows what release candidate of the container code has been built
+RELEASE_CANDIDATE ?=
 # MQ_VERSION is the fully qualified MQ version number to build
 MQ_VERSION ?= 9.2.0.0
 # MQ_ARCHIVE_REPOSITORY is a remote repository from which to pull the MQ_ARCHIVE (if required)
@@ -112,11 +114,32 @@ else
 	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)
 endif
 
+# image tagging
+
 ifneq "$(RELEASE)" "$(EMPTY)"
-	MQ_TAG=$(MQ_VERSION)-$(RELEASE)-$(ARCH)
+	MQ_TAG=$(MQ_VERSION)-$(RELEASE)-$(ARCH)-$(RELEASE_CANDIDATE)
 	EXTRA_LABELS=--label release=$(RELEASE)
-	MQ_MANIFEST_TAG=$(MQ_VERSION)-$(RELEASE)
+	MQ_MANIFEST_TAG=$(MQ_VERSION)-$(RELEASE)-$(RELEASE_CANDIDATE)
 endif
+
+CURRENT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+ifeq "$(TIMESTAMPFLAT)" "$(EMPTY)"
+	TIMESTAMPFLAT=$(shell date "+%Y%m%d%H%M%S")
+endif
+
+ifeq "$(GIT_COMMIT)" "$(EMPTY)"
+	GIT_COMMIT=$(shell git rev-parse --short HEAD)
+endif
+
+ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" != "true" ] && [ "$(CURRENT_BRANCH)" == "private-master" ] && echo true), true)
+	RELEASE_TAG=$(shell [ -z "$(RELEASE)" ] || echo "-$(RELEASE)-$(RELEASE_CANDIDATE)")
+	MQ_TAG=$(MQ_VERSION)$(RELEASE_TAG)-$(ARCH).$(TIMESTAMPFLAT).$(GIT_COMMIT)
+	MQ_MANIFEST_TAG=$(MQ_VERSION)$(RELEASE_TAG).$(TIMESTAMPFLAT).$(GIT_COMMIT)
+endif
+
+# end image tagging
+
 MQ_IMAGE_FULL_RELEASE_NAME=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
 MQ_IMAGE_DEV_FULL_RELEASE_NAME=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
 

@@ -30,10 +30,6 @@ go_import_path: "github.com/ibm-messaging/mq-container"
 #   directories:
 #     - downloads
 
-env:
-  global:
-    - RELEASE=""
-
 jobs:
   include:
     - stage: basic-build
@@ -70,9 +66,11 @@ jobs:
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=$MQ_920_ARCHIVE_REPOSITORY_S390X
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_920_ARCHIVE_REPOSITORY_DEV_S390X
+        - RELEASE=""
+        - RELEASE_CANDIDATE=""
       script: bash -e travis-build-scripts/run.sh
     - stage: push-manifest
-      if: branch = private-master OR tag =~ ^release-candidate*
+      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
       name: "Push Manifest-list to registry"
       script: make push-manifest
 before_install:
