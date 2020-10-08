@@ -16,6 +16,9 @@
 
 set -e
 
+echo 'Cacheing MQ tag...' && echo -en 'travis_fold:start:build-cache-mq-tag\\r'
+make cache-mq-tag
+echo -en 'travis_fold:end:cache-mq-tag\\r'
 echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
 make build-devjmstest
 echo -en 'travis_fold:end:build-devjmstest\\r'

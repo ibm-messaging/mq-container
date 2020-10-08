@@ -136,10 +136,16 @@ ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" != "true" ] && [ 
 	MQ_MANIFEST_TAG=$(MQ_VERSION)$(RELEASE_TAG).$(TIMESTAMPFLAT).$(GIT_COMMIT)
 endif
 
+PATH_TO_MQ_TAG_CACHE=$(TRAVIS_BUILD_DIR)/.tagcache
+MQ_TAG_CACHED=$(MQ_TAG)
+ifneq "$(TRAVIS)" "$(EMPTY)"
+	MQ_TAG_CACHED=$(shell cat $(PATH_TO_MQ_TAG_CACHE))
+endif
+
 # end image tagging
 
-MQ_IMAGE_FULL_RELEASE_NAME=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
-MQ_IMAGE_DEV_FULL_RELEASE_NAME=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
+MQ_IMAGE_FULL_RELEASE_NAME=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED)
+MQ_IMAGE_DEV_FULL_RELEASE_NAME=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG_CACHED)
 
 #setup variables for fat-manifests
 MQ_IMAGE_DEVSERVER_MANIFEST=$(MQ_IMAGE_DEVSERVER):$(MQ_MANIFEST_TAG)
@@ -191,6 +197,10 @@ endif
 .PHONY: downloads
 downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
 
+.PHONY: cache-mq-tag
+cache-mq-tag:
+	@$(shell echo "$(MQ_TAG)" > $(PATH_TO_MQ_TAG_CACHE))
+
 # Vendor Go dependencies for the Docker tests
 test/docker/vendor:
 	cd test/docker && go mod vendor
@@ -202,9 +212,9 @@ test-unit:
 
 .PHONY: test-advancedserver
 test-advancedserver: test/docker/vendor
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) on $(shell docker --version)"$(END)))
-	docker inspect $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED) on $(shell docker --version)"$(END)))
+	docker inspect $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
 build-devjmstest:
@@ -213,9 +223,9 @@ build-devjmstest:
 
 .PHONY: test-devserver
 test-devserver: test/docker/vendor
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell docker --version)"$(END)))
-	docker inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG_CACHED) on $(shell docker --version)"$(END)))
+	docker inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG_CACHED)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG_CACHED) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
 
 .PHONY: coverage
 coverage:
@@ -223,7 +233,7 @@ coverage:
 
 .PHONY: test-advancedserver-cover
 test-advancedserver-cover: test/docker/vendor coverage
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) with code coverage on $(shell docker --version)"$(END)))
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED) with code coverage on $(shell docker --version)"$(END)))
 	rm -f ./coverage/unit*.cov
 	# Run unit tests with coverage, for each package under 'internal'
 	go list -f '{{.Name}}' ./internal/... | xargs -I {} go test -cover -covermode count -coverprofile ./coverage/unit-{}.cov ./internal/{}
@@ -235,7 +245,7 @@ test-advancedserver-cover: test/docker/vendor coverage
 	rm -f ./test/docker/coverage/*.cov
 	rm -f ./coverage/docker.*
 	mkdir -p ./test/docker/coverage/
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover TEST_COVER=true go test $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED)-cover TEST_COVER=true go test $(TEST_OPTS_DOCKER)
 	echo 'mode: count' > ./coverage/docker.cov
 	tail -q -n +2 ./test/docker/coverage/*.cov >> ./coverage/docker.cov
 	go tool cover -html=./coverage/docker.cov -o ./coverage/docker.html
@@ -291,20 +301,20 @@ build-advancedserver-host: build-advancedserver
 
 .PHONY: build-advancedserver
 build-advancedserver: registry-login log-build-env downloads/$(MQ_ARCHIVE) command-version
-	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
-	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
+	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED)"$(END)))
+	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG_CACHED),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
 
 .PHONY: build-devserver-host
 build-devserver-host: build-devserver
 
 .PHONY: build-devserver
 build-devserver: registry-login log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
-	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
-	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG_CACHED)"$(END)))
+	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG_CACHED),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: registry-login command-version
-	$(COMMAND) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover -f Dockerfile-server.cover .
+	$(COMMAND) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED)-cover -f Dockerfile-server.cover .
 
 .PHONY: build-explorer
 build-explorer: registry-login downloads/$(MQ_ARCHIVE_DEV)
@@ -313,7 +323,7 @@ build-explorer: registry-login downloads/$(MQ_ARCHIVE_DEV)
 .PHONY: build-sdk
 build-sdk: registry-login downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
-	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
+	$(call build-mq,mq-sdk,$(MQ_TAG_CACHED),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
 
 .PHONY: registry-login
 registry-login:
@@ -353,14 +363,14 @@ pull-mq-archive-dev:
 push-advancedserver:
 	$(info $(SPACER)$(shell printf $(TITLE)"Push production image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
-	$(COMMAND) tag $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
+	$(COMMAND) tag $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG_CACHED) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
 	$(COMMAND) push $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
 
 .PHONY: push-devserver
 push-devserver:
 	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
-	$(COMMAND) tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
+	$(COMMAND) tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG_CACHED) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
 	$(COMMAND) push $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
 
 .PHONY: pull-advancedserver
@@ -368,14 +378,14 @@ pull-advancedserver:
 	$(info $(SPACER)$(shell printf $(TITLE)"Pull production image from $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
 	$(COMMAND) pull $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
-	$(COMMAND) tag $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME) $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG)
+	$(COMMAND) tag $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME) $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG_CACHED)
 
 .PHONY: pull-devserver
 pull-devserver:
 	$(info $(SPACER)$(shell printf $(TITLE)"Pull developer image from $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
 	$(COMMAND) pull $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
-	$(COMMAND) tag $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME) $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG)
+	$(COMMAND) tag $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME) $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG_CACHED)
 
 .PHONY: push-manifest
 push-manifest: build-skopeo-container
