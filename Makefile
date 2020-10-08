@@ -122,8 +122,6 @@ ifneq "$(RELEASE)" "$(EMPTY)"
 	MQ_MANIFEST_TAG=$(MQ_VERSION)-$(RELEASE)-$(RELEASE_CANDIDATE)
 endif
 
-CURRENT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
-
 ifeq "$(TIMESTAMPFLAT)" "$(EMPTY)"
 	TIMESTAMPFLAT=$(shell date "+%Y%m%d%H%M%S")
 endif
@@ -132,7 +130,7 @@ ifeq "$(GIT_COMMIT)" "$(EMPTY)"
 	GIT_COMMIT=$(shell git rev-parse --short HEAD)
 endif
 
-ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" != "true" ] && [ "$(CURRENT_BRANCH)" == "private-master" ] && echo true), true)
+ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" != "true" ] && [ "$(TRAVIS_BRANCH)" = "private-master" ] && echo true), true)
 	RELEASE_TAG=$(shell [ -z "$(RELEASE)" ] || echo "-$(RELEASE)-$(RELEASE_CANDIDATE)")
 	MQ_TAG=$(MQ_VERSION)$(RELEASE_TAG)-$(ARCH).$(TIMESTAMPFLAT).$(GIT_COMMIT)
 	MQ_MANIFEST_TAG=$(MQ_VERSION)$(RELEASE_TAG).$(TIMESTAMPFLAT).$(GIT_COMMIT)
