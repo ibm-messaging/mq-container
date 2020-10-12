@@ -16,12 +16,13 @@
 # Conditional variables - you can override the values of these variables from
 # the command line
 ###############################################################################
+
+include config.env
+
 # RELEASE shows what release of the container code has been built
 RELEASE ?=
 # RELEASE_CANDIDATE shows what release candidate of the container code has been built
 RELEASE_CANDIDATE ?=
-# MQ_VERSION is the fully qualified MQ version number to build
-MQ_VERSION ?= 9.2.0.0
 # MQ_ARCHIVE_REPOSITORY is a remote repository from which to pull the MQ_ARCHIVE (if required)
 MQ_ARCHIVE_REPOSITORY ?=
 # MQ_ARCHIVE_REPOSITORY_DEV is a remote repository from which to pull the MQ_ARCHIVE_DEV (if required)
@@ -62,7 +63,7 @@ REGISTRY_USER ?=
 REGISTRY_PASS ?=
 # ARCH is the platform architecture (e.g. amd64, ppc64le or s390x)
 ARCH ?= $(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
-# Tag to use for fat-manifest 
+# Tag to use for fat-manifest
 MQ_MANIFEST_TAG=$(MQ_VERSION)
 
 ###############################################################################
@@ -402,7 +403,7 @@ push-manifest: build-skopeo-container
 	echo $(shell ./travis-build-scripts/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_DEVSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL)  -d "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST) $(MQ_IMAGE_DEVSERVER_S390X_DIGEST)" $(END))
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_ADVANCEDSERVER_MANIFEST)**"$(END)))
 	echo $(shell ./travis-build-scripts/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)" $(END))
-	
+
 .PHONY: build-skopeo-container
 build-skopeo-container:
 	$(COMMAND) images | grep -q "skopeo"; if [ $$? != 0 ]; then docker build -t skopeo:latest ./docker-builds/skopeo/; fi
@@ -469,3 +470,14 @@ gosec:
 fi ;\
 
 include formatting.mk
+
+.PHONY: update-release-information
+update-release-information:
+	sed -i.bak 's/ARG MQ_URL=.*-LinuxX64.tar.gz"/ARG MQ_URL="https:\/\/public.dhe.ibm.com\/ibmdl\/export\/pub\/software\/websphere\/messaging\/mqadv\/$(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"/g' Dockerfile-server && rm Dockerfile-server.bak
+	$(eval MQ_VERSION_1=$(shell echo '${MQ_VERSION}' | rev | cut -c 3- | rev))
+	sed -i.bak 's/IBM_MQ_.*_LINUX_X86-64_NOINST.tar.gz/IBM_MQ_${MQ_VERSION_1}_LINUX_X86-64_NOINST.tar.gz/g' docs/building.md && rm docs/building.md.bak
+	sed -i.bak 's/ibm-mqadvanced-server:.*-amd64/ibm-mqadvanced-server:$(MQ_VERSION)-amd64/g' docs/security.md
+	sed -i.bak 's/ibm-mqadvanced-server-dev.*-amd64/ibm-mqadvanced-server-dev:$(MQ_VERSION)-amd64/g' docs/security.md && rm docs/security.md.bak
+	sed -i.bak 's/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:.*-amd64/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:$(MQ_VERSION)-amd64/g' docs/testing.md && rm docs/testing.md.bak
+	$(eval MQ_VERSION_2=$(shell echo '${MQ_VERSION_1}' | rev | cut -c 3- | rev))
+	sed -i.bak 's/knowledgecenter\/SSFKSJ_.*\/com/knowledgecenter\/SSFKSJ_${MQ_VERSION_2}.0\/com/g' docs/usage.md && rm docs/usage.md.bak
