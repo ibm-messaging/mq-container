@@ -1087,6 +1087,7 @@ func TestReadiness(t *testing.T) {
 }
 
 func TestErrorLogRotation(t *testing.T) {
+	t.Skipf("Skipping %v until test defect fixed", t.Name())
 	t.Parallel()
 
 	cli, err := client.NewEnvClient()

@@ -32,6 +32,7 @@ var miEnv = []string{
 // TestMultiInstanceStartStop creates 2 containers in a multi instance queue manager configuration
 // and starts/stop them checking we always have an active and standby
 func TestMultiInstanceStartStop(t *testing.T) {
+	t.Skipf("Skipping %v until test defect fixed", t.Name())
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)

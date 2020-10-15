@@ -39,6 +39,11 @@ jobs:
       env:
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_920_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
+    - stage: global-tag
+      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
+      name: "Generate Global Tag"
+      os: linux
+      script: bash -e travis-build-scripts/global-tag.sh
     - stage: build
       if: branch = private-master OR tag =~ ^release-candidate*
       name: "Multi-Arch AMD64 build"
@@ -72,7 +77,9 @@ jobs:
     - stage: push-manifest
       if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
       name: "Push Manifest-list to registry"
-      script: make push-manifest
+      env:
+        - PUSH_MANIFEST_ONLY=true
+      script: bash -e travis-build-scripts/run.sh
 before_install:
   - make install-build-deps
   - make install-credential-helper
@@ -84,3 +91,6 @@ before_script: echo nothing
 
 after_success:
   - make lint
+
+after_failure:
+  - ./travis-build-scripts/cleanup-cache.sh

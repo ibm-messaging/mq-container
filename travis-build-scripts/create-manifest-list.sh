@@ -84,7 +84,7 @@ for digest in $DIGESTS ; do \
 done
 
 docker login $REGISTRY -u $USER -p $CREDENTIAL
-docker manifest create $REGISTRY/$NAMESPACE/$IMAGE:$TAG $MANIFESTS > /dev/null
+docker manifest create $REGISTRY/$NAMESPACE/$IMAGE:$TAG $MANIFESTS
 MANIFEST_DIGEST=$(docker manifest push --purge $REGISTRY/$NAMESPACE/$IMAGE:$TAG)
 
 echo $MANIFEST_DIGEST

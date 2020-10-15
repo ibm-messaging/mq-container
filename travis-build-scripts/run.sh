@@ -18,6 +18,15 @@ set -e
 
 if [ "$(uname -m)" = "x86_64" ] ; then export ARCH="amd64" ; else export ARCH=$(uname -m) ; fi
 
+if [ "$PUSH_MANIFEST_ONLY" = true ] ; then
+  echo 'Retrieving remote tagcache' && echo -en 'travis_fold:start:retrieve-tag-cache\\r'
+  ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/tagcache -l ./.tagcache --get
+  echo -en 'travis_fold:end:retrieve-tag-cache\\r' 
+  make push-manifest
+  ./travis-build-scripts/cleanup-cache.sh
+  exit 0
+fi
+
 echo 'Downgrading Docker (if necessary)...' && echo -en 'travis_fold:start:docker-downgrade\\r'
 eval "$DOCKER_DOWNGRADE"
 echo -en 'travis_fold:end:docker-downgrade\\r'

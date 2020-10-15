@@ -16,9 +16,12 @@
 
 set -e
 
-echo 'Cacheing MQ tag...' && echo -en 'travis_fold:start:build-cache-mq-tag\\r'
-make cache-mq-tag
-echo -en 'travis_fold:end:cache-mq-tag\\r'
+if [ "$TRAVIS_BRANCH" = "private-master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+  echo 'Retrieving global tagcache' && echo -en 'travis_fold:start:tag-cache-retrieve\\r'
+  ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/tagcache -l ./.tagcache --check
+  ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/tagcache -l ./.tagcache --get
+  echo -en 'travis_fold:end:tag-cache-retrieve\\r' 
+fi
 echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
 make build-devjmstest
 echo -en 'travis_fold:end:build-devjmstest\\r'
