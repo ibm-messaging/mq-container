@@ -488,3 +488,5 @@ update-release-information:
 	sed -i.bak 's/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:.*-amd64/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:$(MQ_VERSION)-amd64/g' docs/testing.md && rm docs/testing.md.bak
 	$(eval MQ_VERSION_2=$(shell echo '${MQ_VERSION_1}' | rev | cut -c 3- | rev))
 	sed -i.bak 's/knowledgecenter\/SSFKSJ_.*\/com/knowledgecenter\/SSFKSJ_${MQ_VERSION_2}.0\/com/g' docs/usage.md && rm docs/usage.md.bak
+	$(eval MQ_VERSION_3=$(shell echo '${MQ_VERSION_1}' | sed "s/\.//g"))
+	sed -i.bak 's/MQ_..._ARCHIVE_REPOSITORY/MQ_${MQ_VERSION_3}_ARCHIVE_REPOSITORY/g' .travis.yml && rm .travis.yml.bak
