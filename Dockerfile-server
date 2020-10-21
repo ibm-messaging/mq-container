@@ -157,7 +157,7 @@ RUN chown -R 1001:root /etc/mqm/* \
   && install --directory --mode 2775 --owner 1001 --group root /run/runmqdevserver
 ENV MQ_ENABLE_EMBEDDED_WEB_SERVER=1 MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost
 ENV LD_LIBRARY_PATH=/opt/mqm/lib64
-ENV MQS_PERMIT_UNKNOWN_ID=true
 ENV MQ_CONNAUTH_USE_HTP=true
+ENV MQS_PERMIT_UNKNOWN_ID=true
 USER 1001
 ENTRYPOINT ["runmqdevserver"]

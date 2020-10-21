@@ -203,9 +203,21 @@ func getQueueManagerDataDir(mounts map[string]string, name string) string {
 }
 
 func getCreateQueueManagerArgs(mounts map[string]string, name string, devMode bool) []string {
+
+	// use "UserExternal" only if we are 9.2.0.1 or above.
+	mqVersion, _, err := command.Run("dspmqver", "-b", "-f", "2")
+	if err != nil {
+		log.Printf("Error Getting MQ version to find oa: %v", strings.TrimSuffix(string(mqVersion), "\n"))
+	}
+	oaVal := "user"
+	if mqVersion > "9.2.0.0" {
+		oaVal = "UserExternal"
+	}
+
+	//build args
 	args := []string{"-ii", "/etc/mqm/", "-ic", "/etc/mqm/", "-q", "-p", "1414"}
 	if devMode {
-		args = append(args, "-oa", "user")
+		args = append(args, "-oa", oaVal)
 	}
 	if _, ok := mounts["/mnt/mqm-log"]; ok {
 		args = append(args, "-ld", "/mnt/mqm-log/log")
