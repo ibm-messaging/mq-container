@@ -109,6 +109,10 @@ else ifeq "$(ARCH)" "s390x"
 	MQ_ARCHIVE_ARCH=S390X
 endif
 
+ifneq (,$(findstring release-candidate,$(TRAVIS_TAG)))
+    MQ_DELIVERY_REGISTRY_NAMESPACE=release-candidates
+endif
+
 ifneq "$(MQ_DELIVERY_REGISTRY_NAMESPACE)" "$(EMPTY)"
 	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)/$(MQ_DELIVERY_REGISTRY_NAMESPACE)
 else
