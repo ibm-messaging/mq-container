@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Temporarily removing dist tag as not supported by power build
-# dist: xenial
-
+dist: xenial
 sudo: required
 language: go
+group: xeniallegacy
 
 go:
   - "1.13.15"
