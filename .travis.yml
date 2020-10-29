@@ -23,6 +23,12 @@ go:
 services:
   - docker
 
+env:
+  global:
+    - MAIN_BRANCH=private-master
+    - MQ_LTS_VERSION=9.2.0.1
+    - TAGCACHE_FILE=tagcache
+
 go_import_path: "github.com/ibm-messaging/mq-container"
 
 # cache:
@@ -38,6 +44,9 @@ jobs:
       env:
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_920_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
+
+    # CD Build
+
     - stage: global-tag
       if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
       name: "Generate Global Tag"
@@ -79,6 +88,49 @@ jobs:
       env:
         - PUSH_MANIFEST_ONLY=true
       script: bash -e travis-build-scripts/run.sh
+
+      # LTS Build
+
+    - stage: global-tag
+      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
+      name: "Generate Global Tag"
+      os: linux
+      env:
+        - LTS=true
+        - TAGCACHE_FILE=tagcache-lts
+        - MQ_VERSION=$MQ_LTS_VERSION
+      script: bash -e travis-build-scripts/global-tag.sh
+    - stage: build
+      if: branch = private-master OR tag =~ ^release-candidate*
+      name: "Multi-Arch AMD64 build"
+      os: linux
+      env:
+        - LTS=true
+        - TAGCACHE_FILE=tagcache-lts
+        - MQ_VERSION=$MQ_LTS_VERSION
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9201_EUS_ARCHIVE_REPOSITORY_AMD64
+      script: bash -e travis-build-scripts/run.sh
+    - stage: build
+      if: branch = private-master OR tag =~ ^release-candidate*
+      name: "Multi-Arch S390X build"
+      os: linux-s390
+      env:
+        - LTS=true
+        - TAGCACHE_FILE=tagcache-lts
+        - MQ_VERSION=$MQ_LTS_VERSION
+        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9201_EUS_ARCHIVE_REPOSITORY_S390X
+      script: bash -e travis-build-scripts/run.sh
+    - stage: push-manifest
+      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
+      name: "Push Manifest-list to registry"
+      env:
+        - LTS=true
+        - TAGCACHE_FILE=tagcache-lts
+        - MQ_VERSION=$MQ_LTS_VERSION
+        - PUSH_MANIFEST_ONLY=true
+      script: bash -e travis-build-scripts/run.sh
+
 before_install:
   - make install-build-deps
   - make install-credential-helper
@@ -90,6 +142,3 @@ before_script: echo nothing
 
 after_success:
   - make lint
-
-after_failure:
-  - ./travis-build-scripts/cleanup-cache.sh

@@ -16,10 +16,12 @@
 
 set -e
 
-echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
-make test-devserver
-echo -en 'travis_fold:end:test-devserver\\r'
-if [ "$BUILD_ALL" = true ] ; then
+if [ "$LTS" != true ] ; then
+  echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
+  make test-devserver
+  echo -en 'travis_fold:end:test-devserver\\r'
+fi
+if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
     if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" ]] ; then
         echo 'Testing Production image...' && echo -en 'travis_fold:start:test-advancedserver\\r'
         make test-advancedserver
