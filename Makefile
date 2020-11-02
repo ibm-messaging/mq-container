@@ -40,7 +40,9 @@ MQ_ARCHIVE_DEV ?= $(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-$(MQ_
 # MQ_SDK_ARCHIVE specifies the archive to use for building the golang programs.  Defaults vary on developer or advanced.
 MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
-TEST_OPTS_DOCKER ?=
+TEST_OPTS_DOCKER ?= 
+# Timeout for the Docker tests
+TEST_TIMEOUT_DOCKER ?= 30m
 # MQ_IMAGE_ADVANCEDSERVER is the name of the built MQ Advanced image
 MQ_IMAGE_ADVANCEDSERVER ?=ibm-mqadvanced-server
 # MQ_IMAGE_DEVSERVER is the name of the built MQ Advanced for Developers image
@@ -78,7 +80,7 @@ MQ_ARCHIVE_DEV_TYPE=Linux
 BUILD_SERVER_CONTAINER=build-server
 # NUM_CPU is the number of CPUs available to Docker.  Used to control how many
 # test run in parallel
-NUM_CPU = $(or $(shell docker info --format "{{ .NCPU }}"),2)
+NUM_CPU ?= $(or $(shell docker info --format "{{ .NCPU }}"),2)
 # BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
 BASE_IMAGE_TAG=$(lastword $(subst /, ,$(subst :,-,$(BASE_IMAGE))))
 #BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
@@ -241,7 +243,7 @@ test-unit:
 test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED_$(ARCH)) on $(shell docker --version)"$(END)))
 	docker inspect $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED_$(ARCH))
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED_$(ARCH)) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG_CACHED_$(ARCH)) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
 build-devjmstest:
@@ -252,7 +254,7 @@ build-devjmstest:
 test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG_CACHED_$(ARCH)) on $(shell docker --version)"$(END)))
 	docker inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG_CACHED_$(ARCH))
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG_CACHED_$(ARCH)) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -tags mqdev $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG_CACHED_$(ARCH)) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) -tags mqdev $(TEST_OPTS_DOCKER)
 
 .PHONY: coverage
 coverage:

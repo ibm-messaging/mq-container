@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2019
+© Copyright IBM Corporation 2017, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1433,4 +1433,45 @@ func TestTraceStrmqm(t *testing.T) {
 	if rc != 0 {
 		t.Fatalf("No trace files found in trace directory /var/mqm/trace. RC=%d.", rc)
 	}
+}
+
+// utilTestHealthCheck is used by TestHealthCheck* to run a container with
+// privileges enabled or disabled.  Otherwise the same as the golden path tests.
+func utilTestHealthCheck(t *testing.T, nonewpriv bool) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+	hostConfig := getDefaultHostConfig(t, cli)
+	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, fmt.Sprintf("no-new-privileges:%v", nonewpriv))
+	id := runContainerWithHostConfig(t, cli, &containerConfig, hostConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	rc, out := execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+	t.Log(out)
+	if rc != 0 {
+		t.Errorf("Expected chkmqhealthy to return with exit code 0; got \"%v\"", rc)
+		t.Logf("Output from chkmqhealthy:\n%v", out)
+	}
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+// TestHealthCheckWithNoNewPrivileges tests golden path start/stop plus
+// chkmqhealthy, when running in a container where no new privileges are
+// allowed (i.e. setuid is disabled)
+func TestHealthCheckWithNoNewPrivileges(t *testing.T) {
+	utilTestHealthCheck(t, true)
+}
+
+// TestHealthCheckWithNoNewPrivileges tests golden path start/stop plus
+// chkmqhealthy when running in a container where new privileges are
+// allowed (i.e. setuid is allowed)
+// See https://github.com/ibm-messaging/mq-container/issues/428
+func TestHealthCheckWithNewPrivileges(t *testing.T) {
+	utilTestHealthCheck(t, false)
 }
