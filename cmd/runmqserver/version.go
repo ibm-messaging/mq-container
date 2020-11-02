@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/mqversion"
 )
 
 var (
@@ -50,7 +51,7 @@ func logImageTag() {
 }
 
 func logMQVersion() {
-	mqVersion, _, err := command.Run("dspmqver", "-b", "-f", "2")
+	mqVersion, err := mqversion.Get()
 	if err != nil {
 		log.Printf("Error Getting MQ version: %v", strings.TrimSuffix(string(mqVersion), "\n"))
 	}
