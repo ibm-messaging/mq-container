@@ -27,6 +27,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/command"
 	containerruntime "github.com/ibm-messaging/mq-container/internal/containerruntime"
 	"github.com/ibm-messaging/mq-container/internal/mqscredact"
+	"github.com/ibm-messaging/mq-container/internal/mqversion"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
 
@@ -204,13 +205,16 @@ func getQueueManagerDataDir(mounts map[string]string, name string) string {
 
 func getCreateQueueManagerArgs(mounts map[string]string, name string, devMode bool) []string {
 
-	// use "UserExternal" only if we are 9.2.0.1 or above.
-	mqVersion, _, err := command.Run("dspmqver", "-b", "-f", "2")
-	if err != nil {
-		log.Printf("Error Getting MQ version to find oa: %v", strings.TrimSuffix(string(mqVersion), "\n"))
-	}
+	mqversionBase := "9.2.0.0"
+
+	// use "UserExternal" only if we are 9.2.1.0 or above.
 	oaVal := "user"
-	if mqVersion > "9.2.0.0" {
+	mqVersionCheck, err := mqversion.Compare(mqversionBase)
+
+	if err != nil {
+		log.Printf("Error comparing MQ versions for oa,rc: %v", mqVersionCheck)
+	}
+	if mqVersionCheck > 0 {
 		oaVal = "UserExternal"
 	}
 
