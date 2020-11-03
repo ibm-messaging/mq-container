@@ -16,19 +16,21 @@
 
 set -e
 
-if [ "$TRAVIS_BRANCH" = "private-master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+if [ "$TRAVIS_BRANCH" = "$MAIN_BRANCH" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
   echo 'Retrieving global tagcache' && echo -en 'travis_fold:start:tag-cache-retrieve\\r'
-  ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/tagcache -l ./.tagcache --check
-  ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/tagcache -l ./.tagcache --get
+  ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --check
+  ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --get
   echo -en 'travis_fold:end:tag-cache-retrieve\\r' 
 fi
-echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
-make build-devjmstest
-echo -en 'travis_fold:end:build-devjmstest\\r'
-echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
-make build-devserver
-echo -en 'travis_fold:end:build-devserver\\r'
-if [ "$BUILD_ALL" = true ] ; then
+if [ "$LTS" != true ] ; then
+  echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
+  make build-devjmstest
+  echo -en 'travis_fold:end:build-devjmstest\\r'
+  echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
+  make build-devserver
+  echo -en 'travis_fold:end:build-devserver\\r'
+fi
+if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
     if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" ]] ; then
         echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
         make build-advancedserver

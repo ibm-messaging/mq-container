@@ -45,8 +45,10 @@ TEST_OPTS_DOCKER ?=
 MQ_IMAGE_ADVANCEDSERVER ?=ibm-mqadvanced-server
 # MQ_IMAGE_DEVSERVER is the name of the built MQ Advanced for Developers image
 MQ_IMAGE_DEVSERVER ?=ibm-mqadvanced-server-dev
+# MQ_MANIFEST_TAG is the tag to use for fat-manifest
+MQ_MANIFEST_TAG ?= $(MQ_VERSION)$(LTS_TAG)
 # MQ_TAG is the tag of the built MQ Advanced image & MQ Advanced for Developers image
-MQ_TAG ?=$(MQ_VERSION)-$(ARCH)
+MQ_TAG ?= $(MQ_MANIFEST_TAG)-$(ARCH)
 # COMMAND is the container command to run.  "podman" or "docker"
 COMMAND ?=$(shell type -p podman 2>&1 >/dev/null && echo podman || echo docker)
 # MQ_DELIVERY_REGISTRY_HOSTNAME is a remote registry to push the MQ Image to (if required)
@@ -63,8 +65,8 @@ REGISTRY_USER ?=
 REGISTRY_PASS ?=
 # ARCH is the platform architecture (e.g. amd64, ppc64le or s390x)
 ARCH ?= $(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
-# Tag to use for fat-manifest
-MQ_MANIFEST_TAG=$(MQ_VERSION)
+# LTS is a boolean value to enable/disable LTS container build
+LTS ?= false
 
 ###############################################################################
 # Other variables
@@ -109,6 +111,22 @@ else ifeq "$(ARCH)" "s390x"
 	MQ_ARCHIVE_ARCH=S390X
 endif
 
+# LTS_TAG is the tag modifier for an LTS container build
+LTS_TAG=
+ifeq "$(LTS)" "true" 
+ifneq "$(LTS_TAG_OVERRIDE)" "$(EMPTY)"
+	LTS_TAG=$(LTS_TAG_OVERRIDE)
+else
+	LTS_TAG=-lts
+endif
+	MQ_ARCHIVE:=$(MQ_VERSION)-IBM-MQ-Advanced-Non-Install-Linux$(MQ_ARCHIVE_ARCH).tar.gz
+	MQ_DELIVERY_REGISTRY_NAMESPACE:=$(MQ_DELIVERY_REGISTRY_NAMESPACE)$(LTS_TAG)
+endif
+
+ifneq (,$(findstring release-candidate,$(TRAVIS_TAG)))
+    MQ_DELIVERY_REGISTRY_NAMESPACE=release-candidates
+endif
+
 ifneq "$(MQ_DELIVERY_REGISTRY_NAMESPACE)" "$(EMPTY)"
 	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)/$(MQ_DELIVERY_REGISTRY_NAMESPACE)
 else
@@ -119,7 +137,7 @@ endif
 
 ifneq "$(RELEASE)" "$(EMPTY)"
 	EXTRA_LABELS=--label release=$(RELEASE)
-	MQ_MANIFEST_TAG=$(MQ_VERSION)-$(RELEASE)-$(RELEASE_CANDIDATE)
+	MQ_MANIFEST_TAG=$(MQ_VERSION)-$(RELEASE)$(LTS_TAG)-$(RELEASE_CANDIDATE)
 	MQ_TAG=$(MQ_MANIFEST_TAG)-$(ARCH)
 endif
 
@@ -131,9 +149,10 @@ ifeq "$(GIT_COMMIT)" "$(EMPTY)"
 	GIT_COMMIT=$(shell git rev-parse --short HEAD)
 endif
 
-ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" = "false" ] && [ "$(TRAVIS_BRANCH)" = "private-master" ] && echo true), true)
-	RELEASE_TAG=$(shell [ -z "$(RELEASE)" ] || echo "-$(RELEASE)-$(RELEASE_CANDIDATE)")
-	MQ_MANIFEST_TAG=$(MQ_VERSION)$(RELEASE_TAG).$(TIMESTAMPFLAT).$(GIT_COMMIT)
+ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" = "false" ] && [ "$(TRAVIS_BRANCH)" = "$(MAIN_BRANCH)" ] && echo true), true)
+	RELEASE_TAG=$(shell [ -z "$(RELEASE)" ] || echo "-$(RELEASE)")
+	RELEASE_CANDIDATE_TAG=$(shell [ -z "$(RELEASE_CANDIDATE)" ] || echo "-$(RELEASE_CANDIDATE)")
+	MQ_MANIFEST_TAG=$(MQ_VERSION)$(RELEASE_TAG)$(LTS_TAG).$(TIMESTAMPFLAT).$(GIT_COMMIT)$(RELEASE_CANDIDATE_TAG)
 	MQ_TAG=$(MQ_MANIFEST_TAG)-$(ARCH)
 endif
 
@@ -205,9 +224,9 @@ downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
 
 .PHONY: cache-mq-tag
 cache-mq-tag:
-	@$(shell printf "MQ_MANIFEST_TAG_CACHED=$(MQ_MANIFEST_TAG)\n" > $(PATH_TO_MQ_TAG_CACHE))
-	@$(shell printf "MQ_TAG_CACHED_amd64=$(MQ_MANIFEST_TAG)-amd64\n" >> $(PATH_TO_MQ_TAG_CACHE))
-	@$(shell printf "MQ_TAG_CACHED_s390x=$(MQ_MANIFEST_TAG)-s390x\n" >> $(PATH_TO_MQ_TAG_CACHE))
+	@printf "MQ_MANIFEST_TAG_CACHED=$(MQ_MANIFEST_TAG)\n" | tee $(PATH_TO_MQ_TAG_CACHE)
+	@printf "MQ_TAG_CACHED_amd64=$(MQ_MANIFEST_TAG)-amd64\n" | tee -a $(PATH_TO_MQ_TAG_CACHE)
+	@printf "MQ_TAG_CACHED_s390x=$(MQ_MANIFEST_TAG)-s390x\n" | tee -a $(PATH_TO_MQ_TAG_CACHE)
 
 # Vendor Go dependencies for the Docker tests
 test/docker/vendor:
@@ -398,16 +417,20 @@ pull-devserver:
 .PHONY: push-manifest
 push-manifest: build-skopeo-container
 	$(info $(SPACER)$(shell printf $(TITLE)"** Determining the image digests **"$(END)))
+ifneq "$(LTS)" "true"
 	$(eval MQ_IMAGE_DEVSERVER_AMD64_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux --override-arch s390x  inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_AMD64) | jq -r .Digest))
 	$(eval MQ_IMAGE_DEVSERVER_S390X_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_S390X) | jq -r .Digest))
-	$(eval MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_AMD64) | jq -r .Digest))
-	$(eval MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_S390X) | jq -r .Digest))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_AMD64) has a digest of $(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_S390X) has a digest of $(MQ_IMAGE_DEVSERVER_S390X_DIGEST)**"$(END)))
+endif	
+	$(eval MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_AMD64) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_S390X) | jq -r .Digest))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_AMD64) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_S390X) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)**"$(END)))
+ifneq "$(LTS)" "true"	
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_DEVSERVER_MANIFEST)**"$(END)))
 	echo $(shell ./travis-build-scripts/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_DEVSERVER) -t $(MQ_MANIFEST_TAG_CACHED) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL)  -d "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST) $(MQ_IMAGE_DEVSERVER_S390X_DIGEST)" $(END))
+endif	
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_ADVANCEDSERVER_MANIFEST)**"$(END)))
 	echo $(shell ./travis-build-scripts/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG_CACHED) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)" $(END))
 

@@ -20,5 +20,5 @@ echo 'Cacheing MQ tag...' && echo -en 'travis_fold:start:build-cache-mq-tag\\r'
 make cache-mq-tag
 echo -en 'travis_fold:end:cache-mq-tag\\r'
 echo 'Caching tagcache for future stages' && echo -en 'travis_fold:start:tag-cache\\r'
-./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/tagcache -l ./.tagcache --upload
+./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --upload
 echo -en 'travis_fold:end:tag-cache\\r' 
