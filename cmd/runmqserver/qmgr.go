@@ -205,7 +205,7 @@ func getQueueManagerDataDir(mounts map[string]string, name string) string {
 
 func getCreateQueueManagerArgs(mounts map[string]string, name string, devMode bool) []string {
 
-	mqversionBase := "9.2.0.0"
+	mqversionBase := "9.2.1.0"
 
 	// use "UserExternal" only if we are 9.2.1.0 or above.
 	oaVal := "user"
@@ -214,7 +214,7 @@ func getCreateQueueManagerArgs(mounts map[string]string, name string, devMode bo
 	if err != nil {
 		log.Printf("Error comparing MQ versions for oa,rc: %v", mqVersionCheck)
 	}
-	if mqVersionCheck > 0 {
+	if mqVersionCheck >= 0 {
 		oaVal = "UserExternal"
 	}
 
