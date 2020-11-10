@@ -97,7 +97,7 @@ COPY web /etc/mqm/web
 COPY etc/mqm/*.tpl /etc/mqm/
 RUN chmod ug+x /usr/local/bin/runmqserver \
   && chown 1001:root /usr/local/bin/*mq* \
-  && chmod ug+xs /usr/local/bin/chkmq* \
+  && chmod ug+x /usr/local/bin/chkmq* \
   && chown -R 1001:root /etc/mqm/* \
   && install --directory --mode 2775 --owner 1001 --group root /run/runmqserver \
   && touch /run/termination-log \

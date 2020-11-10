@@ -16,6 +16,9 @@
 
 set -e
 
+# Use verbose test output
+export TEST_OPTS_DOCKER="-v"
+
 echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
 make test-devserver
 echo -en 'travis_fold:end:test-devserver\\r'

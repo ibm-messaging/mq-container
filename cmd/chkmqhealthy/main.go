@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2019
+© Copyright IBM Corporation 2017, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,11 +36,11 @@ func queueManagerHealthy() (bool, error) {
 	cmd := exec.Command("dspmq", "-n", "-m", name)
 	// Run the command and wait for completion
 	out, err := cmd.CombinedOutput()
+	fmt.Printf("%s", out)
 	if err != nil {
 		fmt.Println(err)
 		return false, err
 	}
-	fmt.Printf("%s", out)
 	if !strings.Contains(string(out), "(RUNNING)") && !strings.Contains(string(out), "(RUNNING AS STANDBY)") && !strings.Contains(string(out), "(STARTING)") {
 		return false, nil
 	}

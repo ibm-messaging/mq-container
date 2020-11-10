@@ -267,20 +267,8 @@ func generateRandomUID() string {
 	return fmt.Sprint(rand.Intn(max-min) + min)
 }
 
-// runContainerWithPorts creates and starts a container, exposing the specified ports on the host.
-// If no image is specified in the container config, then the image name is retrieved from the TEST_IMAGE
-// environment variable.
-func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *container.Config, ports []int) string {
-	if containerConfig.Image == "" {
-		containerConfig.Image = imageName()
-	}
-	// Always run as a random user, unless the test has specified otherwise
-	if containerConfig.User == "" {
-		containerConfig.User = generateRandomUID()
-	}
-	// if coverage
-	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
-	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
+// getDefaultHostConfig creates a HostConfig and populates it with the defaults used in testing
+func getDefaultHostConfig(t *testing.T, cli *client.Client) *container.HostConfig {
 	hostConfig := container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
@@ -299,6 +287,37 @@ func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *co
 	} else {
 		t.Logf("Detected MQ Advanced image - dropping all capabilities")
 	}
+	return &hostConfig
+}
+
+// runContainerWithHostConfig creates and starts a container, using the supplied HostConfig.
+// Note that a default HostConfig can be created using getDefaultHostConfig.
+func runContainerWithHostConfig(t *testing.T, cli *client.Client, containerConfig *container.Config, hostConfig *container.HostConfig) string {
+	if containerConfig.Image == "" {
+		containerConfig.Image = imageName()
+	}
+	// Always run as a random user, unless the test has specified otherwise
+	if containerConfig.User == "" {
+		containerConfig.User = generateRandomUID()
+	}
+	// if coverage
+	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
+	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
+	networkingConfig := network.NetworkingConfig{}
+	t.Logf("Running container (%s)", containerConfig.Image)
+	ctr, err := cli.ContainerCreate(context.Background(), containerConfig, hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	return ctr.ID
+}
+
+// runContainerWithPorts creates and starts a container, exposing the specified ports on the host.
+// If no image is specified in the container config, then the image name is retrieved from the TEST_IMAGE
+// environment variable.
+func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *container.Config, ports []int) string {
+	hostConfig := getDefaultHostConfig(t, cli)
 	for _, p := range ports {
 		port := nat.Port(fmt.Sprintf("%v/tcp", p))
 		hostConfig.PortBindings[port] = []nat.PortBinding{
@@ -307,14 +326,7 @@ func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *co
 			},
 		}
 	}
-	networkingConfig := network.NetworkingConfig{}
-	t.Logf("Running container (%s)", containerConfig.Image)
-	ctr, err := cli.ContainerCreate(context.Background(), containerConfig, &hostConfig, &networkingConfig, t.Name())
-	if err != nil {
-		t.Fatal(err)
-	}
-	startContainer(t, cli, ctr.ID)
-	return ctr.ID
+	return runContainerWithHostConfig(t, cli, containerConfig, hostConfig)
 }
 
 // runContainer creates and starts a container.  If no image is specified in
@@ -526,6 +538,7 @@ func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout time.
 
 // execContainer runs a command in a running container, and returns the exit code and output
 func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd []string) (int, string) {
+	t.Logf("Running command: %v", cmd)
 	config := types.ExecConfig{
 		User:        user,
 		Privileged:  false,
