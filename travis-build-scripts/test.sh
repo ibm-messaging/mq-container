@@ -16,13 +16,16 @@
 
 set -e
 
+# Use verbose test output
+TEST_OPTS_DOCKER="-v"
+
 echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
-travis_wait make test-devserver
+make test-devserver
 echo -en 'travis_fold:end:test-devserver\\r'
 if [ "$BUILD_ALL" = true ] ; then
     if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" ]] ; then
         echo 'Testing Production image...' && echo -en 'travis_fold:start:test-advancedserver\\r'
-        travis_wait make test-advancedserver
+        make test-advancedserver
         echo -en 'travis_fold:end:test-advancedserver\\r'
     fi
 fi
