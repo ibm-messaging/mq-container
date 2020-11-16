@@ -28,6 +28,8 @@ env:
     - MAIN_BRANCH=private-master
     - MQ_LTS_VERSION=9.2.0.1
     - TAGCACHE_FILE=tagcache
+    - RELEASE=
+    - RELEASE_LTS=
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
@@ -79,8 +81,6 @@ jobs:
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=$MQ_920_ARCHIVE_REPOSITORY_S390X
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_920_ARCHIVE_REPOSITORY_DEV_S390X
-        - RELEASE=""
-        - RELEASE_CANDIDATE=""
       script: bash -e travis-build-scripts/run.sh
     - stage: push-manifest
       if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
@@ -99,6 +99,7 @@ jobs:
         - LTS=true
         - TAGCACHE_FILE=tagcache-lts
         - MQ_VERSION=$MQ_LTS_VERSION
+        - RELEASE=$RELEASE_LTS
       script: bash -e travis-build-scripts/global-tag.sh
     - stage: build
       if: branch = private-master OR tag =~ ^release-candidate*
@@ -109,6 +110,7 @@ jobs:
         - TAGCACHE_FILE=tagcache-lts
         - MQ_VERSION=$MQ_LTS_VERSION
         - MQ_ARCHIVE_REPOSITORY=$MQ_9201_EUS_ARCHIVE_REPOSITORY_AMD64
+        - RELEASE=$RELEASE_LTS
       script: bash -e travis-build-scripts/run.sh
     - stage: build
       if: branch = private-master OR tag =~ ^release-candidate*
@@ -120,6 +122,7 @@ jobs:
         - MQ_VERSION=$MQ_LTS_VERSION
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=$MQ_9201_EUS_ARCHIVE_REPOSITORY_S390X
+        - RELEASE=$RELEASE_LTS
       script: bash -e travis-build-scripts/run.sh
     - stage: push-manifest
       if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
@@ -129,6 +132,7 @@ jobs:
         - TAGCACHE_FILE=tagcache-lts
         - MQ_VERSION=$MQ_LTS_VERSION
         - PUSH_MANIFEST_ONLY=true
+        - RELEASE=$RELEASE_LTS
       script: bash -e travis-build-scripts/run.sh
 
 before_install:
