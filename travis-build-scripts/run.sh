@@ -21,7 +21,7 @@ if [ "$(uname -m)" = "x86_64" ] ; then export ARCH="amd64" ; else export ARCH=$(
 if [ "$PUSH_MANIFEST_ONLY" = true ] ; then
   echo 'Retrieving remote tagcache' && echo -en 'travis_fold:start:retrieve-tag-cache\\r'
   ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --get
-  echo -en 'travis_fold:end:retrieve-tag-cache\\r' 
+  echo -en 'travis_fold:end:retrieve-tag-cache\\r'
   make push-manifest
   ./travis-build-scripts/cleanup-cache.sh
   exit 0
@@ -38,9 +38,17 @@ echo -en 'travis_fold:end:docker-downgrade\\r'
 ./travis-build-scripts/test.sh
 
 ## Push images
-if [ "$BUILD_ALL" = true ] ; then
+if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
+  if [ "$BUILD_ALL" = true ] ; then
     ./travis-build-scripts/push.sh developer
     ./travis-build-scripts/push.sh production
+  fi
+else
+  if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
+    ./travis-build-scripts/push.sh developer
+  else
+    ./travis-build-scripts/push.sh production
+  fi
 fi
 
 if [ "$LTS" = true ] ; then

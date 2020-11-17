@@ -21,7 +21,7 @@ if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
     exit 0
 fi
 
-if [ ! -z $2 ]; then 
+if [ ! -z $2 ]; then
     export ARCH=$2
 fi
 
@@ -50,7 +50,7 @@ if [ ! -z $1 ]; then
         exit 1
         ;;
     esac
-else 
+else
     echo "ERROR: Type ( developer | production ) must be passed to push.sh"
     exit 1
 fi

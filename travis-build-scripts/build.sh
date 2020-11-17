@@ -20,20 +20,36 @@ if [ "$TRAVIS_BRANCH" = "$MAIN_BRANCH" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]
   echo 'Retrieving global tagcache' && echo -en 'travis_fold:start:tag-cache-retrieve\\r'
   ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --check
   ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --get
-  echo -en 'travis_fold:end:tag-cache-retrieve\\r' 
+  echo -en 'travis_fold:end:tag-cache-retrieve\\r'
 fi
-if [ "$LTS" != true ] ; then
+if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
+  if [ "$LTS" != true ] ; then
+    echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
+    make build-devjmstest
+    echo -en 'travis_fold:end:build-devjmstest\\r'
+    echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
+    make build-devserver
+    echo -en 'travis_fold:end:build-devserver\\r'
+  fi
+  if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
+      if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" ]] ; then
+          echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
+          make build-advancedserver
+          echo -en 'travis_fold:end:build-advancedserver\\r'
+      fi
+  fi
+else
   echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
   make build-devjmstest
   echo -en 'travis_fold:end:build-devjmstest\\r'
-  echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
-  make build-devserver
-  echo -en 'travis_fold:end:build-devserver\\r'
-fi
-if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
-    if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" ]] ; then
-        echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
-        make build-advancedserver
-        echo -en 'travis_fold:end:build-advancedserver\\r'
-    fi
+
+  if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
+    echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
+    make build-devserver
+    echo -en 'travis_fold:end:build-devserver\\r'
+  else
+    echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
+    make build-advancedserver
+    echo -en 'travis_fold:end:build-advancedserver\\r'
+  fi
 fi

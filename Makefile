@@ -38,7 +38,7 @@ MQ_ARCHIVE_DEV ?= $(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-$(MQ_
 # MQ_SDK_ARCHIVE specifies the archive to use for building the golang programs.  Defaults vary on developer or advanced.
 MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
-TEST_OPTS_DOCKER ?= 
+TEST_OPTS_DOCKER ?=
 # Timeout for the Docker tests
 TEST_TIMEOUT_DOCKER ?= 30m
 # MQ_IMAGE_ADVANCEDSERVER is the name of the built MQ Advanced image
@@ -113,7 +113,7 @@ endif
 
 # LTS_TAG is the tag modifier for an LTS container build
 LTS_TAG=
-ifeq "$(LTS)" "true" 
+ifeq "$(LTS)" "true"
 ifneq "$(LTS_TAG_OVERRIDE)" "$(EMPTY)"
 	LTS_TAG=$(LTS_TAG_OVERRIDE)
 else
@@ -201,17 +201,36 @@ incubating: build-explorer
 downloads/$(MQ_ARCHIVE_DEV):
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced for Developers "$(MQ_VERSION)$(END)))
 	mkdir -p downloads
+ifneq "$(BUILD_RSYNC_SERVER)" "$(EMPTY)"
+# Use key which is not stored in the repository to fetch the files from the fileserver
+	curl -L $(BUILD_RSYNC_ENCRYPTED_KEY_URL) -o ./host.key.gpg
+	@echo $(BUILD_RSYNC_ENCRYPTION_PASSWORD)|gpg --passphrase-fd 0 ./host.key.gpg
+	chmod 600 ./host.key
+	rsync -rv -e "ssh -o BatchMode=yes -q -o StrictHostKeyChecking=no -i ./host.key" --include="*/" --include="*.tar.gz" --exclude="*" $(BUILD_RSYNC_USER)@$(BUILD_RSYNC_SERVER):"$(BUILD_RSYNC_PATH)" downloads/$(MQ_ARCHIVE_DEV)
+	-@rm host.key.gpg host.key
+else
 ifneq "$(MQ_ARCHIVE_REPOSITORY_DEV)" "$(EMPTY)"
 	curl -u $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -X GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" -o downloads/$(MQ_ARCHIVE_DEV)
 else
 	curl -L https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV) -o downloads/$(MQ_ARCHIVE_DEV)
 endif
+endif
 
 downloads/$(MQ_ARCHIVE):
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ Advanced "$(MQ_VERSION)$(END)))
 	mkdir -p downloads
+ifneq "$(BUILD_RSYNC_SERVER)" "$(EMPTY)"
+# Use key which is not stored in the repository to fetch the files from the fileserver
+	-@rm host.key.gpg host.key
+	curl -L $(BUILD_RSYNC_ENCRYPTED_KEY_URL) -o ./host.key.gpg
+	@echo $(BUILD_RSYNC_ENCRYPTION_PASSWORD)|gpg --passphrase-fd 0 ./host.key.gpg
+	chmod 600 ./host.key
+	rsync -rv -e "ssh -o BatchMode=yes -q -o StrictHostKeyChecking=no -i ./host.key" --include="*/" --include="*.tar.gz" --exclude="*" $(BUILD_RSYNC_USER)@$(BUILD_RSYNC_SERVER):"$(BUILD_RSYNC_PATH)" downloads/$(MQ_ARCHIVE)
+	-@rm host.key.gpg host.key
+else
 ifneq "$(MQ_ARCHIVE_REPOSITORY)" "$(EMPTY)"
 	curl -u $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -X GET "$(MQ_ARCHIVE_REPOSITORY)" -o downloads/$(MQ_ARCHIVE)
+endif
 endif
 
 .PHONY: downloads
@@ -283,7 +302,7 @@ define build-mq
 	$(COMMAND) build \
 	  --tag $1:$2 \
 	  --file $3 \
-		$(EXTRA_ARGS) \
+	  $(EXTRA_ARGS) \
 	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
 	  --build-arg IMAGE_TAG="$1:$2" \
@@ -415,15 +434,15 @@ ifneq "$(LTS)" "true"
 	$(eval MQ_IMAGE_DEVSERVER_S390X_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_S390X) | jq -r .Digest))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_AMD64) has a digest of $(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_S390X) has a digest of $(MQ_IMAGE_DEVSERVER_S390X_DIGEST)**"$(END)))
-endif	
+endif
 	$(eval MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_AMD64) | jq -r .Digest))
 	$(eval MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_S390X) | jq -r .Digest))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_AMD64) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_S390X) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)**"$(END)))
-ifneq "$(LTS)" "true"	
+ifneq "$(LTS)" "true"
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_DEVSERVER_MANIFEST)**"$(END)))
 	echo $(shell ./travis-build-scripts/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_DEVSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL)  -d "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST) $(MQ_IMAGE_DEVSERVER_S390X_DIGEST)" $(END))
-endif	
+endif
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_ADVANCEDSERVER_MANIFEST)**"$(END)))
 	echo $(shell ./travis-build-scripts/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)" $(END))
 
