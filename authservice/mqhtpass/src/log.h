@@ -17,10 +17,13 @@ limitations under the License.
 #ifndef _LOG_H
 #define _LOG_H
 
+/**
+ * Initialize the log to use the given file name.
+ */
 int log_init(char *);
 
 /**
- * Initialize the log wih an existing file handle
+ * Initialize the log with an existing file handle.
  */
 void log_init_file(FILE *);
 

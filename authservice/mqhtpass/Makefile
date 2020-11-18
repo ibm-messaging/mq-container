@@ -12,31 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Where to find the sample test.
+# This Makefile expects the following to be installed:
+# - gcc
+# - ldd
+# - MQ SDK (mqm_r library, plus header files)
+# - Apache Portable Runtime (apr-1 and aprutil-1 libraries, plus header files)
+
 SRC_DIR = src
+BUILD_DIR = ./build
 
-# Flags passed to the C compiler.
-CFLAGS += -std=c11 -fPIC -Wall
+# Flags passed to the C compiler.  Need to use gnu11 to get POSIX functions needed for file locking.
+CFLAGS += -std=gnu11 -fPIC -Wall -m64
 
-log.o : $(SRC_DIR)/log.c $(SRC_DIR)/log.h
-	gcc $(CFLAGS) -c $(SRC_DIR)/log.c
+LIB_APR = -L/usr/lib64 -lapr-1 -laprutil-1
+LIB_MQ = -L/opt/mqm/lib64 -lmqm_r
 
-htpass.o : $(SRC_DIR)/htpass.c $(SRC_DIR)/htpass.h
-	gcc $(CFLAGS) -c -I /usr/include/apr-1 $^
+all: $(BUILD_DIR)/mqhtpass.so $(BUILD_DIR)/htpass_test
 
-htpass_test.o : htpass.o log.o
-	gcc $(CFLAGS) -I /usr/include/apr-1 -L/usr/lib64 -lapr-1 -laprutil-1 $(SRC_DIR)/htpass_test.c $^ -o htpass_test
+$(BUILD_DIR)/log.o : $(SRC_DIR)/log.c $(SRC_DIR)/log.h
+	mkdir -p ${dir $@}
+	gcc $(CFLAGS) -c $(SRC_DIR)/log.c -o $@
 
-htpass_test : htpass_test.o
-	./htpass_test
+$(BUILD_DIR)/htpass.o : $(SRC_DIR)/htpass.c $(SRC_DIR)/htpass.h
+	mkdir -p ${dir $@}
+	gcc $(CFLAGS) -c $(SRC_DIR)/htpass.c -I /usr/include/apr-1 -o $@
 
-mqhtpass.so : log.o htpass.o
-	gcc $(CFLAGS) -I/opt/mqm/inc -D_REENTRANT -L/usr/lib64 -lapr-1 -laprutil-1 -L/opt/mqm/lib64 -lmqm_r -Wl,-rpath,/opt/mqm/lib64 -Wl,-rpath,/usr/lib64 -shared $(SRC_DIR)/mqhtpass.c $^ -o $@
+$(BUILD_DIR)/htpass_test : $(BUILD_DIR)/htpass.o $(BUILD_DIR)/log.o
+	mkdir -p ${dir $@}
+	gcc $(CFLAGS) $(LIB_APR) -lpthread $(SRC_DIR)/htpass_test.c $^ -o $@
+# Run HTPasswd tests, and print log if they fail	
+	$@ || (cat htpass_test*.log && exit 1)
+
+$(BUILD_DIR)/mqhtpass.so : $(BUILD_DIR)/log.o $(BUILD_DIR)/htpass.o
+	mkdir -p ${dir $@}
+	# NOTE: rpath for libapr will be different on Ubuntu
+	gcc $(CFLAGS) -I/opt/mqm/inc -D_REENTRANT $(LIB_APR) $(LIB_MQ) -Wl,-rpath,/opt/mqm/lib64 -Wl,-rpath,/usr/lib64 -shared $(SRC_DIR)/mqhtpass.c $^ -o $@
 	ldd $@
-
-mqhtpass_unittest.o : $(SRC_DIR)/mqhtpass_test.cc \
-                     $(SRC_DIR)/sample1.h $(FUSED_GTEST_H)
-	gcc $(CFLAGS) -c $(SRC_DIR)/mqhtpass_test.cc
-
-mqhtpass_unittest : mqhtpass.so mqhtpass_test.o gtest-all.o gtest_main.o
-	gcc $(CFLAGS) $^ -o $@

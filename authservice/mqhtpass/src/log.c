@@ -14,19 +14,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
 
-#define LOG_LEVEL_INFO 0
-#define LOG_LEVEL_ERROR 1
-#define LOG_LEVEL_DEBUG 2
-
-
 FILE *fp = NULL;
 int pid;
+bool debug = false;
+
+/**
+ * Determine whether debugging is enabled or not, using an environment variable.
+ */
+void init_debug(){
+  char *debug_env = getenv("DEBUG");
+  if (debug_env != NULL)
+  {
+    // Enable debug logging if the DEBUG environment variable is set
+    if (strncmp(debug_env, "true", 4) || strncmp(debug_env, "1", 1))
+    {
+      debug = true;
+    }
+  }
+}
 
 int log_init(char *filename)
 {
@@ -44,12 +58,14 @@ int log_init(char *filename)
       result = 1;
     }
   }
+  init_debug();
   return result;
 }
 
 void log_init_file(FILE *f)
 {
   fp = f;
+  init_debug();
 }
 
 void log_close()
@@ -65,102 +81,46 @@ void log_printf(const char *source_file, int source_line, const char *level, con
 {
   if (fp)
   {
-    char buff[70];
+    // If this is a DEBUG message, and debugging is off
+    if ((strncmp(level, "DEBUG", 5) == 0) && !debug)
+    {
+      return;
+    }
+    char buf[1024] = "";
+    char *cur = buf;
+    char* const end = buf + sizeof buf;
+    char date_buf[70];
     struct tm *utc;
     time_t t;
-
     struct timeval now;
+
     gettimeofday(&now, NULL);
     t = now.tv_sec;
     t = time(NULL);
     utc = gmtime(&t);
 
-    fprintf(fp, "{");
-    fprintf(fp, "\"loglevel\":\"%s\"", level);
+    cur += snprintf(cur, end-cur, "{");
+    cur += snprintf(cur, end-cur, "\"loglevel\":\"%s\"", level);
     // Print ISO-8601 time and date
-    if (strftime(buff, sizeof buff, "%FT%T", utc))
+    if (strftime(date_buf, sizeof date_buf, "%FT%T", utc))
     {
-      fprintf(fp, ", \"ibm_datetime\":\"%s.%3ld", buff, now.tv_usec);
+       // Round microseconds down to milliseconds, for consistency
+       cur += snprintf(cur, end-cur, ", \"ibm_datetime\":\"%s.%03ldZ", date_buf, now.tv_usec / 1000);
     }
-    fprintf(fp, ", \"ibm_processId\":\"%d\"", pid);
-    fprintf(fp, ", \"module\":\"%s:%d\"", source_file, source_line);
-    fprintf(fp, ", \"message\":\"");
+    cur += snprintf(cur, end-cur, ", \"ibm_processId\":\"%d\"", pid);
+    cur += snprintf(cur, end-cur, ", \"module\":\"%s:%d\"", source_file, source_line);
+    cur += snprintf(cur, end-cur, ", \"message\":\"");
 
     // Print log message, using varargs
     va_list args;
     va_start(args, format);
-    vfprintf(fp, format, args);
+    cur += vsnprintf(cur, end-cur, format, args);
     va_end(args);
-    fprintf(fp, "\"}\n");
+    cur += snprintf(cur, end-cur, "\"}\n");
+
+    // Important: Just do one file write, to prevent problems with multi-threading.
+    // This only works if the log message is not too long for the buffer.
+    fprintf(fp, buf);
   }
 }
-
-/**
- * Writes a message to the log file, using the specified type, based on a printf format string.
- */
-// void log_printf(const char *level, const char *format, va_list args)
-// {
-//   // FindSize();
-//   if (fp)
-//   {
-//     char buff[70];
-//     struct tm *utc;
-//     time_t t;
-
-//     struct timeval now;
-//     gettimeofday(&now, NULL);
-//     t = now.tv_sec;
-
-//     // Print ISO-8601 time and date
-//     t = time(NULL);
-//     utc = gmtime(&t);
-//     fprintf(fp, "{");
-//     fprintf(fp, "\"loglevel\":\"%s\"", level);
-//     if (strftime(buff, sizeof buff, "%FT%T", utc))
-//     {
-//       fprintf(fp, ", \"ibm_datetime\":\"%s.%3ld", buff, now.tv_usec);
-//     }
-//     fprintf(fp, ", \"ibm_processId\": \"%d\"", pid);
-//     fprintf(fp, ", \"message\":\"");
-
-//     // Print log message, using varargs
-//     // va_list args;
-//     // va_start(args, format);
-//     vfprintf(fp, format, args);
-//     // va_end(args);
-//     fprintf(fp, "\"}\n");
-//   }
-// }
-
-// void log_errorf(const char *format, ...)
-// {
-//     va_list args;
-//     va_start(args, format);
-//     log_printf("ERROR", format, args);
-//     va_end(args);
-// }
-
-// void log_infof(const char *format, ...)
-// {
-//     va_list args;
-//     va_start(args, format);
-//     log_printf("INFO", format, args);
-//     va_end(args);
-// }
-
-// void log_debugf(const char *format, ...)
-// {
-//     va_list args;
-//     va_start(args, format);
-//     log_printf("DEBUG", format, args);
-//     va_end(args);
-// }
-
-// void log_debugf2(const char *source_file, const char *source_line, const char *format, ...)
-// {
-//     va_list args;
-//     va_start(args, format);
-//     log_printf(source_line, format, args);
-//     va_end(args);
-// }
 

@@ -133,8 +133,7 @@ RUN mkdir /opt/mqm \
   && chown -R 1001:root /opt/mqm/*
 COPY authservice/ /opt/app-root/src/authservice/
 WORKDIR /opt/app-root/src/authservice/mqhtpass
-RUN make mqhtpass.so
-RUN make htpass_test
+RUN make all
 
 ###############################################################################
 # Add default developer config
@@ -157,7 +156,7 @@ LABEL io.k8s.description="Simplify, accelerate and facilitate the reliable excha
 LABEL base-image=$BASE_IMAGE
 LABEL base-image-release=$BASE_TAG
 USER 0
-COPY --from=cbuilder /opt/app-root/src/authservice/mqhtpass/mqhtpass.so /opt/mqm/lib64/
+COPY --from=cbuilder /opt/app-root/src/authservice/mqhtpass/build/mqhtpass.so /opt/mqm/lib64/
 COPY etc/mqm/*.ini /etc/mqm/
 COPY etc/mqm/mq.htpasswd /etc/mqm/
 RUN chmod 0660 /etc/mqm/mq.htpasswd
