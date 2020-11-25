@@ -41,7 +41,7 @@ func queueManagerHealthy() (bool, error) {
 		fmt.Println(err)
 		return false, err
 	}
-	if !strings.Contains(string(out), "(RUNNING)") && !strings.Contains(string(out), "(RUNNING AS STANDBY)") && !strings.Contains(string(out), "(STARTING)") {
+	if !strings.Contains(string(out), "(RUNNING)") && !strings.Contains(string(out), "(RUNNING AS STANDBY)") && !strings.Contains(string(out), "(STARTING)") && !strings.Contains(string(out), "(REPLICA)") {
 		return false, nil
 	}
 	return true, nil

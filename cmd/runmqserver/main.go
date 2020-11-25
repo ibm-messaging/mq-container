@@ -24,6 +24,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/ibm-messaging/mq-container/internal/ha"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/internal/tls"
@@ -159,6 +160,14 @@ func doMain() error {
 	if err != nil {
 		logTermination(err)
 		return err
+	}
+
+	if os.Getenv("MQ_NATIVE_HA") == "true" {
+		err = ha.ConfigureNativeHA(log)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	newQM, err := createQueueManager(name, *devFlag)
