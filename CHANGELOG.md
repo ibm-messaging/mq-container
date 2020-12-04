@@ -1,5 +1,10 @@
 # Change log
 
+## 9.2.1.0 (2020-02-18)
+
+* Updated to MQ version 9.2.1.0
+
+
 ## 9.2.0.1-LTS (2020-12-04)
 
 * Added support for MQ Long Term Support (production licensed only) in the mq-container
