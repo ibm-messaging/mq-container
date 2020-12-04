@@ -27,6 +27,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/command"
 	containerruntime "github.com/ibm-messaging/mq-container/internal/containerruntime"
 	"github.com/ibm-messaging/mq-container/internal/mqscredact"
+	"github.com/ibm-messaging/mq-container/internal/mqversion"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
 
@@ -203,9 +204,24 @@ func getQueueManagerDataDir(mounts map[string]string, name string) string {
 }
 
 func getCreateQueueManagerArgs(mounts map[string]string, name string, devMode bool) []string {
+
+	mqversionBase := "9.2.1.0"
+
+	// use "UserExternal" only if we are 9.2.1.0 or above.
+	oaVal := "user"
+	mqVersionCheck, err := mqversion.Compare(mqversionBase)
+
+	if err != nil {
+		log.Printf("Error comparing MQ versions for oa,rc: %v", mqVersionCheck)
+	}
+	if mqVersionCheck >= 0 {
+		oaVal = "UserExternal"
+	}
+
+	//build args
 	args := []string{"-ii", "/etc/mqm/", "-ic", "/etc/mqm/", "-q", "-p", "1414"}
 	if devMode {
-		args = append(args, "-oa", "user")
+		args = append(args, "-oa", oaVal)
 	}
 	if _, ok := mounts["/mnt/mqm-log"]; ok {
 		args = append(args, "-ld", "/mnt/mqm-log/log")
