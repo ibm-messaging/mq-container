@@ -76,6 +76,11 @@ func IsRunningAsStandbyQM(name string) (bool, error) {
 	return isRunningQM(name, "(RUNNING AS STANDBY)")
 }
 
+// IsRunningAsReplicaQM returns true if the queue manager is running in replica mode
+func IsRunningAsReplicaQM(name string) (bool, error) {
+	return isRunningQM(name, "(REPLICA)")
+}
+
 func isRunningQM(name string, status string) (bool, error) {
 	out, _, err := command.Run("dspmq", "-n", "-m", name)
 	if err != nil {
