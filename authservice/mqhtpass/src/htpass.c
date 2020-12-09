@@ -25,7 +25,44 @@ limitations under the License.
 #include <apr_errno.h>
 #include <apr_md5.h>
 
-char *find_hash(char *, char *);
+bool htpass_valid_file(char *filename)
+{
+  bool valid = true;
+  FILE *fp;
+  char *huser;
+
+  fp = fopen(filename, "r");
+  if (fp == NULL)
+  {
+    log_errorf("Error %d opening htpasswd file '%s'", errno, filename);
+  }
+  if (fp)
+  {
+    const size_t line_size = 1024;
+    char *line = malloc(line_size);
+    while (fgets(line, line_size, fp) != NULL)
+    {
+      char *saveptr;
+      // Need to use strtok_r to be safe for multiple threads
+      huser = strtok_r(line, ":", &saveptr);
+      if (strlen(huser) >= 12)
+      {
+        log_errorf("Invalid htpasswd file for use with IBM MQ.  User '%s' is longer than twelve characters", huser);
+        valid = false;
+        break;
+      }
+      else {
+
+      }
+    }
+    fclose(fp);
+    if (line)
+    {
+      free(line);
+    }
+  }
+  return valid;
+}
 
 char *find_hash(char *filename, char *user)
 {
@@ -58,33 +95,42 @@ char *find_hash(char *filename, char *user)
     }
     fclose(fp);
     if (line)
+    {
       free(line);
+    }
   }
   if (!found)
   {
     hash = NULL;
   }
-  return (hash);
+  return hash;
 }
 
 bool htpass_authenticate_user(char *filename, char *user, char *password)
 {
   char *hash = find_hash(filename, user);
   bool result = false;
-  // Use the Apache Portable Runtime utilities to validate the password against the hash.
-  // Supports multiple hashing algorithms, but we should only be using bcrypt
-  apr_status_t status = apr_password_validate(password, hash);
-  // status is usually either APR_SUCCESS or APR_EMISMATCH
-  if (status == APR_SUCCESS)
+  if (hash == NULL)
   {
-    result = true;
-    log_debugf("Correct password supplied. user=%s", user);
+    log_debugf("User does not exist. user=%s", user);
   }
   else
   {
-    log_debugf("Incorrect password supplied. user=%s", user);
+    // Use the Apache Portable Runtime utilities to validate the password against the hash.
+    // Supports multiple hashing algorithms, but we should only be using bcrypt
+    apr_status_t status = apr_password_validate(password, hash);
+    // status is usually either APR_SUCCESS or APR_EMISMATCH
+    if (status == APR_SUCCESS)
+    {
+      result = true;
+      log_debugf("Correct password supplied. user=%s", user);
+    }
+    else
+    {
+      log_debugf("Incorrect password supplied. user=%s", user);
+    }
   }
-  return (result);
+  return result;
 }
 
 bool htpass_valid_user(char *filename, char *user)
@@ -95,5 +141,5 @@ bool htpass_valid_user(char *filename, char *user)
   {
     valid = true;
   }
-  return (valid);
+  return valid;
 }

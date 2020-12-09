@@ -17,7 +17,28 @@ limitations under the License.
 #ifndef _HTPASS_H
 #define _HTPASS_H
 
-_Bool htpass_authenticate_user(char *, char *, char *);
-_Bool htpass_valid_user(char *, char *);
+/**
+ * Validate an HTPasswd file for use with IBM MQ.
+ * 
+ * @param filename the HTPasswd file
+ */
+_Bool htpass_valid_file(char *filename);
+
+/**
+ * Authenticate a user, based on the supplied file name.
+ * 
+ * @param filename the HTPasswd file
+ * @param user the user name to authenticate
+ * @param password the password of the user
+ */
+_Bool htpass_authenticate_user(char *filename, char *user, char *password);
+
+/**
+ * Validate that a user exists in the password file.
+ * 
+ * @param filename the HTPasswd file
+ * @param user the user name to validate
+ */
+_Bool htpass_valid_user(char *filename, char *user);
 
 #endif

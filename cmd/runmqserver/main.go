@@ -188,6 +188,13 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+	if *devFlag {
+		_, err = mirrorHTPasswdLogs(ctx, &wg, name, newQM, mf)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
 	err = updateCommandLevel()
 	if err != nil {
 		logTermination(err)

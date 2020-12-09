@@ -36,9 +36,30 @@ void test_fail(const char *test_name)
   exit(1);
 }
 
+// ----------------------------------------------------------------------------
+// Simple tests for file validation
+// ----------------------------------------------------------------------------
+
+void test_htpass_valid_file_ok()
+{
+  test_start();
+  int ok = htpass_valid_file("./src/htpass_test.htpasswd");
+  if (!ok)
+    test_fail(__func__);
+  test_pass();
+}
+
+void test_htpass_valid_file_too_long()
+{
+  test_start();
+  int ok = htpass_valid_file("./src/htpass_test_invalid.htpasswd");
+  if (ok)
+    test_fail(__func__);
+  test_pass();
+}
 
 // ----------------------------------------------------------------------------
-// Simple tests
+// Simple tests for authentication
 // ----------------------------------------------------------------------------
 
 void test_htpass_authenticate_user_fred_valid()
@@ -136,6 +157,10 @@ void check_log_file_valid(char *filename)
       errors++;
     }
   }
+  if (line)
+  {
+    free(line);
+  }
   fclose(log);
 }
 
@@ -173,6 +198,8 @@ int main()
   // Turn on debugging for the tests
   setenv("DEBUG", "true", true);
   log_init("htpass_test.log");
+  test_htpass_valid_file_ok();
+  test_htpass_valid_file_too_long();
   test_htpass_authenticate_user_fred_valid();
   test_htpass_authenticate_user_fred_invalid1();
   test_htpass_authenticate_user_fred_invalid2();

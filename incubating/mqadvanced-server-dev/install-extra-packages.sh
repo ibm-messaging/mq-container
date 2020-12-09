@@ -36,6 +36,6 @@ if ($YUM); then
 fi
 
 if ($MICRODNF); then
-    microdnf install apr-util-openssl
-    microdnf clean all
+    microdnf --disableplugin=subscription-manager install apr-util-openssl
+    microdnf --disableplugin=subscription-manager clean all
 fi

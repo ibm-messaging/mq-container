@@ -100,6 +100,11 @@ func mirrorQueueManagerErrorLogs(ctx context.Context, wg *sync.WaitGroup, name s
 	return mirrorLog(ctx, wg, f, fromStart, mf, true)
 }
 
+// mirrorHTPasswdLogs starts a goroutine to mirror the contents of the MQ HTPasswd authorization service's log
+func mirrorHTPasswdLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool, mf mirrorFunc) (chan error, error) {
+	return mirrorLog(ctx, wg, "/var/mqm/errors/mqhtpass.json", false, mf, true)
+}
+
 func getDebug() bool {
 	debug := os.Getenv("DEBUG")
 	if debug == "true" || debug == "1" {
@@ -124,7 +129,7 @@ func configureLogger(name string) (mirrorFunc, error) {
 				return false
 			}
 			if err != nil {
-				log.Printf("Failed to unmarshall JSON - %v", msg)
+				log.Printf("Failed to unmarshall JSON in log message - %v", msg)
 			} else {
 				fmt.Println(msg)
 			}
@@ -142,7 +147,7 @@ func configureLogger(name string) (mirrorFunc, error) {
 				return false
 			}
 			if err != nil {
-				log.Printf("Failed to unmarshall JSON - %v", err)
+				log.Printf("Failed to unmarshall JSON in log message - %v", err)
 			} else {
 				fmt.Printf(formatBasic(obj))
 				// fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))

@@ -24,16 +24,15 @@ limitations under the License.
 #include "log.h"
 #include "htpass.h"
 
-/****************************************************************************/
-/* Declare the internal functions that implement the interface              */
-/****************************************************************************/
+// Declare the internal functions that implement the interface
 MQZ_INIT_AUTHORITY MQStart;
 static MQZ_AUTHENTICATE_USER mqhtpass_authenticate_user;
 static MQZ_FREE_USER mqhtpass_free_user;
-static MQZ_TERM_AUTHORITY mqhtpass_term_auth;
+static MQZ_TERM_AUTHORITY mqhtpass_terminate;
 
-#define LOG_FILE "/var/mqm/errors/mqhtpass.log"
+#define LOG_FILE "/var/mqm/errors/mqhtpass.json"
 #define HTPASSWD_FILE "/etc/mqm/mq.htpasswd"
+#define NAME "MQ Advanced for Developers custom authentication service"
 
 static char *trim(char *s);
 
@@ -44,13 +43,7 @@ static char *trim(char *s);
  *
  * This function is called whenever the module is loaded.  The Options
  * field will show whether it's a PRIMARY (i.e. during qmgr startup) or
- * SECONDARY (any other time - normally during the start of an agent
- * process which is not necessarily the same as during MQCONN, especially
- * when running multi-threaded agents) initialization, but there's
- * nothing different that we'd want to do here based on that flag.
- *
- * Because of when the init function is called, there is no need to
- * worry about multi-threaded stuff in this particular function.
+ * SECONDARY.
  */
 void MQENTRY MQStart(
     MQHCONFIG hc,
@@ -65,32 +58,53 @@ void MQENTRY MQStart(
   MQLONG CC = MQCC_OK;
   MQLONG Reason = MQRC_NONE;
   int log_rc = 0;
-  
-  log_rc = log_init(LOG_FILE);
+
+  if (Options == MQZIO_PRIMARY)
+  {
+    // Reset the log file.  The file could still get large if debug is turned on,
+    // but this is a simpler solution for now.
+    log_rc = log_init_reset(LOG_FILE);
+  }
+  else
+  {
+    log_rc = log_init(LOG_FILE);
+  }
+
   if (log_rc != 0)
   {
     CC = MQCC_FAILED;
     Reason = MQRC_INITIALIZATION_FAILED;
   }
 
-  log_infof("MQStart options=%s qmgr=%s", ((Options == MQZIO_SECONDARY) ? "Secondary" : "Primary"), trim(QMgrName));
-  /************************************************************************/
-  /* Initialize the entry point vectors.  This is performed for both      */
-  /* global and process initialisation, i.e whatever the value of the     */
-  /* Options field.                                                       */
-  /************************************************************************/
+  if (Options == MQZIO_PRIMARY)
+  {
+    log_infof("Initializing %s", NAME);
+  }
+  log_debugf("MQStart options=%s qmgr=%s", ((Options == MQZIO_SECONDARY) ? "Secondary" : "Primary"), trim(QMgrName));
+
+  if (!htpass_valid_file(HTPASSWD_FILE))
+  {
+    CC = MQCC_FAILED;
+    Reason = MQRC_INITIALIZATION_FAILED;
+  }
+
+  // Initialize the functions to use for each entry point
   if (CC == MQCC_OK)
+  {
     hc->MQZEP_Call(hc, MQZID_INIT_AUTHORITY, (PMQFUNC)MQStart, &CC, &Reason);
-
+  }
   if (CC == MQCC_OK)
-    hc->MQZEP_Call(hc, MQZID_TERM_AUTHORITY, (PMQFUNC)mqhtpass_term_auth, &CC, &Reason);
-
+  {
+    hc->MQZEP_Call(hc, MQZID_TERM_AUTHORITY, (PMQFUNC)mqhtpass_terminate, &CC, &Reason);
+  }
   if (CC == MQCC_OK)
+  {
     hc->MQZEP_Call(hc, MQZID_AUTHENTICATE_USER, (PMQFUNC)mqhtpass_authenticate_user, &CC, &Reason);
-
+  }
   if (CC == MQCC_OK)
+  {
     hc->MQZEP_Call(hc, MQZID_FREE_USER, (PMQFUNC)mqhtpass_free_user, &CC, &Reason);
-
+  }
   *Version = MQZAS_VERSION_5;
   *pCompCode = CC;
   *pReason = Reason;
@@ -98,24 +112,7 @@ void MQENTRY MQStart(
 }
 
 /**
- * Called during the connection of any application. This allows the OAM
- * to change the userid associated with the connection, regardless of the
- * operating system user ID. One reason you might want to do that is to
- * deal with non-standard user IDs, which perhaps are longer than 12
- * characters. The CorrelationPtr can be assigned in this function to
- * point to some OAM-managed storage, and is available as part of the
- * MQZED structure for all subsequent functions. Note that there is only
- * one CorrelPtr stored for the user's hconn, so if two OAMs are chained
- * and both want to manage storage for the connection, there would be
- * difficulties as there is no reverse call that would allow the second
- * to reset the first's pointer (or vice versa). I'd suggest instead
- * using something like thread-specific storage as each thread is tied
- * to the hconn.
- *
- * When a clntconn/svrconn channel connects to the queue manager, the
- * authentication is supposed to take two stages. First as the
- * channel program connects, and then as the MCAUSER is set. You will
- * see this as "initial" and "change" context values in the parameters.
+ * Called during the connection of any application.
  */
 static void MQENTRY mqhtpass_authenticate_user(
     PMQCHAR pQMgrName,
@@ -146,17 +143,19 @@ static void MQENTRY mqhtpass_authenticate_user(
     spuser = malloc(pSecurityParms->CSPUserIdLength + 1);
     if (!spuser)
     {
-      log_errorf("Unable to allocate memory");
+      log_errorf("%s is unable to allocate memory for a user", NAME);
       return;
     }
     strncpy(spuser, pSecurityParms->CSPUserIdPtr, pSecurityParms->CSPUserIdLength);
     spuser[pSecurityParms->CSPUserIdLength] = 0;
-    sppass = malloc(pSecurityParms->CSPPasswordLength + 1);
+    sppass = malloc((pSecurityParms->CSPPasswordLength + 1));
     if (!sppass)
     {
-      log_errorf("Unable to allocate memory");
+      log_errorf("%s is unable to allocate memory for a password", NAME);
       if (spuser)
+      {
         free(spuser);
+      }
       return;
     }
     strncpy(sppass, pSecurityParms->CSPPasswordPtr, pSecurityParms->CSPPasswordLength);
@@ -175,61 +174,76 @@ static void MQENTRY mqhtpass_authenticate_user(
     else
     {
       log_debugf(
-          "Failed to authenticate user=%s effuser=%s applname=%s cspuser=%s cc=%d reason=%d",
-          pIdentityContext->UserIdentifier,
-          pApplicationContext->EffectiveUserID,
-          pApplicationContext->ApplName,
-          spuser,
+          "User authentication failed user=%s effuser=%s applname=%s cspuser=%s cc=%d reason=%d",
+          trim(pIdentityContext->UserIdentifier),
+          trim(pApplicationContext->EffectiveUserID),
+          trim(pApplicationContext->ApplName),
+          trim(spuser),
           *pCompCode,
           *pReason);
     }
     if (spuser)
+    {
       free(spuser);
+    }
     if (sppass)
+    {
       free(sppass);
+    }
   }
   else
   {
     // Password not supplied, so just check that the user ID is valid
     spuser = malloc(sizeof(PMQCHAR12) + 1);
-    if (!sppass)
+    if (!spuser)
     {
-      log_errorf("Unable to allocate memory");
+      log_errorf("%s is unable to allocate memory to check a user", NAME);
       return;
     }
     strncpy(spuser, pApplicationContext->EffectiveUserID, strlen(pApplicationContext->EffectiveUserID));
     spuser[sizeof(PMQCHAR12)] = 0;
-    log_debugf("%s without CSP user set.  effectiveuid=%s", __func__, spuser);
-    bool valid_user = htpass_valid_user(HTPASSWD_FILE, spuser);
-    if (valid_user)
+    log_debugf("%s without CSP user set.  effectiveuid=%s env=%d, callertype=%d, type=%d, accttoken=%d applidentitydata=%d", __func__, spuser, pApplicationContext->Environment, pApplicationContext->CallerType, pApplicationContext->AuthenticationType, pIdentityContext->AccountingToken, pIdentityContext->ApplIdentityData);
+    if (strncmp(spuser, "mqm", 3) == 0)
     {
-      *pCompCode = MQCC_OK;
+      // Special case: pass the "mqm" user on for validation up the chain
+      // A warning in the completion code means MQ will pass this to other authorization services
+      *pCompCode = MQCC_WARNING;
       *pReason = MQRC_NONE;
       *pContinuation = MQZCI_CONTINUE;
-      memcpy(pIdentityContext->UserIdentifier, spuser, sizeof(pIdentityContext->UserIdentifier));
     }
     else
     {
-      log_debugf(
-          "Invalid user=%s effuser=%s applname=%s cspuser=%s cc=%d reason=%d",
-          pIdentityContext->UserIdentifier,
-          pApplicationContext->EffectiveUserID,
-          pApplicationContext->ApplName,
-          spuser,
-          *pCompCode,
-          *pReason);
+      bool valid_user = htpass_valid_user(HTPASSWD_FILE, spuser);
+      if (valid_user)
+      {
+        // An OK completion code means MQ will accept this user is authenticated
+        *pCompCode = MQCC_OK;
+        *pReason = MQRC_NONE;
+        *pContinuation = MQZCI_CONTINUE;
+        memcpy(pIdentityContext->UserIdentifier, spuser, sizeof(pIdentityContext->UserIdentifier));
+      }
+      else
+      {
+        log_debugf(
+            "User authentication failed user=%s effuser=%s applname=%s cspuser=%s cc=%d reason=%d",
+            trim(pIdentityContext->UserIdentifier),
+            trim(pApplicationContext->EffectiveUserID),
+            trim(pApplicationContext->ApplName),
+            trim(spuser),
+            *pCompCode,
+            *pReason);
+      }
+      if (spuser)
+      {
+        free(spuser);
+      }
     }
-    if (spuser)
-      free(spuser);
   }
   return;
 }
 
 /**
- * Called during MQDISC, as the inverse of the Authenticate. If the authorization
- * service has allocated private storage to hold additional information about
- * the user, then this is the time to free it. No more calls will be made
- * to the authorization service for this connection instance of this user.
+ * Called during MQDISC, as the inverse of the call to authenticate.
  */
 static void MQENTRY mqhtpass_free_user(
     PMQCHAR pQMgrName,
@@ -247,12 +261,9 @@ static void MQENTRY mqhtpass_free_user(
 }
 
 /**
- * Called during MQDISC, as the inverse of the Authenticate. If the OAM
- * has allocated private storage to hold additional information about
- * the user, then this is the time to free it. No more calls will be made
- * to the authorization service for this connection instance of this user.
+ * Called when the authorization service is terminated.
  */
-static void MQENTRY mqhtpass_term_auth(
+static void MQENTRY mqhtpass_terminate(
     MQHCONFIG hc,
     MQLONG Options,
     PMQCHAR pQMgrName,
@@ -260,7 +271,7 @@ static void MQENTRY mqhtpass_term_auth(
     PMQLONG pCompCode,
     PMQLONG pReason)
 {
-  log_debugf("mqhtpass_term_auth()");
+  log_infof("Terminating %s", NAME);
   if (Options == MQZTO_PRIMARY)
   {
     log_close();

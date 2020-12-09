@@ -18,19 +18,29 @@ limitations under the License.
 #define _LOG_H
 
 /**
+ * Initialize the log to use the given file name, wiping any existing contents.
+ */
+int log_init_reset(char *filename);
+
+/**
  * Initialize the log to use the given file name.
  */
-int log_init(char *);
+int log_init(char *filename);
 
 /**
  * Initialize the log with an existing file handle.
  */
-void log_init_file(FILE *);
+void log_init_file(FILE *f);
 
 /**
  * Write a message to the log file, based on a printf format string.
+ * 
+ * @param source_file the name of the source code file submitting this log message
+ * @param source_line the line of code in the source file
+ * @param level the log level, one of "DEBUG", "INFO" or "ERROR"
+ * @param format the printf format string for the message
  */
-void log_printf(const char*, int, const char*, const char*, ...);
+void log_printf(const char *source_file, int source_line, const char *level, const char *format, ...);
 
 void log_close();
 

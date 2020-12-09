@@ -42,7 +42,10 @@ void init_debug(){
   }
 }
 
-int log_init(char *filename)
+/**
+ * Internal function to initialize the log with the given file mode.
+ */
+int log_init_internal(char *filename, const char *mode)
 {
   int result = 0;
   pid = getpid();
@@ -51,6 +54,7 @@ int log_init(char *filename)
     fp = fopen(filename, "a");
     if (fp)
     {
+      // Disable buffering for this file
       setbuf(fp, NULL);
     }
     else
@@ -60,6 +64,18 @@ int log_init(char *filename)
   }
   init_debug();
   return result;
+}
+
+int log_init_reset(char *filename)
+{
+  // Open the log file for writing (overwrite if it already exists)
+  return log_init_internal(filename, "w");
+}
+
+int log_init(char *filename)
+{
+  // Open the log file file for appending
+  return log_init_internal(filename, "a");
 }
 
 void log_init_file(FILE *f)
@@ -105,11 +121,17 @@ void log_printf(const char *source_file, int source_line, const char *level, con
     if (strftime(date_buf, sizeof date_buf, "%FT%T", utc))
     {
        // Round microseconds down to milliseconds, for consistency
-       cur += snprintf(cur, end-cur, ", \"ibm_datetime\":\"%s.%03ldZ", date_buf, now.tv_usec / 1000);
+       cur += snprintf(cur, end-cur, ", \"ibm_datetime\":\"%s.%03ldZ\"", date_buf, now.tv_usec / 1000);
     }
     cur += snprintf(cur, end-cur, ", \"ibm_processId\":\"%d\"", pid);
     cur += snprintf(cur, end-cur, ", \"module\":\"%s:%d\"", source_file, source_line);
     cur += snprintf(cur, end-cur, ", \"message\":\"");
+
+    if (strncmp(level, "DEBUG", 5) == 0)
+    {
+      // Add a prefix on any debug messages
+      cur += snprintf(cur, end-cur, "mqhtpass: ");
+    }
 
     // Print log message, using varargs
     va_list args;
