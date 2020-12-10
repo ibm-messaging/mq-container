@@ -71,6 +71,8 @@ LTS ?= false
 ###############################################################################
 # Other variables
 ###############################################################################
+# Build doesn't work if BuildKit is enabled
+DOCKER_BUILDKIT=0
 GO_PKG_DIRS = ./cmd ./internal ./test
 MQ_ARCHIVE_TYPE=LINUX
 MQ_ARCHIVE_DEV_TYPE=Linux
