@@ -1,5 +1,5 @@
 <!--
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2020
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ limitations under the License.
     <dependency>
       <groupId>com.ibm.mq</groupId>
       <artifactId>com.ibm.mq.allclient</artifactId>
-      <version>9.1.3.0</version>
+      <version>9.2.0.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
