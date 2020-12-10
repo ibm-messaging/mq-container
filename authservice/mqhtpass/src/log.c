@@ -25,6 +25,7 @@ limitations under the License.
 
 FILE *fp = NULL;
 int pid;
+char hostname[255];
 bool debug = false;
 
 /**
@@ -49,6 +50,8 @@ int log_init_internal(char *filename, const char *mode)
 {
   int result = 0;
   pid = getpid();
+  hostname[254] = '\0';
+  gethostname(hostname, 254);
   if (!fp)
   {
     fp = fopen(filename, "a");
@@ -124,6 +127,7 @@ void log_printf(const char *source_file, int source_line, const char *level, con
        cur += snprintf(cur, end-cur, ", \"ibm_datetime\":\"%s.%03ldZ\"", date_buf, now.tv_usec / 1000);
     }
     cur += snprintf(cur, end-cur, ", \"ibm_processId\":\"%d\"", pid);
+    cur += snprintf(cur, end-cur, ", \"host\":\"%s\"", hostname);
     cur += snprintf(cur, end-cur, ", \"module\":\"%s:%d\"", source_file, source_line);
     cur += snprintf(cur, end-cur, ", \"message\":\"");
 

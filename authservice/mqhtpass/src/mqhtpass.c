@@ -271,10 +271,13 @@ static void MQENTRY mqhtpass_terminate(
     PMQLONG pCompCode,
     PMQLONG pReason)
 {
-  log_infof("Terminating %s", NAME);
   if (Options == MQZTO_PRIMARY)
   {
+    log_infof("Terminating %s", NAME);
     log_close();
+  }
+  else {
+    log_debugf("Terminating secondary");
   }
   *pCompCode = MQCC_OK;
   *pReason = MQRC_NONE;
