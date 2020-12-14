@@ -38,6 +38,7 @@
     </openidConnectClient>
     <variable name="httpHost" value="*"/>
     <variable name="managementMode" value="externallyprovisioned"/>
+    <variable name="mqConsoleEnableUnsafeInline" value="true"/>
     <jndiEntry jndiName="mqConsoleDefaultCCDTHostname" value="${env.MQ_CONSOLE_DEFAULT_CCDT_HOSTNAME}"/>
     <jndiEntry jndiName="mqConsoleDefaultCCDTPort" value="${env.MQ_CONSOLE_DEFAULT_CCDT_PORT}"/>
     <httpDispatcher enableWelcomePage="false" appOrContextRootMissingMessage='&lt;script&gt;document.location.href="/ibmmq/console";&lt;/script&gt;' />
