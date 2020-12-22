@@ -171,8 +171,8 @@ func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
 	var labels []string
 	for scanner.Scan() {
 		s := scanner.Text()
-		if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "*-") {
-			s := strings.TrimLeft(s, "-*")
+		if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "*-") || strings.HasPrefix(s, "!") {
+			s := strings.TrimLeft(s, "-*!")
 			labels = append(labels, strings.TrimSpace(s))
 		}
 	}
