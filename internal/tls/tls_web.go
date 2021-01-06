@@ -60,7 +60,7 @@ func ConfigureWebKeystore(p12Truststore KeyStoreData, webKeystore string) (strin
 	if webKeystore == "" {
 		webKeystore = webKeystoreDefault
 	}
-	webKeystoreFile := filepath.Join(keystoreDir, webKeystore)
+	webKeystoreFile := filepath.Join(keystoreDirDefault, webKeystore)
 
 	// Check if a new self-signed certificate should be generated
 	genHostName := os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME")

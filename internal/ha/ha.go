@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
+	"github.com/ibm-messaging/mq-container/internal/tls"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
@@ -40,11 +41,20 @@ func ConfigureNativeHA(log *logger.Logger) error {
 	templateMap["NativeHAInstance2_ReplicationAddress"] = os.Getenv("MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS")
 
 	if os.Getenv("MQ_NATIVE_HA_TLS") == "true" {
-		templateMap["CertificateLabel"] = os.Getenv("MQ_NATIVE_HA_TLS_CERTLABEL")
+		keyLabel, _, err := tls.ConfigureHATLSKeystore()
+		if err != nil {
+			return err
+		}
+
+		certLabel, ok := os.LookupEnv("MQ_NATIVE_HA_TLS_CERTLABEL")
+		if !ok {
+			certLabel = keyLabel
+		}
+		templateMap["CertificateLabel"] = certLabel
 
 		keyRepository, ok := os.LookupEnv("MQ_NATIVE_HA_KEY_REPOSITORY")
 		if !ok {
-			keyRepository = "/run/runmqserver/tls/key"
+			keyRepository = "/run/runmqserver/ha/tls/key"
 		}
 		templateMap["KeyRepository"] = keyRepository
 
