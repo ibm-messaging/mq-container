@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -117,14 +117,22 @@ func (l *Logger) log(level string, msg string) {
 // Debug logs a line as debug
 func (l *Logger) Debug(args ...interface{}) {
 	if l.debug {
-		l.log(debugLevel, fmt.Sprint(args...))
+		if l.json {
+			l.log(debugLevel, fmt.Sprint(args...))
+		} else {
+			l.log(debugLevel, "DEBUG: "+fmt.Sprint(args...))
+		}
 	}
 }
 
 // Debugf logs a line as debug using format specifiers
 func (l *Logger) Debugf(format string, args ...interface{}) {
 	if l.debug {
-		l.log(debugLevel, fmt.Sprintf(format, args...))
+		if l.json {
+			l.log(debugLevel, fmt.Sprintf(format, args...))
+		} else {
+			l.log(debugLevel, fmt.Sprintf("DEBUG: "+format, args...))
+		}
 	}
 }
 

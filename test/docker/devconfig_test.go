@@ -1,7 +1,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -82,6 +82,8 @@ func TestDevSecure(t *testing.T) {
 			"MQ_QMGR_NAME=" + qm,
 			"MQ_APP_PASSWORD=" + appPassword,
 			"DEBUG=1",
+			"WLP_LOGGING_MESSAGE_FORMAT=JSON",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER_LOG=true",
 		},
 		Image: imageName(),
 	}
