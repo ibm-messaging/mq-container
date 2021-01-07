@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020
+© Copyright IBM Corporation 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ limitations under the License.
 #include <stdlib.h>
 #include <string.h>
 #include "log.h"
+#include "htpass.h"
 #include <linux/limits.h>
 #include <apr_general.h>
 #include <apr_errno.h>
@@ -50,9 +51,6 @@ bool htpass_valid_file(char *filename)
         log_errorf("Invalid htpasswd file for use with IBM MQ.  User '%s' is longer than twelve characters", huser);
         valid = false;
         break;
-      }
-      else {
-
       }
     }
     fclose(fp);
@@ -106,12 +104,13 @@ char *find_hash(char *filename, char *user)
   return hash;
 }
 
-bool htpass_authenticate_user(char *filename, char *user, char *password)
+int htpass_authenticate_user(char *filename, char *user, char *password)
 {
   char *hash = find_hash(filename, user);
-  bool result = false;
+  int result = -1;
   if (hash == NULL)
   {
+    result = HTPASS_INVALID_USER;
     log_debugf("User does not exist. user=%s", user);
   }
   else
@@ -122,11 +121,12 @@ bool htpass_authenticate_user(char *filename, char *user, char *password)
     // status is usually either APR_SUCCESS or APR_EMISMATCH
     if (status == APR_SUCCESS)
     {
-      result = true;
+      result = HTPASS_VALID;
       log_debugf("Correct password supplied. user=%s", user);
     }
     else
     {
+      result = HTPASS_INVALID_PASSWORD;
       log_debugf("Incorrect password supplied. user=%s", user);
     }
   }

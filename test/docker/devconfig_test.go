@@ -43,6 +43,7 @@ func TestDevGoldenPath(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qm,
+			"DEBUG=true",
 		},
 	}
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})

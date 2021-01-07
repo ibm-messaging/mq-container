@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020
+© Copyright IBM Corporation 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -112,7 +112,108 @@ void MQENTRY MQStart(
 }
 
 /**
+ * Called during the connection of any application which supplies an MQCSP (Connection Security Parameters).
+ * This is the usual case.
+ * See https://www.ibm.com/support/knowledgecenter/SSFKSJ_latest/com.ibm.mq.ref.dev.doc/q095610_.html
+ */
+static void MQENTRY mqhtpass_authenticate_user_csp(
+    PMQCHAR pQMgrName,
+    PMQCSP pSecurityParms,
+    PMQZAC pApplicationContext,
+    PMQZIC pIdentityContext,
+    PMQPTR pCorrelationPtr,
+    PMQBYTE pComponentData,
+    PMQLONG pContinuation,
+    PMQLONG pCompCode,
+    PMQLONG pReason)
+{
+  char *csp_user = NULL;
+  char *csp_pass = NULL;
+
+  // Firstly, create null-terminated strings from the user credentials in the MQ CSP object
+  csp_user = malloc(pSecurityParms->CSPUserIdLength + 1);
+  if (!csp_user)
+  {
+    log_errorf("%s is unable to allocate memory for a user", NAME);
+    *pCompCode = MQCC_FAILED;
+    *pReason = MQRC_SERVICE_ERROR;
+    return;
+  }
+  strncpy(csp_user, pSecurityParms->CSPUserIdPtr, pSecurityParms->CSPUserIdLength);
+  csp_user[pSecurityParms->CSPUserIdLength] = 0;
+  csp_pass = malloc((pSecurityParms->CSPPasswordLength + 1));
+  if (!csp_pass)
+  {
+    log_errorf("%s is unable to allocate memory for a password", NAME);
+    *pCompCode = MQCC_FAILED;
+    *pReason = MQRC_SERVICE_ERROR;
+    if (csp_user)
+    {
+      free(csp_user);
+    }
+    return;
+  }
+  strncpy(csp_pass, pSecurityParms->CSPPasswordPtr, pSecurityParms->CSPPasswordLength);
+  csp_pass[pSecurityParms->CSPPasswordLength] = 0;
+  log_debugf("%s with CSP user set. user=%s", __func__, csp_user);
+  int auth_result = htpass_authenticate_user(HTPASSWD_FILE, csp_user, csp_pass);
+
+  if (auth_result == HTPASS_VALID)
+  {
+    // An OK completion code means MQ will accept this user is authenticated
+    *pCompCode = MQCC_OK;
+    *pReason = MQRC_NONE;
+    // Tell the queue manager to stop trying other authorization services.
+    *pContinuation = MQZCI_STOP;
+    memcpy(pIdentityContext->UserIdentifier, csp_user, sizeof(pIdentityContext->UserIdentifier));
+    log_debugf("Authenticated user=%s", pIdentityContext->UserIdentifier);
+  }
+  // If the htpasswd file does not have an entry for this user
+  else if (auth_result == HTPASS_INVALID_USER)
+  {
+    *pCompCode = MQCC_WARNING;
+    *pReason = MQRC_NONE;
+    // Tell the queue manager to continue trying other authorization services, as they might have the user.
+    *pContinuation = MQZCI_CONTINUE;
+    log_debugf(
+        "User authentication failed due to invalid user.  user=%s effuser=%s applname=%s csp_user=%s cc=%d reason=%d",
+        trim(pIdentityContext->UserIdentifier),
+        trim(pApplicationContext->EffectiveUserID),
+        trim(pApplicationContext->ApplName),
+        trim(csp_user),
+        *pCompCode,
+        *pReason);
+  }
+  // If the htpasswd file has an entry for this user, but the password supplied is incorrect
+  else if (auth_result == HTPASS_INVALID_PASSWORD)
+  {
+    *pCompCode = MQCC_WARNING;
+    *pReason = MQRC_NOT_AUTHORIZED;
+    // Tell the queue manager to stop trying other authorization services.
+    *pContinuation = MQZCI_STOP;
+    log_debugf(
+        "User authentication failed due to invalid password.  user=%s effuser=%s applname=%s csp_user=%s cc=%d reason=%d",
+        trim(pIdentityContext->UserIdentifier),
+        trim(pApplicationContext->EffectiveUserID),
+        trim(pApplicationContext->ApplName),
+        trim(csp_user),
+        *pCompCode,
+        *pReason);
+  }
+  if (csp_user)
+  {
+    free(csp_user);
+  }
+  if (csp_pass)
+  {
+    free(csp_pass);
+  }
+  return;
+}
+
+/**
  * Called during the connection of any application.
+ * For more information on the parameters, see https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_latest/com.ibm.mq.ref.dev.doc/q110090_.html
  */
 static void MQENTRY mqhtpass_authenticate_user(
     PMQCHAR pQMgrName,
@@ -137,59 +238,7 @@ static void MQENTRY mqhtpass_authenticate_user(
 
   if ((pSecurityParms->AuthenticationType) == MQCSP_AUTH_USER_ID_AND_PWD)
   {
-    // Authenticating a user ID and password.
-
-    // Firstly, create null-terminated strings from the user credentials in the MQ CSP object
-    spuser = malloc(pSecurityParms->CSPUserIdLength + 1);
-    if (!spuser)
-    {
-      log_errorf("%s is unable to allocate memory for a user", NAME);
-      return;
-    }
-    strncpy(spuser, pSecurityParms->CSPUserIdPtr, pSecurityParms->CSPUserIdLength);
-    spuser[pSecurityParms->CSPUserIdLength] = 0;
-    sppass = malloc((pSecurityParms->CSPPasswordLength + 1));
-    if (!sppass)
-    {
-      log_errorf("%s is unable to allocate memory for a password", NAME);
-      if (spuser)
-      {
-        free(spuser);
-      }
-      return;
-    }
-    strncpy(sppass, pSecurityParms->CSPPasswordPtr, pSecurityParms->CSPPasswordLength);
-    sppass[pSecurityParms->CSPPasswordLength] = 0;
-    log_debugf("%s with CSP user set. user=%s", __func__, spuser);
-    bool authenticated = htpass_authenticate_user(HTPASSWD_FILE, spuser, sppass);
-
-    if (authenticated)
-    {
-      *pCompCode = MQCC_OK;
-      *pReason = MQRC_NONE;
-      *pContinuation = MQZCI_CONTINUE;
-      memcpy(pIdentityContext->UserIdentifier, spuser, sizeof(pIdentityContext->UserIdentifier));
-      log_debugf("Authenticated user=%s", pIdentityContext->UserIdentifier);
-    }
-    else
-    {
-      log_debugf(
-          "User authentication failed user=%s effuser=%s applname=%s cspuser=%s cc=%d reason=%d",
-          trim(pIdentityContext->UserIdentifier),
-          trim(pApplicationContext->EffectiveUserID),
-          trim(pApplicationContext->ApplName),
-          trim(spuser),
-          *pCompCode,
-          *pReason);
-    }
-    if (spuser)
-    {
-      free(spuser);
-    }
-    if (sppass)
-    {
-      free(sppass);
-    }
+    mqhtpass_authenticate_user_csp(pQMgrName, pSecurityParms, pApplicationContext, pIdentityContext, pCorrelationPtr, pComponentData, pContinuation, pCompCode, pReason);
   }
   else
   {
@@ -198,6 +247,8 @@ static void MQENTRY mqhtpass_authenticate_user(
     if (!spuser)
     {
       log_errorf("%s is unable to allocate memory to check a user", NAME);
+      *pCompCode = MQCC_FAILED;
+      *pReason = MQRC_SERVICE_ERROR;
       return;
     }
     strncpy(spuser, pApplicationContext->EffectiveUserID, strlen(pApplicationContext->EffectiveUserID));
@@ -219,7 +270,7 @@ static void MQENTRY mqhtpass_authenticate_user(
         // An OK completion code means MQ will accept this user is authenticated
         *pCompCode = MQCC_OK;
         *pReason = MQRC_NONE;
-        *pContinuation = MQZCI_CONTINUE;
+        *pContinuation = MQZCI_STOP;
         memcpy(pIdentityContext->UserIdentifier, spuser, sizeof(pIdentityContext->UserIdentifier));
       }
       else

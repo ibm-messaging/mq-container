@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020
+© Copyright IBM Corporation 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,10 @@ limitations under the License.
 #ifndef _HTPASS_H
 #define _HTPASS_H
 
+#define HTPASS_VALID 0
+#define HTPASS_INVALID_USER 1
+#define HTPASS_INVALID_PASSWORD 2
+
 /**
  * Validate an HTPasswd file for use with IBM MQ.
  * 
@@ -30,8 +34,9 @@ _Bool htpass_valid_file(char *filename);
  * @param filename the HTPasswd file
  * @param user the user name to authenticate
  * @param password the password of the user
+ * @return HTPASS_VALID, HTPASS_INVALID_USER or HTPASS_INVALID_PASSWORD
  */
-_Bool htpass_authenticate_user(char *filename, char *user, char *password);
+int htpass_authenticate_user(char *filename, char *user, char *password);
 
 /**
  * Validate that a user exists in the password file.

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020
+© Copyright IBM Corporation 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -65,9 +65,9 @@ void test_htpass_valid_file_too_long()
 void test_htpass_authenticate_user_fred_valid()
 {
   test_start();
-  int ok = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "passw0rd");
-  printf("%s: fred - %d\n", __func__, ok);
-  if (!ok)
+  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "passw0rd");
+  printf("%s: fred - %d\n", __func__, rc);
+  if (rc != HTPASS_VALID)
     test_fail(__func__);
   test_pass();
 }
@@ -75,9 +75,9 @@ void test_htpass_authenticate_user_fred_valid()
 void test_htpass_authenticate_user_fred_invalid1()
 {
   test_start();
-  int ok = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "passw0rd ");
-  printf("%s: fred - %d\n", __func__, ok);
-  if (ok)
+  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "passw0rd ");
+  printf("%s: fred - %d\n", __func__, rc);
+  if (rc != HTPASS_INVALID_PASSWORD)
     test_fail(__func__);
   test_pass();
 }
@@ -85,9 +85,9 @@ void test_htpass_authenticate_user_fred_invalid1()
 void test_htpass_authenticate_user_fred_invalid2()
 {
   test_start();
-  int ok = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "");
-  printf("%s: fred - %d\n", __func__, ok);
-  if (ok)
+  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "");
+  printf("%s: fred - %d\n", __func__, rc);
+  if (rc != HTPASS_INVALID_PASSWORD)
     test_fail(__func__);
   test_pass();
 }
@@ -95,9 +95,9 @@ void test_htpass_authenticate_user_fred_invalid2()
 void test_htpass_authenticate_user_fred_invalid3()
 {
   test_start();
-  int ok = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "clearlywrong");
-  printf("%s: fred - %d\n", __func__, ok);
-  if (ok)
+  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "clearlywrong");
+  printf("%s: fred - %d\n", __func__, rc);
+  if (rc != HTPASS_INVALID_PASSWORD)
     test_fail(__func__);
   test_pass();
 }
@@ -105,9 +105,19 @@ void test_htpass_authenticate_user_fred_invalid3()
 void test_htpass_authenticate_user_barney_valid()
 {
   test_start();
-  int ok = htpass_authenticate_user("./src/htpass_test.htpasswd", "barney", "s3cret");
-  printf("%s: barney - %d\n", __func__, ok);
-  if (!ok)
+  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "barney", "s3cret");
+  printf("%s: barney - %d\n", __func__, rc);
+  if (rc != HTPASS_VALID)
+    test_fail(__func__);
+  test_pass();
+}
+
+void test_htpass_authenticate_user_unknown()
+{
+  test_start();
+  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "george", "s3cret");
+  printf("%s: barney - %d\n", __func__, rc);
+  if (rc != HTPASS_INVALID_USER)
     test_fail(__func__);
   test_pass();
 }
@@ -127,11 +137,11 @@ void *authenticate_many_times(void *p)
 {
   for (int i = 0; i < NUM_TESTS_PER_THREAD; i++)
   {
-    int ok = htpass_authenticate_user("./src/htpass_test.htpasswd", "barney", "s3cret");
-    if (!ok)
+    int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "barney", "s3cret");
+    if (rc != HTPASS_VALID)
       test_fail(__func__);
-    ok = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "passw0rd");
-    if (!ok)
+    rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "passw0rd");
+    if (rc != HTPASS_VALID)
       test_fail(__func__);
   }
   pthread_exit(NULL);
@@ -205,6 +215,7 @@ int main()
   test_htpass_authenticate_user_fred_invalid2();
   test_htpass_authenticate_user_fred_invalid3();
   test_htpass_authenticate_user_barney_valid();
+  test_htpass_authenticate_user_unknown();
   log_close();
 
   // Call multi-threaded test last, because it re-initializes the log to use a file

@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018, 2019
+# © Copyright IBM Corporation 2018, 2021
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,4 +33,5 @@ RUN find /usr/src/mymaven
 FROM docker.io/ibmjava:8-jre
 COPY --from=builder /usr/src/mymaven/target/*.jar /opt/app/
 COPY --from=builder /usr/src/mymaven/target/lib/*.jar /opt/app/
+USER 1001
 ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]
