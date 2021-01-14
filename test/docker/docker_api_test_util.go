@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2017, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -306,6 +306,31 @@ func runContainerWithHostConfig(t *testing.T, cli *client.Client, containerConfi
 	networkingConfig := network.NetworkingConfig{}
 	t.Logf("Running container (%s)", containerConfig.Image)
 	ctr, err := cli.ContainerCreate(context.Background(), containerConfig, hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctr.ID)
+	return ctr.ID
+}
+
+// runContainerWithAllConfig creates and starts a container, using the supplied ContainerConfig, HostConfig,
+// NetworkingConfig, and container name (or the value of t.Name if containerName="").
+func runContainerWithAllConfig(t *testing.T, cli *client.Client, containerConfig *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, containerName string) string {
+	if containerName == "" {
+		containerName = t.Name()
+	}
+	if containerConfig.Image == "" {
+		containerConfig.Image = imageName()
+	}
+	// Always run as a random user, unless the test has specified otherwise
+	if containerConfig.User == "" {
+		containerConfig.User = generateRandomUID()
+	}
+	// if coverage
+	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
+	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
+	t.Logf("Running container (%s)", containerConfig.Image)
+	ctr, err := cli.ContainerCreate(context.Background(), containerConfig, hostConfig, networkingConfig, containerName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -622,6 +647,9 @@ func waitForReady(t *testing.T, cli *client.Client, ID string) {
 			} else if rc == 10 {
 				t.Log("MQ Readiness: Queue Manager Running as Standby")
 				return
+			} else if rc == 20 {
+				t.Log("MQ Readiness: Queue Manager Running as Replica")
+				return
 			}
 		case <-ctx.Done():
 			t.Fatal("Timed out waiting for container to become ready")
@@ -835,4 +863,13 @@ func countTarLines(t *testing.T, b []byte) int {
 		total += countLines(t, tr)
 	}
 	return total
+}
+
+func getMQVersion(t *testing.T, cli *client.Client) (string, error) {
+	inspect, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
+	if err != nil {
+		return "", err
+	}
+	version := inspect.ContainerConfig.Labels["version"]
+	return version, nil
 }

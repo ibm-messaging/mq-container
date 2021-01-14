@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020
+© Copyright IBM Corporation 2020, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,12 +45,7 @@ func ConfigureNativeHA(log *logger.Logger) error {
 		if err != nil {
 			return err
 		}
-
-		certLabel, ok := os.LookupEnv("MQ_NATIVE_HA_TLS_CERTLABEL")
-		if !ok {
-			certLabel = keyLabel
-		}
-		templateMap["CertificateLabel"] = certLabel
+		templateMap["CertificateLabel"] = keyLabel
 
 		keyRepository, ok := os.LookupEnv("MQ_NATIVE_HA_KEY_REPOSITORY")
 		if !ok {

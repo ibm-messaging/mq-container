@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019
+© Copyright IBM Corporation 2019, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,19 +43,19 @@ const cmsKeystoreName = "key.kdb"
 // p12TruststoreName is the name of the PKCS#12 Truststore
 const p12TruststoreName = "trust.p12"
 
-// keystoreDir is the location for the default CMS Keystore & PKCS#12 Truststore
+// keystoreDirDefault is the location for the default CMS Keystore & PKCS#12 Truststore
 const keystoreDirDefault = "/run/runmqserver/tls/"
 
 // keystoreDirHA is the location for the HA CMS Keystore
 const keystoreDirHA = "/run/runmqserver/ha/tls/"
 
-// keyDir is the location of the keys to import
+// keyDirDefault is the location of the default keys to import
 const keyDirDefault = "/etc/mqm/pki/keys"
 
-// keyDir is the location of the HA keys to import
+// keyDirHA is the location of the HA keys to import
 const keyDirHA = "/etc/mqm/ha/pki/keys"
 
-// trustDir is the location of the trust certificates to import
+// trustDirDefault is the location of the trust certificates to import
 const trustDirDefault = "/etc/mqm/pki/trust"
 
 type KeyStoreData struct {
@@ -103,7 +103,7 @@ func ConfigureDefaultTLSKeystores() (string, KeyStoreData, KeyStoreData, error) 
 // ConfigureHATLSKeystore configures the CMS Keystore & PKCS#12 Truststore
 func ConfigureHATLSKeystore() (string, KeyStoreData, error) {
 
-	// Create the CMS Keystore & PKCS#12 Truststore
+	// Create a CMS Keystore only
 	tlsStore, err := generateHAKeystore()
 	if err != nil {
 		return "", tlsStore.Keystore, err
