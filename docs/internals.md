@@ -11,6 +11,7 @@ The resulting Docker image contains the following:
    - `runmqdevserver` - The main process for MQ Advanced for Developers
    - `chkmqhealthy` - Checks the health of the queue manager.  This can be used by (say) a Kubernetes liveness probe.
    - `chkmqready` - Checks if the queue manager is ready for work.  This can be used by (say) a Kubernetes readiness probe.
+   - `chkmqstarted` - Checks if the queue manager has successfully started.  This can be used by (say) a Kubernetes startup probe.
 
 ## runmqserver
 The `runmqserver` command has the following responsibilities:

@@ -116,7 +116,11 @@ func waitForReadyHA(t *testing.T, cli *client.Client, qmReplicaIDs [3]string) {
 				rc, _ := execContainer(t, cli, id, "", []string{"chkmqready"})
 				if rc == 0 {
 					t.Log("MQ is ready")
-					return
+					rc, _ := execContainer(t, cli, id, "", []string{"chkmqstarted"})
+					if rc == 0 {
+						t.Log("MQ has started")
+						return
+					}
 				}
 			}
 		case <-ctx.Done():
