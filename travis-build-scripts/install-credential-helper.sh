@@ -19,6 +19,9 @@ sudo add-apt-repository "deb [arch=$ARCH] https://download.docker.com/linux/ubun
 sudo apt update
 sudo apt -y install docker-ce pass
 
+echo "default-cache-ttl 1200" > /home/travis/.gnupg/gpg-agent.conf
+gpg-connect-agent reloadagent /bye
+
 mkdir -p $GOPATH/src/github.com/docker
 cd $GOPATH/src/github.com/docker
 git clone https://github.com/docker/docker-credential-helpers
