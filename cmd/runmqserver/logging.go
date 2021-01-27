@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2017, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -79,6 +79,8 @@ func formatBasic(obj map[string]interface{}) string {
 	if len(inserts) > 0 {
 		return fmt.Sprintf("%s %s [%v]\n", obj["ibm_datetime"], obj["message"], strings.Join(inserts, ", "))
 	}
+	// Convert time zone information from some logs (e.g. Liberty) for consistency
+	obj["ibm_datetime"] = strings.Replace(obj["ibm_datetime"].(string), "+0000", "Z", 1)
 	return fmt.Sprintf("%s %s\n", obj["ibm_datetime"], obj["message"])
 }
 
@@ -100,6 +102,16 @@ func mirrorQueueManagerErrorLogs(ctx context.Context, wg *sync.WaitGroup, name s
 	return mirrorLog(ctx, wg, f, fromStart, mf, true)
 }
 
+// mirrorHTPasswdLogs starts a goroutine to mirror the contents of the MQ HTPasswd authorization service's log
+func mirrorHTPasswdLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool, mf mirrorFunc) (chan error, error) {
+	return mirrorLog(ctx, wg, "/var/mqm/errors/mqhtpass.json", false, mf, true)
+}
+
+// mirrorWebServerLogs starts a goroutine to mirror the contents of the Liberty web server messages.log
+func mirrorWebServerLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool, mf mirrorFunc) (chan error, error) {
+	return mirrorLog(ctx, wg, "/var/mqm/web/installations/Installation1/servers/mqweb/logs/messages.log", false, mf, true)
+}
+
 func getDebug() bool {
 	debug := os.Getenv("DEBUG")
 	if debug == "true" || debug == "1" {
@@ -119,14 +131,21 @@ func configureLogger(name string) (mirrorFunc, error) {
 			return nil, err
 		}
 		return func(msg string, isQMLog bool) bool {
-			obj, err := processLogMessage(msg)
-			if err == nil && isQMLog && filterQMLogMessage(obj) {
-				return false
-			}
-			if err != nil {
-				log.Printf("Failed to unmarshall JSON - %v", msg)
+			// Check if the message is JSON
+			if len(msg) > 0 && msg[0] == '{' {
+				obj, err := processLogMessage(msg)
+				if err == nil && isQMLog && filterQMLogMessage(obj) {
+					return false
+				}
+				if err != nil {
+					log.Printf("Failed to unmarshall JSON in log message - %v", msg)
+				} else {
+					fmt.Println(msg)
+				}
 			} else {
-				fmt.Println(msg)
+				// The log being mirrored isn't JSON, so wrap it in a simple JSON message
+				// MQ error logs are usually JSON, but this is useful for Liberty logs - usually expect WLP_LOGGING_MESSAGE_FORMAT=JSON to be set when mirroring Liberty logs.
+				fmt.Printf("{\"message\":\"%s\"}\n", msg)
 			}
 			return true
 		}, nil
@@ -136,16 +155,22 @@ func configureLogger(name string) (mirrorFunc, error) {
 			return nil, err
 		}
 		return func(msg string, isQMLog bool) bool {
-			// Parse the JSON message, and print a simplified version
-			obj, err := processLogMessage(msg)
-			if err == nil && isQMLog && filterQMLogMessage(obj) {
-				return false
-			}
-			if err != nil {
-				log.Printf("Failed to unmarshall JSON - %v", err)
+			// Check if the message is JSON
+			if len(msg) > 0 && msg[0] == '{' {
+				// Parse the JSON message, and print a simplified version
+				obj, err := processLogMessage(msg)
+				if err == nil && isQMLog && filterQMLogMessage(obj) {
+					return false
+				}
+				if err != nil {
+					log.Printf("Failed to unmarshall JSON in log message - %v", err)
+				} else {
+					fmt.Printf(formatBasic(obj))
+				}
 			} else {
-				fmt.Printf(formatBasic(obj))
-				// fmt.Printf(formatSimple(obj["ibm_datetime"].(string), obj["message"].(string)))
+				// The log being mirrored isn't JSON, so just print it.
+				// MQ error logs are usually JSON, but this is useful for Liberty logs - usually expect WLP_LOGGING_MESSAGE_FORMAT=JSON to be set when mirroring Liberty logs.
+				fmt.Println(msg)
 			}
 			return true
 		}, nil

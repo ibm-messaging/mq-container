@@ -197,6 +197,23 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+	if *devFlag {
+		_, err = mirrorHTPasswdLogs(ctx, &wg, name, newQM, mf)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+	// Recommended to use this option in conjunction with setting WLP_LOGGING_MESSAGE_FORMAT=JSON
+	mirrorWebLog := os.Getenv("MQ_ENABLE_EMBEDDED_WEB_SERVER_LOG")
+	if mirrorWebLog == "true" || mirrorWebLog == "1" {
+		_, err = mirrorWebServerLogs(ctx, &wg, name, newQM, mf)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+
 	err = updateCommandLevel()
 	if err != nil {
 		logTermination(err)

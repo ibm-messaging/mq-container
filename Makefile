@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017, 2020
+# © Copyright IBM Corporation 2017, 2021
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,6 +71,8 @@ LTS ?= false
 ###############################################################################
 # Other variables
 ###############################################################################
+# Build doesn't work if BuildKit is enabled
+DOCKER_BUILDKIT=0
 GO_PKG_DIRS = ./cmd ./internal ./test
 MQ_ARCHIVE_TYPE=LINUX
 MQ_ARCHIVE_DEV_TYPE=Linux

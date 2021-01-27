@@ -18,18 +18,3 @@ docker run \
   --detach \
   ibm-mqadvanced-server:9.2.2.0-amd64
 ```
-
-The MQ Advanced for Developers image does require the "chown", "setuid", "setgid" and "audit_write" capabilities (plus "dac_override" if you're using an image based on Red Hat Enterprise Linux).  This is because it uses the "sudo" command to change passwords inside the container.  For example, in Docker, you could do the following:
-
-```sh
-docker run \
-  --cap-drop=ALL \
-  --cap-add=CHOWN \
-  --cap-add=SETUID \
-  --cap-add=SETGID \
-  --cap-add=AUDIT_WRITE \
-  --env LICENSE=accept \
-  --env MQ_QMGR_NAME=QM1 \
-  --detach \
-  ibm-mqadvanced-server-dev:9.2.2.0-amd64
-```

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2020
+© Copyright IBM Corporation 2018, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/htpasswd"
@@ -29,27 +28,6 @@ import (
 )
 
 var log *logger.Logger
-
-func setPassword(user string, password string) error {
-	// #nosec G204
-	cmd := exec.Command("sudo", "chpasswd")
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-	fmt.Fprintf(stdin, "%s:%s", user, password)
-	err = stdin.Close()
-	if err != nil {
-		log.Errorf("Error closing password stdin: %v", err)
-	}
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		// Include the command output in the error
-		return fmt.Errorf("%v: %v", err.Error(), out)
-	}
-	log.Printf("Set password for \"%v\" user", user)
-	return nil
-}
 
 func getLogFormat() string {
 	return os.Getenv("LOG_FORMAT")

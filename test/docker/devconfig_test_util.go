@@ -1,7 +1,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,8 +48,9 @@ var insecureTLSConfig *tls.Config = &tls.Config{
 }
 
 func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config) {
+	t.Logf("%s Waiting for web server to be ready", time.Now().Format(time.RFC3339))
 	httpClient := http.Client{
-		Timeout: time.Duration(3 * time.Second),
+		Timeout: time.Duration(10 * time.Second),
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
 		},
@@ -63,13 +64,13 @@ func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls
 		case <-time.After(1 * time.Second):
 			req, err := http.NewRequest("GET", url, nil)
 			req.SetBasicAuth("admin", defaultAdminPassword)
-			resp, err := httpClient.Do(req.WithContext(ctx))
+			resp, err := httpClient.Do(req)
 			if err == nil && resp.StatusCode == http.StatusOK {
-				t.Log("MQ web server is ready")
+				t.Logf("%s MQ web server is ready", time.Now().Format(time.RFC3339))
 				return
 			}
 		case <-ctx.Done():
-			t.Fatal("Timed out waiting for web server to become ready")
+			t.Fatalf("%s Timed out waiting for web server to become ready", time.Now().Format(time.RFC3339))
 		}
 	}
 }

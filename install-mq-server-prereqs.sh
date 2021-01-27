@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2020
+# © Copyright IBM Corporation 2015, 2021
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +66,7 @@ if ($RPM); then
   EXTRA_RPMS="bash bc ca-certificates file findutils gawk glibc-common grep ncurses-compat-libs passwd procps-ng sed shadow-utils tar util-linux which"
   # Install additional packages required by MQ, this install process and the runtime scripts
   $YUM && yum -y install --setopt install_weak_deps=false ${EXTRA_RPMS}
-  $MICRODNF && microdnf install ${EXTRA_RPMS}
+  $MICRODNF && microdnf --disableplugin=subscription-manager install ${EXTRA_RPMS}
 fi
 
 # Apply any bug fixes not included in base Ubuntu or MQ image.
@@ -78,4 +78,4 @@ $UBUNTU && apt-get install -y libapparmor1 libsystemd0 systemd systemd-sysv libu
 $UBUNTU && rm -rf /var/lib/apt/lists/*
 $YUM && yum -y clean all
 $YUM && rm -rf /var/cache/yum/*
-$MICRODNF && microdnf clean all
+$MICRODNF && microdnf --disableplugin=subscription-manager clean all

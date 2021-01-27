@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2020
+# © Copyright IBM Corporation 2015, 2021
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ RUN go build ./cmd/chkmqready/
 RUN go build ./cmd/chkmqhealthy/
 RUN go build ./cmd/chkmqstarted/
 RUN go build ./cmd/runmqdevserver/
-RUN go build -buildmode=c-shared -o amqpasdev.so ./internal/qmgrauth/pas.go
 RUN go test -v ./cmd/runmqdevserver/...
 RUN go test -v ./cmd/runmqserver/
 RUN go test -v ./cmd/chkmqready/
@@ -119,6 +118,27 @@ ENV MQ_CONNAUTH_USE_HTP=false
 ENTRYPOINT ["runmqserver"]
 
 ###############################################################################
+# Build stage to build C code for custom authorization service (developer-only)
+###############################################################################
+FROM registry.redhat.io/rhel8/gcc-toolset-9-toolchain as cbuilder
+# The URL to download the MQ installer from in tar.gz format
+# This assumes an archive containing the MQ Non-Install packages
+ARG MQ_URL
+USER 0
+# Install the Apache Portable Runtime code (used for htpasswd hash checking)
+RUN yum -y install apr-devel apr-util-openssl apr-util-devel
+# Install MQ client
+COPY install-mq.sh /usr/local/bin/
+RUN mkdir /opt/mqm \
+  && chmod a+x /usr/local/bin/install-mq.sh \
+  && sleep 1 \
+  && INSTALL_SDK=1 install-mq.sh \
+  && chown -R 1001:root /opt/mqm/*
+COPY authservice/ /opt/app-root/src/authservice/
+WORKDIR /opt/app-root/src/authservice/mqhtpass
+RUN make all
+
+###############################################################################
 # Add default developer config
 ###############################################################################
 FROM mq-server AS mq-dev-server
@@ -139,7 +159,7 @@ LABEL io.k8s.description="Simplify, accelerate and facilitate the reliable excha
 LABEL base-image=$BASE_IMAGE
 LABEL base-image-release=$BASE_TAG
 USER 0
-COPY --from=builder $GO_WORKDIR/amqpas* /opt/mqm/lib64/
+COPY --from=cbuilder /opt/app-root/src/authservice/mqhtpass/build/mqhtpass.so /opt/mqm/lib64/
 COPY etc/mqm/*.ini /etc/mqm/
 COPY etc/mqm/mq.htpasswd /etc/mqm/
 RUN chmod 0660 /etc/mqm/mq.htpasswd

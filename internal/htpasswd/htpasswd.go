@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020
+© Copyright IBM Corporation 2020, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -109,45 +109,4 @@ func (htpfile mapHtPasswd) updateHtPasswordFile(isTest bool) error {
 		file = "my.htpasswd"
 	}
 	return ioutil.WriteFile(file, htpfile.GetBytes(), 0660)
-}
-
-// AuthenticateUser verifies if the given user password match with htpasswrd
-func AuthenticateUser(user string, password string, isTest bool) (bool, bool, error) {
-	passwords := mapHtPasswd(map[string]string{})
-
-	if len(strings.TrimSpace(user)) == 0 || len(strings.TrimSpace(password)) == 0 {
-		return false, false, fmt.Errorf("UserId or Password are empty")
-	}
-
-	err := passwords.ReadHtPasswordFile(isTest)
-	if err != nil {
-		return false, false, err
-	}
-
-	ok := false
-	value, found := passwords[user]
-
-	if !found {
-		return found, ok, fmt.Errorf("User not found in the mq.htpasswd file")
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(value), []byte(password))
-	return found, err == nil, err
-}
-
-// ValidateUser validates the given user
-func ValidateUser(user string, isTest bool) (bool, error) {
-	passwords := mapHtPasswd(map[string]string{})
-
-	if len(strings.TrimSpace(user)) == 0 {
-		return false, fmt.Errorf("Userid is empty for AuthenticateUser")
-	}
-
-	err := passwords.ReadHtPasswordFile(isTest)
-	if err != nil {
-		return false, err
-	}
-
-	_, found := passwords[strings.TrimSpace(user)]
-	return found, nil
 }
