@@ -39,7 +39,7 @@ func main() {
 	}
 
 	// Check if the queue manager has a running listener
-	if standby, _ := ready.IsRunningAsStandbyQM(name); !standby {
+	if active, _ := ready.IsRunningAsActiveQM(name); active {
 		conn, err := net.Dial("tcp", "127.0.0.1:1414")
 		if err != nil {
 			fmt.Println(err)
@@ -49,8 +49,13 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-	} else {
+	} else if standby, _ := ready.IsRunningAsStandbyQM(name); standby {
 		fmt.Printf("Detected queue manager running in standby mode")
 		os.Exit(10)
+	} else if replica, _ := ready.IsRunningAsReplicaQM(name); replica {
+		fmt.Printf("Detected queue manager running in replica mode")
+		os.Exit(20)
+	} else {
+		os.Exit(1)
 	}
 }

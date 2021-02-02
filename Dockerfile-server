@@ -15,7 +15,7 @@
 ARG BASE_IMAGE=registry.redhat.io/ubi8/ubi-minimal
 ARG BASE_TAG=8.3-230
 ARG GO_WORKDIR=/go/src/github.com/ibm-messaging/mq-container
-ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.2.1.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
+ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.2.2.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
@@ -45,11 +45,13 @@ ENV PATH="${PATH}:/opt/mqm/bin"
 RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\" -X \"main.ImageTag=$IMAGE_TAG\"" ./cmd/runmqserver/
 RUN go build ./cmd/chkmqready/
 RUN go build ./cmd/chkmqhealthy/
+RUN go build ./cmd/chkmqstarted/
 RUN go build ./cmd/runmqdevserver/
 RUN go test -v ./cmd/runmqdevserver/...
 RUN go test -v ./cmd/runmqserver/
 RUN go test -v ./cmd/chkmqready/
 RUN go test -v ./cmd/chkmqhealthy/
+RUN go test -v ./cmd/chkmqstarted/
 RUN go test -v ./pkg/...
 RUN go test -v ./internal/...
 RUN go vet ./cmd/... ./internal/...
@@ -92,6 +94,7 @@ RUN mkdir -p /run/runmqserver \
 COPY --from=builder $GO_WORKDIR/runmqserver /usr/local/bin/
 COPY --from=builder $GO_WORKDIR/chkmq* /usr/local/bin/
 COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
+COPY ha/native-ha.ini.tpl /etc/mqm/native-ha.ini.tpl
 # Copy web XML files
 COPY web /etc/mqm/web
 COPY etc/mqm/*.tpl /etc/mqm/

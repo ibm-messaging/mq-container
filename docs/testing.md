@@ -14,7 +14,7 @@ There are two main sets of tests:
 2. Docker tests, which test a complete Docker image, using the Docker API
 
 ### Running the Docker tests
- 
+
 The Docker tests can be run locally on a machine with Docker. For example:
 
 ```
@@ -25,7 +25,7 @@ make advancedserver
 You can specify the image to use directly by using the `MQ_IMAGE_ADVANCEDSERVER` or `MQ_IMAGE_DEVSERVER` variables, for example:
 
 ```
-MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:9.2.1.0-amd64 make test-advancedserver
+MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:9.2.2.0-amd64 make test-advancedserver
 ```
 
 You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command:

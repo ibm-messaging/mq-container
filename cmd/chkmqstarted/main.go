@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// chkmqhealthy checks that MQ is healthy, by checking the output of the "dspmq" command
+// chkmqstarted checks that MQ has successfully started, by checking the output of the "dspmq" command
 package main
 
 import (
@@ -26,7 +26,7 @@ import (
 	"github.com/ibm-messaging/mq-container/pkg/name"
 )
 
-func queueManagerHealthy() (bool, error) {
+func queueManagerStarted() (bool, error) {
 	name, err := name.GetQueueManagerName()
 	if err != nil {
 		return false, err
@@ -36,7 +36,6 @@ func queueManagerHealthy() (bool, error) {
 	cmd := exec.Command("dspmq", "-n", "-m", name)
 	// Run the command and wait for completion
 	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s", out)
 	if err != nil {
 		fmt.Println(err)
 		return false, err
@@ -44,15 +43,29 @@ func queueManagerHealthy() (bool, error) {
 	if !strings.Contains(string(out), "(RUNNING)") && !strings.Contains(string(out), "(RUNNING AS STANDBY)") && !strings.Contains(string(out), "(STARTING)") && !strings.Contains(string(out), "(REPLICA)") {
 		return false, nil
 	}
+	if os.Getenv("MQ_NATIVE_HA") == "true" {
+		// Specify the queue manager name, just in case someone's created a second queue manager
+		// #nosec G204
+		cmd = exec.Command("dspmq", "-o", "nativeha", "-m", name)
+		// Run the command and wait for completion
+		out, err = cmd.CombinedOutput()
+		if err != nil {
+			fmt.Println(err)
+			return false, err
+		}
+		if !strings.Contains(string(out), "INSYNC(yes)") {
+			return false, nil
+		}
+	}
 	return true, nil
 }
 
 func main() {
-	healthy, err := queueManagerHealthy()
+	started, err := queueManagerStarted()
 	if err != nil {
 		os.Exit(2)
 	}
-	if !healthy {
+	if !started {
 		os.Exit(1)
 	}
 	os.Exit(0)

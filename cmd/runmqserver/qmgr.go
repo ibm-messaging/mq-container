@@ -113,8 +113,12 @@ func startQueueManager(name string) error {
 	out, rc, err := command.Run("strmqm", "-x", name)
 	if err != nil {
 		// 30=standby queue manager started, which is fine
+		// 94=native HA replica started, which is fine
 		if rc == 30 {
 			log.Printf("Started standby queue manager")
+			return nil
+		} else if rc == 94 {
+			log.Printf("Started replica queue manager")
 			return nil
 		}
 		log.Printf("Error %v starting queue manager: %v", rc, string(out))
@@ -220,6 +224,10 @@ func getCreateQueueManagerArgs(mounts map[string]string, name string, devMode bo
 
 	//build args
 	args := []string{"-ii", "/etc/mqm/", "-ic", "/etc/mqm/", "-q", "-p", "1414"}
+
+	if os.Getenv("MQ_NATIVE_HA") == "true" {
+		args = append(args, "-lr", os.Getenv("HOSTNAME"))
+	}
 	if devMode {
 		args = append(args, "-oa", oaVal)
 	}

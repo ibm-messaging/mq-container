@@ -1475,3 +1475,44 @@ func TestHealthCheckWithNoNewPrivileges(t *testing.T) {
 func TestHealthCheckWithNewPrivileges(t *testing.T) {
 	utilTestHealthCheck(t, false)
 }
+
+// utilTestStartedCheck is used by TestStartedCheck* to run a container with
+// privileges enabled or disabled.  Otherwise the same as the golden path tests.
+func utilTestStartedCheck(t *testing.T, nonewpriv bool) {
+	t.Parallel()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+	}
+	hostConfig := getDefaultHostConfig(t, cli)
+	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, fmt.Sprintf("no-new-privileges:%v", nonewpriv))
+	id := runContainerWithHostConfig(t, cli, &containerConfig, hostConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	rc, out := execContainer(t, cli, id, "", []string{"chkmqstarted"})
+	t.Log(out)
+	if rc != 0 {
+		t.Errorf("Expected chkmqstarted to return with exit code 0; got \"%v\"", rc)
+		t.Logf("Output from chkmqstarted:\n%v", out)
+	}
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+// TestStartedCheckWithNoNewPrivileges tests golden path start/stop plus
+// chkmqstarted, when running in a container where no new privileges are
+// allowed (i.e. setuid is disabled)
+func TestStartedCheckWithNoNewPrivileges(t *testing.T) {
+	utilTestStartedCheck(t, true)
+}
+
+// TestStartedCheckWithNoNewPrivileges tests golden path start/stop plus
+// chkmqstarted when running in a container where new privileges are
+// allowed (i.e. setuid is allowed)
+// See https://github.com/ibm-messaging/mq-container/issues/428
+func TestStartedCheckWithNewPrivileges(t *testing.T) {
+	utilTestStartedCheck(t, false)
+}

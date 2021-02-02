@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019, 2020
+© Copyright IBM Corporation 2019, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ func ConfigureWebKeystore(p12Truststore KeyStoreData, webKeystore string) (strin
 	if webKeystore == "" {
 		webKeystore = webKeystoreDefault
 	}
-	webKeystoreFile := filepath.Join(keystoreDir, webKeystore)
+	webKeystoreFile := filepath.Join(keystoreDirDefault, webKeystore)
 
 	// Check if a new self-signed certificate should be generated
 	genHostName := os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME")

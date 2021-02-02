@@ -24,6 +24,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/ibm-messaging/mq-container/internal/ha"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/internal/tls"
@@ -143,22 +144,30 @@ func doMain() error {
 	// Print out versioning information
 	logVersionInfo()
 
-	keyLabel, cmsKeystore, p12Truststore, err := tls.ConfigureTLSKeystores()
+	keyLabel, defaultCmsKeystore, defaultP12Truststore, err := tls.ConfigureDefaultTLSKeystores()
 	if err != nil {
 		logTermination(err)
 		return err
 	}
 
-	err = tls.ConfigureTLS(keyLabel, cmsKeystore, *devFlag, log)
+	err = tls.ConfigureTLS(keyLabel, defaultCmsKeystore, *devFlag, log)
 	if err != nil {
 		logTermination(err)
 		return err
 	}
 
-	err = postInit(name, keyLabel, p12Truststore)
+	err = postInit(name, keyLabel, defaultP12Truststore)
 	if err != nil {
 		logTermination(err)
 		return err
+	}
+
+	if os.Getenv("MQ_NATIVE_HA") == "true" {
+		err = ha.ConfigureNativeHA(log)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	newQM, err := createQueueManager(name, *devFlag)
