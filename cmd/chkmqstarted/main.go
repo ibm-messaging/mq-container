@@ -46,14 +46,14 @@ func queueManagerStarted() (bool, error) {
 	if os.Getenv("MQ_NATIVE_HA") == "true" {
 		// Specify the queue manager name, just in case someone's created a second queue manager
 		// #nosec G204
-		cmd = exec.Command("dspmq", "-o", "nativeha", "-m", name)
+		cmd = exec.Command("dspmq", "-n", "-o", "nativeha", "-m", name)
 		// Run the command and wait for completion
 		out, err = cmd.CombinedOutput()
 		if err != nil {
 			fmt.Println(err)
 			return false, err
 		}
-		if !strings.Contains(string(out), "INSYNC(yes)") {
+		if !strings.Contains(string(out), "INSYNC(YES)") {
 			return false, nil
 		}
 	}
