@@ -170,10 +170,27 @@ func doMain() error {
 		}
 	}
 
+	enableTraceCrtmqm := os.Getenv("MQ_ENABLE_TRACE_CRTMQM")
+	if enableTraceCrtmqm == "true" || enableTraceCrtmqm == "1" {
+		err = startMQTrace()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+
 	newQM, err := createQueueManager(name, *devFlag)
 	if err != nil {
 		logTermination(err)
 		return err
+	}
+
+	if enableTraceCrtmqm == "true" || enableTraceCrtmqm == "1" {
+		err = endMQTrace()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	var wg sync.WaitGroup
