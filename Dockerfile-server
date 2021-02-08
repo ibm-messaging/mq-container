@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=registry.redhat.io/ubi8/ubi-minimal
+ARG BASE_IMAGE=registry.access.redhat.com/ubi8/ubi-minimal
 ARG BASE_TAG=8.3-230
 ARG GO_WORKDIR=/go/src/github.com/ibm-messaging/mq-container
 ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.2.1.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"

@@ -12,33 +12,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM registry.redhat.io/ubi8/ubi-minimal AS mq-explorer
+FROM registry.access.redhat.com/ubi8/ubi-minimal AS mq-explorer
 
 # The URL to download the MQ installer from in tar.gz format
-ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev912_linux_x86-64.tar.gz"
+ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev920_linux_x86-64.tar.gz"
 
 # The MQ packages to install
 ENV MQ_PACKAGES="MQSeriesRuntime*.rpm MQSeriesJRE*.rpm MQSeriesExplorer*.rpm"
 
 ARG MQM_UID=888
 
-RUN microdnf install -y gtk2 libXtst \
+RUN microdnf install -y gtk2 libXtst tar gzip \
   && microdnf clean all
 
 ADD install-mq.sh /usr/local/bin/
 
 # Install MQ Explorer.  To avoid a "text file busy" error here, we sleep before installing.
-# Need to re-instate the `/var/mqm` directory after installation, to avoid MQ 
+# Need to re-instate the `/var/mqm` directory after installation, to avoid MQ
 # errors with some commands (e.g. `dspmqver`)
-RUN chmod u+x /usr/local/bin/install-mq.sh \
-  && sleep 1 \
-  && install-mq.sh $MQM_UID \
-  && rm -rf /var/mqm \
-  && /opt/mqm/bin/crtmqdir -f -s
+# RUN chmod u+x /usr/local/bin/install-mq.sh \
+#   && sleep 1 \
+#   && install-mq.sh $MQM_UID \
+#   && rm -rf /var/mqm \
+#   && /opt/mqm/bin/crtmqdir -f -s
+
+RUN curl -LO $MQ_URL
+RUN tar -xzvf *.tar.gz
 
 ENV LANG=en_US.UTF-8
 
-# Run as mqm
-USER $MQM_UID
+RUN microdnf install shadow-utils findutils
 
+RUN rpm -ivh MQServer/MQSeriesRuntime-9.2.0-0.x86_64.rpm
+RUN MQServer/mqlicense.sh -accept
+
+RUN rpm -ivh MQServer/MQSeriesJRE-9.2.0-0.x86_64.rpm
+RUN rpm -ivh MQServer/MQSeriesExplorer-9.2.0-0.x86_64.rpm
+
+# Run as mqm
+# USER $MQM_UID
+
+ENV PATH=$PATH:/opt/mqm/bin/
+
+RUN microdnf install curl
+
+RUN microdnf install less gtk3
+RUN microdnf install libglvnd-glx
 ENTRYPOINT ["MQExplorer"]
