@@ -62,15 +62,31 @@ func startWebServer(webKeystore, webkeystorePW, webTruststoreRef string) error {
 }
 
 func configureSSO(p12TrustStore tls.KeyStoreData, webKeystore string) (string, error) {
-	// Ensure all required environment variables are set for SSO
-	requiredEnvVars := []string{
-		"MQ_OIDC_CLIENT_ID",
-		"MQ_OIDC_CLIENT_SECRET",
-		"MQ_OIDC_UNIQUE_USER_IDENTIFIER",
-		"MQ_OIDC_AUTHORIZATION_ENDPOINT",
-		"MQ_OIDC_TOKEN_ENDPOINT",
-		"MQ_OIDC_JWK_ENDPOINT",
-		"MQ_OIDC_ISSUER_IDENTIFIER",
+	requiredEnvVars := []string{}
+	_, set := os.LookupEnv("MQ_ZEN_INTERNAL_ENDPOINT")
+	if !set {
+		// Ensure all required environment variables are set for SSO
+		requiredEnvVars = []string{
+			"MQ_OIDC_CLIENT_ID",
+			"MQ_OIDC_CLIENT_SECRET",
+			"MQ_OIDC_UNIQUE_USER_IDENTIFIER",
+			"MQ_OIDC_AUTHORIZATION_ENDPOINT",
+			"MQ_OIDC_TOKEN_ENDPOINT",
+			"MQ_OIDC_JWK_ENDPOINT",
+			"MQ_OIDC_ISSUER_IDENTIFIER",
+		}
+	} else {
+		// Ensure all required environment variables are set for Zen SSO
+		requiredEnvVars = []string{
+			"MQ_ZEN_UNIQUE_USER_IDENTIFIER",
+			"MQ_ZEN_INTERNAL_ENDPOINT",
+			"MQ_ZEN_ISSUER_IDENTIFIER",
+			"MQ_ZEN_AUDIENCES",
+			"MQ_ZEN_CONTEXT_NAME",
+			"MQ_ZEN_BASE_URI",
+			"MQ_ZEN_CONTEXT_NAMESPACE",
+			"IAM_URL",
+		}
 	}
 	for _, envVar := range requiredEnvVars {
 		if len(os.Getenv(envVar)) == 0 {
