@@ -49,6 +49,7 @@ Licenses for the products installed within the images are as follows:
 
 Note: The IBM MQ Advanced for Developers license does not permit further distribution and the terms restrict usage to a developer machine.
 
+
 ## Copyright
 
 © Copyright IBM Corporation 2015, 2020
