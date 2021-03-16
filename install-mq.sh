@@ -38,7 +38,7 @@ ls -la ${DIR_TMP}
 export genmqpkg_inc32=0
 export genmqpkg_incadm=1
 export genmqpkg_incamqp=0
-export genmqpkg_incams=1
+export genmqpkg_incams=0
 export genmqpkg_inccbl=0
 export genmqpkg_inccics=0
 export genmqpkg_inccpp=0
