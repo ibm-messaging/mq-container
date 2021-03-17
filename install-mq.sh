@@ -50,13 +50,15 @@ export genmqpkg_incmqbc=0
 export genmqpkg_incmqft=0
 export genmqpkg_incmqsf=0
 export genmqpkg_incmqxr=0
-export genmqpkg_incnls=1
-export genmqpkg_incras=1
-export genmqpkg_incsamp=1
+export genmqpkg_incnls=0
+export genmqpkg_incras=0
+export genmqpkg_incsamp=0
 export genmqpkg_incsdk=$INSTALL_SDK
 export genmqpkg_inctls=1
 export genmqpkg_incunthrd=0
 export genmqpkg_incweb=1
+export genmqpkg_inccics=0
+export genmqpkg_incras=0
 export INSTALLATION_DIR=/opt/mqm
 ${DIR_TMP}/bin/genmqpkg.sh -b ${INSTALLATION_DIR}
 ls -la ${INSTALLATION_DIR}
