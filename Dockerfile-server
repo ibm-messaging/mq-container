@@ -105,6 +105,8 @@ RUN chmod ug+x /usr/local/bin/runmqserver \
   && chown 1001:root /run/termination-log \
   && chmod 0660 /run/termination-log \
   && chmod -R g+w /etc/mqm/web
+# Remove license files for ADVCAP parameter bugfix https://github.com/ibm-messaging/mq-container/issues/437
+RUN rm /opt/mqm/swidtag/ibm.com_IBM_MQ_Advanced_for_Developers_Non-Warranted-9.2.1.swidtag /opt/mqm/swidtag/IBM_MQ_Advanced-9.2.1.mqtag
 # Always use port 1414 for MQ & 9157 for the metrics
 EXPOSE 1414 9157 9443
 ENV MQ_OVERRIDE_DATA_PATH=/mnt/mqm/data MQ_OVERRIDE_INSTALLATION_NAME=Installation1 MQ_USER_NAME="mqm" PATH="${PATH}:/opt/mqm/bin"
