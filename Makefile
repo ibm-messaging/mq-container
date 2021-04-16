@@ -63,6 +63,10 @@ MQ_DELIVERY_REGISTRY_CREDENTIAL ?=
 REGISTRY_USER ?=
 # REGISTRY_PASS is the password used to login to the Red Hat registry
 REGISTRY_PASS ?=
+# DOCKER_USER is the username used to login to docker hub
+DOCKER_USER ?=
+# DOCKER_PASS is the password used to login to docker hub
+DOCKER_PASS ?=
 # ARCH is the platform architecture (e.g. amd64, ppc64le or s390x)
 ARCH ?= $(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
 # LTS is a boolean value to enable/disable LTS container build
@@ -256,7 +260,7 @@ test-advancedserver: test/docker/vendor
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
-build-devjmstest:
+build-devjmstest: docker-login
 	$(info $(SPACER)$(shell printf $(TITLE)"Build JMS tests for developer config"$(END)))
 	cd test/messaging && docker build --tag $(DEV_JMS_IMAGE) .
 
@@ -339,7 +343,7 @@ endif
 build-advancedserver-host: build-advancedserver
 
 .PHONY: build-advancedserver
-build-advancedserver: registry-login log-build-env downloads/$(MQ_ARCHIVE) command-version
+build-advancedserver: docker-login registry-login log-build-env downloads/$(MQ_ARCHIVE) command-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
 
@@ -347,7 +351,7 @@ build-advancedserver: registry-login log-build-env downloads/$(MQ_ARCHIVE) comma
 build-devserver-host: build-devserver
 
 .PHONY: build-devserver
-build-devserver: registry-login log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
+build-devserver: docker-login registry-login log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
 
@@ -369,6 +373,10 @@ registry-login:
 ifneq ($(REGISTRY_USER),)
 	$(COMMAND) login -u $(REGISTRY_USER) -p $(REGISTRY_PASS) registry.redhat.io
 endif
+
+.PHONY: docker-login
+docker-login:
+	docker login -u $(DOCKER_USER) -p $(DOCKER_PASS)
 
 .PHONY: log-build-env
 log-build-vars:
@@ -447,7 +455,7 @@ endif
 	echo $(shell ./travis-build-scripts/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)" $(END))
 
 .PHONY: build-skopeo-container
-build-skopeo-container:
+build-skopeo-container: docker-login
 	$(COMMAND) images | grep -q "skopeo"; if [ $$? != 0 ]; then docker build -t skopeo:latest ./docker-builds/skopeo/; fi
 
 .PHONY: clean

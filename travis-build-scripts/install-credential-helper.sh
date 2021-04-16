@@ -30,7 +30,7 @@ make pass
 cp bin/docker-credential-pass $GOPATH/bin/docker-credential-pass
 mkdir -p /home/travis/.docker
 echo '{ "credsStore": "pass" }' | tee /home/travis/.docker/config.json
-gpg --batch --gen-key <<-EOF
+gpg2 --batch --gen-key <<-EOF
 %echo generating a standard key
 Key-Type: DSA
 Key-Length: 1024
@@ -39,13 +39,14 @@ Subkey-Length: 1024
 Name-Real: Travis CI
 Name-Email: travis@osism.io
 Expire-Date: 0
+Passphrase: $REGISTRY_PASS
 %commit
 %echo done
 EOF
-key=$(gpg --no-auto-check-trustdb --list-secret-keys | grep ^sec | cut -d/ -f2 | cut -d" " -f1)
-gpg --export-secret-keys | gpg2 --import -
+key=$(gpg2 --list-secret-keys | grep uid -B 1 | head -n 1 | sed 's/^ *//g')
 pass init $key
 pass insert docker-credential-helpers/docker-pass-initialized-check <<-EOF
 pass is initialized
 pass is initialized
 EOF
+gpg2 --passphrase $REGISTRY_PASS --pinentry-mode=loopback --output doc --decrypt ~/.password-store/docker-credential-helpers/docker-pass-initialized-check.gpg
