@@ -18,6 +18,9 @@ set -e
 
 if [ "$(uname -m)" = "x86_64" ] ; then export ARCH="amd64" ; else export ARCH=$(uname -m) ; fi
 
+# if DOCKER_USER is set, authenticate with docker.io to mitigate rate limit (https://www.docker.com/increase-rate-limits)
+if [ -n "$DOCKER_USER" ] ; then echo 'Authenticating with docker.io...' && docker login -u $DOCKER_USER -p $DOCKER_PASS docker.io ; fi
+
 if [ "$PUSH_MANIFEST_ONLY" = true ] ; then
   echo 'Retrieving remote tagcache' && echo -en 'travis_fold:start:retrieve-tag-cache\\r'
   ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --get
