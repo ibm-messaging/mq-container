@@ -15,7 +15,7 @@
 FROM registry.redhat.io/ubi8/ubi-minimal AS mq-explorer
 
 # The URL to download the MQ installer from in tar.gz format
-ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev912_linux_x86-64.tar.gz"
+ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev921_linux_x86-64.tar.gz"
 
 # The MQ packages to install
 ENV MQ_PACKAGES="MQSeriesRuntime*.rpm MQSeriesJRE*.rpm MQSeriesExplorer*.rpm"
