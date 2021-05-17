@@ -22,7 +22,7 @@ ENV MQ_PACKAGES="MQSeriesRuntime*.rpm MQSeriesJRE*.rpm MQSeriesExplorer*.rpm"
 
 ARG MQM_UID=888
 
-RUN microdnf install -y gtk2 libXtst \
+RUN microdnf install -y gtk2 libXtst gzip tar \
   && microdnf clean all
 
 ADD install-mq.sh /usr/local/bin/
