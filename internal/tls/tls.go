@@ -76,23 +76,22 @@ type TLSStore struct {
 	Truststore KeyStoreData
 }
 
-// ConfigureDefaultTLSKeystores configures the CMS Keystore & PKCS#12 Truststore
-func ConfigureDefaultTLSKeystores() (string, KeyStoreData, KeyStoreData, error) {
+func configureTLSKeystores(keystoreDir, keyDir, trustDir string, p12TruststoreRequired bool) (string, KeyStoreData, KeyStoreData, error) {
 
-	// Create the CMS Keystore & PKCS#12 Truststore
-	tlsStore, err := generateAllDefaultKeystores()
+	// Create the CMS Keystore & PKCS#12 Truststore (if required)
+	tlsStore, err := generateAllKeystores(keystoreDir, p12TruststoreRequired)
 	if err != nil {
 		return "", tlsStore.Keystore, tlsStore.Truststore, err
 	}
 
 	// Process all keys - add them to the CMS KeyStore
-	keyLabel, err := processKeys(&tlsStore, keystoreDirDefault, keyDirDefault)
+	keyLabel, err := processKeys(&tlsStore, keystoreDir, keyDir)
 	if err != nil {
 		return "", tlsStore.Keystore, tlsStore.Truststore, err
 	}
 
-	// Process all trust certificates - add them to the CMS KeyStore & PKCS#12 Truststore
-	err = processTrustCertificates(&tlsStore, trustDirDefault)
+	// Process all trust certificates - add them to the CMS KeyStore & PKCS#12 Truststore (if required)
+	err = processTrustCertificates(&tlsStore, trustDir)
 	if err != nil {
 		return "", tlsStore.Keystore, tlsStore.Truststore, err
 	}
@@ -100,22 +99,15 @@ func ConfigureDefaultTLSKeystores() (string, KeyStoreData, KeyStoreData, error) 
 	return keyLabel, tlsStore.Keystore, tlsStore.Truststore, err
 }
 
+// ConfigureDefaultTLSKeystores configures the CMS Keystore & PKCS#12 Truststore
+func ConfigureDefaultTLSKeystores() (string, KeyStoreData, KeyStoreData, error) {
+	return configureTLSKeystores(keystoreDirDefault, keyDirDefault, trustDirDefault, true)
+}
+
 // ConfigureHATLSKeystore configures the CMS Keystore & PKCS#12 Truststore
-func ConfigureHATLSKeystore() (string, KeyStoreData, error) {
-
-	// Create a CMS Keystore only
-	tlsStore, err := generateHAKeystore()
-	if err != nil {
-		return "", tlsStore.Keystore, err
-	}
-
-	// Process all keys - add them to the CMS KeyStore
-	keyLabel, err := processKeys(&tlsStore, keystoreDirHA, keyDirHA)
-	if err != nil {
-		return "", tlsStore.Keystore, err
-	}
-
-	return keyLabel, tlsStore.Keystore, err
+func ConfigureHATLSKeystore() (string, KeyStoreData, KeyStoreData, error) {
+	// *.crt files mounted to the HA TLS dir keyDirHA will be processed as trusted in the CMS keystore
+	return configureTLSKeystores(keystoreDirHA, keyDirHA, keyDirHA, false)
 }
 
 // ConfigureTLS configures TLS for the queue manager
@@ -166,8 +158,8 @@ func configureTLSDev(log *logger.Logger) error {
 	return nil
 }
 
-// generateAllDefaultKeystores creates the CMS Keystore & PKCS#12 Truststore
-func generateAllDefaultKeystores() (TLSStore, error) {
+// generateAllKeystores creates the CMS Keystore & PKCS#12 Truststore (if required)
+func generateAllKeystores(keystoreDir string, p12TruststoreRequired bool) (TLSStore, error) {
 
 	var cmsKeystore, p12Truststore KeyStoreData
 
@@ -178,50 +170,28 @@ func generateAllDefaultKeystores() (TLSStore, error) {
 
 	// Create the Keystore directory - if it does not already exist
 	// #nosec G301 - write group permissions are required
-	err := os.MkdirAll(keystoreDirDefault, 0770)
+	err := os.MkdirAll(keystoreDir, 0770)
 	if err != nil {
 		return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create Keystore directory: %v", err)
 	}
 
 	// Create the CMS Keystore
-	cmsKeystore.Keystore = keystore.NewCMSKeyStore(filepath.Join(keystoreDirDefault, cmsKeystoreName), cmsKeystore.Password)
+	cmsKeystore.Keystore = keystore.NewCMSKeyStore(filepath.Join(keystoreDir, cmsKeystoreName), cmsKeystore.Password)
 	err = cmsKeystore.Keystore.Create()
 	if err != nil {
 		return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create CMS Keystore: %v", err)
 	}
 
-	// Create the PKCS#12 Truststore
-	p12Truststore.Keystore = keystore.NewPKCS12KeyStore(filepath.Join(keystoreDirDefault, p12TruststoreName), p12Truststore.Password)
-	err = p12Truststore.Keystore.Create()
-	if err != nil {
-		return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create PKCS#12 Truststore: %v", err)
+	// Create the PKCS#12 Truststore (if required)
+	if p12TruststoreRequired {
+		p12Truststore.Keystore = keystore.NewPKCS12KeyStore(filepath.Join(keystoreDir, p12TruststoreName), p12Truststore.Password)
+		err = p12Truststore.Keystore.Create()
+		if err != nil {
+			return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create PKCS#12 Truststore: %v", err)
+		}
 	}
+
 	return TLSStore{cmsKeystore, p12Truststore}, nil
-}
-
-// generateHAKeystore creates the CMS Keystore for Native HA replication
-func generateHAKeystore() (TLSStore, error) {
-	var cmsKeystore KeyStoreData
-
-	// Generate a pasword for use with the CMS Keystore
-	pw := generateRandomPassword()
-	cmsKeystore.Password = pw
-
-	// Create the Keystore directory - if it does not already exist
-	// #nosec G301 - write group permissions are required
-	err := os.MkdirAll(keystoreDirHA, 0770)
-	if err != nil {
-		return TLSStore{Keystore: cmsKeystore}, fmt.Errorf("Failed to create HA Keystore directory: %v", err)
-	}
-
-	// Create the CMS Keystore
-	cmsKeystore.Keystore = keystore.NewCMSKeyStore(filepath.Join(keystoreDirHA, cmsKeystoreName), cmsKeystore.Password)
-	err = cmsKeystore.Keystore.Create()
-	if err != nil {
-		return TLSStore{Keystore: cmsKeystore}, fmt.Errorf("Failed to create CMS Keystore: %v", err)
-	}
-
-	return TLSStore{Keystore: cmsKeystore}, nil
 }
 
 // processKeys processes all keys - adding them to the CMS KeyStore
@@ -273,7 +243,7 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 			// Import the new PKCS#12 Keystore into the CMS Keystore
 			err = tlsStore.Keystore.Keystore.Import(filepath.Join(keystoreDir, keySet.Name()+".p12"), tlsStore.Keystore.Password)
 			if err != nil {
-				return "", fmt.Errorf("Failed tp import keys from %s into CMS Keystore: %v", filepath.Join(keystoreDir, keySet.Name()+".p12"), err)
+				return "", fmt.Errorf("Failed to import keys from %s into CMS Keystore: %v", filepath.Join(keystoreDir, keySet.Name()+".p12"), err)
 			}
 
 			// Relabel the certificate in the CMS Keystore
@@ -292,7 +262,7 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 	return keyLabel, nil
 }
 
-// processTrustCertificates processes all trust certificates - adding them to the CMS KeyStore & PKCS#12 Truststore
+// processTrustCertificates processes all trust certificates - adding them to the CMS KeyStore & PKCS#12 Truststore (if required)
 func processTrustCertificates(tlsStore *TLSStore, trustDir string) error {
 
 	// Process all trust certiifcates
@@ -324,10 +294,12 @@ func processTrustCertificates(tlsStore *TLSStore, trustDir string) error {
 							return fmt.Errorf("Failed to add to know certificates for CMS Keystore")
 						}
 
-						// Add to known certificates for the PKCS#12 Truststore
-						err = addToKnownCertificates(block, &tlsStore.Truststore, true)
-						if err != nil {
-							return fmt.Errorf("Failed to add to know certificates for PKCS#12 Truststore")
+						if tlsStore.Truststore.Keystore != nil {
+							// Add to known certificates for the PKCS#12 Truststore
+							err = addToKnownCertificates(block, &tlsStore.Truststore, true)
+							if err != nil {
+								return fmt.Errorf("Failed to add to know certificates for PKCS#12 Truststore")
+							}
 						}
 					}
 				}
@@ -335,8 +307,8 @@ func processTrustCertificates(tlsStore *TLSStore, trustDir string) error {
 		}
 	}
 
-	// Add all trust certificates to PKCS#12 Truststore
-	if len(tlsStore.Truststore.TrustedCerts) > 0 {
+	// Add all trust certificates to PKCS#12 Truststore (if required)
+	if tlsStore.Truststore.Keystore != nil && len(tlsStore.Truststore.TrustedCerts) > 0 {
 		err = addCertificatesToTruststore(&tlsStore.Truststore)
 		if err != nil {
 			return err
@@ -438,7 +410,7 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 					return nil, nil, fmt.Errorf("Failed to add to know certificates for CMS Keystore")
 				}
 
-				if p12Truststore != nil {
+				if p12Truststore.Keystore != nil {
 					// Add to known certificates for the PKCS#12 Truststore
 					err = addToKnownCertificates(block, p12Truststore, true)
 					if err != nil {
