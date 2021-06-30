@@ -258,7 +258,7 @@ test-advancedserver: test/docker/vendor
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
-build-devjmstest:
+build-devjmstest: registry-login
 	$(info $(SPACER)$(shell printf $(TITLE)"Build JMS tests for developer config"$(END)))
 	cd test/messaging && docker build --tag $(DEV_JMS_IMAGE) .
 
