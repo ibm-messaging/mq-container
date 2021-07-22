@@ -15,23 +15,24 @@
 ###############################################################################
 # Application build environment (Maven)
 ###############################################################################
-FROM docker.io/maven:3-ibmjava as builder
-COPY pom.xml /usr/src/mymaven/
-WORKDIR /usr/src/mymaven
+FROM registry.redhat.io/ubi8/openjdk-8 as builder
+COPY pom.xml .
+#WORKDIR /usr/src/mymaven
 # Download dependencies separately, so Docker caches them
 RUN mvn dependency:go-offline install
 # Copy source
-COPY src /usr/src/mymaven/src
+COPY src .
 # Run the main build
 RUN mvn --offline install
 # Print a list of all the files (useful for debugging)
-RUN find /usr/src/mymaven
+RUN find .
 
 ###############################################################################
 # Application runtime (JRE only, no build environment)
 ###############################################################################
-FROM docker.io/ibmjava:8-jre
-COPY --from=builder /usr/src/mymaven/target/*.jar /opt/app/
-COPY --from=builder /usr/src/mymaven/target/lib/*.jar /opt/app/
+# OpenJDK is not technically supported with the MQ client, but is good enough for these tests
+FROM registry.redhat.io/ubi8/openjdk-8-runtime
+COPY --from=builder /home/jboss/target/*.jar /opt/app/
+COPY --from=builder /home/jboss/target/lib/*.jar /opt/app/
 USER 1001
 ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]

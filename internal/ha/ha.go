@@ -41,7 +41,7 @@ func ConfigureNativeHA(log *logger.Logger) error {
 	templateMap["NativeHAInstance2_ReplicationAddress"] = os.Getenv("MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS")
 
 	if os.Getenv("MQ_NATIVE_HA_TLS") == "true" {
-		keyLabel, _, err := tls.ConfigureHATLSKeystore()
+		keyLabel, _, _, err := tls.ConfigureHATLSKeystore()
 		if err != nil {
 			return err
 		}
