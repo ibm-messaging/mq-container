@@ -798,12 +798,23 @@ func copyFromContainer(t *testing.T, cli *client.Client, id string, file string)
 }
 
 func getPort(t *testing.T, cli *client.Client, ID string, port int) string {
-	i, err := cli.ContainerInspect(context.Background(), ID)
-	if err != nil {
-		t.Fatal(err)
+	var inspectInfo types.ContainerJSON
+	var err error
+	for attemptsRemaining := 3; attemptsRemaining > 0; attemptsRemaining-- {
+		inspectInfo, err = cli.ContainerInspect(context.Background(), ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		portNat := nat.Port(fmt.Sprintf("%d/tcp", port))
+		if inspectInfo.NetworkSettings.Ports[portNat] == nil || len(inspectInfo.NetworkSettings.Ports[portNat]) == 0 {
+			t.Log("Container port not yet bound")
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		return inspectInfo.NetworkSettings.Ports[portNat][0].HostPort
 	}
-	portNat := nat.Port(fmt.Sprintf("%d/tcp", port))
-	return i.NetworkSettings.Ports[portNat][0].HostPort
+	t.Fatal("Failed to get port")
+	return ""
 }
 
 func countLines(t *testing.T, r io.Reader) int {
