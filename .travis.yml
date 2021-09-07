@@ -26,7 +26,7 @@ services:
 env:
   global:
     - MAIN_BRANCH=private-master
-    - MQ_LTS_VERSION=9.2.0.1
+    - MQ_LTS_VERSION=9.2.0.2
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
     - RELEASE_LTS=r1
