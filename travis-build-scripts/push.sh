@@ -32,11 +32,9 @@ function push_developer {
 }
 
 function push_production {
-    if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" ]] ; then
-        echo 'Pushing Production image...' && echo -en 'travis_fold:start:push-advancedserver\\r'
-        make push-advancedserver
-        echo -en 'travis_fold:end:push-advancedserver\\r'
-    fi
+    echo 'Pushing Production image...' && echo -en 'travis_fold:start:push-advancedserver\\r'
+    make push-advancedserver
+    echo -en 'travis_fold:end:push-advancedserver\\r'
 }
 
 # call relevant push function
