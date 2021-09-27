@@ -1,5 +1,5 @@
 {
-  "settingsInheritedFrom": "whitesource-config/whitesource-config@master"
+  "settingsInheritedFrom": "whitesource-config/whitesource-config@master",
   "scanSettings": {
       "baseBranches": ["private-master", "v9.2.0.x-eus"]
   }
