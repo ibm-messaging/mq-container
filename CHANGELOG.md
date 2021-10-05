@@ -1,9 +1,13 @@
 # Change log
 
+## 9.2.0.4-LTS (2021-10-05)
+
+* Updated to MQ version 9.2.0.4
+
 ## 9.2.0.1-LTS (2020-12-04)
 
 * Added support for MQ Long Term Support (production licensed only) in the mq-container
-  
+
 ## 9.2.0.0 (2020-07-23)
 
 * Updated to [MQ version 9.2.0.0](https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.2.0/com.ibm.mq.pro.doc/q113110_.htm)
@@ -19,7 +23,7 @@
 * Updated to MQ version 9.1.4.0
 * Updated to use UBI8 as base image
 * Added required security settings to self signed certificates to align with macOS Catalina requirements
-  
+
 ## 9.1.3.0 (2019-07-19)
 
 * Updated to MQ version 9.1.3.0
@@ -40,7 +44,7 @@
 * Security fixes
 * Web console added to production image
 * Container built on RedHat host
-  
+
 ## 9.1.2.0 (2019-03-21)
 
 * Updated to MQ version 9.1.2.0
