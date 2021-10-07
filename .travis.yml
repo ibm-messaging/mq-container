@@ -26,10 +26,10 @@ services:
 env:
   global:
     - MAIN_BRANCH=v9.2.0.x-eus
-    - MQ_LTS_VERSION=9.2.0.2
+    - MQ_LTS_VERSION=9.2.0.4
     - TAGCACHE_FILE=tagcache
     - RELEASE=r2
-    - RELEASE_LTS=r2
+    - RELEASE_LTS=r1
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
@@ -109,7 +109,7 @@ jobs:
         - LTS=true
         - TAGCACHE_FILE=tagcache-lts
         - MQ_VERSION=$MQ_LTS_VERSION
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9202_EUS_ARCHIVE_REPOSITORY_AMD64
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9204_EUS_ARCHIVE_REPOSITORY_AMD64
         - RELEASE=$RELEASE_LTS
       script: bash -e travis-build-scripts/run.sh
     - stage: build
@@ -121,7 +121,7 @@ jobs:
         - TAGCACHE_FILE=tagcache-lts
         - MQ_VERSION=$MQ_LTS_VERSION
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9202_EUS_ARCHIVE_REPOSITORY_S390X
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9204_EUS_ARCHIVE_REPOSITORY_S390X
         - RELEASE=$RELEASE_LTS
       script: bash -e travis-build-scripts/run.sh
     - stage: push-manifest
