@@ -22,5 +22,5 @@ set -ex
 sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.1/dep-linux-$ARCH
 sudo chmod +x /usr/local/bin/dep
 
-go get -u golang.org/x/lint/golint
+go install golang.org/x/lint/golint@latest
 curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $GOPATH/bin 2.0.0 || echo "Gosec not installed. Platform may not be supported."

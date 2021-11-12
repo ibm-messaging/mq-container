@@ -13,9 +13,9 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=registry.redhat.io/ubi8/ubi-minimal
-ARG BASE_TAG=8.4-212
+ARG BASE_TAG=8.5-204
 ARG BUILDER_IMAGE=registry.redhat.io/ubi8/go-toolset
-ARG BUILDER_TAG=1.15.14-18
+ARG BUILDER_TAG=1.16.7-5
 ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
 ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.2.4.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
 ###############################################################################
@@ -37,6 +37,7 @@ RUN mkdir /opt/mqm \
   && INSTALL_SDK=1 install-mq.sh \
   && chown -R 1001:root /opt/mqm/*
 WORKDIR $GO_WORKDIR/
+COPY go.mod go.sum ./
 COPY cmd/ ./cmd
 COPY internal/ ./internal
 COPY pkg/ ./pkg
