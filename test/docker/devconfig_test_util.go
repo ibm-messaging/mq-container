@@ -1,7 +1,8 @@
+//go:build mqdev
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,7 +50,7 @@ var insecureTLSConfig *tls.Config = &tls.Config{
 
 func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config) {
 	httpClient := http.Client{
-		Timeout: time.Duration(3 * time.Second),
+		Timeout: time.Duration(10 * time.Second),
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
 		},

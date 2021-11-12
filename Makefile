@@ -376,7 +376,9 @@ endif
 
 .PHONY: docker-login
 docker-login:
+ifneq ($(DOCKER_USER),)
 	docker login -u $(DOCKER_USER) -p $(DOCKER_PASS)
+endif
 
 .PHONY: log-build-env
 log-build-vars:
