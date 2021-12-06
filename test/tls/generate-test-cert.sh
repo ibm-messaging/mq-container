@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/bash -ex
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2021
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ PASSWORD=passw0rd
 openssl req \
        -newkey rsa:2048 -nodes -keyout ${KEY} \
        -subj "/CN=localhost" \
+       -addext "subjectAltName = DNS:localhost" \
        -x509 -days 3650 -out ${CERT}
 
 # Add the key and certificate to a PKCS #12 key store, for the server to use

@@ -991,7 +991,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 		RUN chmod 0660 /etc/mqm/test1.ini
 		USER 1001`, imageName())},
 		{"test1.ini",
-			"Log:\n   LogFilePages=5000"},
+			"Log:\n   LogBufferPages=128"},
 	}
 
 	secondImage := createImage(t, cli, filesSecondContainer)
@@ -1011,7 +1011,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 	waitForReady(t, cli, ctr2.ID)
 
 	_, test2 := execContainer(t, cli, ctr2.ID, "", []string{"bash", "-c", catIniFileCommand})
-	changedStanza := strings.Contains(test2, "LogFilePages=5000")
+	changedStanza := strings.Contains(test2, "LogBufferPages=128")
 	//check if stanza that was merged in the first container doesnt exist in this one.
 	firstMergedStanza := strings.Contains(test2, "ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF")
 
