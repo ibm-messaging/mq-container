@@ -32,7 +32,7 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
     echo -en 'travis_fold:end:build-devserver\\r'
   fi
   if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
-      if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" ]] ; then
+      if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" || "$ARCH" = "ppc64le" ]] ; then
           echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
           make build-advancedserver
           echo -en 'travis_fold:end:build-advancedserver\\r'

@@ -26,10 +26,10 @@ services:
 env:
   global:
     - MAIN_BRANCH=private-master
-    - MQ_LTS_VERSION=9.2.0.2
+    - MQ_LTS_VERSION=9.2.0.4
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
-    - RELEASE_LTS=r2
+    - RELEASE_LTS=r1
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
@@ -44,7 +44,7 @@ jobs:
       name: "Basic AMD64 build"
       os: linux
       env:
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_924_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_925_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
 
     # CD Build
@@ -60,18 +60,9 @@ jobs:
       os: linux
       env:
         - BUILD_ALL=true
-        - MQ_ARCHIVE_REPOSITORY=$MQ_924_ARCHIVE_REPOSITORY_AMD64
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_924_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY=$MQ_925_ARCHIVE_REPOSITORY_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_925_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
-    # - if: branch = private-master OR tag =~ ^release-candidate*
-    #   name: "Multi-Arch PPC64LE build"
-    #   os: linux-ppc64le
-    #   env:
-    #     - BUILD_ALL=true
-    #     - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-    #     # - MQ_ARCHIVE_REPOSITORY=$MQ_924_ARCHIVE_REPOSITORY_PPC64LE
-    #     - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_924_ARCHIVE_REPOSITORY_DEV_PPC64LE
-    #   script: bash -e travis-build-scripts/run.sh
     - stage: build
       if: branch = private-master OR tag =~ ^release-candidate*
       name: "Multi-Arch S390X build"
@@ -79,8 +70,18 @@ jobs:
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_924_ARCHIVE_REPOSITORY_S390X
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_924_ARCHIVE_REPOSITORY_DEV_S390X
+        - MQ_ARCHIVE_REPOSITORY=$MQ_925_ARCHIVE_REPOSITORY_S390X
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_925_ARCHIVE_REPOSITORY_DEV_S390X
+      script: bash -e travis-build-scripts/run.sh
+    - stage: build
+      if: branch = private-master OR tag =~ ^release-candidate*
+      name: "Multi-Arch PPC64LE build"
+      os: linux-ppc64le
+      env:
+        - BUILD_ALL=true
+        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - MQ_ARCHIVE_REPOSITORY=$MQ_925_ARCHIVE_REPOSITORY_PPC64LE
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_925_ARCHIVE_REPOSITORY_DEV_PPC64LE
       script: bash -e travis-build-scripts/run.sh
     - stage: push-manifest
       if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
@@ -109,7 +110,7 @@ jobs:
         - LTS=true
         - TAGCACHE_FILE=tagcache-lts
         - MQ_VERSION=$MQ_LTS_VERSION
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9201_EUS_ARCHIVE_REPOSITORY_AMD64
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9204_EUS_ARCHIVE_REPOSITORY_AMD64
         - RELEASE=$RELEASE_LTS
       script: bash -e travis-build-scripts/run.sh
     - stage: build
@@ -121,7 +122,19 @@ jobs:
         - TAGCACHE_FILE=tagcache-lts
         - MQ_VERSION=$MQ_LTS_VERSION
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9201_EUS_ARCHIVE_REPOSITORY_S390X
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9204_EUS_ARCHIVE_REPOSITORY_S390X
+        - RELEASE=$RELEASE_LTS
+      script: bash -e travis-build-scripts/run.sh
+    - stage: build
+      if: branch = private-master OR tag =~ ^release-candidate*
+      name: "Multi-Arch PPC64LE build"
+      os: linux-ppc64le
+      env:
+        - LTS=true
+        - TAGCACHE_FILE=tagcache-lts
+        - MQ_VERSION=$MQ_LTS_VERSION
+        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9204_EUS_ARCHIVE_REPOSITORY_PPC64LE
         - RELEASE=$RELEASE_LTS
       script: bash -e travis-build-scripts/run.sh
     - stage: push-manifest

@@ -20,7 +20,7 @@ From MQ 9.2.X, the MQ container adds support for MQ Long Term Support (LTS) **pr
 This procedure works for building the MQ Continuous Delivery release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.2.4_LINUX_X86-64_NOINST.tar.gz`) in the `downloads` directory
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `IBM_MQ_9.2.5_LINUX_X86-64_NOINST.tar.gz`) in the `downloads` directory
 3. Login to the Red Hat Registry: `docker login registry.redhat.io` using your Customer Portal credentials.
 4. Run `make build-advancedserver`
 
@@ -37,7 +37,7 @@ MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 This procedure works for building the MQ Long Term Support release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `9.2.0.1-IBM-MQ-Advanced-Non-Install-LinuxX86.tar.gz`) in the `downloads` directory
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/) or [IBM Fix Central](https://www.ibm.com/support/fixcentral), and place the downloaded file (for example, `9.2.0.4-IBM-MQ-Advanced-Non-Install-LinuxX86.tar.gz`) in the `downloads` directory
 3. Login to the Red Hat Registry: `docker login registry.redhat.io` using your Customer Portal credentials.
 4. Run `LTS=true make build-advancedserver`
 
