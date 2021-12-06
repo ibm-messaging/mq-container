@@ -53,4 +53,4 @@ Note: The IBM MQ Advanced for Developers license does not permit further distrib
 
 ## Copyright
 
-© Copyright IBM Corporation 2015, 2020
+© Copyright IBM Corporation 2015, 2021
