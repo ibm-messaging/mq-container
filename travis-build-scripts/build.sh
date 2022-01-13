@@ -26,7 +26,7 @@ get_archive_level() {
   level_path="${archive_level_cache_dir}/${archive_variable}.level"
 
   if [[ ! -f "$level_path" ]]; then
-    if [[ -z "${REPOSITORY_USER}" || -z "${REPOSITORY_CREDENTIALS}" ]]; then
+    if [[ -z "${REPOSITORY_USER}" || -z "${REPOSITORY_CREDENTIAL}" ]]; then
       echo 'Skipping level lookup as repository credentials not set'
       return
     fi
