@@ -138,9 +138,15 @@ endif
 # image tagging
 
 ifneq "$(RELEASE)" "$(EMPTY)"
-	EXTRA_LABELS=--label release=$(RELEASE)
+	EXTRA_LABELS_RELEASE=--label "release=$(RELEASE)"
 	RELEASE_TAG="-$(RELEASE)"
 endif
+
+ifneq "$(MQ_ARCHIVE_LEVEL)" "$(EMPTY)"
+	EXTRA_LABELS_LEVEL=--label "mq-build=$(MQ_ARCHIVE_LEVEL)"
+endif
+
+EXTRA_LABELS=$(EXTRA_LABELS_RELEASE) $(EXTRA_LABELS_LEVEL)
 
 ifeq "$(TIMESTAMPFLAT)" "$(EMPTY)"
 	TIMESTAMPFLAT=$(shell date "+%Y%m%d%H%M%S")

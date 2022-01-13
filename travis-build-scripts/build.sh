@@ -16,6 +16,22 @@
 
 set -e
 
+archive_level_cache_dir="$(mktemp -d)"
+
+get_archive_level() {
+  local level_path
+  local archive_variable
+  archive_variable="$1"
+  MQ_ARCHIVE_LEVEL=""
+  level_path="${archive_level_cache_dir}/${archive_variable}.level"
+
+  if [[ ! -f "$level_path" ]]; then
+    ./travis-build-scripts/artifact-util.sh -f "${!archive_variable}" -u "${REPOSITORY_USER}" -p "${REPOSITORY_CREDENTIAL}" -l "$level_path" -n snapshot --get-property
+  fi
+  read -r MQ_ARCHIVE_LEVEL < "$level_path"
+  export MQ_ARCHIVE_LEVEL
+}
+
 if [ "$TRAVIS_BRANCH" = "$MAIN_BRANCH" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
   echo 'Retrieving global tagcache' && echo -en 'travis_fold:start:tag-cache-retrieve\\r'
   ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --check
@@ -28,12 +44,14 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
     make build-devjmstest
     echo -en 'travis_fold:end:build-devjmstest\\r'
     echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
+    get_archive_level MQ_ARCHIVE_REPOSITORY_DEV
     make build-devserver
     echo -en 'travis_fold:end:build-devserver\\r'
   fi
   if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
       if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" || "$ARCH" = "ppc64le" ]] ; then
           echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
+          get_archive_level MQ_ARCHIVE_REPOSITORY
           make build-advancedserver
           echo -en 'travis_fold:end:build-advancedserver\\r'
       fi
@@ -45,10 +63,12 @@ else
 
   if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
     echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
+    get_archive_level MQ_ARCHIVE_REPOSITORY_DEV
     make build-devserver
     echo -en 'travis_fold:end:build-devserver\\r'
   else
     echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
+    get_archive_level MQ_ARCHIVE_REPOSITORY
     make build-advancedserver
     echo -en 'travis_fold:end:build-advancedserver\\r'
   fi
