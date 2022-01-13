@@ -56,14 +56,16 @@ FILE_NAME=
 BUILD_ID=
 REGISTRY_HOSTNAME=
 FILE_LOCATION=
+PROPERTY_NAME=
 
 CHECK=false
 UPLOAD=false
 GET=false
+GET_PROPERTY=false
 DELETE=false
 DELETE_NAMESPACE=false
 num_commands_selected=0
-while getopts "f:u:p:c:l:-:" flag
+while getopts "f:u:p:c:l:n:-:" flag
 do
     case "${flag}" in
         f) FILE_NAME=${OPTARG};;
@@ -71,6 +73,7 @@ do
         p) CREDENTIAL=${OPTARG};;
         c) CACHE_PATH=${OPTARG};;
         l) FILE_LOCATION=${OPTARG};;
+        n) PROPERTY_NAME=${OPTARG};;
         -)
             case "${OPTARG}" in
                 check)
@@ -83,6 +86,10 @@ do
                     ;;
                 get)
                     GET=true
+                    num_commands_selected=$((num_commands_selected+1))
+                    ;;
+                get-property)
+                    GET_PROPERTY=true
                     num_commands_selected=$((num_commands_selected+1))
                     ;;
                 delete) 
@@ -165,6 +172,43 @@ if [ "$GET" == "true" ]; then
     else
         printf "${GREENTICK} File ${FILE_NAME} was downloaded to ${FILE_LOCATION}\n"
     fi
+fi
+
+if [ "$GET_PROPERTY" == "true" ]; then
+    if [[ -z $PROPERTY_NAME ]]; then
+        printf "${REDCROSS} Property name to retrieve from '${FILE_NAME}' was not supplied please do so\n"
+        printf $SPACER
+        printf "${ERROR}$usage${END}\n"
+        exit 1
+    fi
+    if [[ -z $FILE_LOCATION ]]; then
+        printf "${REDCROSS} File location to store property value in was not supplied please do so\n"
+        printf $SPACER
+        printf "${ERROR}$usage${END}\n"
+        exit 1
+    fi
+    printf "${GREENRIGHTARROW} Attempting to retrieve ${PROPERTY_NAME} of ${FILE_NAME} from repository ${REMOTE_PATH} and store it in ${FILE_LOCATION}\n"
+
+    query_url="${FILE_NAME}"
+    query_url="${query_url/\/artifactory\//\/artifactory\/api\/storage\//}?properties=${PROPERTY_NAME}"
+    request_result="$(curl -s -u ${USER}:${CREDENTIAL} "${query_url}")"
+
+    if [ $? != 0 ]; then
+        printf "Unable to retrieve properties from ${query_url}"
+        exit 1
+    else
+        printf "${GREENTICK} Properties retrieved from ${query_url}"
+    fi
+
+    jq -r '.properties.snapshot|first' <<<"$request_result" > ${FILE_LOCATION}
+
+    if [ $? != 0 ]; then
+        printf "Unable to write snapshot property to ${FILE_LOCATION}"
+        exit 1
+    else
+        printf "${GREENTICK} Property written to ${FILE_LOCATION}"
+    fi
+
 fi
 
 if [ "$DELETE" == "true" ]; then
