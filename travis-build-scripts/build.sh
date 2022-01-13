@@ -26,6 +26,14 @@ get_archive_level() {
   level_path="${archive_level_cache_dir}/${archive_variable}.level"
 
   if [[ ! -f "$level_path" ]]; then
+    if [[ -z "${REPOSITORY_USER}" || -z "${REPOSITORY_CREDENTIALS}" ]]; then
+      echo 'Skipping level lookup as repository credentials not set'
+      return
+    fi
+    if [[ -z "${!archive_variable}" ]]; then
+      echo "Skipping level lookup as '\$${archive_variable}' is not set"
+      return
+    fi
     ./travis-build-scripts/artifact-util.sh -f "${!archive_variable}" -u "${REPOSITORY_USER}" -p "${REPOSITORY_CREDENTIAL}" -l "$level_path" -n snapshot --get-property
   fi
   read -r MQ_ARCHIVE_LEVEL < "$level_path"
