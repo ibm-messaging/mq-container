@@ -21,6 +21,8 @@ set -ex
 
 sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.1/dep-linux-$ARCH
 sudo chmod +x /usr/local/bin/dep
+sudo apt-get update || :
+sudo apt-get install -y jq
 
 (
     cd "$(mktemp -d)"
