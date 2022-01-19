@@ -67,6 +67,8 @@ REGISTRY_PASS ?=
 ARCH ?= $(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
 # LTS is a boolean value to enable/disable LTS container build
 LTS ?= false
+# VOLUME_MOUNT_OPTIONS is used when bind-mounting files from the "downloads" directory into the container.  By default, SELinux labels are automatically re-written, but this doesn't work on some filesystems with extended attributes (xattrs).  You can turn off the label re-writing by setting this variable to be blank.
+VOLUME_MOUNT_OPTIONS ?= :Z
 
 ###############################################################################
 # Other variables
@@ -80,7 +82,7 @@ MQ_ARCHIVE_DEV_TYPE=Linux
 BUILD_SERVER_CONTAINER=build-server
 # NUM_CPU is the number of CPUs available to Docker.  Used to control how many
 # test run in parallel
-NUM_CPU ?= $(or $(shell docker info --format "{{ .NCPU }}"),2)
+NUM_CPU ?= $(or $(shell $(COMMAND) info --format "{{ .NCPU }}"),2)
 # BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
 BASE_IMAGE_TAG=$(lastword $(subst /, ,$(subst :,-,$(BASE_IMAGE))))
 #BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
@@ -258,12 +260,12 @@ test/docker/vendor:
 # Shortcut to just run the unit tests
 .PHONY: test-unit
 test-unit:
-	docker build --target builder --file Dockerfile-server .
+	$(COMMAND) build --target builder --file Dockerfile-server .
 
 .PHONY: test-advancedserver
 test-advancedserver: test/docker/vendor
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) on $(shell docker --version)"$(END)))
-	docker inspect $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
+	$(COMMAND) inspect $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
@@ -273,8 +275,8 @@ build-devjmstest: registry-login
 
 .PHONY: test-devserver
 test-devserver: test/docker/vendor
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell docker --version)"$(END)))
-	docker inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
+	$(COMMAND) inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) -tags mqdev $(TEST_OPTS_DOCKER)
 
 .PHONY: coverage
@@ -283,7 +285,7 @@ coverage:
 
 .PHONY: test-advancedserver-cover
 test-advancedserver-cover: test/docker/vendor coverage
-	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) with code coverage on $(shell docker --version)"$(END)))
+	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) with code coverage on $(shell $(COMMAND) --version)"$(END)))
 	rm -f ./coverage/unit*.cov
 	# Run unit tests with coverage, for each package under 'internal'
 	go list -f '{{.Name}}' ./internal/... | xargs -I {} go test -cover -covermode count -coverprofile ./coverage/unit-{}.cov ./internal/{}
@@ -307,8 +309,8 @@ test-advancedserver-cover: test/docker/vendor coverage
 # Build an MQ image.  The commands used are slightly different between Docker and Podman
 define build-mq
 	$(if $(findstring docker,$(COMMAND)), @docker network create build,)
-	$(if $(findstring docker,$(COMMAND)), @docker run --rm --name $(BUILD_SERVER_CONTAINER) --network build --network-alias build --volume $(DOWNLOADS_DIR):/opt/app-root/src:ro --detach registry.redhat.io/ubi8/nginx-118 nginx -g "daemon off;",)
-	$(eval EXTRA_ARGS=$(if $(findstring docker,$(COMMAND)), --network build --build-arg MQ_URL=http://build:8080/$4, --volume $(DOWNLOADS_DIR):/var/downloads --build-arg MQ_URL=file:///var/downloads/$4))
+	$(if $(findstring docker,$(COMMAND)), @docker run --rm --name $(BUILD_SERVER_CONTAINER) --network build --network-alias build --volume $(DOWNLOADS_DIR):/opt/app-root/src$(VOLUME_MOUNT_OPTIONS) --detach registry.redhat.io/ubi8/nginx-118 nginx -g "daemon off;",)
+	$(eval EXTRA_ARGS=$(if $(findstring docker,$(COMMAND)), --network build --build-arg MQ_URL=http://build:8080/$4, --volume $(DOWNLOADS_DIR):/var/downloads$(VOLUME_MOUNT_OPTIONS) --build-arg MQ_URL=file:///var/downloads/$4))
 	# Build the new image
 	$(COMMAND) build \
 	  --tag $1:$2 \
@@ -321,26 +323,26 @@ define build-mq
 	  --label name=$1 \
 	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
 	  --label architecture="$(ARCH)" \
-	  --label run="docker run -d -e LICENSE=accept $1:$2" \
+	  --label run="podman run -d -e LICENSE=accept $1:$2" \
 	  --label vcs-ref=$(IMAGE_REVISION) \
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
 	  $(EXTRA_LABELS) \
 	  --target $5 \
-	  .
+	  . 
 	$(if $(findstring docker,$(COMMAND)), @docker kill $(BUILD_SERVER_CONTAINER))
 	$(if $(findstring docker,$(COMMAND)), @docker network rm build)
 endef
 
-DOCKER_SERVER_VERSION=$(shell docker version --format "{{ .Server.Version }}")
-DOCKER_CLIENT_VERSION=$(shell docker version --format "{{ .Client.Version }}")
+COMMAND_SERVER_VERSION=$(shell $(COMMAND) version --format "{{ .Server.Version }}")
+COMMAND_CLIENT_VERSION=$(shell $(COMMAND) version --format "{{ .Client.Version }}")
 PODMAN_VERSION=$(shell podman version --format "{{ .Version }}")
 .PHONY: command-version
 command-version:
 # If we're using Docker, then check it's recent enough to support multi-stage builds
 ifneq (,$(findstring docker,$(COMMAND)))
-	@test "$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
-	@test "$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(DOCKER_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(DOCKER_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
+	@test "$(word 1,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
+	@test "$(word 1,$(subst ., ,$(COMMAND_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(COMMAND_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
 endif
 ifneq (,$(findstring podman,$(COMMAND)))
 	@test "$(word 1,$(subst ., ,$(PODMAN_VERSION)))" -ge "1" || (echo "Error: Podman version 1.0 or greater is required" && exit 1)
@@ -463,7 +465,7 @@ endif
 
 .PHONY: build-skopeo-container
 build-skopeo-container:
-	$(COMMAND) images | grep -q "skopeo"; if [ $$? != 0 ]; then docker build -t skopeo:latest ./docker-builds/skopeo/; fi
+	$(COMMAND) images | grep -q "skopeo"; if [ $$? != 0 ]; then $(COMMAND) build -t skopeo:latest ./docker-builds/skopeo/; fi
 
 .PHONY: clean
 clean:
