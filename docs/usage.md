@@ -60,7 +60,7 @@ You can customize the configuration in several ways:
 
 1. For getting started, you can use the [default developer configuration](developer-config.md), which is available out-of-the-box for the MQ Advanced for Developers image
 2. By creating your own image and adding your own MQSC file into the `/etc/mqm` directory on the image.  This file will be run when your queue manager is created.
-3. By using [remote MQ administration](https://www.ibm.com/support/knowledgecenter/SSFKSJ_9.2.0/com.ibm.mq.adm.doc/q021090_.htm), via an MQ command server, the MQ HTTP APIs, or using a tool such as the MQ web console or MQ Explorer.
+3. By using [remote MQ administration](https://www.ibm.com/docs/en/ibm-mq/9.2?topic=administering-working-remote-mq-objects), via an MQ command server, the MQ HTTP APIs, or using a tool such as the MQ web console or MQ Explorer.
 
 Note that a listener is always created on port 1414 inside the container.  This port can be mapped to any port on the Docker host.
 
