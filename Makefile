@@ -539,6 +539,6 @@ update-release-information:
 	sed -i.bak 's/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:.*-amd64/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:$(MQ_LTS_VERSION)-amd64/g' docs/testing.md && rm docs/testing.md.bak
 	$(eval MQ_VERSION_2=$(shell echo '${MQ_VERSION_1}' | sed "s/\.//g"))
 	sed -i.bak 's/MQ_..._ARCHIVE_REPOSITORY/MQ_${MQ_VERSION_2}_ARCHIVE_REPOSITORY/g' .travis.yml && rm .travis.yml.bak
-	sed -i.bak 's/MQ_LTS_VERSION=[0-9]\.[0-9]\.[0-9]\.[0-9]/MQ_LTS_VERSION=9.2.0.5/g' .travis.yml && rm .travis.yml.bak
+	sed -i.bak 's/MQ_LTS_VERSION=[0-9]\.[0-9]\.[0-9]\.[0-9]/MQ_LTS_VERSION=${MQ_LTS_VERSION}/g' .travis.yml && rm .travis.yml.bak
 	$(eval MQ_LTS_VERSION_1=$(shell echo '${MQ_LTS_VERSION}' | sed "s/\.//g"))
 	sed -i.bak 's/MQ_...._EUS_ARCHIVE_REPOSITORY/MQ_${MQ_LTS_VERSION_1}_EUS_ARCHIVE_REPOSITORY/g' .travis.yml && rm .travis.yml.bak
