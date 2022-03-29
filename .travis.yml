@@ -44,7 +44,7 @@ jobs:
       name: "Basic AMD64 build"
       os: linux
       env:
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_925_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_930_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
 
     # CD Build
@@ -60,8 +60,8 @@ jobs:
       os: linux
       env:
         - BUILD_ALL=true
-        - MQ_ARCHIVE_REPOSITORY=$MQ_925_ARCHIVE_REPOSITORY_AMD64
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_925_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY=$MQ_930_ARCHIVE_REPOSITORY_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_930_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
     - stage: build
       if: branch = private-master OR tag =~ ^release-candidate*
@@ -70,8 +70,8 @@ jobs:
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_925_ARCHIVE_REPOSITORY_S390X
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_925_ARCHIVE_REPOSITORY_DEV_S390X
+        - MQ_ARCHIVE_REPOSITORY=$MQ_930_ARCHIVE_REPOSITORY_S390X
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_930_ARCHIVE_REPOSITORY_DEV_S390X
       script: bash -e travis-build-scripts/run.sh
     - stage: build
       if: branch = private-master OR tag =~ ^release-candidate*
@@ -80,8 +80,8 @@ jobs:
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_925_ARCHIVE_REPOSITORY_PPC64LE
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_925_ARCHIVE_REPOSITORY_DEV_PPC64LE
+        - MQ_ARCHIVE_REPOSITORY=$MQ_930_ARCHIVE_REPOSITORY_PPC64LE
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_930_ARCHIVE_REPOSITORY_DEV_PPC64LE
       script: bash -e travis-build-scripts/run.sh
     - stage: push-manifest
       if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
