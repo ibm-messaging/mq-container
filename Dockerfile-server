@@ -13,7 +13,7 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=registry.redhat.io/ubi8/ubi-minimal
-ARG BASE_TAG=8.5-240
+ARG BASE_TAG=8.5-240.1648458092
 ARG BUILDER_IMAGE=registry.redhat.io/ubi8/go-toolset
 ARG BUILDER_TAG=1.16.12-7
 ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
