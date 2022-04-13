@@ -302,12 +302,8 @@ test-advancedserver-cover: test/docker/vendor coverage
 	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
 	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
 
-# Build an MQ image.  The commands used are slightly different between Docker and Podman
-define build-mq
-	$(if $(findstring docker,$(COMMAND)), @docker network create build,)
-	$(if $(findstring docker,$(COMMAND)), @docker run --rm --name $(BUILD_SERVER_CONTAINER) --network build --network-alias build --volume $(DOWNLOADS_DIR):/opt/app-root/src$(VOLUME_MOUNT_OPTIONS) --detach registry.access.redhat.com/ubi8/nginx-118 nginx -g "daemon off;",)
-	$(eval EXTRA_ARGS=$(if $(findstring docker,$(COMMAND)), --network build --build-arg MQ_URL=http://build:8080/$4, --volume $(DOWNLOADS_DIR):/var/downloads$(VOLUME_MOUNT_OPTIONS) --build-arg MQ_URL=file:///var/downloads/$4))
-	# Build the new image
+# Command to build the image
+define build-mq-command
 	$(COMMAND) build \
 	  --tag $1:$2 \
 	  --file $3 \
@@ -324,10 +320,36 @@ define build-mq
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
 	  $(EXTRA_LABELS) \
-	  --target $5 \
-	  . 
-	$(if $(findstring docker,$(COMMAND)), @docker kill $(BUILD_SERVER_CONTAINER))
-	$(if $(findstring docker,$(COMMAND)), @docker network rm build)
+	  --target $4 \
+	  .
+endef
+
+# When building with Docker, create a separate "build-server" container using nginx
+define build-mq-docker
+	@docker network create build
+	@docker run \
+	  --rm \
+	  --name $(BUILD_SERVER_CONTAINER) \
+	  --network build \
+	  --network-alias build \
+	  --volume $(DOWNLOADS_DIR):/opt/app-root/src$(VOLUME_MOUNT_OPTIONS) \
+	  --detach \
+	  registry.access.redhat.com/ubi8/nginx-120 nginx -g "daemon off;" || (docker network rm build && exit 1)
+	$(eval EXTRA_ARGS= --network build --build-arg MQ_URL=http://build:8080/$4)
+	$(call build-mq-command,$1,$2,$3,$5) || (docker rm -f $(BUILD_SERVER_CONTAINER) && docker network rm build && exit 1)
+	@docker rm -f $(BUILD_SERVER_CONTAINER)
+	@docker network rm build
+endef
+
+# When building with Podman, just pass the downloads directory as a volume
+define build-mq-podman
+	$(eval EXTRA_ARGS= --volume $(DOWNLOADS_DIR):/var/downloads$(VOLUME_MOUNT_OPTIONS) --build-arg MQ_URL=file:///var/downloads/$4)
+	$(call build-mq-command,$1,$2,$3,$5)
+endef
+
+# Build an MQ image.  The commands used are slightly different between Docker and Podman
+define build-mq
+	$(call build-mq-$(COMMAND),$1,$2,$3,$4,$5)
 endef
 
 COMMAND_SERVER_VERSION=$(shell $(COMMAND) version --format "{{ .Server.Version }}")
