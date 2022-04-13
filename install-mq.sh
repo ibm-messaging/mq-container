@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2020
+# © Copyright IBM Corporation 2015, 2022
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@ INSTALL_SDK=${INSTALL_SDK:-0}
 DIR_TMP=/tmp/mq
 mkdir -p ${DIR_TMP}
 cd ${DIR_TMP}
-curl -LO $MQ_URL
+curl --fail --remote-name --location $MQ_URL
 
 tar -xzf ./*.tar.gz
 rm -f ./*.tar.gz
