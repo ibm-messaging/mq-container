@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018, 2021
+# © Copyright IBM Corporation 2018, 2022
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ###############################################################################
 # Application build environment (Maven)
 ###############################################################################
-FROM registry.redhat.io/ubi8/openjdk-8 as builder
+FROM registry.access.redhat.com/ubi8/openjdk-8 as builder
 COPY pom.xml .
 #WORKDIR /usr/src/mymaven
 # Download dependencies separately, so Docker caches them
@@ -31,7 +31,7 @@ RUN find .
 # Application runtime (JRE only, no build environment)
 ###############################################################################
 # OpenJDK is not technically supported with the MQ client, but is good enough for these tests
-FROM registry.redhat.io/ubi8/openjdk-8-runtime
+FROM registry.access.redhat.com/ubi8/openjdk-8-runtime
 COPY --from=builder /home/jboss/target/*.jar /opt/app/
 COPY --from=builder /home/jboss/target/lib/*.jar /opt/app/
 USER 1001

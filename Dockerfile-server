@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2021
+# © Copyright IBM Corporation 2015, 2022
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=registry.redhat.io/ubi8/ubi-minimal
+ARG BASE_IMAGE=registry.access.redhat.com/ubi8/ubi-minimal
 ARG BASE_TAG=8.5-240.1648458092
-ARG BUILDER_IMAGE=registry.redhat.io/ubi8/go-toolset
+ARG BUILDER_IMAGE=registry.access.redhat.com/ubi8/go-toolset
 ARG BUILDER_TAG=1.16.12-7
 ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
 ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.3.0.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
@@ -123,13 +123,14 @@ ENTRYPOINT ["runmqserver"]
 ###############################################################################
 # Build stage to build C code for custom authorization service (developer-only)
 ###############################################################################
-FROM registry.redhat.io/rhel8/gcc-toolset-9-toolchain as cbuilder
+# User the Go toolset image, which already includes gcc
+FROM $BUILDER_IMAGE:$BUILDER_TAG as cbuilder
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ Non-Install packages
 ARG MQ_URL
 USER 0
 # Install the Apache Portable Runtime code (used for htpasswd hash checking)
-RUN yum -y install apr-devel apr-util-openssl apr-util-devel
+RUN yum --assumeyes --disableplugin=subscription-manager install apr-devel apr-util-openssl apr-util-devel
 # Install MQ client
 COPY install-mq.sh /usr/local/bin/
 RUN mkdir /opt/mqm \

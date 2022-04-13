@@ -3,6 +3,7 @@
 ## 9.3.0.0 (2022-03-29)
 
 * Updated to MQ version 9.3.0.0
+* Use `registry.access.redhat.com` instead of `registry.redhat.io`, so that you don't need to login with a Red Hat account.
 
 ## 9.2.5.0 (2021-12-06)
 

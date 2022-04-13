@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017, 2021
+# © Copyright IBM Corporation 2017, 2022
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,10 +59,6 @@ MQ_DELIVERY_REGISTRY_NAMESPACE ?=
 MQ_DELIVERY_REGISTRY_USER ?=
 # MQ_DELIVERY_REGISTRY_CREDENTIAL is the password/API key for the remote registry (if required)
 MQ_DELIVERY_REGISTRY_CREDENTIAL ?=
-# REGISTRY_USER is the username used to login to the Red Hat registry
-REGISTRY_USER ?=
-# REGISTRY_PASS is the password used to login to the Red Hat registry
-REGISTRY_PASS ?=
 # ARCH is the platform architecture (e.g. amd64, ppc64le or s390x)
 ARCH ?= $(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
 # LTS is a boolean value to enable/disable LTS container build
@@ -269,7 +265,7 @@ test-advancedserver: test/docker/vendor
 	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
-build-devjmstest: registry-login
+build-devjmstest:
 	$(info $(SPACER)$(shell printf $(TITLE)"Build JMS tests for developer config"$(END)))
 	cd test/messaging && docker build --tag $(DEV_JMS_IMAGE) .
 
@@ -309,7 +305,7 @@ test-advancedserver-cover: test/docker/vendor coverage
 # Build an MQ image.  The commands used are slightly different between Docker and Podman
 define build-mq
 	$(if $(findstring docker,$(COMMAND)), @docker network create build,)
-	$(if $(findstring docker,$(COMMAND)), @docker run --rm --name $(BUILD_SERVER_CONTAINER) --network build --network-alias build --volume $(DOWNLOADS_DIR):/opt/app-root/src$(VOLUME_MOUNT_OPTIONS) --detach registry.redhat.io/ubi8/nginx-118 nginx -g "daemon off;",)
+	$(if $(findstring docker,$(COMMAND)), @docker run --rm --name $(BUILD_SERVER_CONTAINER) --network build --network-alias build --volume $(DOWNLOADS_DIR):/opt/app-root/src$(VOLUME_MOUNT_OPTIONS) --detach registry.access.redhat.com/ubi8/nginx-118 nginx -g "daemon off;",)
 	$(eval EXTRA_ARGS=$(if $(findstring docker,$(COMMAND)), --network build --build-arg MQ_URL=http://build:8080/$4, --volume $(DOWNLOADS_DIR):/var/downloads$(VOLUME_MOUNT_OPTIONS) --build-arg MQ_URL=file:///var/downloads/$4))
 	# Build the new image
 	$(COMMAND) build \
@@ -352,7 +348,7 @@ endif
 build-advancedserver-host: build-advancedserver
 
 .PHONY: build-advancedserver
-build-advancedserver: registry-login log-build-env downloads/$(MQ_ARCHIVE) command-version
+build-advancedserver: log-build-env downloads/$(MQ_ARCHIVE) command-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
 
@@ -360,28 +356,22 @@ build-advancedserver: registry-login log-build-env downloads/$(MQ_ARCHIVE) comma
 build-devserver-host: build-devserver
 
 .PHONY: build-devserver
-build-devserver: registry-login log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
+build-devserver: log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
 	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
 
 .PHONY: build-advancedserver-cover
-build-advancedserver-cover: registry-login command-version
+build-advancedserver-cover: command-version
 	$(COMMAND) build --build-arg BASE_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) -t $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover -f Dockerfile-server.cover .
 
 .PHONY: build-explorer
-build-explorer: registry-login downloads/$(MQ_ARCHIVE_DEV)
+build-explorer: downloads/$(MQ_ARCHIVE_DEV)
 	$(call build-mq,mq-explorer,latest-$(ARCH),incubating/mq-explorer/Dockerfile,$(MQ_ARCHIVE_DEV),mq-explorer)
 
 .PHONY: build-sdk
-build-sdk: registry-login downloads/$(MQ_ARCHIVE_DEV)
+build-sdk: downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
 	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
-
-.PHONY: registry-login
-registry-login:
-ifneq ($(REGISTRY_USER),)
-	$(COMMAND) login -u $(REGISTRY_USER) -p $(REGISTRY_PASS) registry.redhat.io
-endif
 
 .PHONY: log-build-env
 log-build-vars:
@@ -393,7 +383,6 @@ log-build-vars:
 	@echo MQ_IMAGE_DEVSERVER=$(MQ_IMAGE_DEVSERVER)
 	@echo MQ_IMAGE_ADVANCEDSERVER=$(MQ_IMAGE_ADVANCEDSERVER)
 	@echo COMMAND=$(COMMAND)
-	@echo REGISTRY_USER=$(REGISTRY_USER)
 
 .PHONY: log-build-env
 log-build-env: log-build-vars
