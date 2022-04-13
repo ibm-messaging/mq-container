@@ -14,7 +14,7 @@ docker run \
   --publish 1414:1414 \
   --publish 9443:9443 \
   --detach \
-  ibmcom/mq
+  icr.io/ibm-messaging/mq
 ```
 
 ## Running with the default configuration and a volume
@@ -34,7 +34,7 @@ docker run \
   --publish 9443:9443 \
   --detach \
   --volume qm1data:/mnt/mqm \
-  ibmcom/mq
+  icr.io/ibm-messaging/mq
 ```
 
 The Docker image always uses `/mnt/mqm` for MQ data, which is correctly linked for you under `/var/mqm` at runtime.  This is to handle problems with file permissions on some platforms.
@@ -51,7 +51,7 @@ docker run \
   --publish 9443:9443 \
   --publish 9157:9157 \
   --detach \
-  ibmcom/mq
+  icr.io/ibm-messaging/mq
 ```
 
 ## Customizing the queue manager configuration
@@ -67,7 +67,7 @@ Note that a listener is always created on port 1414 inside the container.  This 
 The following is an *example* `Dockerfile` for creating your own pre-configured image, which adds a custom MQ configuration file:
 
 ```dockerfile
-FROM ibmcom/mq
+FROM icr.io/ibm-messaging/mq
 USER 1001
 COPY 20-config.mqsc /etc/mqm/
 ```
