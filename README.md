@@ -34,7 +34,7 @@ See the [default developer configuration docs](docs/developer-config.md) for the
 
 ### Kubernetes
 
-If you want to use IBM MQ in [Kubernetes](https://kubernetes.io), you can find an example [Helm](https://helm.sh/) chart here: [IBM charts](https://github.com/IBM/charts).  This can be used to run the container on a cluster, such as [IBM Cloud Private](https://www.ibm.com/cloud-computing/products/ibm-cloud-private/) or the [IBM Cloud Kubernetes Service](https://www.ibm.com/cloud/container-service).
+If you want to use IBM MQ in [Kubernetes](https://kubernetes.io), you can find an example [Helm](https://helm.sh/) chart here: [IBM MQ Sample Helm Chart](https://github.com/ibm-messaging/mq-helm).  This can be used to run the container on a Kubernetes, such as the [IBM Cloud Kubernetes Service](https://www.ibm.com/cloud/container-service).
 
 ## Issues and contributions
 
@@ -53,4 +53,4 @@ Note: The IBM MQ Advanced for Developers license does not permit further distrib
 
 ## Copyright
 
-© Copyright IBM Corporation 2015, 2020
+© Copyright IBM Corporation 2015, 2022
