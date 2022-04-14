@@ -303,11 +303,12 @@ test-advancedserver-cover: test/docker/vendor coverage
 	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
 
 # Command to build the image
+# Args: imageName, imageTag, dockerfile, extraArgs, dockerfileTarget
 define build-mq-command
 	$(COMMAND) build \
 	  --tag $1:$2 \
 	  --file $3 \
-	  $(EXTRA_ARGS) \
+	  $4 \
 	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
 	  --build-arg IMAGE_TAG="$1:$2" \
@@ -320,7 +321,7 @@ define build-mq-command
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
 	  $(EXTRA_LABELS) \
-	  --target $4 \
+	  --target $5 \
 	  .
 endef
 
@@ -335,16 +336,14 @@ define build-mq-docker
 	  --volume $(DOWNLOADS_DIR):/opt/app-root/src$(VOLUME_MOUNT_OPTIONS) \
 	  --detach \
 	  registry.access.redhat.com/ubi8/nginx-120 nginx -g "daemon off;" || (docker network rm build && exit 1)
-	$(eval EXTRA_ARGS= --network build --build-arg MQ_URL=http://build:8080/$4)
-	$(call build-mq-command,$1,$2,$3,$5) || (docker rm -f $(BUILD_SERVER_CONTAINER) && docker network rm build && exit 1)
+	$(call build-mq-command,$1,$2,$3,--network build --build-arg MQ_URL=http://build:8080/$4,$5) || (docker rm -f $(BUILD_SERVER_CONTAINER) && docker network rm build && exit 1)
 	@docker rm -f $(BUILD_SERVER_CONTAINER)
 	@docker network rm build
 endef
 
 # When building with Podman, just pass the downloads directory as a volume
 define build-mq-podman
-	$(eval EXTRA_ARGS= --volume $(DOWNLOADS_DIR):/var/downloads$(VOLUME_MOUNT_OPTIONS) --build-arg MQ_URL=file:///var/downloads/$4)
-	$(call build-mq-command,$1,$2,$3,$5)
+	$(call build-mq-command,$1,$2,$3,--volume $(DOWNLOADS_DIR):/var/downloads$(VOLUME_MOUNT_OPTIONS) --build-arg MQ_URL=file:///var/downloads/$4,$5)
 endef
 
 # Build an MQ image.  The commands used are slightly different between Docker and Podman
