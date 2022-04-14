@@ -33,7 +33,7 @@ var miEnv = []string{
 // and starts/stop them checking we always have an active and standby
 func TestMultiInstanceStartStop(t *testing.T) {
 	t.Skipf("Skipping %v until test defect fixed", t.Name())
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func TestMultiInstanceStartStop(t *testing.T) {
 // TestMultiInstanceContainerStop starts 2 containers in a multi instance queue manager configuration,
 // stops the active queue manager, then checks to ensure the backup queue manager becomes active
 func TestMultiInstanceContainerStop(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +109,7 @@ func TestMultiInstanceContainerStop(t *testing.T) {
 func TestMultiInstanceRace(t *testing.T) {
 	t.Skipf("Skipping %v until file lock is implemented", t.Name())
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestMultiInstanceRace(t *testing.T) {
 // mounts, then checks to ensure that the container terminates with the expected message
 func TestMultiInstanceNoSharedMounts(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +174,7 @@ func TestMultiInstanceNoSharedMounts(t *testing.T) {
 // TestMultiInstanceNoSharedLogs starts 2 multi instance queue managers without providing a shared log
 // mount, then checks to ensure that the container terminates with the expected message
 func TestMultiInstanceNoSharedLogs(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,7 +196,7 @@ func TestMultiInstanceNoSharedLogs(t *testing.T) {
 // TestMultiInstanceNoSharedData starts 2 multi instance queue managers without providing a shared data
 // mount, then checks to ensure that the container terminates with the expected message
 func TestMultiInstanceNoSharedData(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -218,7 +218,7 @@ func TestMultiInstanceNoSharedData(t *testing.T) {
 // TestMultiInstanceNoMounts starts 2 multi instance queue managers without providing a shared data
 // mount, then checks to ensure that the container terminates with the expected message
 func TestMultiInstanceNoMounts(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}

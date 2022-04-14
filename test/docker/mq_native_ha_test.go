@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021
+© Copyright IBM Corporation 2021, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import (
 // TestNativeHABasic creates 3 containers in a Native HA queue manager configuration
 // and ensures the queue manger and replicas start as expected
 func TestNativeHABasic(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestNativeHABasic(t *testing.T) {
 // queue manager comes back as a replica
 func TestNativeHAFailover(t *testing.T) {
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +132,7 @@ func TestNativeHAFailover(t *testing.T) {
 // TestNativeHASecure creates 3 containers in a Native HA queue manager configuration
 // with HA TLS enabled, and ensures the queue manger and replicas start as expected
 func TestNativeHASecure(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +177,7 @@ func TestNativeHASecure(t *testing.T) {
 // with HA TLS enabled, overrides the default CipherSpec, and ensures the queue manger
 // and replicas start as expected
 func TestNativeHASecureCipherSpec(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}

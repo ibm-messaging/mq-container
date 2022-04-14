@@ -2,10 +2,9 @@
 
 ## Prerequisites
 You need to ensure you have the following tools installed:
-* [Docker](https://www.docker.com/)
+* [Docker](https://www.docker.com/) 19.03 or higher (API version 1.40)
 * [GNU make](https://www.gnu.org/software/make/)
 * [Go](https://golang.org/) - only needed for running the tests
-* [dep](https://github.com/golang/dep) (official Go dependency management tool) - needed to prepare for running the tests
 
 ## Running the tests
 There are two main sets of tests:

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2017, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import (
 func TestLicenseNotSet(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +55,7 @@ func TestLicenseNotSet(t *testing.T) {
 func TestLicenseView(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +79,7 @@ func TestLicenseView(t *testing.T) {
 //Check that when the container is stopped that the command endmqm has option -tp and x
 func TestEndMQMOpts(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +114,7 @@ func TestGoldenPathNoMetrics(t *testing.T) {
 
 // Actual test function for TestGoldenPathNoMetrics & TestGoldenPathWithMetrics
 func goldenPath(t *testing.T, metric bool) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +137,7 @@ func goldenPath(t *testing.T, metric bool) {
 func TestSecurityVulnerabilities(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +171,7 @@ func TestSecurityVulnerabilities(t *testing.T) {
 
 func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName string) {
 	search := "QMNAME(" + expectedName + ")"
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,7 +217,7 @@ func TestWithVolumeNoMetrics(t *testing.T) {
 
 // Actual test function for TestWithVolumeNoMetrics & TestWithVolumeAndMetrics
 func withVolume(t *testing.T, metric bool) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,7 +261,7 @@ func withVolume(t *testing.T, metric bool) {
 
 // TestWithSplitVolumesLogsData starts a queue manager with separate log/data mounts
 func TestWithSplitVolumesLogsData(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -281,7 +281,7 @@ func TestWithSplitVolumesLogsData(t *testing.T) {
 
 // TestWithSplitVolumesLogsOnly starts a queue manager with a separate log mount
 func TestWithSplitVolumesLogsOnly(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -299,7 +299,7 @@ func TestWithSplitVolumesLogsOnly(t *testing.T) {
 
 // TestWithSplitVolumesDataOnly starts a queue manager with a separate data mount
 func TestWithSplitVolumesDataOnly(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -320,7 +320,7 @@ func TestWithSplitVolumesDataOnly(t *testing.T) {
 func TestNoVolumeWithRestart(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -340,7 +340,7 @@ func TestNoVolumeWithRestart(t *testing.T) {
 // where `runmqserver -i` is run to initialize the storage.  Then the
 // container can be run as normal.
 func TestVolumeRequiresRoot(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -403,7 +403,7 @@ func TestVolumeRequiresRoot(t *testing.T) {
 func TestCreateQueueManagerFail(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -436,7 +436,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 func TestStartQueueManagerFail(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -472,7 +472,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 func TestVolumeUnmount(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -521,7 +521,7 @@ func TestVolumeUnmount(t *testing.T) {
 func TestZombies(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -558,7 +558,7 @@ func TestZombies(t *testing.T) {
 func TestMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -605,7 +605,7 @@ func TestMQSC(t *testing.T) {
 func TestLargeMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -657,7 +657,7 @@ func TestLargeMQSC(t *testing.T) {
 func TestRedactValidMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -735,7 +735,7 @@ func TestRedactValidMQSC(t *testing.T) {
 func TestRedactInvalidMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -808,7 +808,7 @@ func TestRedactInvalidMQSC(t *testing.T) {
 // tries to start a container based on that image, and checks that container terminates
 func TestInvalidMQSC(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -842,7 +842,7 @@ func TestInvalidMQSC(t *testing.T) {
 
 func TestSimpleMQIniMerge(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -880,7 +880,7 @@ func TestSimpleMQIniMerge(t *testing.T) {
 }
 func TestMultipleIniMerge(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -929,7 +929,7 @@ func TestMultipleIniMerge(t *testing.T) {
 }
 
 func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1027,7 +1027,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 func TestReadiness(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1090,7 +1090,7 @@ func TestErrorLogRotation(t *testing.T) {
 	t.Skipf("Skipping %v until test defect fixed", t.Name())
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1180,7 +1180,7 @@ func TestJSONLogFormatNoMetrics(t *testing.T) {
 
 // Actual test function for TestJSONLogFormatWithMetrics & TestJSONLogFormatNoMetrics
 func jsonLogFormat(t *testing.T, metric bool) {
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1216,7 +1216,7 @@ func jsonLogFormat(t *testing.T, metric bool) {
 func TestBadLogFormat(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1240,7 +1240,7 @@ func TestBadLogFormat(t *testing.T) {
 func TestMQJSONDisabled(t *testing.T) {
 	t.SkipNow()
 	t.Parallel()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1268,7 +1268,7 @@ func TestCorrectLicense(t *testing.T) {
 		t.Fatal("Required test environment variable 'EXPECTED_LICENSE' was not set.")
 	}
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1293,7 +1293,7 @@ func TestCorrectLicense(t *testing.T) {
 func TestVersioning(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1414,7 +1414,7 @@ func TestVersioning(t *testing.T) {
 func TestTraceStrmqm(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1439,7 +1439,7 @@ func TestTraceStrmqm(t *testing.T) {
 // privileges enabled or disabled.  Otherwise the same as the golden path tests.
 func utilTestHealthCheck(t *testing.T, nonewpriv bool) {
 	t.Parallel()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1480,7 +1480,7 @@ func TestHealthCheckWithNewPrivileges(t *testing.T) {
 // privileges enabled or disabled.  Otherwise the same as the golden path tests.
 func utilTestStartedCheck(t *testing.T, nonewpriv bool) {
 	t.Parallel()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}

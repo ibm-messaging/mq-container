@@ -71,6 +71,8 @@ VOLUME_MOUNT_OPTIONS ?= :Z
 ###############################################################################
 # Build doesn't work if BuildKit is enabled
 DOCKER_BUILDKIT=0
+# Lock Docker API version for compatibility with Podman and with the Docker version in Travis' Ubuntu Bionic
+DOCKER_API_VERSION=1.40
 GO_PKG_DIRS = ./cmd ./internal ./test
 MQ_ARCHIVE_TYPE=LINUX
 MQ_ARCHIVE_DEV_TYPE=Linux
@@ -262,7 +264,7 @@ test-unit:
 test-advancedserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(COMMAND) inspect $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production DOCKER_API_VERSION=$(DOCKER_API_VERSION) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) $(TEST_OPTS_DOCKER)
 
 .PHONY: build-devjmstest
 build-devjmstest:
@@ -273,7 +275,7 @@ build-devjmstest:
 test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(COMMAND) inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) -tags mqdev $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true DOCKER_API_VERSION=$(DOCKER_API_VERSION) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) -tags mqdev $(TEST_OPTS_DOCKER)
 
 .PHONY: coverage
 coverage:
@@ -293,7 +295,7 @@ test-advancedserver-cover: test/docker/vendor coverage
 	rm -f ./test/docker/coverage/*.cov
 	rm -f ./coverage/docker.*
 	mkdir -p ./test/docker/coverage/
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover TEST_COVER=true go test $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover TEST_COVER=true DOCKER_API_VERSION=$(DOCKER_API_VERSION) go test $(TEST_OPTS_DOCKER)
 	echo 'mode: count' > ./coverage/docker.cov
 	tail -q -n +2 ./test/docker/coverage/*.cov >> ./coverage/docker.cov
 	go tool cover -html=./coverage/docker.cov -o ./coverage/docker.html

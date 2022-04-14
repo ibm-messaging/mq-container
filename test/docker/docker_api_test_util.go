@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2021
+© Copyright IBM Corporation 2017, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -548,9 +548,14 @@ func getCoverageExitCode(t *testing.T, orig int64) int64 {
 func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout time.Duration) int64 {
 	c, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	rc, err := cli.ContainerWait(c, ID)
-	if err != nil {
+	t.Logf("Waiting for container for %s", timeout)
+	okC, errC := cli.ContainerWait(c, ID, container.WaitConditionNotRunning)
+	var rc int64
+	select {
+	case err := <-errC:
 		t.Fatal(err)
+	case ok := <-okC:
+		rc = ok.StatusCode
 	}
 	if coverage() {
 		// COVERAGE: When running coverage, the exit code is written to a file,
@@ -579,7 +584,7 @@ func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd
 	if err != nil {
 		t.Fatal(err)
 	}
-	hijack, err := cli.ContainerExecAttach(context.Background(), resp.ID, config)
+	hijack, err := cli.ContainerExecAttach(context.Background(), resp.ID, types.ExecStartCheck{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -686,7 +691,7 @@ func removeNetwork(t *testing.T, cli *client.Client, ID string) {
 }
 
 func createVolume(t *testing.T, cli *client.Client, name string) types.Volume {
-	v, err := cli.VolumeCreate(context.Background(), volume.VolumesCreateBody{
+	v, err := cli.VolumeCreate(context.Background(), volume.VolumeCreateBody{
 		Driver:     "local",
 		DriverOpts: map[string]string{},
 		Labels:     map[string]string{},

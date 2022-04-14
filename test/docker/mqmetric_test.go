@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import (
 func TestGoldenPathMetric(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +55,7 @@ func TestGoldenPathMetric(t *testing.T) {
 func TestMetricNames(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +100,7 @@ func TestMetricLabels(t *testing.T) {
 	t.Parallel()
 
 	requiredLabels := []string{"qmgr"}
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func TestMetricLabels(t *testing.T) {
 func TestRapidFirePrometheus(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +182,7 @@ func TestRapidFirePrometheus(t *testing.T) {
 func TestSlowPrometheus(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -213,7 +213,7 @@ func TestSlowPrometheus(t *testing.T) {
 func TestContainerRestart(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,7 +261,7 @@ func TestContainerRestart(t *testing.T) {
 func TestQMRestart(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -319,7 +319,7 @@ func TestQMRestart(t *testing.T) {
 func TestValidValues(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -355,7 +355,7 @@ func TestValidValues(t *testing.T) {
 func TestChangingValues(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}

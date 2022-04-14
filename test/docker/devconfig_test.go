@@ -1,7 +1,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2021
+© Copyright IBM Corporation 2018, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import (
 func TestDevGoldenPath(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestDevGoldenPath(t *testing.T) {
 func TestDevSecure(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +131,7 @@ func TestDevSecure(t *testing.T) {
 func TestDevWebDisabled(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,7 +162,7 @@ func TestDevWebDisabled(t *testing.T) {
 func TestDevConfigDisabled(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
