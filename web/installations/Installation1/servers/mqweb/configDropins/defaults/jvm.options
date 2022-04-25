@@ -1,0 +1,2 @@
+-Djava.util.prefs.userRoot=/tmp
+-Djava.util.prefs.systemRoot=/tmp
