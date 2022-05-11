@@ -26,10 +26,8 @@ services:
 env:
   global:
     - MAIN_BRANCH=v9.2.5
-    - MQ_LTS_VERSION=9.2.0.5
     - TAGCACHE_FILE=tagcache
     - RELEASE=r3
-    - RELEASE_LTS=r1
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
@@ -90,63 +88,6 @@ jobs:
         - PUSH_MANIFEST_ONLY=true
       script: bash -e travis-build-scripts/run.sh
 
-      # LTS Build
-
-    - stage: global-tag
-      if: branch = v9.2.5 AND type != pull_request OR tag =~ ^release-candidate*
-      name: "Generate Global Tag"
-      os: linux
-      env:
-        - LTS=true
-        - TAGCACHE_FILE=tagcache-lts
-        - MQ_VERSION=$MQ_LTS_VERSION
-        - RELEASE=$RELEASE_LTS
-      script: bash -e travis-build-scripts/global-tag.sh
-    - stage: build
-      if: branch = v9.2.5 OR tag =~ ^release-candidate*
-      name: "Multi-Arch AMD64 build"
-      os: linux
-      env:
-        - LTS=true
-        - TAGCACHE_FILE=tagcache-lts
-        - MQ_VERSION=$MQ_LTS_VERSION
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9204_EUS_ARCHIVE_REPOSITORY_AMD64
-        - RELEASE=$RELEASE_LTS
-      script: bash -e travis-build-scripts/run.sh
-    - stage: build
-      if: branch = v9.2.5 OR tag =~ ^release-candidate*
-      name: "Multi-Arch S390X build"
-      os: linux-s390
-      env:
-        - LTS=true
-        - TAGCACHE_FILE=tagcache-lts
-        - MQ_VERSION=$MQ_LTS_VERSION
-        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9204_EUS_ARCHIVE_REPOSITORY_S390X
-        - RELEASE=$RELEASE_LTS
-      script: bash -e travis-build-scripts/run.sh
-    - stage: build
-      if: branch = v9.2.5 OR tag =~ ^release-candidate*
-      name: "Multi-Arch PPC64LE build"
-      os: linux-ppc64le
-      env:
-        - LTS=true
-        - TAGCACHE_FILE=tagcache-lts
-        - MQ_VERSION=$MQ_LTS_VERSION
-        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9204_EUS_ARCHIVE_REPOSITORY_PPC64LE
-        - RELEASE=$RELEASE_LTS
-      script: bash -e travis-build-scripts/run.sh
-    - stage: push-manifest
-      if: branch = v9.2.5 AND type != pull_request OR tag =~ ^release-candidate*
-      name: "Push Manifest-list to registry"
-      env:
-        - LTS=true
-        - TAGCACHE_FILE=tagcache-lts
-        - MQ_VERSION=$MQ_LTS_VERSION
-        - PUSH_MANIFEST_ONLY=true
-        - RELEASE=$RELEASE_LTS
-      script: bash -e travis-build-scripts/run.sh
 
 before_install:
   - make install-build-deps
