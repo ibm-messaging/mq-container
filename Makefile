@@ -78,6 +78,8 @@ MQ_ARCHIVE_TYPE=LINUX
 MQ_ARCHIVE_DEV_TYPE=Linux
 # BUILD_SERVER_CONTAINER is the name of the web server container used at build time
 BUILD_SERVER_CONTAINER=build-server
+# BUILD_SERVER_NETWORK is the name of the network to use for the web server container used at build time
+BUILD_SERVER_NETWORK=build
 # NUM_CPU is the number of CPUs available to Docker.  Used to control how many
 # test run in parallel
 NUM_CPU ?= $(or $(shell $(COMMAND) info --format "{{ .NCPU }}"),2)
@@ -251,6 +253,10 @@ downloads: downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_SDK_ARCHIVE)
 cache-mq-tag:
 	@printf "MQ_MANIFEST_TAG=$(MQ_MANIFEST_TAG)\n" | tee $(PATH_TO_MQ_TAG_CACHE)
 
+###############################################################################
+# Test targets
+###############################################################################
+
 # Vendor Go dependencies for the Docker tests
 test/docker/vendor:
 	cd test/docker && go mod vendor
@@ -304,6 +310,10 @@ test-advancedserver-cover: test/docker/vendor coverage
 	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
 	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
 
+###############################################################################
+# Build functions
+###############################################################################
+
 # Command to build the image
 # Args: imageName, imageTag, dockerfile, extraArgs, dockerfileTarget
 define build-mq-command
@@ -327,46 +337,67 @@ define build-mq-command
 	  .
 endef
 
-# When building with Docker, create a separate "build-server" container using nginx
-define build-mq-docker
-	@docker network create build
-	@docker run \
+# Build using a separate container to host the MQ download files.
+# To minimize the layers in the resulting image, the download files can't be part of the build context.
+# The "docker build" command (and "podman build" on macOS) don't allow you to mount a directory into the build, so a 
+# separate container is used to host a web server.
+# Note that for Podman, this means that you need to be using the "rootful" mode, because the rootless mode doesn't allow
+# much control of networking, so the containers can't talk to each other.
+define build-mq-using-web-server
+	$(COMMAND) network create $(BUILD_SERVER_NETWORK)
+	$(COMMAND) run \
 	  --rm \
 	  --name $(BUILD_SERVER_CONTAINER) \
-	  --network build \
-	  --network-alias build \
+	  --network $(BUILD_SERVER_NETWORK) \
 	  --volume $(DOWNLOADS_DIR):/opt/app-root/src$(VOLUME_MOUNT_OPTIONS) \
 	  --detach \
-	  registry.access.redhat.com/ubi8/nginx-120 nginx -g "daemon off;" || (docker network rm build && exit 1)
-	$(call build-mq-command,$1,$2,$3,--network build --build-arg MQ_URL=http://build:8080/$4,$5) || (docker rm -f $(BUILD_SERVER_CONTAINER) && docker network rm build && exit 1)
-	@docker rm -f $(BUILD_SERVER_CONTAINER)
-	@docker network rm build
+	  registry.access.redhat.com/ubi8/nginx-120 nginx -g "daemon off;" || ($(COMMAND) network rm $(BUILD_SERVER_NETWORK) && exit 1)
+	BUILD_SERVER_IP=$$($(COMMAND) inspect -f '{{ .NetworkSettings.Networks.$(BUILD_SERVER_NETWORK).IPAddress }}' $(BUILD_SERVER_CONTAINER)); \
+	$(call build-mq-command,$1,$2,$3,--network build --build-arg MQ_URL=http://$$BUILD_SERVER_IP:8080/$4,$5) || ($(COMMAND) rm -f $(BUILD_SERVER_CONTAINER) && $(COMMAND) network rm $(BUILD_SERVER_NETWORK) && exit 1)
+	$(COMMAND) rm -f $(BUILD_SERVER_CONTAINER)
+	$(COMMAND) network rm $(BUILD_SERVER_NETWORK)
 endef
 
-# When building with Podman, just pass the downloads directory as a volume
-define build-mq-podman
+# When building with Docker, always use the web server build because you can't use bind-mounted volumes.
+# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
+define build-mq-docker
+	$(call build-mq-using-web-server,$1,$2,$3,$4,$5)
+endef
+
+# Make sure we don't use VOLUME_MOUNT_OPTIONS for Podman on macOS
+ifeq "$(COMMAND)" "podman"
+	ifeq "$(shell uname -s)" "Darwin"
+		VOLUME_MOUNT_OPTIONS:=
+	endif
+endif
+
+# When building with Podman on macOS (Darwin), use the web server build because you can't use bind-mounted volumes with `podman build` on macOS
+# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
+define build-mq-podman-Darwin
+	$(call build-mq-using-web-server,$1,$2,$3,$4,$5)
+endef
+
+# When building with Podman on Linux, just pass the downloads directory as a volume
+# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
+define build-mq-podman-Linux
 	$(call build-mq-command,$1,$2,$3,--volume $(DOWNLOADS_DIR):/var/downloads$(VOLUME_MOUNT_OPTIONS) --build-arg MQ_URL=file:///var/downloads/$4,$5)
 endef
 
+# When building with Podman, just pass the downloads directory as a volume
+# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
+define build-mq-podman
+	$(call build-mq-podman-$(shell uname -s),$1,$2,$3,$4,$5)
+endef
+
 # Build an MQ image.  The commands used are slightly different between Docker and Podman
+# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
 define build-mq
 	$(call build-mq-$(COMMAND),$1,$2,$3,$4,$5)
 endef
 
-COMMAND_SERVER_VERSION=$(shell $(COMMAND) version --format "{{ .Server.Version }}")
-COMMAND_CLIENT_VERSION=$(shell $(COMMAND) version --format "{{ .Client.Version }}")
-PODMAN_VERSION=$(shell podman version --format "{{ .Version }}")
-.PHONY: command-version
-command-version:
-# If we're using Docker, then check it's recent enough to support multi-stage builds
-ifneq (,$(findstring docker,$(COMMAND)))
-	@test "$(word 1,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
-	@test "$(word 1,$(subst ., ,$(COMMAND_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(COMMAND_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
-endif
-ifneq (,$(findstring podman,$(COMMAND)))
-	@test "$(word 1,$(subst ., ,$(PODMAN_VERSION)))" -ge "1" || (echo "Error: Podman version 1.0 or greater is required" && exit 1)
-endif
-
+###############################################################################
+# Build targets
+###############################################################################
 .PHONY: build-advancedserver-host
 build-advancedserver-host: build-advancedserver
 
@@ -396,6 +427,9 @@ build-sdk: downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
 	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
 
+###############################################################################
+# Logging targets
+###############################################################################
 .PHONY: log-build-env
 log-build-vars:
 	$(info $(SPACER)$(shell printf $(TITLE)"Build environment"$(END)))
@@ -415,6 +449,9 @@ log-build-env: log-build-vars
 
 include formatting.mk
 
+###############################################################################
+# Push/pull targets
+###############################################################################
 .PHONY: pull-mq-archive
 pull-mq-archive:
 	curl --fail --user $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY)" --output downloads/$(MQ_ARCHIVE)
@@ -479,6 +516,10 @@ endif
 build-skopeo-container:
 	$(COMMAND) images | grep -q "skopeo"; if [ $$? != 0 ]; then $(COMMAND) build -t skopeo:latest ./docker-builds/skopeo/; fi
 
+###############################################################################
+# Other targets
+###############################################################################
+
 .PHONY: clean
 clean:
 	rm -rf ./coverage
@@ -540,8 +581,6 @@ gosec:
 		printf "\ngosec found no LOW severity issues\n" ;\
 fi ;\
 
-include formatting.mk
-
 .PHONY: update-release-information
 update-release-information:
 	sed -i.bak 's/ARG MQ_URL=.*-LinuxX64.tar.gz"/ARG MQ_URL="https:\/\/public.dhe.ibm.com\/ibmdl\/export\/pub\/software\/websphere\/messaging\/mqadv\/$(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"/g' Dockerfile-server && rm Dockerfile-server.bak
@@ -554,3 +593,17 @@ update-release-information:
 	sed -i.bak 's/knowledgecenter\/SSFKSJ_.*\/com/knowledgecenter\/SSFKSJ_${MQ_VERSION_2}.0\/com/g' docs/usage.md && rm docs/usage.md.bak
 	$(eval MQ_VERSION_3=$(shell echo '${MQ_VERSION_1}' | sed "s/\.//g"))
 	sed -i.bak 's/MQ_..._ARCHIVE_REPOSITORY/MQ_${MQ_VERSION_3}_ARCHIVE_REPOSITORY/g' .travis.yml && rm .travis.yml.bak
+
+COMMAND_SERVER_VERSION=$(shell $(COMMAND) version --format "{{ .Server.Version }}")
+COMMAND_CLIENT_VERSION=$(shell $(COMMAND) version --format "{{ .Client.Version }}")
+PODMAN_VERSION=$(shell podman version --format "{{ .Version }}")
+.PHONY: command-version
+command-version:
+# If we're using Docker, then check it's recent enough to support multi-stage builds
+ifneq (,$(findstring docker,$(COMMAND)))
+	@test "$(word 1,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
+	@test "$(word 1,$(subst ., ,$(COMMAND_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(COMMAND_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
+endif
+ifneq (,$(findstring podman,$(COMMAND)))
+	@test "$(word 1,$(subst ., ,$(PODMAN_VERSION)))" -ge "1" || (echo "Error: Podman version 1.0 or greater is required" && exit 1)
+endif
