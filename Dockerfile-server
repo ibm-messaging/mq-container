@@ -31,6 +31,7 @@ ARG IMAGE_TAG="Not specified"
 ARG GO_WORKDIR
 USER 0
 COPY install-mq.sh /usr/local/bin/
+# Install the MQ SDK
 RUN mkdir /opt/mqm \
   && chmod a+x /usr/local/bin/install-mq.sh \
   && sleep 1 \
@@ -43,21 +44,21 @@ COPY internal/ ./internal
 COPY pkg/ ./pkg
 COPY vendor/ ./vendor
 ENV CGO_CFLAGS="-I/opt/mqm/inc/" \
-    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*"
-ENV PATH="${PATH}:/opt/mqm/bin"
-RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\" -X \"main.ImageTag=$IMAGE_TAG\"" ./cmd/runmqserver/
-RUN go build ./cmd/chkmqready/
-RUN go build ./cmd/chkmqhealthy/
-RUN go build ./cmd/chkmqstarted/
-RUN go build ./cmd/runmqdevserver/
-RUN go test -v ./cmd/runmqdevserver/...
-RUN go test -v ./cmd/runmqserver/
-RUN go test -v ./cmd/chkmqready/
-RUN go test -v ./cmd/chkmqhealthy/
-RUN go test -v ./cmd/chkmqstarted/
-RUN go test -v ./pkg/...
-RUN go test -v ./internal/...
-RUN go vet ./cmd/... ./internal/...
+    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
+    PATH="${PATH}:/opt/mqm/bin"
+RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\" -X \"main.ImageTag=$IMAGE_TAG\"" ./cmd/runmqserver/ \
+  && go build ./cmd/chkmqready/ \
+  && go build ./cmd/chkmqhealthy/ \
+  && go build ./cmd/chkmqstarted/ \
+  && go build ./cmd/runmqdevserver/ \
+  && go test -v ./cmd/runmqdevserver/... \
+  && go test -v ./cmd/runmqserver/ \
+  && go test -v ./cmd/chkmqready/ \
+  && go test -v ./cmd/chkmqhealthy/ \
+  && go test -v ./cmd/chkmqstarted/ \
+  && go test -v ./pkg/... \
+  && go test -v ./internal/... \
+  && go vet ./cmd/... ./internal/...
 
 ###############################################################################
 # Main build stage, to build MQ image
@@ -68,18 +69,18 @@ ARG MQ_URL
 ARG BASE_IMAGE
 ARG BASE_TAG
 ARG GO_WORKDIR
-LABEL summary="IBM MQ Advanced Server"
-LABEL description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
-LABEL vendor="IBM"
-LABEL maintainer="IBM"
-LABEL distribution-scope="private"
-LABEL authoritative-source-url="https://www.ibm.com/software/passportadvantage/"
-LABEL url="https://www.ibm.com/products/mq/advanced"
-LABEL io.openshift.tags="mq messaging"
-LABEL io.k8s.display-name="IBM MQ Advanced Server"
-LABEL io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
-LABEL base-image=$BASE_IMAGE
-LABEL base-image-release=$BASE_TAG
+LABEL summary="IBM MQ Advanced Server" \
+      description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
+      vendor="IBM" \
+      maintainer="IBM" \
+      distribution-scope="private" \
+      authoritative-source-url="https://www.ibm.com/software/passportadvantage/" \
+      url="https://www.ibm.com/products/mq/advanced" \
+      io.openshift.tags="mq messaging" \
+      io.k8s.display-name="IBM MQ Advanced Server" \
+      io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
+      base-image=$BASE_IMAGE \
+      base-image-release=$BASE_TAG
 COPY install-mq.sh /usr/local/bin/
 COPY install-mq-server-prereqs.sh /usr/local/bin/
 # Install MQ.  To avoid a "text file busy" error here, we sleep before installing.
@@ -91,9 +92,6 @@ RUN env \
   && install-mq.sh \
   && /opt/mqm/bin/security/amqpamcf \
   && chown -R 1001:root /opt/mqm/*
-# Create a directory for runtime data from runmqserver
-RUN mkdir -p /run/runmqserver \
-  && chown 1001:root /run/runmqserver
 COPY --from=builder $GO_WORKDIR/runmqserver /usr/local/bin/
 COPY --from=builder $GO_WORKDIR/chkmq* /usr/local/bin/
 COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
@@ -123,21 +121,14 @@ ENTRYPOINT ["runmqserver"]
 ###############################################################################
 # Build stage to build C code for custom authorization service (developer-only)
 ###############################################################################
-# User the Go toolset image, which already includes gcc
-FROM $BUILDER_IMAGE:$BUILDER_TAG as cbuilder
+# Use the Go toolset image, which already includes gcc and the MQ SDK
+FROM builder as cbuilder
 # The URL to download the MQ installer from in tar.gz format
 # This assumes an archive containing the MQ Non-Install packages
 ARG MQ_URL
 USER 0
 # Install the Apache Portable Runtime code (used for htpasswd hash checking)
 RUN yum --assumeyes --disableplugin=subscription-manager install apr-devel apr-util-openssl apr-util-devel
-# Install MQ client
-COPY install-mq.sh /usr/local/bin/
-RUN mkdir /opt/mqm \
-  && chmod a+x /usr/local/bin/install-mq.sh \
-  && sleep 1 \
-  && INSTALL_SDK=1 install-mq.sh \
-  && chown -R 1001:root /opt/mqm/*
 COPY authservice/ /opt/app-root/src/authservice/
 WORKDIR /opt/app-root/src/authservice/mqhtpass
 RUN make all
@@ -149,31 +140,25 @@ FROM mq-server AS mq-dev-server
 ARG BASE_IMAGE
 ARG BASE_TAG
 ARG GO_WORKDIR
-# Enable MQ developer default configuration
-ENV MQ_DEV=true
-LABEL summary="IBM MQ Advanced for Developers Server"
-LABEL description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
-LABEL vendor="IBM"
-LABEL distribution-scope="private"
-LABEL authoritative-source-url="https://www.ibm.com/software/passportadvantage/"
-LABEL url="https://www.ibm.com/products/mq/advanced"
-LABEL io.openshift.tags="mq messaging"
-LABEL io.k8s.display-name="IBM MQ Advanced for Developers Server"
-LABEL io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises"
-LABEL base-image=$BASE_IMAGE
-LABEL base-image-release=$BASE_TAG
+LABEL summary="IBM MQ Advanced for Developers Server" \
+      description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
+      vendor="IBM" \
+      distribution-scope="private" \
+      authoritative-source-url="https://www.ibm.com/software/passportadvantage/" \
+      url="https://www.ibm.com/products/mq/advanced" \
+      io.openshift.tags="mq messaging" \
+      io.k8s.display-name="IBM MQ Advanced for Developers Server" \
+      io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
+      base-image=$BASE_IMAGE \
+      base-image-release=$BASE_TAG
 USER 0
 COPY --from=cbuilder /opt/app-root/src/authservice/mqhtpass/build/mqhtpass.so /opt/mqm/lib64/
 COPY etc/mqm/*.ini /etc/mqm/
 COPY etc/mqm/mq.htpasswd /etc/mqm/
-RUN chmod 0660 /etc/mqm/mq.htpasswd
 COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
 RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
   && sleep 1 \
   && install-extra-packages.sh
-# Create a directory for runtime data from runmqserver
-RUN mkdir -p /run/runmqdevserver \
-  && chown 1001:root /run/runmqdevserver
 COPY --from=builder $GO_WORKDIR/runmqdevserver /usr/local/bin/
 # Copy template files
 COPY incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
@@ -182,10 +167,13 @@ COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
 RUN chown -R 1001:root /etc/mqm/* \
   && chmod -R g+w /etc/mqm/web \
   && chmod +x /usr/local/bin/runmq* \
+  && chmod 0660 /etc/mqm/mq.htpasswd \
   && install --directory --mode 2775 --owner 1001 --group root /run/runmqdevserver
-ENV MQ_ENABLE_EMBEDDED_WEB_SERVER=1 MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost
-ENV LD_LIBRARY_PATH=/opt/mqm/lib64
-ENV MQ_CONNAUTH_USE_HTP=true
-ENV MQS_PERMIT_UNKNOWN_ID=true
+ENV MQ_DEV=true \
+    MQ_ENABLE_EMBEDDED_WEB_SERVER=1 \
+    MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost \
+    LD_LIBRARY_PATH=/opt/mqm/lib64 \
+    MQ_CONNAUTH_USE_HTP=true \
+    MQS_PERMIT_UNKNOWN_ID=true
 USER 1001
 ENTRYPOINT ["runmqdevserver"]
