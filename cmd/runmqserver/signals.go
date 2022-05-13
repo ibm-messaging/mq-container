@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2018
+© Copyright IBM Corporation 2017, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ func signalHandler(qmgr string) chan int {
 	control := make(chan int)
 	// Use separate channels for the signals, to avoid SIGCHLD signals swamping
 	// the buffer, and preventing other signals.
-	stopSignals := make(chan os.Signal)
-	reapSignals := make(chan os.Signal)
+	stopSignals := make(chan os.Signal, 1)
+	reapSignals := make(chan os.Signal, 1)
 	signal.Notify(stopSignals, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		for {
