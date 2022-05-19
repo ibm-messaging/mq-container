@@ -137,16 +137,6 @@ jobs:
         - MQ_ARCHIVE_REPOSITORY=$MQ_9204_EUS_ARCHIVE_REPOSITORY_PPC64LE
         - RELEASE=$RELEASE_LTS
       script: bash -e travis-build-scripts/run.sh
-    - stage: push-manifest
-      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
-      name: "Push Manifest-list to registry"
-      env:
-        - LTS=true
-        - TAGCACHE_FILE=tagcache-lts
-        - MQ_VERSION=$MQ_LTS_VERSION
-        - PUSH_MANIFEST_ONLY=true
-        - RELEASE=$RELEASE_LTS
-      script: bash -e travis-build-scripts/run.sh
 
 before_install:
   - make install-build-deps

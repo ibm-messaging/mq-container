@@ -55,5 +55,5 @@ else
 fi
 
 if [ "$LTS" = true ] ; then
-    ./travis-build-scripts/push.sh production
+    printf '\nIn CD stream but building LTS image. Do not push LTS image to artifactory\n'
 fi
