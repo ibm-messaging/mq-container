@@ -32,7 +32,7 @@ MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 
 ### Building previous MQ Long Term Support (LTS)
 
-**Note**: MQ 9.3 is the latest MQ version with MQ Long Term Support (LTS), as well as being the latest Continuous Delivery (CD) version. Therefore, to build build 9.3.0.X, follow the [instructions above for MQ 9.3](#building-mq-93-mq-long-term-support-lts-and-continuous-delivery-cd).
+**Note**: MQ 9.3 is the latest MQ version with MQ Long Term Support (LTS), as well as being the latest Continuous Delivery (CD) version. Therefore, to build build 9.3.0.X, follow the [instructions above for MQ 9.3](#building-mq-93-long-term-support-lts-and-continuous-delivery-cd).
 
 However, if you wish to build the previous MQ LTS, use the instructions for LTS in `docs/building.md` in the `v9.2.0.x-eus` branch.
 
