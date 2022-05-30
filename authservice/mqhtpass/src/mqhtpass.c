@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021
+© Copyright IBM Corporation 2021, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -227,7 +227,6 @@ static void MQENTRY mqhtpass_authenticate_user(
     PMQLONG pReason)
 {
   char *spuser = NULL;
-  char *sppass = NULL;
   // By default, return a warning, which indicates to MQ that this
   // authorization service hasn't authenticated the user.
   *pCompCode = MQCC_WARNING;
