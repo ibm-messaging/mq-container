@@ -30,12 +30,10 @@ ARG IMAGE_SOURCE="Not specified"
 ARG IMAGE_TAG="Not specified"
 ARG GO_WORKDIR
 USER 0
-COPY install-mq.sh /usr/local/bin/
-# Install the MQ SDK
-RUN mkdir /opt/mqm \
-  && chmod a+x /usr/local/bin/install-mq.sh \
-  && sleep 1 \
-  && INSTALL_SDK=1 install-mq.sh \
+WORKDIR /opt/mqm
+# Download and extract MQ files, to get the MQ client needed to compile.
+# Only extract certain MQ files to make the build quicker
+RUN curl --fail --location $MQ_URL | tar --extract --gunzip \
   && chown -R 1001:root /opt/mqm/*
 WORKDIR $GO_WORKDIR/
 COPY go.mod go.sum ./

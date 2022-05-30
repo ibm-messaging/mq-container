@@ -21,17 +21,11 @@ set -ex
 test -f /usr/bin/rpm && RPM=true || RPM=false
 test -f /usr/bin/apt-get && UBUNTU=true || UBUNTU=false
 
-# Only install the SDK package as part of the build stage
-INSTALL_SDK=${INSTALL_SDK:-0}
-
 # Download and extract the MQ unzippable server
 DIR_TMP=/tmp/mq
 mkdir -p ${DIR_TMP}
 cd ${DIR_TMP}
-curl --fail --remote-name --location $MQ_URL
-
-tar -xzf ./*.tar.gz
-rm -f ./*.tar.gz
+curl --fail --location $MQ_URL | tar --extract --gunzip
 ls -la ${DIR_TMP}
 
 # Generate MQ package in INSTALLATION_DIR
@@ -53,7 +47,7 @@ export genmqpkg_incmqxr=0
 export genmqpkg_incnls=1
 export genmqpkg_incras=1
 export genmqpkg_incsamp=1
-export genmqpkg_incsdk=$INSTALL_SDK
+export genmqpkg_incsdk=0
 export genmqpkg_inctls=1
 export genmqpkg_incunthrd=0
 export genmqpkg_incweb=1
@@ -97,8 +91,8 @@ $RPM && PAM_FILE=/etc/pam.d/password-auth
 sed -i 's/password\t\[success=1 default=ignore\]\tpam_unix\.so obscure sha512/password\t[success=1 default=ignore]\tpam_unix.so obscure sha512 minlen=8/' $PAM_FILE
 
 # List all the installed packages, for the build log
-$RPM && rpm -q --all || true
-$UBUNTU && dpkg --list || true
+$RPM && (rpm -q --all | sort) || true
+$UBUNTU && (dpkg --list | sort) || true
 
 #Update the license file to include UBI 8 instead of UBI 7
 sed -i 's/v7.0/v8.0/g' /opt/mqm/licenses/non_ibm_license.txt
