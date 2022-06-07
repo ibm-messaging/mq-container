@@ -1,15 +1,20 @@
 # Change log
 
-## 9.3.0.0 (2022-03-29)
+## 9.3.0.0 (2022-06)
 
 * Updated to MQ version 9.3.0.0
 * Use `registry.access.redhat.com` instead of `registry.redhat.io`, so that you don't need to login with a Red Hat account.
+* Updated default developer config to use TLS cipher `ANY_TLS12_OR_HIGHER` instead of `ANY_TLS12`
+* Added default `jvm.options` file fix issue with missing preferences file causing an error in the web server log.
+* Updated to allow building image from Podman on macOS (requires Podman 4.1)
+* Container builds are now faster
+* Updated signal handling to use a buffer, as recommended by the Go 1.17 vetting tool
 
-## 9.2.5.0 (2021-12-06)
+## 9.2.5.0 (2022-03)
 
 * Updated to MQ version 9.2.5.0
 
-## 9.2.4.0 (2021-09-06)
+## 9.2.4.0 (2021-11)
 
 * Updated to MQ version 9.2.4.0
 
