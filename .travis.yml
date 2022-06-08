@@ -29,7 +29,7 @@ env:
     - MQ_LTS_VERSION=9.2.0.5
     - TAGCACHE_FILE=tagcache
     - RELEASE=r2
-    - RELEASE_LTS=r2
+    - RELEASE_LTS=r3
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
