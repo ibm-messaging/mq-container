@@ -20,7 +20,7 @@ From MQ 9.2.X, the MQ container adds support for MQ Long Term Support (LTS) **pr
 The procedure below is for building the 9.3 release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/), selecting the correct 'Continuous Delivery for containers' eImage part number for your architecture: https://www.ibm.com/support/pages/downloading-ibm-mq-925-continuous-delivery
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/). Identify the correct 'Long Term Support Release for Containers' eImage part number for your architecture from the 9.3.0 LTS tab at https://www.ibm.com/support/pages/downloading-ibm-mq-930
 3. Ensure the `tar.gz` file is in the `downloads` directory
 4. Run `make build-advancedserver`
 
@@ -34,7 +34,8 @@ MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 
 **Note**: MQ 9.3 is the latest MQ version with MQ Long Term Support (LTS), as well as being the latest Continuous Delivery (CD) version. Therefore, to build build 9.3.0.X, follow the [instructions above for MQ 9.3](#building-mq-93-long-term-support-lts-and-continuous-delivery-cd).
 
-However, if you wish to build the previous MQ LTS, use the instructions for LTS in `docs/building.md` in the `v9.2.0.x-eus` branch.
+However, if you wish to build the previous MQ LTS, use the [instructions](/../v9.2.0.x-eus/docs/building.md#mq-long-term-support-lts) in the `v9.2.0.x-eus` branch.
+
 
 ## Building a developer image
 
