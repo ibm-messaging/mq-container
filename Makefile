@@ -20,6 +20,13 @@
 include config.env
 include source-branch.env
 
+# arch_uname is the platform architecture according to the uname program.  Can be differ by OS, e.g. `arm64` on macOS, but `aarch64` on Linux.
+arch_uname := $(shell uname -m)
+# arch_go is the platform architecture in Go-style (e.g. amd64, ppc64le, s390x or arm64).
+arch_go := $(if $(findstring x86_64,$(arch_uname)),amd64,$(if $(findstring aarch64,$(arch_uname)),arm64,$(arch_uname)))
+# ARCH is the platform architecture in Go-style (e.g. amd64, ppc64le, s390x or arm64).
+# Override this to build an image for a different architecture.  Note that RUN instructions will not be able to succeed without the help of emulation provided by packages like qemu-user-static.
+ARCH ?= $(arch_go)
 # RELEASE shows what release of the container code has been built
 RELEASE ?=
 # MQ_ARCHIVE_REPOSITORY is a remote repository from which to pull the MQ_ARCHIVE (if required)
@@ -60,8 +67,6 @@ MQ_DELIVERY_REGISTRY_NAMESPACE ?=
 MQ_DELIVERY_REGISTRY_USER ?=
 # MQ_DELIVERY_REGISTRY_CREDENTIAL is the password/API key for the remote registry (if required)
 MQ_DELIVERY_REGISTRY_CREDENTIAL ?=
-# ARCH is the platform architecture (e.g. amd64, ppc64le or s390x)
-ARCH ?= $(if $(findstring x86_64,$(shell uname -m)),amd64,$(shell uname -m))
 # LTS is a boolean value to enable/disable LTS container build
 LTS ?= false
 # VOLUME_MOUNT_OPTIONS is used when bind-mounting files from the "downloads" directory into the container.  By default, SELinux labels are automatically re-written, but this doesn't work on some filesystems with extended attributes (xattrs).  You can turn off the label re-writing by setting this variable to be blank.
@@ -108,12 +113,17 @@ endif
 
 # Try to figure out which archive to use from the architecture
 ifeq "$(ARCH)" "amd64"
-	MQ_ARCHIVE_ARCH=X86-64
-	MQ_ARCHIVE_DEV_ARCH=X64
+	MQ_ARCHIVE_ARCH:=X86-64
+	MQ_ARCHIVE_DEV_ARCH:=X64
 else ifeq "$(ARCH)" "ppc64le"
-	MQ_ARCHIVE_ARCH=PPC64LE
+	MQ_ARCHIVE_ARCH:=PPC64LE
+	MQ_ARCHIVE_DEV_ARCH:=PPC64LE
 else ifeq "$(ARCH)" "s390x"
-	MQ_ARCHIVE_ARCH=S390X
+	MQ_ARCHIVE_ARCH:=S390X
+	MQ_ARCHIVE_DEV_ARCH:=S390X
+else ifeq "$(ARCH)" "arm64"
+	MQ_ARCHIVE_ARCH:=ARM64
+	MQ_ARCHIVE_DEV_ARCH:=ARM64
 endif
 
 # If this is a fake master build, push images to alternative location (pipeline wont consider these images GA candidates)
@@ -322,6 +332,7 @@ test-advancedserver-cover: test/docker/vendor coverage
 
 # Command to build the image
 # Args: imageName, imageTag, dockerfile, extraArgs, dockerfileTarget
+# If the ARCH variable has been changed from the default value (arch_go variable), then the `--platform` parameter is added
 define build-mq-command
 	$(COMMAND) build \
 	  --tag $1:$2 \
@@ -338,6 +349,7 @@ define build-mq-command
 	  --label vcs-ref=$(IMAGE_REVISION) \
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
+	  $(if $(findstring $(arch_go),$(ARCH)),,--platform=linux/$(ARCH)) \
 	  $(EXTRA_LABELS) \
 	  --target $5 \
 	  .
@@ -439,9 +451,12 @@ build-sdk: downloads/$(MQ_ARCHIVE_DEV)
 .PHONY: log-build-env
 log-build-vars:
 	$(info $(SPACER)$(shell printf $(TITLE)"Build environment"$(END)))
-	@echo ARCH=$(ARCH)
-	@echo MQ_VERSION=$(MQ_VERSION)
-	@echo MQ_ARCHIVE=$(MQ_ARCHIVE)
+	@echo arch_uname=$(arch_uname)
+	@echo arch_go=$(arch_go)
+	@echo "ARCH=$(ARCH) (origin:$(origin ARCH))"
+	@echo MQ_VERSION="$(MQ_VERSION) (origin:$(origin MQ_VERSION))"
+	@echo MQ_ARCHIVE="$(MQ_ARCHIVE) (origin:$(origin MQ_ARCHIVE))"
+	@echo MQ_ARCHIVE_DEV_ARCH=$(MQ_ARCHIVE_DEV_ARCH)
 	@echo MQ_ARCHIVE_DEV=$(MQ_ARCHIVE_DEV)
 	@echo MQ_IMAGE_DEVSERVER=$(MQ_IMAGE_DEVSERVER)
 	@echo MQ_IMAGE_ADVANCEDSERVER=$(MQ_IMAGE_ADVANCEDSERVER)

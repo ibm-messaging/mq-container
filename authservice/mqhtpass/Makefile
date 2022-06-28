@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017, 2020
+# © Copyright IBM Corporation 2017, 2022
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,9 +20,15 @@
 
 SRC_DIR = src
 BUILD_DIR = ./build
+ARCH ?= $(if $(findstring x86_64,$(shell uname -m)),amd64,$(if $(findstring aarch64,$(shell uname -m)),aarch64,$(shell uname -m)))
 
 # Flags passed to the C compiler.  Need to use gnu11 to get POSIX functions needed for file locking.
-CFLAGS += -std=gnu11 -fPIC -Wall -m64
+CFLAGS.amd64 := -m64
+CFLAGS.ppc64le := -m64
+CFLAGS.s390x := -m64
+# -m64 is not a valid compiler option on aarch64/arm64 (ARM)
+CFLAGS.arm64 :=
+CFLAGS += -std=gnu11 -fPIC -Wall ${CFLAGS.${ARCH}}
 
 LIB_APR = -L/usr/lib64 -lapr-1 -laprutil-1
 LIB_MQ = -L/opt/mqm/lib64 -lmqm_r
