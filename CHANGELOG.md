@@ -1,5 +1,10 @@
 # Change log
 
+## 9.2.0.6-LTS (2022-07-20)
+
+* Updated to MQ version 9.2.0.6
+* Updated to Go version 1.17
+
 ## 9.2.0.5-LTS (2022-01-25)
 
 * Updated to MQ version 9.2.0.5

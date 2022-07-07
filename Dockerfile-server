@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2020
+# © Copyright IBM Corporation 2015, 2022
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=registry.redhat.io/ubi8/ubi-minimal
-ARG BASE_TAG=8.6-751.1655117800
+ARG BASE_TAG=8.6-854
 ARG BUILDER_IMAGE=registry.redhat.io/ubi8/go-toolset
-ARG BUILDER_TAG=1.16.12-10
+ARG BUILDER_TAG=1.17.10-4
 ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
-ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.2.0.5-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
+ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.2.0.6-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
@@ -56,7 +56,8 @@ RUN go test -v ./cmd/chkmqready/
 RUN go test -v ./cmd/chkmqhealthy/
 RUN go test -v ./pkg/...
 RUN go test -v ./internal/...
-RUN go vet ./cmd/... ./internal/...
+# go 1.17 sigchanyzer check disabled for EUS stream as fix would introduce change of behaviour
+RUN go vet -sigchanyzer=FALSE ./cmd/... ./internal/...
 
 ###############################################################################
 # Main build stage, to build MQ image
