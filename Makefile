@@ -18,6 +18,7 @@
 ###############################################################################
 
 include config.env
+include source-branch.env
 
 # RELEASE shows what release of the container code has been built
 RELEASE ?=
@@ -113,6 +114,13 @@ else ifeq "$(ARCH)" "ppc64le"
 	MQ_ARCHIVE_ARCH=PPC64LE
 else ifeq "$(ARCH)" "s390x"
 	MQ_ARCHIVE_ARCH=S390X
+endif
+
+# If this is a fake master build, push images to alternative location (pipeline wont consider these images GA candidates)
+ifeq "$(TRAVIS)" "true"
+ifneq "$(MAIN_BRANCH)" "$(SOURCE_BRANCH)"
+	MQ_DELIVERY_REGISTRY_NAMESPACE="master-fake"
+endif
 endif
 
 # LTS_TAG is the tag modifier for an LTS container build
@@ -462,6 +470,9 @@ pull-mq-archive-dev:
 
 .PHONY: push-advancedserver
 push-advancedserver:
+	@if [ $(MQ_DELIVERY_REGISTRY_NAMESPACE) = "master-fake" ]; then\
+        echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
+    fi
 	$(info $(SPACER)$(shell printf $(TITLE)"Push production image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
 	$(COMMAND) tag $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
@@ -469,6 +480,9 @@ push-advancedserver:
 
 .PHONY: push-devserver
 push-devserver:
+	@if [ $(MQ_DELIVERY_REGISTRY_NAMESPACE) = "master-fake" ]; then\
+        echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
+    fi
 	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
 	$(COMMAND) tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
