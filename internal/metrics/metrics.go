@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ func GatherMetrics(qmName string, log *logger.Logger) {
 
 	// If running in standby mode - wait until the queue manager becomes active
 	for {
-		active, _ := ready.IsRunningAsActiveQM(qmName)
+		active, _ := ready.IsRunningAsActiveQM(context.Background(), qmName)
 		if active {
 			break
 		}

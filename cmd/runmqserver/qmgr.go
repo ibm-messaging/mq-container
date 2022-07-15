@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2017, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -131,7 +132,7 @@ func startQueueManager(name string) error {
 func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
 	qmGracePeriod := os.Getenv("MQ_GRACE_PERIOD")
-	isStandby, err := ready.IsRunningAsStandbyQM(name)
+	isStandby, err := ready.IsRunningAsStandbyQM(context.Background(), name)
 	if err != nil {
 		log.Printf("Error getting status for queue manager %v: %v", name, err.Error())
 		return err
