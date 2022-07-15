@@ -117,7 +117,7 @@ else ifeq "$(ARCH)" "s390x"
 endif
 
 # If this is a fake master build, push images to alternative location (pipeline wont consider these images GA candidates)
-ifeq ($(shell [ "$(TRAVIS)" = "true" ] && [ -n $(MAIN_BRANCH) ] && [ -n $(SOURCE_BRANCH) ] && [ "$(MAIN_BRANCH)" != "$(SOURCE_BRANCH)" ] && echo "true"), true)
+ifeq ($(shell [ "$(TRAVIS)" = "true" ] && [ -n "$(MAIN_BRANCH)" ] && [ -n "$(SOURCE_BRANCH)" ] && [ "$(MAIN_BRANCH)" != "$(SOURCE_BRANCH)" ] && echo "true"), true)
 	MQ_DELIVERY_REGISTRY_NAMESPACE="master-fake"
 endif
 
