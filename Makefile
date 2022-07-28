@@ -484,8 +484,8 @@ pull-mq-archive-dev:
 .PHONY: push-advancedserver
 push-advancedserver:
 	@if [ $(MQ_DELIVERY_REGISTRY_NAMESPACE) = "master-fake" ]; then\
-        echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
-    fi
+		echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
+	fi
 	$(info $(SPACER)$(shell printf $(TITLE)"Push production image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
 	$(COMMAND) tag $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
@@ -494,8 +494,8 @@ push-advancedserver:
 .PHONY: push-devserver
 push-devserver:
 	@if [ $(MQ_DELIVERY_REGISTRY_NAMESPACE) = "master-fake" ]; then\
-        echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
-    fi
+		echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
+	fi
 	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
 	$(COMMAND) tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
