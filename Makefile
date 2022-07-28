@@ -178,6 +178,13 @@ ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" = "false" ] && [ 
 	MQ_MANIFEST_TAG_SUFFIX=.$(TIMESTAMPFLAT).$(GIT_COMMIT)
 endif
 
+# Make sure we don't use VOLUME_MOUNT_OPTIONS for Podman on macOS
+ifeq "$(COMMAND)" "podman"
+	ifeq "$(shell uname -s)" "Darwin"
+		VOLUME_MOUNT_OPTIONS:=
+	endif
+endif
+
 PATH_TO_MQ_TAG_CACHE=$(TRAVIS_BUILD_DIR)/.tagcache
 ifneq "$(TRAVIS)" "$(EMPTY)"
 ifneq ("$(wildcard $(PATH_TO_MQ_TAG_CACHE))","")
@@ -381,13 +388,6 @@ endef
 define build-mq-docker
 	$(call build-mq-using-web-server,$1,$2,$3,$4,$5)
 endef
-
-# Make sure we don't use VOLUME_MOUNT_OPTIONS for Podman on macOS
-ifeq "$(COMMAND)" "podman"
-	ifeq "$(shell uname -s)" "Darwin"
-		VOLUME_MOUNT_OPTIONS:=
-	endif
-endif
 
 # When building with Podman on macOS (Darwin), use the web server build because you can't use bind-mounted volumes with `podman build` on macOS
 # Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
