@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2017, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ func stopQueueManager(name string) error {
 		if isStandby {
 			args = []string{"-x", name}
 		} else {
-			args = []string{"-s", "-w", "-r", "-tp", qmGracePeriod, name}
+			args = []string{"-s", "-w", "-tp", qmGracePeriod, name}
 		}
 	}
 	out, rc, err := command.Run("endmqm", args...)
