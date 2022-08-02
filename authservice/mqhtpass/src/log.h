@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021
+© Copyright IBM Corporation 2021, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,5 +59,12 @@ void log_close();
  */
 #define log_debugf(format,...) log_printf(__FILE__, __LINE__, "DEBUG", format, ##__VA_ARGS__)
 
+/**
+ * Return the length of the string when trimmed of trailing spaces.
+ * IBM MQ uses fixed length strings, so this function can be used to print
+ * a trimmed version of a string using the "%.*s" printf format string.
+ * For example, `log_printf("%.*s", trimmed_len(fw_str, 48), fw_str)`
+ */
+int trimmed_len(char *s, int);
 
 #endif

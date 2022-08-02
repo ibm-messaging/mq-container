@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021
+© Copyright IBM Corporation 2021, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ void log_printf(const char *source_file, int source_line, const char *level, con
     if (strftime(date_buf, sizeof date_buf, "%FT%T", utc))
     {
        // Round microseconds down to milliseconds, for consistency
-       cur += snprintf(cur, end-cur, ", \"ibm_datetime\":\"%s.%03ldZ\"", date_buf, now.tv_usec / 1000);
+       cur += snprintf(cur, end-cur, ", \"ibm_datetime\":\"%s.%03ldZ\"", date_buf, now.tv_usec / (long)1000);
     }
     cur += snprintf(cur, end-cur, ", \"ibm_processId\":\"%d\"", pid);
     cur += snprintf(cur, end-cur, ", \"host\":\"%s\"", hostname);
@@ -146,7 +146,17 @@ void log_printf(const char *source_file, int source_line, const char *level, con
 
     // Important: Just do one file write, to prevent problems with multi-threading.
     // This only works if the log message is not too long for the buffer.
-    fprintf(fp, buf);
+    fprintf(fp, "%s", buf);
   }
 }
 
+int trimmed_len(char *s, int max_len)
+{
+  int i;
+  for (i = max_len - 1; i >= 0; i--)
+  {
+    if (s[i] != ' ')
+      break;
+  }
+  return i+1;
+}

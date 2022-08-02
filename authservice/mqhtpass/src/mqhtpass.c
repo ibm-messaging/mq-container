@@ -34,8 +34,6 @@ static MQZ_TERM_AUTHORITY mqhtpass_terminate;
 #define HTPASSWD_FILE "/etc/mqm/mq.htpasswd"
 #define NAME "MQ Advanced for Developers custom authentication service"
 
-static char *trim(char *s);
-
 /**
  * Initialization and entrypoint for the dynamically loaded
  * authorization installable service. It registers the addresses of the
@@ -80,7 +78,7 @@ void MQENTRY MQStart(
   {
     log_infof("Initializing %s", NAME);
   }
-  log_debugf("MQStart options=%s qmgr=%s", ((Options == MQZIO_SECONDARY) ? "Secondary" : "Primary"), trim(QMgrName));
+  log_debugf("MQStart options=%s qmgr=%.*s", ((Options == MQZIO_SECONDARY) ? "Secondary" : "Primary"), trimmed_len(QMgrName, MQ_Q_MGR_NAME_LENGTH), QMgrName);
 
   if (!htpass_valid_file(HTPASSWD_FILE))
   {
@@ -176,11 +174,14 @@ static void MQENTRY mqhtpass_authenticate_user_csp(
     // Tell the queue manager to continue trying other authorization services, as they might have the user.
     *pContinuation = MQZCI_CONTINUE;
     log_debugf(
-        "User authentication failed due to invalid user.  user=%s effuser=%s applname=%s csp_user=%s cc=%d reason=%d",
-        trim(pIdentityContext->UserIdentifier),
-        trim(pApplicationContext->EffectiveUserID),
-        trim(pApplicationContext->ApplName),
-        trim(csp_user),
+        "User authentication failed due to invalid user.  user=%.*s effuser=%.*s applname=%.*s csp_user=%s cc=%d reason=%d",
+        trimmed_len(pIdentityContext->UserIdentifier, MQ_USER_ID_LENGTH),
+        pIdentityContext->UserIdentifier,
+        trimmed_len(pApplicationContext->EffectiveUserID, MQ_USER_ID_LENGTH),
+        pApplicationContext->EffectiveUserID,
+        trimmed_len(pApplicationContext->ApplName, MQ_APPL_NAME_LENGTH),
+        pApplicationContext->ApplName,
+        csp_user,
         *pCompCode,
         *pReason);
   }
@@ -192,11 +193,14 @@ static void MQENTRY mqhtpass_authenticate_user_csp(
     // Tell the queue manager to stop trying other authorization services.
     *pContinuation = MQZCI_STOP;
     log_debugf(
-        "User authentication failed due to invalid password.  user=%s effuser=%s applname=%s csp_user=%s cc=%d reason=%d",
-        trim(pIdentityContext->UserIdentifier),
-        trim(pApplicationContext->EffectiveUserID),
-        trim(pApplicationContext->ApplName),
-        trim(csp_user),
+        "User authentication failed due to invalid password.  user=%.*s effuser=%.*s applname=%.*s csp_user=%s cc=%d reason=%d",
+        trimmed_len(pIdentityContext->UserIdentifier, MQ_USER_ID_LENGTH),
+        pIdentityContext->UserIdentifier,
+        trimmed_len(pApplicationContext->EffectiveUserID, MQ_USER_ID_LENGTH),
+        pApplicationContext->EffectiveUserID,
+        trimmed_len(pApplicationContext->ApplName, MQ_APPL_NAME_LENGTH),
+        pApplicationContext->ApplName,
+        csp_user,
         *pCompCode,
         *pReason);
   }
@@ -275,11 +279,14 @@ static void MQENTRY mqhtpass_authenticate_user(
       else
       {
         log_debugf(
-            "User authentication failed user=%s effuser=%s applname=%s cspuser=%s cc=%d reason=%d",
-            trim(pIdentityContext->UserIdentifier),
-            trim(pApplicationContext->EffectiveUserID),
-            trim(pApplicationContext->ApplName),
-            trim(spuser),
+            "User authentication failed user=%.*s effuser=%.*s applname=%.*s cspuser=%s cc=%d reason=%d",
+            trimmed_len(pIdentityContext->UserIdentifier, MQ_USER_ID_LENGTH),
+            pIdentityContext->UserIdentifier,
+            trimmed_len(pApplicationContext->EffectiveUserID, MQ_USER_ID_LENGTH),
+            pApplicationContext->EffectiveUserID,
+            trimmed_len(pApplicationContext->ApplName, MQ_APPL_NAME_LENGTH),
+            pApplicationContext->ApplName,
+            spuser,
             *pCompCode,
             *pReason);
       }
@@ -333,18 +340,3 @@ static void MQENTRY mqhtpass_terminate(
   *pReason = MQRC_NONE;
 }
 
-/**
- * Remove trailing spaces from a string.
- */
-static char *trim(char *s)
-{
-  int i;
-  for (i = strlen(s) - 1; i >= 0; i--)
-  {
-    if (s[i] == ' ')
-      s[i] = 0;
-    else
-      break;
-  }
-  return s;
-}

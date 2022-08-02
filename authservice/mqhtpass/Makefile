@@ -33,11 +33,17 @@ CFLAGS += -std=gnu11 -fPIC -Wall ${CFLAGS.${ARCH}}
 LIB_APR = -L/usr/lib64 -lapr-1 -laprutil-1
 LIB_MQ = -L/opt/mqm/lib64 -lmqm_r
 
-all: $(BUILD_DIR)/mqhtpass.so $(BUILD_DIR)/htpass_test
+all: $(BUILD_DIR)/mqhtpass.so $(BUILD_DIR)/htpass_test $(BUILD_DIR)/log_test
 
 $(BUILD_DIR)/log.o : $(SRC_DIR)/log.c $(SRC_DIR)/log.h
 	mkdir -p ${dir $@}
 	gcc $(CFLAGS) -c $(SRC_DIR)/log.c -o $@
+
+$(BUILD_DIR)/log_test : $(BUILD_DIR)/log.o
+	mkdir -p ${dir $@}
+	gcc $(CFLAGS) $(SRC_DIR)/log_test.c $^ -o $@
+# Run Logging tests, and print log if they fail	
+	$@ || (cat log_test*.log && exit 1)
 
 $(BUILD_DIR)/htpass.o : $(SRC_DIR)/htpass.c $(SRC_DIR)/htpass.h
 	mkdir -p ${dir $@}
