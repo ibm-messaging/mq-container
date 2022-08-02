@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019, 2020
+© Copyright IBM Corporation 2019, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -92,15 +93,28 @@ func TestMultiInstanceContainerStop(t *testing.T) {
 	waitForReady(t, cli, qm1aId)
 	waitForReady(t, cli, qm1bId)
 
-	err, active, standby := getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
+	err, originalActive, originalStandby := getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	stopContainer(t, cli, active)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	stopContainer(t, cli, originalActive)
 
-	if status := getQueueManagerStatus(t, cli, standby, "QM1"); strings.Compare(status, "Running") != 0 {
-		t.Fatalf("Expected QM1 to be running as active queue manager, dspmq returned status of %v", status)
+	for {
+		status := getQueueManagerStatus(t, cli, originalStandby, "QM1")
+		select {
+		case <-time.After(1 * time.Second):
+			if status == "Running" {
+				t.Logf("Original standby is now the active")
+				return
+			} else if status == "Starting" {
+				t.Logf("Original standby is starting")
+			}
+		case <-ctx.Done():
+			t.Fatalf("%s Timed out waiting for standby to become the active.  Status=%v", time.Now().Format(time.RFC3339), status)
+		}
 	}
 }
 
