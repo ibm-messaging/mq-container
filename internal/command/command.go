@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2017, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ limitations under the License.
 package command
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 )
@@ -27,9 +28,13 @@ import (
 // Do not use this function to run shell built-ins (like "cd"), because
 // the error handling works differently
 func Run(name string, arg ...string) (string, int, error) {
+	return RunContext(context.Background(), name, arg...)
+}
+
+func RunContext(ctx context.Context, name string, arg ...string) (string, int, error) {
 	// Run the command and wait for completion
 	// #nosec G204
-	cmd := exec.Command(name, arg...)
+	cmd := exec.CommandContext(ctx, name, arg...)
 	out, err := cmd.CombinedOutput()
 	rc := cmd.ProcessState.ExitCode()
 	if err != nil {

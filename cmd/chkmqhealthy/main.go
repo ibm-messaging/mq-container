@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2017, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,22 +18,24 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/pkg/name"
 )
 
-func queueManagerHealthy() (bool, error) {
+func queueManagerHealthy(ctx context.Context) (bool, error) {
 	name, err := name.GetQueueManagerName()
 	if err != nil {
 		return false, err
 	}
 	// Specify the queue manager name, just in case someone's created a second queue manager
 	// #nosec G204
-	cmd := exec.Command("dspmq", "-n", "-m", name)
+	cmd := exec.CommandContext(ctx, "dspmq", "-n", "-m", name)
 	// Run the command and wait for completion
 	out, err := cmd.CombinedOutput()
 	fmt.Printf("%s", out)
@@ -47,13 +49,20 @@ func queueManagerHealthy() (bool, error) {
 	return true, nil
 }
 
-func main() {
-	healthy, err := queueManagerHealthy()
+func doMain() int {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	defer cancel()
+
+	healthy, err := queueManagerHealthy(ctx)
 	if err != nil {
-		os.Exit(2)
+		return 2
 	}
 	if !healthy {
-		os.Exit(1)
+		return 1
 	}
-	os.Exit(0)
+	return 0
+}
+
+func main() {
+	os.Exit(doMain())
 }

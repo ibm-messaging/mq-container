@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ limitations under the License.
 package ready
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -67,22 +68,22 @@ func Check() (bool, error) {
 }
 
 // IsRunningAsActiveQM returns true if the queue manager is running in active mode
-func IsRunningAsActiveQM(name string) (bool, error) {
-	return isRunningQM(name, "(RUNNING)")
+func IsRunningAsActiveQM(ctx context.Context, name string) (bool, error) {
+	return isRunningQM(ctx, name, "(RUNNING)")
 }
 
 // IsRunningAsStandbyQM returns true if the queue manager is running in standby mode
-func IsRunningAsStandbyQM(name string) (bool, error) {
-	return isRunningQM(name, "(RUNNING AS STANDBY)")
+func IsRunningAsStandbyQM(ctx context.Context, name string) (bool, error) {
+	return isRunningQM(ctx, name, "(RUNNING AS STANDBY)")
 }
 
 // IsRunningAsReplicaQM returns true if the queue manager is running in replica mode
-func IsRunningAsReplicaQM(name string) (bool, error) {
-	return isRunningQM(name, "(REPLICA)")
+func IsRunningAsReplicaQM(ctx context.Context, name string) (bool, error) {
+	return isRunningQM(ctx, name, "(REPLICA)")
 }
 
-func isRunningQM(name string, status string) (bool, error) {
-	out, _, err := command.Run("dspmq", "-n", "-m", name)
+func isRunningQM(ctx context.Context, name string, status string) (bool, error) {
+	out, _, err := command.RunContext(ctx, "dspmq", "-n", "-m", name)
 	if err != nil {
 		return false, err
 	}
