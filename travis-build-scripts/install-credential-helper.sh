@@ -26,7 +26,18 @@ mkdir -p $GOPATH/src/github.com/docker
 cd $GOPATH/src/github.com/docker
 git clone https://github.com/docker/docker-credential-helpers
 cd docker-credential-helpers
-make pass 
+
+# After https://github.com/docker/docker-credential-helpers/commit/fd0197473f0ecb29e73ccef9028057194ff463bc go 1.18 is required... Pin commit if earlier go installed
+go_version="$(go version | cut -f3 -d' ')"
+IFS=. read -a go_version_parts <<<"$go_version"
+go_major="${go_version_parts[0]##go}"
+go_minor="${go_version_parts[1]}"
+if [[ "$go_major" -eq 1 && "$go_minor" -lt 18 ]]; then
+    echo "Go version ${go_major}.${go_minor} < 1.18... Pinning credential-helper commit"
+    git checkout ab7fd12c67d83193072fa91e5648b036547f6323
+fi
+
+make pass
 cp bin/docker-credential-pass $GOPATH/bin/docker-credential-pass
 mkdir -p /home/travis/.docker
 echo '{ "credsStore": "pass" }' | tee /home/travis/.docker/config.json
