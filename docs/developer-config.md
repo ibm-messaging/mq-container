@@ -34,7 +34,7 @@ Two channels are created, one for administration, the other for normal messaging
 
 ## Web Console
 
-By default the MQ Advanced for Developers image will start the IBM MQ Web Console that allows you to administer your Queue Manager running on your container. When the web console has been started, you can access it by opening a web browser and navigating to https://<Container IP>:9443/ibmmq/console. Where <Container IP> is replaced by the IP address of your running container.
+By default the MQ Advanced for Developers image will start the IBM MQ Web Console that allows you to administer your Queue Manager running on your container. When the web console has been started, you can access it by opening a web browser and navigating to `https://<Container IP>:9443/ibmmq/console`. Where `<Container IP>` is replaced by the IP address of your running container.
 
 When you navigate to this page you may be presented with a security exception warning. This happens because, by default, the web console creates a self-signed certificate to use for the HTTPS operations. This certificate is not trusted by your browser and has an incorrect distinguished name.
 
