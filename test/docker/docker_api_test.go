@@ -52,6 +52,8 @@ func TestLicenseNotSet(t *testing.T) {
 	expectTerminationMessage(t, cli, id)
 }
 
+//Start container with LICENSE environment variable set to view.
+//Check that container starts and display license text
 func TestLicenseView(t *testing.T) {
 	t.Parallel()
 
@@ -132,42 +134,6 @@ func goldenPath(t *testing.T, metric bool) {
 	stopContainer(t, cli, id)
 }
 
-// TestSecurityVulnerabilities checks for any vulnerabilities in the image, as reported
-// by Red Hat
-func TestSecurityVulnerabilities(t *testing.T) {
-	t.Parallel()
-
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rc, _ := runContainerOneShot(t, cli, "bash", "-c", "command -v microdnf && test -e /etc/yum.repos.d/ubi.repo")
-	if rc != 0 {
-		t.Skip("Skipping test because container is based on ubi-minimal, which doesn't include yum")
-	}
-	// id, _, err := command.Run("sudo", "buildah", "from", imageName())
-	// if err != nil {
-	// 	t.Log(id)
-	// 	t.Fatal(err)
-	// }
-	// id = strings.TrimSpace(id)
-	// defer command.Run("buildah", "rm", id)
-	// mnt, _, err := command.Run("sudo", "buildah", "mount", id)
-	// if err != nil {
-	// 	t.Log(mnt)
-	// 	t.Fatal(err)
-	// }
-	// mnt = strings.TrimSpace(mnt)
-	// out, _, err := command.Run("bash", "-c", "sudo cp /etc/yum.repos.d/* "+filepath.Join(mnt, "/etc/yum.repos.d/"))
-	// if err != nil {
-	// 	t.Log(out)
-	// 	t.Fatal(err)
-	// }
-	// out, ret, _ := command.Run("bash", "-c", "yum --installroot="+mnt+" updateinfo list sec | grep /Sec")
-	// if ret != 1 {
-	// 	t.Errorf("Expected no vulnerabilities, found the following:\n%v", out)
-	// }
-}
 
 func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName string) {
 	search := "QMNAME(" + expectedName + ")"
@@ -187,6 +153,7 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 		t.Errorf("Expected result of running dspmq to contain name=%v, got name=%v", search, out)
 	}
 }
+
 func TestNoQueueManagerName(t *testing.T) {
 	t.Parallel()
 
