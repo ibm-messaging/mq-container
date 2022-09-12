@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2021
+© Copyright IBM Corporation 2017, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ func configureLogger(name string) (mirrorFunc, error) {
 				if err != nil {
 					log.Printf("Failed to unmarshall JSON in log message - %v", err)
 				} else {
-					fmt.Printf(formatBasic(obj))
+					fmt.Print(formatBasic(obj))
 				}
 			} else {
 				// The log being mirrored isn't JSON, so just print it.
