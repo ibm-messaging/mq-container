@@ -34,8 +34,7 @@ MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 
 **Note**: MQ 9.3 is the latest MQ version with MQ Long Term Support (LTS), as well as being the latest Continuous Delivery (CD) version. Therefore, to build build 9.3.0.X, follow the [instructions above for MQ 9.3](#building-mq-93-long-term-support-lts-and-continuous-delivery-cd).
 
-However, if you wish to build the previous MQ LTS, use the [instructions](/../9.2.0.x/docs/building.md#mq-long-term-support-lts) in the `v9.2.0.x-eus` branch.
-
+However, if you wish to build the previous MQ LTS, use the [instructions](https://github.ibm.com/mq-cloudpak/mq-container/blob/v9.2.0.x-eus/docs/building.md#mq-long-term-support-lts) in the `v9.2.0.x-eus` branch.
 
 ## Building a developer image
 
