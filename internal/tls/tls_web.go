@@ -65,7 +65,6 @@ func ConfigureWebKeystore(p12Truststore KeyStoreData, webKeystore string) (strin
 	// Check if a new self-signed certificate should be generated
 	genHostName := os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME")
 	if genHostName != "" {
-
 		// Create the Web Keystore
 		newWebKeystore := keystore.NewPKCS12KeyStore(webKeystoreFile, p12Truststore.Password)
 		err := newWebKeystore.Create()

@@ -1,3 +1,4 @@
+//go:build mqdev
 // +build mqdev
 
 /*
@@ -183,4 +184,77 @@ func TestDevConfigDisabled(t *testing.T) {
 	}
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
+}
+
+// Test if SSLKEYR and CERTLABL attributes are not set when key and certificate
+// are not supplied.
+func TestSSLKEYRBlank(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
+		},
+	}
+	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	// execute runmqsc to display qmgr SSLKEYR and CERTLABL attibutes.
+	// Search the console output for exepcted values
+	_, sslkeyROutput := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
+	if !strings.Contains(sslkeyROutput, "SSLKEYR( )") && !strings.Contains(sslkeyROutput, "CERTLABL( )") {
+		t.Errorf("Expected SSLKEYR to be blank but it is not; got \"%v\"", sslkeyROutput)
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+// Test if SSLKEYR and CERTLABL attributes are set when key and certificate
+// are supplied.
+func TestSSLKEYRWithSuppliedKeyAndCert(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=QM1",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
+		},
+		Image: imageName(),
+	}
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, ctr.ID)
+	startContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+	// execute runmqsc to display qmgr SSLKEYR and CERTLABL attibutes.
+	// Search the console output for exepcted values
+	_, sslkeyROutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
+	if !strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") && !strings.Contains(sslkeyROutput, "CERTLABL(default)") {
+		t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"", sslkeyROutput)
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, ctr.ID)
 }
