@@ -16,16 +16,16 @@
 # Application build environment (Maven)
 ###############################################################################
 FROM registry.access.redhat.com/ubi8/openjdk-8 as builder
-COPY pom.xml .
+COPY pom.xml ./
 #WORKDIR /usr/src/mymaven
 # Download dependencies separately, so Docker caches them
 RUN mvn dependency:go-offline install
 # Copy source
-COPY src .
+COPY src ./src
 # Run the main build
 RUN mvn --offline install
 # Print a list of all the files (useful for debugging)
-RUN find .
+RUN find ./
 
 ###############################################################################
 # Application runtime (JRE only, no build environment)
@@ -35,4 +35,4 @@ FROM registry.access.redhat.com/ubi8/openjdk-8-runtime
 COPY --from=builder /home/jboss/target/*.jar /opt/app/
 COPY --from=builder /home/jboss/target/lib/*.jar /opt/app/
 USER 1001
-ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]
+ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "--fail-if-no-tests", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]

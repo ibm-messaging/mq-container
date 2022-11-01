@@ -1,7 +1,8 @@
+//go:build mqdev
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2021
+© Copyright IBM Corporation 2018, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@ limitations under the License.
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/tls"
@@ -26,8 +28,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
-	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -81,14 +83,14 @@ func tlsDir(t *testing.T, unixPath bool) string {
 }
 
 // runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID
-func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, password string) {
+func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, password string, ibmjre string, cipherName string) {
 	containerConfig := container.Config{
 		// -e MQ_PORT_1414_TCP_ADDR=9.145.14.173 -e MQ_USERNAME=app -e MQ_PASSWORD=passw0rd -e MQ_CHANNEL=DEV.APP.SVRCONN -e MQ_TLS_TRUSTSTORE=/tls/test.p12 -e MQ_TLS_PASSPHRASE=passw0rd -v /Users/arthurbarr/go/src/github.com/ibm-messaging/mq-container/test/tls:/tls msgtest
 		Env: []string{
 			"MQ_PORT_1414_TCP_ADDR=" + getIPAddress(t, cli, ID),
 			"MQ_USERNAME=" + user,
 			"MQ_CHANNEL=DEV.APP.SVRCONN",
-			"IBMJRE=" + os.Getenv("IBMJRE"),
+			"IBMJRE=" + ibmjre,
 		},
 		Image: imageNameDevJMS(),
 	}
@@ -101,6 +103,7 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, pa
 		containerConfig.Env = append(containerConfig.Env, []string{
 			"MQ_TLS_TRUSTSTORE=/var/tls/client-trust.jks",
 			"MQ_TLS_PASSPHRASE=passw0rd",
+			"MQ_TLS_CIPHER=" + cipherName,
 		}...)
 	}
 	hostConfig := container.HostConfig{
@@ -119,7 +122,55 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, pa
 	if rc != 0 {
 		t.Errorf("JUnit container failed with rc=%v", rc)
 	}
+
+	// Get console output of the container and process the lines
+	// to see if we have any failures
+	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, ctr.ID)))
+	for scanner.Scan() {
+		s := scanner.Text()
+		if processJunitLogLine(s) {
+			t.Errorf("JUnit container tests failed. Reason: %s", s)
+		}
+	}
+
 	defer cleanContainer(t, cli, ctr.ID)
+}
+
+// Parse JUnit log line and return true if line contains failed or aborted tests
+func processJunitLogLine(outputLine string) bool {
+	var failedLine bool
+	// Sample JUnit test run output
+	//[         2 containers found      ]
+	//[         0 containers skipped    ]
+	//[         2 containers started    ]
+	//[         0 containers aborted    ]
+	//[         2 containers successful ]
+	//[         0 containers failed     ]
+	//[         0 tests found           ]
+	//[         0 tests skipped         ]
+	//[         0 tests started         ]
+	//[         0 tests aborted         ]
+	//[         0 tests successful      ]
+	//[         0 tests failed          ]
+
+	// Consider only those lines that begin with '[' and with ']'
+	if strings.HasPrefix(outputLine, "[") && strings.HasSuffix(outputLine, "]") {
+		// Strip off [] and whitespaces
+		trimmed := strings.Trim(outputLine, "[] ")
+		if strings.Contains(trimmed, "aborted") || strings.Contains(trimmed, "failed") {
+			// Tokenize on whitespace
+			tokens := strings.Split(trimmed, " ")
+			// Determine the count of aborted or failed tests
+			count, err := strconv.Atoi(tokens[0])
+			if err == nil {
+				if count > 0 {
+					failedLine = true
+				}
+			}
+		}
+	}
+
+	return failedLine
 }
 
 // createTLSConfig creates a tls.Config which trusts the specified certificate

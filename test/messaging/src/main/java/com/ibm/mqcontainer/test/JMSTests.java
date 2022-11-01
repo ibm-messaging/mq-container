@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2021
+© Copyright IBM Corporation 2018, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -82,11 +82,10 @@ class JMSTests {
             boolean ibmjre = System.getenv("IBMJRE").equals("true");
             if (ibmjre){
                 System.setProperty("com.ibm.mq.cfg.useIBMCipherMappings", "true");
-                factory.setSSLCipherSuite("SSL_RSA_WITH_AES_128_CBC_SHA256");
             } else {
                  System.setProperty("com.ibm.mq.cfg.useIBMCipherMappings", "false");
-                 factory.setSSLCipherSuite("TLS_RSA_WITH_AES_128_CBC_SHA256");
             }
+            factory.setSSLCipherSuite(System.getenv("MQ_TLS_CIPHER"));
         }
         return factory;
     }

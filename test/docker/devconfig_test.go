@@ -52,8 +52,10 @@ func TestDevGoldenPath(t *testing.T) {
 	waitForReady(t, cli, id)
 	waitForWebReady(t, cli, id, insecureTLSConfig)
 	t.Run("JMS", func(t *testing.T) {
-		// Run the JMS tests, with no password specified
-		runJMSTests(t, cli, id, false, "app", defaultAppPasswordOS)
+		// Run the JMS tests, with no password specified.
+		// Use OpenJDK JRE for running testing, pass false for 7th parameter.
+		// Last parameter is blank as the test doesn't use TLS.
+		runJMSTests(t, cli, id, false, "app", defaultAppPasswordOS, "false", "")
 	})
 	t.Run("REST admin", func(t *testing.T) {
 		testRESTAdmin(t, cli, id, insecureTLSConfig)
@@ -116,7 +118,9 @@ func TestDevSecure(t *testing.T) {
 	waitForWebReady(t, cli, ctr.ID, createTLSConfig(t, cert, tlsPassPhrase))
 
 	t.Run("JMS", func(t *testing.T) {
-		runJMSTests(t, cli, ctr.ID, true, "app", appPassword)
+		// OpenJDK is used for running tests, hence pass "false" for 7th parameter.
+		// Cipher name specified is compliant with non-IBM JRE naming.
+		runJMSTests(t, cli, ctr.ID, true, "app", appPassword, "false", "TLS_RSA_WITH_AES_256_CBC_SHA256")
 	})
 	t.Run("REST admin", func(t *testing.T) {
 		testRESTAdmin(t, cli, ctr.ID, insecureTLSConfig)
@@ -154,7 +158,9 @@ func TestDevWebDisabled(t *testing.T) {
 	})
 	t.Run("JMS", func(t *testing.T) {
 		// Run the JMS tests, with no password specified
-		runJMSTests(t, cli, id, false, "app", defaultAppPasswordOS)
+		// OpenJDK is used for running tests, hence pass "false" for 7th parameter.
+		// Last parameter is blank as the test doesn't use TLS.
+		runJMSTests(t, cli, id, false, "app", defaultAppPasswordOS, "false", "")
 	})
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
