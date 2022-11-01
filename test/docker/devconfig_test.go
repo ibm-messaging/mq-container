@@ -264,3 +264,58 @@ func TestSSLKEYRWithSuppliedKeyAndCert(t *testing.T) {
 	// Stop the container cleanly
 	stopContainer(t, cli, ctr.ID)
 }
+
+// Test with CA cert
+func TestSSLKEYRWithCACert(t *testing.T) {
+	t.Parallel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=QM1",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
+		},
+		Image: imageName(),
+	}
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			tlsDirWithCA(t, false) + ":/etc/mqm/pki/keys/QM1CA",
+		},
+		// Assign a random port for the web server on the host
+		PortBindings: nat.PortMap{
+			"9443/tcp": []nat.PortBinding{
+				{
+					HostIP: "0.0.0.0",
+				},
+			},
+		},
+	}
+	networkingConfig := network.NetworkingConfig{}
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, ctr.ID)
+	startContainer(t, cli, ctr.ID)
+	waitForReady(t, cli, ctr.ID)
+
+	// execute runmqsc to display qmgr SSLKEYR and CERTLABL attibutes.
+	// Search the console output for exepcted values
+	_, sslkeyROutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
+	if !strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") {
+		t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"", sslkeyROutput)
+	}
+
+	if !strings.Contains(sslkeyROutput, "CERTLABL(QM1CA)") {
+		t.Errorf("Expected CERTLABL to be 'QM1CA' but it is not; got \"%v\"", sslkeyROutput)
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, ctr.ID)
+}

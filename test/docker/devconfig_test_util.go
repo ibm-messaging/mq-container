@@ -82,6 +82,10 @@ func tlsDir(t *testing.T, unixPath bool) string {
 	return filepath.Join(getCwd(t, unixPath), "../tls")
 }
 
+func tlsDirWithCA(t *testing.T, unixPath bool) string {
+	return filepath.Join(getCwd(t, unixPath), "../tlscacert")
+}
+
 // runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID
 func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, password string, ibmjre string, cipherName string) {
 	containerConfig := container.Config{
