@@ -1,5 +1,9 @@
 # Change log
 
+## 9.3.1.0-r2 (2022-11)
+
+* Queue manager attribute SSLKEYR is now set to blank instead of '/run/runmqserver/tls/key' if key and certificate are not supplied.
+
 ## 9.3.1.0 (2022-10)
 
 * Updated to MQ version 9.3.1.0
