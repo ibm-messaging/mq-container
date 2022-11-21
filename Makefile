@@ -304,7 +304,7 @@ build-devjmstest:
 test-devserver: test/docker/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(COMMAND) inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=true DOCKER_API_VERSION=$(DOCKER_API_VERSION) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) -tags mqdev $(TEST_OPTS_DOCKER)
+	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=false DOCKER_API_VERSION=$(DOCKER_API_VERSION) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) -tags mqdev $(TEST_OPTS_DOCKER)
 
 .PHONY: coverage
 coverage:

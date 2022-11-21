@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019, 2021
+© Copyright IBM Corporation 2019, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -76,18 +76,20 @@ type TLSStore struct {
 	Truststore KeyStoreData
 }
 
-func configureTLSKeystores(keystoreDir, keyDir, trustDir string, p12TruststoreRequired bool) (string, KeyStoreData, KeyStoreData, error) {
-
+func configureTLSKeystores(keystoreDir, keyDir, trustDir string, p12TruststoreRequired bool, nativeTLSHA bool) (string, KeyStoreData, KeyStoreData, error) {
+	var keyLabel string
 	// Create the CMS Keystore & PKCS#12 Truststore (if required)
-	tlsStore, err := generateAllKeystores(keystoreDir, p12TruststoreRequired)
+	tlsStore, err := generateAllKeystores(keystoreDir, p12TruststoreRequired, nativeTLSHA)
 	if err != nil {
 		return "", tlsStore.Keystore, tlsStore.Truststore, err
 	}
 
-	// Process all keys - add them to the CMS KeyStore
-	keyLabel, err := processKeys(&tlsStore, keystoreDir, keyDir)
-	if err != nil {
-		return "", tlsStore.Keystore, tlsStore.Truststore, err
+	if tlsStore.Keystore.Keystore != nil {
+		// Process all keys - add them to the CMS KeyStore
+		keyLabel, err = processKeys(&tlsStore, keystoreDir, keyDir)
+		if err != nil {
+			return "", tlsStore.Keystore, tlsStore.Truststore, err
+		}
 	}
 
 	// Process all trust certificates - add them to the CMS KeyStore & PKCS#12 Truststore (if required)
@@ -101,13 +103,13 @@ func configureTLSKeystores(keystoreDir, keyDir, trustDir string, p12TruststoreRe
 
 // ConfigureDefaultTLSKeystores configures the CMS Keystore & PKCS#12 Truststore
 func ConfigureDefaultTLSKeystores() (string, KeyStoreData, KeyStoreData, error) {
-	return configureTLSKeystores(keystoreDirDefault, keyDirDefault, trustDirDefault, true)
+	return configureTLSKeystores(keystoreDirDefault, keyDirDefault, trustDirDefault, true, false)
 }
 
 // ConfigureHATLSKeystore configures the CMS Keystore & PKCS#12 Truststore
 func ConfigureHATLSKeystore() (string, KeyStoreData, KeyStoreData, error) {
 	// *.crt files mounted to the HA TLS dir keyDirHA will be processed as trusted in the CMS keystore
-	return configureTLSKeystores(keystoreDirHA, keyDirHA, keyDirHA, false)
+	return configureTLSKeystores(keystoreDirHA, keyDirHA, keyDirHA, false, true)
 }
 
 // ConfigureTLS configures TLS for the queue manager
@@ -115,9 +117,18 @@ func ConfigureTLS(keyLabel string, cmsKeystore KeyStoreData, devMode bool, log *
 
 	const mqsc string = "/etc/mqm/15-tls.mqsc"
 	const mqscTemplate string = mqsc + ".tpl"
+	sslKeyRing := ""
 
+	// Don't set SSLKEYR if no keys or crts are not supplied
+	// Key label will be blank if no certs were added during processing keys and certs.
+	if cmsKeystore.Keystore != nil {
+		certList, _ := cmsKeystore.Keystore.ListAllCertificates()
+		if len(certList) > 0 {
+			sslKeyRing = strings.TrimSuffix(cmsKeystore.Keystore.Filename, ".kdb")
+		}
+	}
 	err := mqtemplate.ProcessTemplateFile(mqscTemplate, mqsc, map[string]string{
-		"SSLKeyR":          strings.TrimSuffix(cmsKeystore.Keystore.Filename, ".kdb"),
+		"SSLKeyR":          sslKeyRing,
 		"CertificateLabel": keyLabel,
 	}, log)
 	if err != nil {
@@ -159,7 +170,7 @@ func configureTLSDev(log *logger.Logger) error {
 }
 
 // generateAllKeystores creates the CMS Keystore & PKCS#12 Truststore (if required)
-func generateAllKeystores(keystoreDir string, p12TruststoreRequired bool) (TLSStore, error) {
+func generateAllKeystores(keystoreDir string, p12TruststoreRequired bool, nativeTLSHA bool) (TLSStore, error) {
 
 	var cmsKeystore, p12Truststore KeyStoreData
 
@@ -175,11 +186,19 @@ func generateAllKeystores(keystoreDir string, p12TruststoreRequired bool) (TLSSt
 		return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create Keystore directory: %v", err)
 	}
 
-	// Create the CMS Keystore
-	cmsKeystore.Keystore = keystore.NewCMSKeyStore(filepath.Join(keystoreDir, cmsKeystoreName), cmsKeystore.Password)
-	err = cmsKeystore.Keystore.Create()
-	if err != nil {
-		return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create CMS Keystore: %v", err)
+	// Search the default keys directory for any keys/certs.
+	keysDirectory := keyDirDefault
+	// Change to default native HA TLS directory if we are configuring nativeHA
+	if nativeTLSHA {
+		keysDirectory = keyDirHA
+	}
+	// Create the CMS Keystore if we have been provided keys and certificates
+	if haveKeysAndCerts(keysDirectory) || haveKeysAndCerts(trustDirDefault) {
+		cmsKeystore.Keystore = keystore.NewCMSKeyStore(filepath.Join(keystoreDir, cmsKeystoreName), cmsKeystore.Password)
+		err = cmsKeystore.Keystore.Create()
+		if err != nil {
+			return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create CMS Keystore: %v", err)
+		}
 	}
 
 	// Create the PKCS#12 Truststore (if required)
@@ -203,7 +222,6 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 	// Process all keys
 	keyList, err := ioutil.ReadDir(keyDir)
 	if err == nil && len(keyList) > 0 {
-
 		// Process each set of keys - each set should contain files: *.key & *.crt
 		for _, keySet := range keyList {
 			keys, _ := ioutil.ReadDir(filepath.Join(keyDir, keySet.Name()))
@@ -601,4 +619,24 @@ func writeCertificatesToFile(file string, certificates []*pem.Block) error {
 		}
 	}
 	return nil
+}
+
+// Search the specified directory for .key and .crt files.
+// Return true if at least one .key or .crt file is found else false
+func haveKeysAndCerts(keyDir string) bool {
+	fileList, err := os.ReadDir(keyDir)
+	if err == nil && len(fileList) > 0 {
+		for _, fileInfo := range fileList {
+			// Keys and certs will be supplied in an user defined subdirectory.
+			// Do a listing of the subdirectory and then search for .key and .cert files
+			keys, _ := ioutil.ReadDir(filepath.Join(keyDir, fileInfo.Name()))
+			for _, key := range keys {
+				if strings.Contains(key.Name(), ".key") || strings.Contains(key.Name(), ".crt") {
+					// We found at least one key/crt file.
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
