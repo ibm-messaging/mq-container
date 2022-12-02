@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -204,18 +205,35 @@ func TestSSLKEYRBlank(t *testing.T) {
 	containerConfig := container.Config{
 		Env: []string{
 			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
+			"MQ_QMGR_NAME=QM1",
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
 		},
 	}
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
+
 	// execute runmqsc to display qmgr SSLKEYR and CERTLABL attibutes.
 	// Search the console output for exepcted values
 	_, sslkeyROutput := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
-	if !strings.Contains(sslkeyROutput, "SSLKEYR( )") && !strings.Contains(sslkeyROutput, "CERTLABL( )") {
-		t.Errorf("Expected SSLKEYR to be blank but it is not; got \"%v\"", sslkeyROutput)
+	if !strings.Contains(sslkeyROutput, "SSLKEYR( )") || !strings.Contains(sslkeyROutput, "CERTLABL( )") {
+		// Although queue manager is ready, it may be that MQSC scripts have not been applied yet.
+		// Hence wait for a second and retry few times before giving up.
+		waitCount := 30
+		var i int
+		for i = 0; i < waitCount; i++ {
+			time.Sleep(1 * time.Second)
+			_, sslkeyROutput = execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
+			if strings.Contains(sslkeyROutput, "SSLKEYR( )") && strings.Contains(sslkeyROutput, "CERTLABL( )") {
+				break
+			}
+		}
+		// Failed to get expected output? dump the contents of mqsc files.
+		if i == waitCount {
+			_, tls15mqsc := execContainer(t, cli, id, "", []string{"cat", "/etc/mqm/15-tls.mqsc"})
+			_, autoMQSC := execContainer(t, cli, id, "", []string{"cat", "/mnt/mqm/data/qmgrs/QM1/autocfg/cached.mqsc"})
+			t.Errorf("Expected SSLKEYR to be blank but it is not; got \"%v\"\n AutoConfig MQSC file contents %v\n 15-tls: %v", sslkeyROutput, autoMQSC, tls15mqsc)
+		}
 	}
 
 	// Stop the container cleanly
@@ -254,11 +272,28 @@ func TestSSLKEYRWithSuppliedKeyAndCert(t *testing.T) {
 	defer cleanContainer(t, cli, ctr.ID)
 	startContainer(t, cli, ctr.ID)
 	waitForReady(t, cli, ctr.ID)
+
 	// execute runmqsc to display qmgr SSLKEYR and CERTLABL attibutes.
 	// Search the console output for exepcted values
 	_, sslkeyROutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
-	if !strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") && !strings.Contains(sslkeyROutput, "CERTLABL(default)") {
-		t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"", sslkeyROutput)
+	if !strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") || !strings.Contains(sslkeyROutput, "CERTLABL(default)") {
+		// Although queue manager is ready, it may be that MQSC scripts have not been applied yet.
+		// Hence wait for a second and retry few times before giving up.
+		waitCount := 30
+		var i int
+		for i = 0; i < waitCount; i++ {
+			time.Sleep(1 * time.Second)
+			_, sslkeyROutput = execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
+			if strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") && strings.Contains(sslkeyROutput, "CERTLABL(default)") {
+				break
+			}
+		}
+		// Failed to get expected output? dump the contents of mqsc files.
+		if i == waitCount {
+			_, tls15mqsc := execContainer(t, cli, ctr.ID, "", []string{"cat", "/etc/mqm/15-tls.mqsc"})
+			_, autoMQSC := execContainer(t, cli, ctr.ID, "", []string{"cat", "/mnt/mqm/data/qmgrs/QM1/autocfg/cached.mqsc"})
+			t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\" \n AutoConfig MQSC file contents %v\n 15-tls: %v", sslkeyROutput, autoMQSC, tls15mqsc)
+		}
 	}
 
 	// Stop the container cleanly
@@ -309,11 +344,28 @@ func TestSSLKEYRWithCACert(t *testing.T) {
 	// Search the console output for exepcted values
 	_, sslkeyROutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
 	if !strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") {
-		t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"", sslkeyROutput)
+		// Although queue manager is ready, it may be that MQSC scripts have not been applied yet.
+		// Hence wait for a second and retry few times before giving up.
+		waitCount := 30
+		var i int
+		for i = 0; i < waitCount; i++ {
+			time.Sleep(1 * time.Second)
+			_, sslkeyROutput = execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
+			if strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") {
+				break
+			}
+		}
+		// Failed to get expected output? dump the contents of mqsc files.
+		if i == waitCount {
+			_, tls15mqsc := execContainer(t, cli, ctr.ID, "", []string{"cat", "/etc/mqm/15-tls.mqsc"})
+			_, autoMQSC := execContainer(t, cli, ctr.ID, "", []string{"cat", "/mnt/mqm/data/qmgrs/QM1/autocfg/cached.mqsc"})
+			t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"\n AutoConfig MQSC file contents %v\n 15-tls: %v", sslkeyROutput, autoMQSC, tls15mqsc)
+		}
 	}
 
 	if !strings.Contains(sslkeyROutput, "CERTLABL(QM1CA)") {
-		t.Errorf("Expected CERTLABL to be 'QM1CA' but it is not; got \"%v\"", sslkeyROutput)
+		_, autoMQSC := execContainer(t, cli, ctr.ID, "", []string{"cat", "/etc/mqm/15-tls.mqsc"})
+		t.Errorf("Expected CERTLABL to be 'QM1CA' but it is not; got \"%v\" \n MQSC File contents %v", sslkeyROutput, autoMQSC)
 	}
 
 	// Stop the container cleanly
