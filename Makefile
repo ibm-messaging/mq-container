@@ -48,7 +48,7 @@ MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Docker tests
 TEST_OPTS_DOCKER ?=
 # Timeout for the Docker tests
-TEST_TIMEOUT_DOCKER ?= 30m
+TEST_TIMEOUT_DOCKER ?= 45m
 # MQ_IMAGE_ADVANCEDSERVER is the name of the built MQ Advanced image
 MQ_IMAGE_ADVANCEDSERVER ?=ibm-mqadvanced-server
 # MQ_IMAGE_DEVSERVER is the name of the built MQ Advanced for Developers image

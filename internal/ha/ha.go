@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020, 2021
+© Copyright IBM Corporation 2020, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ package ha
 import (
 	"os"
 
+	"github.com/ibm-messaging/mq-container/internal/fips"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/tls"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
@@ -56,6 +57,13 @@ func ConfigureNativeHA(log *logger.Logger) error {
 		cipherSpec, ok := os.LookupEnv("MQ_NATIVE_HA_CIPHERSPEC")
 		if ok {
 			templateMap["CipherSpec"] = cipherSpec
+		}
+
+		// If FIPS is enabled, then set SSLFipsRequired to Yes
+		if fips.IsFIPSEnabled() {
+			templateMap["SSLFipsRequired"] = "Yes"
+		} else {
+			templateMap["SSLFipsRequired"] = "No"
 		}
 	}
 

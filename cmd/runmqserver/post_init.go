@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package main
 import (
 	"os"
 
+	"github.com/ibm-messaging/mq-container/internal/fips"
 	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
@@ -35,6 +36,15 @@ func postInit(name, keyLabel string, p12Truststore tls.KeyStoreData) error {
 		if len(p12Truststore.TrustedCerts) == 0 {
 			webTruststoreRef = "MQWebKeyStore"
 		}
+
+		// Enable FIPS for MQ Web Server if asked for.
+		if fips.IsFIPSEnabled() {
+			err = configureFIPSWebServer(p12Truststore)
+			if err != nil {
+				return err
+			}
+		}
+
 		// Start the web server, in the background (if installed)
 		// WARNING: No error handling or health checking available for the web server
 		go func() {

@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/fips"
 )
 
 // KeyStore describes information about a keystore file
@@ -34,36 +35,46 @@ type KeyStore struct {
 	Password     string
 	keyStoreType string
 	command      string
+	fipsEnabled  bool
 }
 
 // NewJKSKeyStore creates a new Java Key Store, managed by the runmqckm command
 func NewJKSKeyStore(filename, password string) *KeyStore {
-	return &KeyStore{
+	keyStore := &KeyStore{
 		Filename:     filename,
 		Password:     password,
 		keyStoreType: "jks",
 		command:      "/opt/mqm/bin/runmqckm",
+		fipsEnabled:  fips.IsFIPSEnabled(),
 	}
+
+	return keyStore
 }
 
 // NewCMSKeyStore creates a new MQ CMS Key Store, managed by the runmqakm command
 func NewCMSKeyStore(filename, password string) *KeyStore {
-	return &KeyStore{
+	keyStore := &KeyStore{
 		Filename:     filename,
 		Password:     password,
 		keyStoreType: "cms",
 		command:      "/opt/mqm/bin/runmqakm",
+		fipsEnabled:  fips.IsFIPSEnabled(),
 	}
+
+	return keyStore
 }
 
 // NewPKCS12KeyStore creates a new PKCS12 Key Store, managed by the runmqakm command
 func NewPKCS12KeyStore(filename, password string) *KeyStore {
-	return &KeyStore{
+	keyStore := &KeyStore{
 		Filename:     filename,
 		Password:     password,
 		keyStoreType: "p12",
 		command:      "/opt/mqm/bin/runmqakm",
+		fipsEnabled:  fips.IsFIPSEnabled(),
 	}
+
+	return keyStore
 }
 
 // Create a key store, if it doesn't already exist
@@ -100,7 +111,7 @@ func (ks *KeyStore) Create() error {
 	}
 
 	// Create the keystore now we're sure it doesn't exist
-	out, _, err := command.Run(ks.command, "-keydb", "-create", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password, "-stash")
+	out, _, err := command.Run(ks.command, "-keydb", "-create", ks.getFipsEnabledFlag(), "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password, "-stash")
 	if err != nil {
 		return fmt.Errorf("error running \"%v -keydb -create\": %v %s", ks.command, err, out)
 	}
@@ -115,7 +126,7 @@ func (ks *KeyStore) CreateStash() error {
 	_, err := os.Stat(stashFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			out, _, err := command.Run(ks.command, "-keydb", "-stashpw", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
+			out, _, err := command.Run(ks.command, "-keydb", ks.getFipsEnabledFlag(), "-stashpw", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
 			if err != nil {
 				return fmt.Errorf("error running \"%v -keydb -stashpw\": %v %s", ks.command, err, out)
 			}
@@ -127,7 +138,7 @@ func (ks *KeyStore) CreateStash() error {
 
 // Import imports a certificate file in the keystore
 func (ks *KeyStore) Import(inputFile, password string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-import", "-file", inputFile, "-pw", password, "-target", ks.Filename, "-target_pw", ks.Password, "-target_type", ks.keyStoreType)
+	out, _, err := command.Run(ks.command, "-cert", "-import", ks.getFipsEnabledFlag(), "-file", inputFile, "-pw", password, "-target", ks.Filename, "-target_pw", ks.Password, "-target_type", ks.keyStoreType)
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -import\": %v %s", ks.command, err, out)
 	}
@@ -136,7 +147,7 @@ func (ks *KeyStore) Import(inputFile, password string) error {
 
 // CreateSelfSignedCertificate creates a self-signed certificate in the keystore
 func (ks *KeyStore) CreateSelfSignedCertificate(label, dn, hostname string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-create", "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn, "-san_dnsname", hostname, "-size 2048 -sig_alg sha256 -eku serverAuth")
+	out, _, err := command.Run(ks.command, "-cert", "-create", ks.getFipsEnabledFlag(), "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn, "-san_dnsname", hostname, "-size 2048 -sig_alg sha256 -eku serverAuth")
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -create\": %v %s", ks.command, err, out)
 	}
@@ -145,7 +156,7 @@ func (ks *KeyStore) CreateSelfSignedCertificate(label, dn, hostname string) erro
 
 // Add adds a CA certificate to the keystore
 func (ks *KeyStore) Add(inputFile, label string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-add", "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile, "-label", label)
+	out, _, err := command.Run(ks.command, "-cert", "-add", ks.getFipsEnabledFlag(), "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile, "-label", label)
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -add\": %v %s", ks.command, err, out)
 	}
@@ -154,7 +165,7 @@ func (ks *KeyStore) Add(inputFile, label string) error {
 
 // Add adds a CA certificate to the keystore
 func (ks *KeyStore) AddNoLabel(inputFile string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-add", "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile)
+	out, _, err := command.Run(ks.command, "-cert", "-add", ks.getFipsEnabledFlag(), "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile)
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -add\": %v %s", ks.command, err, out)
 	}
@@ -163,7 +174,7 @@ func (ks *KeyStore) AddNoLabel(inputFile string) error {
 
 // GetCertificateLabels returns the labels of all certificates in the key store
 func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
-	out, _, err := command.Run(ks.command, "-cert", "-list", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
+	out, _, err := command.Run(ks.command, "-cert", "-list", ks.getFipsEnabledFlag(), "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
 	if err != nil {
 		return nil, fmt.Errorf("error running \"%v -cert -list\": %v %s", ks.command, err, out)
 	}
@@ -207,7 +218,7 @@ func (ks *KeyStore) RenameCertificate(from, to string) error {
 
 // ListAllCertificates Lists all certificates in the keystore
 func (ks *KeyStore) ListAllCertificates() ([]string, error) {
-	out, _, err := command.Run(ks.command, "-cert", "-list", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
+	out, _, err := command.Run(ks.command, "-cert", "-list", ks.getFipsEnabledFlag(), "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
 	if err != nil {
 		return nil, fmt.Errorf("error running \"%v -cert -list\": %v %s", ks.command, err, out)
 	}
@@ -225,4 +236,23 @@ func (ks *KeyStore) ListAllCertificates() ([]string, error) {
 		return nil, err
 	}
 	return labels, nil
+}
+
+// Returns the FIPS flag. True if enabled else false
+func (ks *KeyStore) IsFIPSEnabled() bool {
+	return ks.fipsEnabled
+}
+
+// Returns -fips option if FIPS is enabled otherwise empty string. Return value is used
+// when running runmqakm/runmqckm commands.
+func (ks *KeyStore) getFipsEnabledFlag() string {
+	var fipsEnabled string
+
+	if ks.fipsEnabled {
+		fipsEnabled = "-fips"
+	} else {
+		fipsEnabled = ""
+	}
+
+	return fipsEnabled
 }

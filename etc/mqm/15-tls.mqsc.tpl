@@ -1,4 +1,4 @@
-* © Copyright IBM Corporation 2019
+* © Copyright IBM Corporation 2019, 2022
 *
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,4 +16,5 @@
 * Set the keystore location for the queue manager
 ALTER QMGR SSLKEYR('{{ .SSLKeyR }}')
 ALTER QMGR CERTLABL('{{ .CertificateLabel }}')
+ALTER QMGR SSLFIPS({{ .SSLFips }})
 REFRESH SECURITY(*) TYPE(SSL)

@@ -77,7 +77,6 @@ func ConfigureWebKeystore(p12Truststore KeyStoreData, webKeystore string) (strin
 		if err != nil {
 			return "", fmt.Errorf("Failed to generate certificate in Web Keystore %s with DN of 'CN=%s': %v", webKeystoreFile, genHostName, err)
 		}
-
 	} else {
 		// Check Web Keystore already exists
 		_, err := os.Stat(webKeystoreFile)

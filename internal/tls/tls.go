@@ -118,18 +118,25 @@ func ConfigureTLS(keyLabel string, cmsKeystore KeyStoreData, devMode bool, log *
 	const mqsc string = "/etc/mqm/15-tls.mqsc"
 	const mqscTemplate string = mqsc + ".tpl"
 	sslKeyRing := ""
+	var fipsEnabled = "NO"
 
 	// Don't set SSLKEYR if no keys or crts are not supplied
-	// Key label will be blank if no certs were added during processing keys and certs.
-	if cmsKeystore.Keystore != nil {
+	// Key label will be blank if no private keys were added during processing keys and certs.
+	if cmsKeystore.Keystore != nil && len(keyLabel) > 0 {
 		certList, _ := cmsKeystore.Keystore.ListAllCertificates()
 		if len(certList) > 0 {
 			sslKeyRing = strings.TrimSuffix(cmsKeystore.Keystore.Filename, ".kdb")
 		}
+
+		if cmsKeystore.Keystore.IsFIPSEnabled() {
+			fipsEnabled = "YES"
+		}
 	}
+
 	err := mqtemplate.ProcessTemplateFile(mqscTemplate, mqsc, map[string]string{
 		"SSLKeyR":          sslKeyRing,
 		"CertificateLabel": keyLabel,
+		"SSLFips":          fipsEnabled,
 	}, log)
 	if err != nil {
 		return err
@@ -631,7 +638,7 @@ func haveKeysAndCerts(keyDir string) bool {
 			// Do a listing of the subdirectory and then search for .key and .cert files
 			keys, _ := ioutil.ReadDir(filepath.Join(keyDir, fileInfo.Name()))
 			for _, key := range keys {
-				if strings.Contains(key.Name(), ".key") || strings.Contains(key.Name(), ".crt") {
+				if strings.HasSuffix(key.Name(), ".key") || strings.HasSuffix(key.Name(), ".crt") {
 					// We found at least one key/crt file.
 					return true
 				}

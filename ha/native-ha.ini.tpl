@@ -6,6 +6,9 @@ NativeHALocalInstance:
   {{ if .CipherSpec }}
   CipherSpec={{ .CipherSpec }}
   {{- end }}
+  {{ if .SSLFipsRequired }}
+  SSLFipsRequired={{ .SSLFipsRequired }}
+  {{- end }}
   {{- end }}
 NativeHAInstance:
   Name={{ .NativeHAInstance0_Name }}

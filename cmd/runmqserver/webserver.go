@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2020
+© Copyright IBM Corporation 2018, 2022
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -196,4 +196,26 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 	})
 
 	return webKeystore, err
+}
+
+// Configure FIPS mode for MQ Web Server
+func configureFIPSWebServer(p12TrustStore tls.KeyStoreData) error {
+	var errOut error
+	// Need to update jvm.options file of MQ Web Server. We don't update the jvm.options file
+	// in /var/mqm/web/installations/Installation1/servers/mqweb directory. Instead we update
+	// the one in /var/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults.
+	// During runtime MQ Web Server merges the data from two files.
+	mqwebJvmOptsDir := "/var/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults"
+	_, errOut = os.Stat(mqwebJvmOptsDir)
+	if errOut == nil {
+		// Update the jvm.options file using the data from template file. Tell the MQ Web Server
+		// use a FIPS provider by setting "-Dcom.ibm.jsse2.usefipsprovider=true" and then tell it
+		// use a specific FIPS provider by setting "Dcom.ibm.jsse2.usefipsProviderName=IBMJCEPlusFIPS".
+		errOut = mqtemplate.ProcessTemplateFile(mqwebJvmOptsDir+"/jvm.options.tpl",
+			mqwebJvmOptsDir+"/jvm.options", map[string]string{
+				"FipsProvider":     "true",
+				"FipsProviderName": "IBMJCEPlusFIPS",
+			}, log)
+	}
+	return errOut
 }

@@ -889,3 +889,42 @@ func getMQVersion(t *testing.T, cli *client.Client) (string, error) {
 	version := inspect.ContainerConfig.Labels["version"]
 	return version, nil
 }
+
+// runContainerWithAllConfig creates and starts a container, using the supplied ContainerConfig, HostConfig,
+// NetworkingConfig, and container name (or the value of t.Name if containerName="").
+func runContainerWithAllConfigError(t *testing.T, cli *client.Client, containerConfig *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, containerName string) (string, error) {
+	if containerName == "" {
+		containerName = t.Name()
+	}
+	if containerConfig.Image == "" {
+		containerConfig.Image = imageName()
+	}
+	// Always run as a random user, unless the test has specified otherwise
+	if containerConfig.User == "" {
+		containerConfig.User = generateRandomUID()
+	}
+	// if coverage
+	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
+	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
+	t.Logf("Running container (%s)", containerConfig.Image)
+	ctr, err := cli.ContainerCreate(context.Background(), containerConfig, hostConfig, networkingConfig, containerName)
+	if err != nil {
+		return "", err
+	}
+	err = startContainerError(t, cli, ctr.ID)
+	if err != nil {
+		return "", err
+	}
+	return ctr.ID, nil
+}
+
+func startContainerError(t *testing.T, cli *client.Client, ID string) error {
+	t.Logf("Starting container: %v", ID)
+	startOptions := types.ContainerStartOptions{}
+	err := cli.ContainerStart(context.Background(), ID, startOptions)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

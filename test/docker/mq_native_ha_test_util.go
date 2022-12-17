@@ -106,7 +106,7 @@ func getActiveReplicaInstances(t *testing.T, cli *client.Client, qmReplicaIDs [3
 
 func waitForReadyHA(t *testing.T, cli *client.Client, qmReplicaIDs [3]string) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
 
 	for {

@@ -86,6 +86,10 @@ func tlsDirWithCA(t *testing.T, unixPath bool) string {
 	return filepath.Join(getCwd(t, unixPath), "../tlscacert")
 }
 
+func tlsDirInvalid(t *testing.T, unixPath bool) string {
+	return filepath.Join(getCwd(t, unixPath), "../tlsinvalidcert")
+}
+
 // runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID
 func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, password string, ibmjre string, cipherName string) {
 	containerConfig := container.Config{
@@ -201,7 +205,7 @@ func createTLSConfig(t *testing.T, certFile, password string) *tls.Config {
 	}
 }
 
-func testRESTAdmin(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config) {
+func testRESTAdmin(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config, errorExpected string) {
 	httpClient := http.Client{
 		Timeout: time.Duration(30 * time.Second),
 		Transport: &http.Transport{
@@ -213,9 +217,15 @@ func testRESTAdmin(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.C
 	req.SetBasicAuth("admin", defaultAdminPassword)
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		t.Fatal(err)
+		if len(errorExpected) > 0 {
+			if !strings.Contains(err.Error(), errorExpected) {
+				t.Fatal(err)
+			}
+		} else {
+			t.Fatal(err)
+		}
 	}
-	if resp.StatusCode != http.StatusOK {
+	if resp != nil && resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected HTTP status code %v from 'GET installation'; got %v", http.StatusOK, resp.StatusCode)
 	}
 }
@@ -238,7 +248,7 @@ func logHTTPResponse(t *testing.T, resp *http.Response) {
 	t.Logf("HTTP response: %v", string(d))
 }
 
-func testRESTMessaging(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config, qmName string, user string, password string) {
+func testRESTMessaging(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config, qmName string, user string, password string, errorExpected string) {
 	httpClient := http.Client{
 		Timeout: time.Duration(30 * time.Second),
 		Transport: &http.Transport{
@@ -255,10 +265,19 @@ func testRESTMessaging(t *testing.T, cli *client.Client, ID string, tlsConfig *t
 	logHTTPRequest(t, req)
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		t.Fatal(err)
+		if len(errorExpected) > 0 {
+			if strings.Contains(err.Error(), errorExpected) {
+				t.Logf("Error contains expected '%s' value", errorExpected)
+				return
+			} else {
+				t.Fatal(err)
+			}
+		} else {
+			t.Fatal(err)
+		}
 	}
 	logHTTPResponse(t, resp)
-	if resp.StatusCode != http.StatusCreated {
+	if resp != nil && resp.StatusCode != http.StatusCreated {
 		t.Errorf("Expected HTTP status code %v from 'POST to queue'; got %v", http.StatusOK, resp.StatusCode)
 		t.Logf("HTTP response: %+v", resp)
 		t.Fail()
@@ -284,5 +303,30 @@ func testRESTMessaging(t *testing.T, cli *client.Client, ID string, tlsConfig *t
 	//gotMessage := string(b)
 	if string(gotMessage) != string(putMessage) {
 		t.Errorf("Expected payload to be \"%s\"; got \"%s\"", putMessage, gotMessage)
+	}
+}
+
+// createTLSConfig creates a tls.Config which trusts the specified certificate
+func createTLSConfigWithCipher(t *testing.T, certFile, password string, ciphers []uint16) *tls.Config {
+	// Get the SystemCertPool, continue with an empty pool on error
+	certs, err := x509.SystemCertPool()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Read in the cert file
+	cert, err := ioutil.ReadFile(certFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Append our cert to the system pool
+	ok := certs.AppendCertsFromPEM(cert)
+	if !ok {
+		t.Fatal("No certs appended")
+	}
+	// Trust the augmented cert pool in our client
+	return &tls.Config{
+		InsecureSkipVerify: false,
+		RootCAs:            certs,
+		CipherSuites:       ciphers,
 	}
 }

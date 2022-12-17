@@ -52,8 +52,8 @@ func TestLicenseNotSet(t *testing.T) {
 	expectTerminationMessage(t, cli, id)
 }
 
-//Start container with LICENSE environment variable set to view.
-//Check that container starts and display license text
+// Start container with LICENSE environment variable set to view.
+// Check that container starts and display license text
 func TestLicenseView(t *testing.T) {
 	t.Parallel()
 
@@ -77,8 +77,8 @@ func TestLicenseView(t *testing.T) {
 	}
 }
 
-//Start a container with qm grace set to x seconds
-//Check that when the container is stopped that the command endmqm has option -tp and x
+// Start a container with qm grace set to x seconds
+// Check that when the container is stopped that the command endmqm has option -tp and x
 func TestEndMQMOpts(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -133,7 +133,6 @@ func goldenPath(t *testing.T, metric bool) {
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
-
 
 func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName string) {
 	search := "QMNAME(" + expectedName + ")"
