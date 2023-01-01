@@ -86,6 +86,8 @@ MQ_ARCHIVE_DEV_TYPE=Linux
 BUILD_SERVER_CONTAINER=build-server
 # BUILD_SERVER_NETWORK is the name of the network to use for the web server container used at build time
 BUILD_SERVER_NETWORK=build
+# There's an apparent podman bug on MacOS which can be worked round by setting this to blank
+USE_BUILD_SERVER_NETWORK = --network $(BUILD_SERVER_NETWORK)
 # NUM_CPU is the number of CPUs available to Docker.  Used to control how many
 # test run in parallel
 NUM_CPU ?= $(or $(shell $(COMMAND) info --format "{{ .NCPU }}"),2)
@@ -182,6 +184,15 @@ endif
 ifeq "$(COMMAND)" "podman"
 	ifeq "$(shell uname -s)" "Darwin"
 		VOLUME_MOUNT_OPTIONS:=
+		# On MacOS, podman 4.3.1 (at least) seems to have an error that confuses
+		# rootful and rootless network options. This removes the attempt to use
+		# a network for that version of podman. The visible error is:
+		#     Error: building at STEP "RUN curl ...": cannot use networks as rootless
+		# even though we are running the VM as rootful. Set the environment variable
+		# PODMAN_ROOTFUL_BUG to any variable
+		ifdef PODMAN_ROOTFUL_BUG
+			USE_BUILD_SERVER_NETWORK:=
+		endif
 	endif
 endif
 
@@ -378,7 +389,7 @@ define build-mq-using-web-server
 	  --detach \
 	  registry.access.redhat.com/ubi8/nginx-120 nginx -g "daemon off;" || ($(COMMAND) network rm $(BUILD_SERVER_NETWORK) && exit 1)
 	BUILD_SERVER_IP=$$($(COMMAND) inspect -f '{{ .NetworkSettings.Networks.$(BUILD_SERVER_NETWORK).IPAddress }}' $(BUILD_SERVER_CONTAINER)); \
-	$(call build-mq-command,$1,$2,$3,--network build --build-arg MQ_URL=http://$$BUILD_SERVER_IP:8080/$4,$5) || ($(COMMAND) rm -f $(BUILD_SERVER_CONTAINER) && $(COMMAND) network rm $(BUILD_SERVER_NETWORK) && exit 1)
+	$(call build-mq-command,$1,$2,$3,$(USE_BUILD_SERVER_NETWORK) --build-arg MQ_URL=http://$$BUILD_SERVER_IP:8080/$4,$5) || ($(COMMAND) rm -f $(BUILD_SERVER_CONTAINER) && $(COMMAND) network rm $(BUILD_SERVER_NETWORK) && exit 1)
 	$(COMMAND) rm -f $(BUILD_SERVER_CONTAINER)
 	$(COMMAND) network rm $(BUILD_SERVER_NETWORK)
 endef
