@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2022
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -174,13 +174,8 @@ func doMain() error {
 		}
 	}
 
-	// Log a message on the console to indicate FIPS certified
-	// cryptography being used.
-	if fips.IsFIPSEnabled() {
-		log.Println("FIPS cryptography is enabled.")
-	} else {
-		log.Println("FIPS cryptography is not enabled.")
-	}
+	// Post FIPS initialization processing
+	fips.PostInit(log)
 
 	enableTraceCrtmqm := os.Getenv("MQ_ENABLE_TRACE_CRTMQM")
 	if enableTraceCrtmqm == "true" || enableTraceCrtmqm == "1" {

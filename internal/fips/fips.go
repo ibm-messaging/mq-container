@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2022
+© Copyright IBM Corporation 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ import (
 )
 
 var (
-	FIPSEnabledType int
+	FIPSEnabledType      int
+	FIPSEnabledComponent int
 )
 
 // FIPS has been turned off either because OS is not FIPS enabled or
@@ -45,6 +46,7 @@ func ProcessFIPSType(logs *logger.Logger) {
 	// Run "sysctl crypto.fips_enabled" command to determine if FIPS has been enabled
 	// on OS.
 	FIPSEnabledType = FIPS_ENABLED_OFF
+
 	out, _, err := command.Run("sysctl", "crypto.fips_enabled")
 	if err == nil {
 		// Check the output of the command for expected output
@@ -75,4 +77,23 @@ func ProcessFIPSType(logs *logger.Logger) {
 
 func IsFIPSEnabled() bool {
 	return FIPSEnabledType > FIPS_ENABLED_OFF
+}
+
+// Set a flag to indicate FIPS compliance for MQ compoments
+// Queue manager, Native HA, MQ Web Server etc.,
+func SetComponent(componentId int) {
+	FIPSEnabledComponent += componentId
+}
+
+// Log a message on the console to indicate FIPS certified
+// cryptography being used.
+func PostInit(log *logger.Logger) {
+	message := "FIPS cryptography is not enabled."
+	if FIPSEnabledType == FIPS_ENABLED_PLATFORM {
+		message = "FIPS cryptography is enabled. FIPS cryptography setting on the host is 'true'."
+	} else if FIPSEnabledType == FIPS_ENABLED_ENV_VAR {
+		message = "FIPS cryptography is enabled. FIPS cryptography setting on the host is 'false'."
+	}
+
+	log.Println(message)
 }
