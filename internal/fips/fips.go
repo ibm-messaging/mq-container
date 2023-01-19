@@ -24,8 +24,7 @@ import (
 )
 
 var (
-	FIPSEnabledType      int
-	FIPSEnabledComponent int
+	FIPSEnabledType int
 )
 
 // FIPS has been turned off either because OS is not FIPS enabled or
@@ -77,12 +76,6 @@ func ProcessFIPSType(logs *logger.Logger) {
 
 func IsFIPSEnabled() bool {
 	return FIPSEnabledType > FIPS_ENABLED_OFF
-}
-
-// Set a flag to indicate FIPS compliance for MQ compoments
-// Queue manager, Native HA, MQ Web Server etc.,
-func SetComponent(componentId int) {
-	FIPSEnabledComponent += componentId
 }
 
 // Log a message on the console to indicate FIPS certified

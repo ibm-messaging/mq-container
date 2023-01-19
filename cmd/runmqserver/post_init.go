@@ -26,6 +26,15 @@ import (
 func postInit(name, keyLabel string, p12Truststore tls.KeyStoreData) error {
 	enableWebServer := os.Getenv("MQ_ENABLE_EMBEDDED_WEB_SERVER")
 	if enableWebServer == "true" || enableWebServer == "1" {
+
+		// Enable FIPS for MQ Web Server if asked for.
+		if fips.IsFIPSEnabled() {
+			err := configureFIPSWebServer(p12Truststore)
+			if err != nil {
+				return err
+			}
+		}
+
 		// Configure the web server (if enabled)
 		webKeystore, err := configureWebServer(keyLabel, p12Truststore)
 		if err != nil {
@@ -35,14 +44,6 @@ func postInit(name, keyLabel string, p12Truststore tls.KeyStoreData) error {
 		webTruststoreRef := "MQWebTrustStore"
 		if len(p12Truststore.TrustedCerts) == 0 {
 			webTruststoreRef = "MQWebKeyStore"
-		}
-
-		// Enable FIPS for MQ Web Server if asked for.
-		if len(keyLabel) > 0 && fips.IsFIPSEnabled() {
-			err = configureFIPSWebServer(p12Truststore)
-			if err != nil {
-				return err
-			}
 		}
 
 		// Start the web server, in the background (if installed)

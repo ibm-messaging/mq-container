@@ -202,10 +202,10 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 func configureFIPSWebServer(p12TrustStore tls.KeyStoreData) error {
 	var errOut error
 	// Need to update jvm.options file of MQ Web Server. We don't update the jvm.options file
-	// in /var/mqm/web/installations/Installation1/servers/mqweb directory. Instead we update
-	// the one in /var/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults.
+	// in /etc/mqm/web/installations/Installation1/servers/mqweb directory. Instead we update
+	// the one in /etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults.
 	// During runtime MQ Web Server merges the data from two files.
-	mqwebJvmOptsDir := "/var/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults"
+	mqwebJvmOptsDir := "/etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults"
 	_, errOut = os.Stat(mqwebJvmOptsDir)
 	if errOut == nil {
 		// Update the jvm.options file using the data from template file. Tell the MQ Web Server
