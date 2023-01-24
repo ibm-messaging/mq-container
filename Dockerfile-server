@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2022
+# © Copyright IBM Corporation 2015, 2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,33 +17,28 @@ ARG BASE_TAG=8.7-1031
 ARG BUILDER_IMAGE=registry.access.redhat.com/ubi8/go-toolset
 ARG BUILDER_TAG=1.17.12-11
 ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
-ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.3.2.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
+ARG MQ_ARCHIVE="downloads/9.3.2.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
+
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
 FROM $BUILDER_IMAGE:$BUILDER_TAG as builder
-# The URL to download the MQ installer from in tar.gz format
-# This assumes an archive containing the MQ Non-Install packages
-ARG MQ_URL
 ARG IMAGE_REVISION="Not specified"
 ARG IMAGE_SOURCE="Not specified"
 ARG IMAGE_TAG="Not specified"
 ARG GO_WORKDIR
+ARG MQ_ARCHIVE
 USER 0
-WORKDIR /opt/mqm
-# Download and extract MQ files, to get the MQ client needed to compile.
-# Only extract certain MQ files to make the build quicker
-RUN curl --fail --location $MQ_URL | tar --extract --gunzip \
-  && chown -R 1001:root /opt/mqm/*
 WORKDIR $GO_WORKDIR/
+ADD $MQ_ARCHIVE /opt/mqm
+ENV CGO_CFLAGS="-I/opt/mqm/inc/" \
+    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
+    PATH="${PATH}:/opt/mqm/bin"
 COPY go.mod go.sum ./
 COPY cmd/ ./cmd
 COPY internal/ ./internal
 COPY pkg/ ./pkg
 COPY vendor/ ./vendor
-ENV CGO_CFLAGS="-I/opt/mqm/inc/" \
-    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
-    PATH="${PATH}:/opt/mqm/bin"
 RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\" -X \"main.ImageTag=$IMAGE_TAG\"" ./cmd/runmqserver/ \
   && go build ./cmd/chkmqready/ \
   && go build ./cmd/chkmqhealthy/ \
@@ -59,10 +54,43 @@ RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"
   && go vet ./cmd/... ./internal/...
 
 ###############################################################################
+# Build stage to reduce MQ packages included using genmqpkg
+###############################################################################
+FROM $BASE_IMAGE:$BASE_TAG AS mq-redux
+ARG BASE_IMAGE
+ARG BASE_TAG
+ARG MQ_ARCHIVE
+WORKDIR /tmp/mq
+ENV genmqpkg_inc32=0 \
+    genmqpkg_incadm=1 \
+    genmqpkg_incamqp=0 \
+    genmqpkg_incams=1 \
+    genmqpkg_inccbl=0 \
+    genmqpkg_inccics=0 \
+    genmqpkg_inccpp=0 \
+    genmqpkg_incdnet=0 \
+    genmqpkg_incjava=1 \
+    genmqpkg_incjre=1 \
+    genmqpkg_incman=0 \
+    genmqpkg_incmqbc=0 \
+    genmqpkg_incmqft=0 \
+    genmqpkg_incmqsf=0 \
+    genmqpkg_incmqxr=0 \
+    genmqpkg_incnls=1 \
+    genmqpkg_incras=1 \
+    genmqpkg_incsamp=1 \
+    genmqpkg_incsdk=0 \
+    genmqpkg_inctls=1 \
+    genmqpkg_incunthrd=0 \
+    genmqpkg_incweb=1
+ADD $MQ_ARCHIVE /opt/mqm-noinstall
+# Run genmqpkg to reduce the MQ packages included
+RUN /opt/mqm-noinstall/bin/genmqpkg.sh -b /opt/mqm-redux
+
+###############################################################################
 # Main build stage, to build MQ image
 ###############################################################################
 FROM $BASE_IMAGE:$BASE_TAG AS mq-server
-# The MQ packages to install - see install-mq.sh for default value
 ARG MQ_URL
 ARG BASE_IMAGE
 ARG BASE_TAG
@@ -79,15 +107,14 @@ LABEL summary="IBM MQ Advanced Server" \
       io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
       base-image=$BASE_IMAGE \
       base-image-release=$BASE_TAG
-COPY install-mq.sh /usr/local/bin/
+COPY --from=mq-redux /opt/mqm-redux/ /opt/mqm/
+COPY setup-image.sh /usr/local/bin/
 COPY install-mq-server-prereqs.sh /usr/local/bin/
-# Install MQ.  To avoid a "text file busy" error here, we sleep before installing.
 RUN env \
-  && mkdir /opt/mqm \
   && chmod u+x /usr/local/bin/install-*.sh \
-  && sleep 1 \
+  && chmod u+x /usr/local/bin/setup-image.sh \
   && install-mq-server-prereqs.sh \
-  && install-mq.sh \
+  && setup-image.sh \
   && /opt/mqm/bin/security/amqpamcf \
   && chown -R 1001:root /opt/mqm/*
 COPY --from=builder $GO_WORKDIR/runmqserver /usr/local/bin/
@@ -121,9 +148,6 @@ ENTRYPOINT ["runmqserver"]
 ###############################################################################
 # Use the Go toolset image, which already includes gcc and the MQ SDK
 FROM builder as cbuilder
-# The URL to download the MQ installer from in tar.gz format
-# This assumes an archive containing the MQ Non-Install packages
-ARG MQ_URL
 USER 0
 # Install the Apache Portable Runtime code (used for htpasswd hash checking)
 RUN yum --assumeyes --disableplugin=subscription-manager install apr-devel apr-util-openssl apr-util-devel

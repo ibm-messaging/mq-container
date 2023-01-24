@@ -1,3 +1,4 @@
+.dockerignore
 .DS_Store
 .vscode
 test/docker/coverage

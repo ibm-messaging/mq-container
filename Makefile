@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017, 2022
+# © Copyright IBM Corporation 2017, 2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -75,8 +75,6 @@ VOLUME_MOUNT_OPTIONS ?= :Z
 ###############################################################################
 # Other variables
 ###############################################################################
-# Build doesn't work if BuildKit is enabled
-DOCKER_BUILDKIT=0
 # Lock Docker API version for compatibility with Podman and with the Docker version in Travis' Ubuntu Bionic
 DOCKER_API_VERSION=1.40
 GO_PKG_DIRS = ./cmd ./internal ./test
@@ -340,14 +338,16 @@ test-advancedserver-cover: test/docker/vendor coverage
 # Command to build the image
 # Args: imageName, imageTag, dockerfile, extraArgs, dockerfileTarget
 # If the ARCH variable has been changed from the default value (arch_go variable), then the `--platform` parameter is added
-define build-mq-command
+# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
+define build-mq
+	rm -f .dockerignore && echo ".git\ndownloads\n!downloads/$4" > .dockerignore
 	$(COMMAND) build \
 	  --tag $1:$2 \
 	  --file $3 \
-	  $4 \
 	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
 	  --build-arg IMAGE_TAG="$1:$2" \
+	  --build-arg MQ_ARCHIVE="downloads/$4" \
 	  --label version=$(MQ_VERSION) \
 	  --label name=$1 \
 	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
@@ -360,57 +360,6 @@ define build-mq-command
 	  $(EXTRA_LABELS) \
 	  --target $5 \
 	  .
-endef
-
-# Build using a separate container to host the MQ download files.
-# To minimize the layers in the resulting image, the download files can't be part of the build context.
-# The "docker build" command (and "podman build" on macOS) don't allow you to mount a directory into the build, so a 
-# separate container is used to host a web server.
-# Note that for Podman, this means that you need to be using the "rootful" mode, because the rootless mode doesn't allow
-# much control of networking, so the containers can't talk to each other.
-define build-mq-using-web-server
-	$(COMMAND) network create $(BUILD_SERVER_NETWORK)
-	$(COMMAND) run \
-	  --rm \
-	  --name $(BUILD_SERVER_CONTAINER) \
-	  --network $(BUILD_SERVER_NETWORK) \
-	  --volume $(DOWNLOADS_DIR):/opt/app-root/src$(VOLUME_MOUNT_OPTIONS) \
-	  --detach \
-	  registry.access.redhat.com/ubi8/nginx-120 nginx -g "daemon off;" || ($(COMMAND) network rm $(BUILD_SERVER_NETWORK) && exit 1)
-	BUILD_SERVER_IP=$$($(COMMAND) inspect -f '{{ .NetworkSettings.Networks.$(BUILD_SERVER_NETWORK).IPAddress }}' $(BUILD_SERVER_CONTAINER)); \
-	$(call build-mq-command,$1,$2,$3,--network build --build-arg MQ_URL=http://$$BUILD_SERVER_IP:8080/$4,$5) || ($(COMMAND) rm -f $(BUILD_SERVER_CONTAINER) && $(COMMAND) network rm $(BUILD_SERVER_NETWORK) && exit 1)
-	$(COMMAND) rm -f $(BUILD_SERVER_CONTAINER)
-	$(COMMAND) network rm $(BUILD_SERVER_NETWORK)
-endef
-
-# When building with Docker, always use the web server build because you can't use bind-mounted volumes.
-# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
-define build-mq-docker
-	$(call build-mq-using-web-server,$1,$2,$3,$4,$5)
-endef
-
-# When building with Podman on macOS (Darwin), use the web server build because you can't use bind-mounted volumes with `podman build` on macOS
-# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
-define build-mq-podman-Darwin
-	$(call build-mq-using-web-server,$1,$2,$3,$4,$5)
-endef
-
-# When building with Podman on Linux, just pass the downloads directory as a volume
-# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
-define build-mq-podman-Linux
-	$(call build-mq-command,$1,$2,$3,--volume $(DOWNLOADS_DIR):/var/downloads$(VOLUME_MOUNT_OPTIONS) --build-arg MQ_URL=file:///var/downloads/$4,$5)
-endef
-
-# When building with Podman, just pass the downloads directory as a volume
-# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
-define build-mq-podman
-	$(call build-mq-podman-$(shell uname -s),$1,$2,$3,$4,$5)
-endef
-
-# Build an MQ image.  The commands used are slightly different between Docker and Podman
-# Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
-define build-mq
-	$(call build-mq-$(COMMAND),$1,$2,$3,$4,$5)
 endef
 
 ###############################################################################
@@ -610,7 +559,6 @@ fi ;\
 
 .PHONY: update-release-information
 update-release-information:
-	sed -i.bak 's/ARG MQ_URL=.*-LinuxX64.tar.gz"/ARG MQ_URL="https:\/\/public.dhe.ibm.com\/ibmdl\/export\/pub\/software\/websphere\/messaging\/mqadv\/$(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"/g' Dockerfile-server && rm Dockerfile-server.bak
 	$(eval MQ_VERSION_1=$(shell echo '${MQ_VERSION}' | rev | cut -c 3- | rev))
 	sed -i.bak 's/IBM_MQ_.*_LINUX_X86-64_NOINST.tar.gz/IBM_MQ_${MQ_VERSION_1}_LINUX_X86-64_NOINST.tar.gz/g' docs/building.md && rm docs/building.md.bak
 	sed -i.bak 's/ibm-mqadvanced-server:.*-amd64/ibm-mqadvanced-server:$(MQ_VERSION)-amd64/g' docs/security.md

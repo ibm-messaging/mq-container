@@ -4,7 +4,7 @@
 
 You need to have the following tools installed:
 
-* [Docker](https://www.docker.com/) 17.06.1 or later, or [Podman](https://podman.io) 1.0 or later (Podman 4.1 on macOS).  If using Podman on macOS, the you need to be in "rootful" mode to allow the use of a network during builds.  Run `podman machine init --rootful`.
+* [Docker](https://www.docker.com/) 17.06.1 or later, or [Podman](https://podman.io) 1.0 or later (Podman 4.1 on macOS).
 * [GNU make](https://www.gnu.org/software/make/)
 
 If you are working in the Windows Subsystem for Linux, follow [this guide by Microsoft to set up Docker](https://blogs.msdn.microsoft.com/commandline/2017/12/08/cross-post-wsl-interoperability-with-docker/) first.
@@ -44,4 +44,4 @@ You can use the environment variable `MQ_ARCHIVE_DEV` to specify an alternative 
 
 ## Installed components
 
-This image includes the core MQ server, Java, language packs, GSKit, and web server.  This is configured in the `Generate MQ package in INSTALLATION_DIR` section [here](../install-mq.sh), with the configured options being picked up at build time.
+This image includes the core MQ server, Java, language packs, GSKit, and web server.  This is configured in the `mq-redux` build stage in `Dockerfile-server`.
