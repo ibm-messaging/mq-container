@@ -60,11 +60,15 @@ func ProcessFIPSType(logs *logger.Logger) {
 		if strings.EqualFold(fipsOverride, "false") || strings.EqualFold(fipsOverride, "0") {
 			FIPSEnabledType = FIPS_ENABLED_OFF
 		} else if strings.EqualFold(fipsOverride, "true") || strings.EqualFold(fipsOverride, "1") {
-			// This is the case where OS is not FIPS compliant but we have been asked to run MQ
-			// queue manager, web server in FIPS mode. This case can be used when running docker tests.
-			FIPSEnabledType = FIPS_ENABLED_ENV_VAR
+			// This is the case where OS may or may not be FIPS compliant but we have been asked
+			// to run MQ queue manager, web server and Native HA in FIPS mode. This case can also
+			// be used when running docker tests. If FIPS is enabled on host, then don't modify
+			// the original value.
+			if FIPSEnabledType != FIPS_ENABLED_PLATFORM {
+				FIPSEnabledType = FIPS_ENABLED_ENV_VAR
+			}
 		} else if strings.EqualFold(fipsOverride, "auto") {
-			// This is the default case. Leave it to the OS default as determine above
+			// This is the default case. Leave it to the OS default as determined above.
 		} else {
 			// We don't recognise the value specified. Log a warning and carry on.
 			if logs != nil {
