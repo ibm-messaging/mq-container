@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2022
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -55,23 +55,36 @@ func createDirStructure() error {
 func createQueueManager(name string, devMode bool) (bool, error) {
 	log.Printf("Creating queue manager %v", name)
 
-	// Run 'dspmqinf' to check if 'mqs.ini' configuration file exists
-	// If command succeeds, the queue manager (or standby queue manager) has already been created
-	_, _, err := command.Run("dspmqinf", name)
-	if err == nil {
-		log.Printf("Detected existing queue manager %v", name)
-		return false, nil
-	}
-
 	mounts, err := containerruntime.GetMounts()
 	if err != nil {
 		log.Printf("Error getting mounts for queue manager")
 		return false, err
 	}
 
+	dataDir := getQueueManagerDataDir(mounts, name)
+
+	// Run 'dspmqinf' to check if 'mqs.ini' configuration file exists
+	// If command succeeds, the queue manager (or standby queue manager) has already been created
+	_, _, err = command.Run("dspmqinf", name)
+	if err == nil {
+		log.Printf("Detected existing queue manager %v", name)
+		// Check if MQ_QMGR_LOG_FILE_PAGES matches the value set in qm.ini
+		lfp := os.Getenv("MQ_QMGR_LOG_FILE_PAGES")
+		if lfp != "" {
+			qmIniBytes, err := readQMIni(dataDir)
+			if err != nil {
+				log.Printf("Error reading qm.ini : %v", err)
+				return false, err
+			}
+			if !validateLogFilePageSetting(qmIniBytes, lfp) {
+				log.Println("Warning: the value of MQ_QMGR_LOG_FILE_PAGES does not match the value of 'LogFilePages' in the qm.ini. This setting cannot be altered after Queue Manager creation.")
+			}
+		}
+		return false, nil
+	}
+
 	// Check if 'qm.ini' configuration file exists for the queue manager
 	// TODO : handle possible race condition - use a file lock?
-	dataDir := getQueueManagerDataDir(mounts, name)
 	_, err = os.Stat(filepath.Join(dataDir, "qm.ini"))
 	if err != nil {
 		// If 'qm.ini' is not found - run 'crtmqm' to create a new queue manager
@@ -94,6 +107,25 @@ func createQueueManager(name string, devMode bool) (bool, error) {
 	}
 	log.Println("Created queue manager")
 	return true, nil
+}
+
+//readQMIni reads the qm.ini file and returns it as a byte array
+//This function is specific to comply with the nosec.
+func readQMIni(dataDir string) ([]byte, error) {
+	qmgrDir := filepath.Join(dataDir, "qm.ini")
+	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
+	iniFileBytes, err := ioutil.ReadFile(qmgrDir)
+	if err != nil {
+		return nil, err
+	}
+	return iniFileBytes, err
+}
+
+//validateLogFilePageSetting validates if the specified logFilePage number is equal to the existing value in the qm.ini
+func validateLogFilePageSetting(iniFileBytes []byte, logFilePages string) bool {
+	lfpString := "LogFilePages=" + logFilePages
+	qminiConfigStr := string(iniFileBytes)
+	return strings.Contains(qminiConfigStr, lfpString)
 }
 
 func updateCommandLevel() error {
@@ -237,6 +269,14 @@ func getCreateQueueManagerArgs(mounts map[string]string, name string, devMode bo
 	}
 	if _, ok := mounts["/mnt/mqm-data"]; ok {
 		args = append(args, "-md", "/mnt/mqm-data/qmgrs")
+	}
+	if os.Getenv("MQ_QMGR_LOG_FILE_PAGES") != "" {
+		_, err = strconv.Atoi(os.Getenv("MQ_QMGR_LOG_FILE_PAGES"))
+		if err != nil {
+			log.Printf("Error processing MQ_QMGR_LOG_FILE_PAGES, the default value for LogFilePages will be used. Err: %v", err)
+		} else {
+			args = append(args, "-lf", os.Getenv("MQ_QMGR_LOG_FILE_PAGES"))
+		}
 	}
 	args = append(args, name)
 	return args
