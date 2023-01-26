@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2022
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,7 +44,12 @@ func doMain() int {
 	}
 
 	// Check if the queue manager has a running listener
-	if active, _ := ready.IsRunningAsActiveQM(ctx, name); active {
+	status, err := ready.Status(ctx, name)
+	if err != nil {
+		return 1
+	}
+	switch status {
+	case ready.StatusActiveQM:
 		conn, err := net.Dial("tcp", "127.0.0.1:1414")
 		if err != nil {
 			fmt.Println(err)
@@ -54,16 +59,16 @@ func doMain() int {
 		if err != nil {
 			fmt.Println(err)
 		}
-	} else if standby, _ := ready.IsRunningAsStandbyQM(ctx, name); standby {
+		return 0
+	case ready.StatusStandbyQM:
 		fmt.Printf("Detected queue manager running in standby mode")
 		return 10
-	} else if replica, _ := ready.IsRunningAsReplicaQM(ctx, name); replica {
+	case ready.StatusReplicaQM:
 		fmt.Printf("Detected queue manager running in replica mode")
 		return 20
-	} else {
+	default:
 		return 1
 	}
-	return 0
 }
 
 func main() {
