@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018, 2020
+# © Copyright IBM Corporation 2018, 2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ sudo: required
 language: go
 
 go:
-  - "1.17.12"
+  - "1.18.9"
 
 services:
   - docker
