@@ -106,6 +106,19 @@ func goldenPath(t *testing.T, metrics bool) {
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 
+	//By default AMQ5041I,AMQ5052I,AMQ5051I,AMQ5037I,AMQ5975I are excluded
+	jsonLogs := inspectLogs(t, cli, id)
+
+	isMessageFound := scanForExcludedEntries(jsonLogs)
+
+	if isMessageFound == true {
+		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	}
+
+	if strings.Contains(jsonLogs, "CWWKF0011I") {
+		t.Errorf("Web Server is off....CWWKF0011I message id is not expected")
+	}
+
 	t.Run("Validate Default LogFilePages", func(t *testing.T) {
 		testLogFilePages(t, cli, id, "qm1", "4096")
 	})
@@ -1158,28 +1171,6 @@ func jsonLogFormat(t *testing.T, metric bool) {
 	}
 }
 
-func TestBadLogFormat(t *testing.T) {
-	t.Parallel()
-
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
-		Env: []string{
-			"LICENSE=accept",
-			"LOG_FORMAT=fake",
-		},
-	}
-	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 20*time.Second)
-	if rc != 1 {
-		t.Errorf("Expected rc=1, got rc=%v", rc)
-	}
-	expectTerminationMessage(t, cli, id)
-}
-
 // TestMQJSONDisabled tests the case where MQ's JSON logging feature is
 // specifically disabled (which will disable log mirroring)
 func TestMQJSONDisabled(t *testing.T) {
@@ -1502,4 +1493,291 @@ func TestCustomLogFilePages(t *testing.T) {
 	waitForReady(t, cli, id)
 
 	testLogFilePages(t, cli, id, "qmlfp", "8192")
+}
+
+// TestLoggingConsoleSource tests default behavior which is
+// MQ_LOGGING_CONSOLE_SOURCE set to qmgr,web
+func TestLoggingConsoleSource(t *testing.T) {
+
+	t.Parallel()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=true",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	jsonLogs := inspectLogs(t, cli, id)
+
+	isMessageFound := scanForExcludedEntries(jsonLogs)
+
+	if isMessageFound == true {
+		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	}
+
+	if !strings.Contains(jsonLogs, "AMQ6206I") && !strings.Contains(jsonLogs, "CWWKF0011I") {
+		t.Errorf("Expected  messageIDs AMQ6206I and CWWKF0011I are not present")
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+// TestOldBehaviorWebConsole sets LOG_FORMAT to json and verify logs are indeed in json format
+func TestOldBehaviorWebConsole(t *testing.T) {
+
+	t.Parallel()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"LOG_FORMAT=json",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	jsonLogs := inspectLogs(t, cli, id)
+
+	isMessageFound := scanForExcludedEntries(jsonLogs)
+
+	if isMessageFound == true {
+		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	}
+
+	if !strings.Contains(jsonLogs, "Environment variable LOG_FORMAT is deprecated. Use MQ_LOGGING_CONSOLE_FORMAT instead.") {
+		t.Errorf("Expected Message stating LOG_FORMAT is deprecated is not in the log")
+	}
+
+	isValidJSON := checkLogForValidJSON(jsonLogs)
+
+	if !isValidJSON {
+		t.Fatalf("Expected all log lines to be valid JSON.  But got error %v ", err)
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+// TestLoggingConsoleWithContRestart restarts the container and checks
+// that setting of env variable persists
+func TestLoggingConsoleWithContRestart(t *testing.T) {
+
+	t.Parallel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
+			"MQ_LOGGING_CONSOLE_SOURCE=qmgr",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	jsonLogs := inspectLogs(t, cli, id)
+
+	if !strings.Contains(jsonLogs, "AMQ6206I") {
+		t.Errorf("Expected  messageID AMQ6206I is not present in the message")
+	}
+
+	isMessageFound := scanForExcludedEntries(jsonLogs)
+
+	if isMessageFound == true {
+		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	}
+
+	stopContainer(t, cli, id)
+	startContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	jsonLogs = inspectLogs(t, cli, id)
+
+	if !strings.Contains(jsonLogs, "Stopped queue manager") || strings.Contains(jsonLogs, "CWWKF0011I") {
+		t.Errorf("CWWKF0011I which is not expected is present!!!!!")
+	}
+
+	isMessageFoundAfterRestart := scanForExcludedEntries(jsonLogs)
+
+	if isMessageFoundAfterRestart == true {
+		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+// TestLoggingWithQmgrAndExcludeId tests MQ_LOGGING_CONSOLE_SOURCE set to qmgr
+// and  exclude ID set to amq7230I.
+func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
+	qmgrName := "qm1"
+
+	t.Parallel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
+			"MQ_LOGGING_CONSOLE_SOURCE=qmgr",
+			"MQ_LOGGING_CONSOLE_FORMAT=json",
+			"MQ_LOGGING_CONSOLE_EXCLUDE_ID=amq7230I",
+		},
+	}
+
+	dir := "/var/mqm/qmgrs/" + qmgrName + "/errors"
+
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	jsonLogs := inspectLogs(t, cli, id)
+
+	isValidJSON := checkLogForValidJSON(jsonLogs)
+
+	if !isValidJSON {
+		t.Fatalf("Expected all log lines to be valid JSON.  But got error %v ", err)
+	}
+
+	if strings.Contains(jsonLogs, "AMQ7230I") {
+		t.Errorf("Expected to exclude messageId by default; but messageId \"AMQ7230I\" is present")
+	}
+
+	stopContainer(t, cli, id)
+
+	//checking that message is only excluded from the console log, but not from the MQ error log
+	b := copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR01.json"))
+
+	foundInLog := 0
+	r := bytes.NewReader(b)
+	scannernew := bufio.NewScanner(r)
+	for scannernew.Scan() {
+		textData := scannernew.Text()
+
+		if strings.Contains(textData, "AMQ7230I") {
+			foundInLog = 1
+		}
+	}
+	if foundInLog == 0 {
+		t.Errorf("mesageID AMQ7230I is not present in MQ LOG!!!!")
+	}
+
+}
+
+// TestLoggingConsoleSetToWeb tests MQ_LOGGING_CONSOLE_SOURCE set to web
+func TestLoggingConsoleSetToWeb(t *testing.T) {
+
+	t.Parallel()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=true",
+			"MQ_LOGGING_CONSOLE_SOURCE=web",
+			"MQ_LOGGING_CONSOLE_EXCLUDE_ID=CWWKG0028A,CWWKS4105I",
+			"MQ_LOGGING_CONSOLE_FORMAT=json",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	// At the most we will wait for 60 seconds for the log to appear. If it doesn't
+	// appear within the time, we'll fail.
+	currentTime := time.Now()
+	waitTime := currentTime.Add(time.Second * 60)
+	var jsonLogs string
+	msgFound := false
+
+	for time.Now().Unix() < waitTime.Unix() {
+
+		jsonLogs = inspectLogs(t, cli, id)
+
+		if !strings.Contains(jsonLogs, "CWWKF0011I") {
+			time.Sleep(1 * time.Second)
+			continue
+		} else {
+			msgFound = true
+			break
+		}
+	}
+	if !msgFound {
+		t.Errorf("Expected  messageID CWWKF0011I is not present in the message")
+	}
+
+	if strings.Contains(jsonLogs, "AMQ5041I") || strings.Contains(jsonLogs, "AMQ5052I") ||
+		strings.Contains(jsonLogs, "AMQ5051I") || strings.Contains(jsonLogs, "AMQ5037I") ||
+		strings.Contains(jsonLogs, "AMQ5975I") || strings.Contains(jsonLogs, "CWWKG0028A") ||
+		strings.Contains(jsonLogs, "CWWKS4105I") {
+		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+// TestLoggingConsoleSetToQmgr test sets LOG_FORMAT to BASIC and MQ_LOGGING_CONSOLE_FORMAT to
+// json and check that log is in json format
+func TestLoggingConsoleSetToQmgr(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
+			"MQ_LOGGING_CONSOLE_SOURCE=qmgr",
+			"LOG_FORMAT=BASIC",
+			"MQ_LOGGING_CONSOLE_FORMAT=json",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	jsonLogs := inspectLogs(t, cli, id)
+
+	isMessageFound := scanForExcludedEntries(jsonLogs)
+
+	if isMessageFound == true {
+		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	}
+
+	if !strings.Contains(jsonLogs, "AMQ6206I") {
+		t.Errorf("Expected  messageID AMQ6206I is not present in the message")
+	}
+
+	isValidJSON := checkLogForValidJSON(jsonLogs)
+
+	if !isValidJSON {
+		t.Fatalf("Expected all log lines to be valid JSON.  But got error %v ", err)
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
 }

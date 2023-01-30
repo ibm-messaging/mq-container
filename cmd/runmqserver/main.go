@@ -160,6 +160,11 @@ func doMain() error {
 		return err
 	}
 
+	//Validate MQ_LOG_CONSOLE_SOURCE variable
+	if !isLogConsoleSourceValid() {
+		log.Println("One or more invalid value is provided for MQ_LOGGING_CONSOLE_SOURCE. Allowed values are 'qmgr' & 'web' in csv format")
+	}
+
 	err = postInit(name, keyLabel, defaultP12Truststore)
 	if err != nil {
 		logTermination(err)
@@ -210,17 +215,24 @@ func doMain() error {
 		log.Debug("Cancel log mirroring")
 		cancelMirror()
 	}()
-	// TODO: Use the error channel
-	_, err = mirrorSystemErrorLogs(ctx, &wg, mf)
-	if err != nil {
-		logTermination(err)
-		return err
+
+	//For mirroring mq system logs and qm logs, if environment variable is set
+	if checkLogSourceForMirroring("qmgr") {
+		//Mirror MQ system logs
+		_, err = mirrorSystemErrorLogs(ctx, &wg, mf)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+
+		//Mirror queue manager logs
+		_, err = mirrorQueueManagerErrorLogs(ctx, &wg, name, newQM, mf)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
-	_, err = mirrorQueueManagerErrorLogs(ctx, &wg, name, newQM, mf)
-	if err != nil {
-		logTermination(err)
-		return err
-	}
+
 	if *devFlag {
 		_, err = mirrorHTPasswdLogs(ctx, &wg, name, newQM, mf)
 		if err != nil {
@@ -228,9 +240,9 @@ func doMain() error {
 			return err
 		}
 	}
-	// Recommended to use this option in conjunction with setting WLP_LOGGING_MESSAGE_FORMAT=JSON
-	mirrorWebLog := os.Getenv("MQ_ENABLE_EMBEDDED_WEB_SERVER_LOG")
-	if mirrorWebLog == "true" || mirrorWebLog == "1" {
+
+	//For mirroring web server logs if source variable is set
+	if checkLogSourceForMirroring("web") {
 		_, err = mirrorWebServerLogs(ctx, &wg, name, newQM, mf)
 		if err != nil {
 			logTermination(err)

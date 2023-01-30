@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -102,5 +102,10 @@ func LogContainerDetails(log *logger.Logger) error {
 			}
 		}
 	}
+
+	if os.Getenv("MQ_LOGGING_CONSOLE_FORMAT") == "" && os.Getenv("LOG_FORMAT") != "" {
+		log.Println("Environment variable LOG_FORMAT is deprecated. Use MQ_LOGGING_CONSOLE_FORMAT instead.")
+	}
+
 	return nil
 }

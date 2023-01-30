@@ -745,6 +745,7 @@ func inspectLogs(t *testing.T, cli *client.Client, ID string) string {
 		t.Fatal(err)
 	}
 	buf := new(bytes.Buffer)
+
 	// Each output line has a header, which needs to be removed
 	_, err = stdcopy.StdCopy(buf, buf, reader)
 	if err != nil {
@@ -888,6 +889,30 @@ func getMQVersion(t *testing.T, cli *client.Client) (string, error) {
 	}
 	version := inspect.ContainerConfig.Labels["version"]
 	return version, nil
+}
+
+// scanForExcludedEntries scans for default excluded messages
+func scanForExcludedEntries(msg string) bool {
+	if strings.Contains(msg, "AMQ5041I") || strings.Contains(msg, "AMQ5052I") ||
+		strings.Contains(msg, "AMQ5051I") || strings.Contains(msg, "AMQ5037I") ||
+		strings.Contains(msg, "AMQ5975I") {
+		return true
+	}
+	return false
+}
+
+// checkLogForValidJSON checks if the message is in Json format
+func checkLogForValidJSON(jsonLogs string) bool {
+	scanner := bufio.NewScanner(strings.NewReader(jsonLogs))
+	for scanner.Scan() {
+		var obj map[string]interface{}
+		s := scanner.Text()
+		err := json.Unmarshal([]byte(s), &obj)
+		if err != nil {
+			return false
+		}
+	}
+	return true
 }
 
 // runContainerWithAllConfig creates and starts a container, using the supplied ContainerConfig, HostConfig,

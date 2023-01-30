@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2022
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,7 +58,20 @@ func logTermination(args ...interface{}) {
 }
 
 func getLogFormat() string {
-	return os.Getenv("LOG_FORMAT")
+	logFormat := strings.ToLower(strings.TrimSpace(os.Getenv("MQ_LOGGING_CONSOLE_FORMAT")))
+	//old-style env var is used.
+	if logFormat == "" {
+		logFormat = strings.ToLower(strings.TrimSpace(os.Getenv("LOG_FORMAT")))
+	}
+
+	if logFormat != "" && (logFormat == "basic" || logFormat == "json") {
+		return logFormat
+	} else {
+		//this is the case where value is either empty string or set to something other than "basic"/"json"
+		logFormat = "basic"
+	}
+
+	return logFormat
 }
 
 // formatBasic formats a log message parsed from JSON, as "basic" text
@@ -81,6 +94,92 @@ func formatBasic(obj map[string]interface{}) string {
 	}
 	// Convert time zone information from some logs (e.g. Liberty) for consistency
 	obj["ibm_datetime"] = strings.Replace(obj["ibm_datetime"].(string), "+0000", "Z", 1)
+
+	if obj["type"] != nil && (obj["type"] == "liberty_message" || obj["type"] == "liberty_trace") {
+		timeStamp := obj["ibm_datetime"]
+		threadID := ""
+		srtModuleName := ""
+		logLevel := ""
+		ibmClassName := ""
+		srtIbmClassName := ""
+		ibmMethodName := ""
+		message := ""
+
+		if obj["loglevel"] != nil {
+			//threadID is captured below
+			if obj["ibm_threadId"] != nil {
+				threadID = obj["ibm_threadId"].(string)
+			}
+
+			//logLevel character to be mirrored in console web server logging is decided below
+			logLevelTmp := obj["loglevel"].(string)
+			switch logLevelTmp {
+			case "AUDIT":
+				logLevel = "A"
+			case "INFO":
+				logLevel = "I"
+			case "EVENT":
+				logLevel = "1"
+			case "ENTRY":
+				logLevel = ">"
+			case "EXIT":
+				logLevel = "<"
+			case "FINE":
+				logLevel = "1"
+			case "FINER":
+				logLevel = "2"
+			case "FINEST":
+				logLevel = "3"
+			default:
+				logLevel = string(logLevelTmp[0])
+			}
+
+			//This is a 13 characters string present in extracted out of module node
+			if obj["module"] != nil {
+				srtModuleNameArr := strings.Split(obj["module"].(string), ".")
+				arrLen := len(srtModuleNameArr)
+				srtModuleName = srtModuleNameArr[arrLen-1]
+				if len(srtModuleName) > 13 {
+					srtModuleName = srtModuleName[0:13]
+				}
+			}
+			if obj["ibm_className"] != nil {
+				ibmClassName = obj["ibm_className"].(string)
+
+				//A 13 character string is extracted from class name. This is required for FINE, FINER & FINEST log lines
+				ibmClassNameArr := strings.Split(ibmClassName, ".")
+				arrLen := len(ibmClassNameArr)
+				srtIbmClassName = ibmClassNameArr[arrLen-1]
+				if len(srtModuleName) > 13 {
+					srtIbmClassName = srtIbmClassName[0:13]
+				}
+			}
+			if obj["ibm_methodName"] != nil {
+				ibmMethodName = obj["ibm_methodName"].(string)
+			}
+			if obj["message"] != nil {
+				message = obj["message"].(string)
+			}
+
+			//For AUDIT & INFO logging
+			if logLevel == "A" || logLevel == "I" {
+				return fmt.Sprintf("%s %s %-13s %s %s %s %s\n", timeStamp, threadID, srtModuleName, logLevel, ibmClassName, ibmMethodName, message)
+			}
+			//For EVENT logLevel
+			if logLevelTmp == "EVENT" {
+				return fmt.Sprintf("%s %s %-13s %s %s\n", timeStamp, threadID, srtModuleName, logLevel, message)
+			}
+			//For ENTRY & EXIT
+			if logLevel == ">" || logLevel == "<" {
+				return fmt.Sprintf("%s %s %-13s %s %s %s\n", timeStamp, threadID, srtModuleName, logLevel, ibmMethodName, message)
+			}
+			//For deeper log levels
+			if logLevelTmp == "FINE" || logLevel == "2" || logLevel == "3" {
+				return fmt.Sprintf("%s %s %-13s %s %s %s %s\n", timeStamp, threadID, srtIbmClassName, logLevel, ibmClassName, ibmMethodName, message)
+			}
+
+		}
+	}
 	return fmt.Sprintf("%s %s\n", obj["ibm_datetime"], obj["message"])
 }
 
@@ -131,6 +230,11 @@ func configureLogger(name string) (mirrorFunc, error) {
 			return nil, err
 		}
 		return func(msg string, isQMLog bool) bool {
+			arrLoggingConsoleExcludeIds := strings.Split(strings.ToUpper(os.Getenv("MQ_LOGGING_CONSOLE_EXCLUDE_ID")), ",")
+			if isExcludedMsgIdPresent(msg, arrLoggingConsoleExcludeIds) {
+				//If excluded id is present do not mirror it, return back
+				return false
+			}
 			// Check if the message is JSON
 			if len(msg) > 0 && msg[0] == '{' {
 				obj, err := processLogMessage(msg)
@@ -155,6 +259,11 @@ func configureLogger(name string) (mirrorFunc, error) {
 			return nil, err
 		}
 		return func(msg string, isQMLog bool) bool {
+			arrLoggingConsoleExcludeIds := strings.Split(strings.ToUpper(os.Getenv("MQ_LOGGING_CONSOLE_EXCLUDE_ID")), ",")
+			if isExcludedMsgIdPresent(msg, arrLoggingConsoleExcludeIds) {
+				//If excluded id is present do not mirror it, return back
+				return false
+			}
 			// Check if the message is JSON
 			if len(msg) > 0 && msg[0] == '{' {
 				// Parse the JSON message, and print a simplified version
@@ -193,6 +302,16 @@ func filterQMLogMessage(obj map[string]interface{}) bool {
 	hostname, err := os.Hostname()
 	if os.Getenv("MQ_MULTI_INSTANCE") == "true" && err == nil && !strings.Contains(obj["host"].(string), hostname) {
 		return true
+	}
+	return false
+}
+
+// Function to check if ids provided in MQ_LOGGING_CONSOLE_EXCLUDE_ID are present in given log line or not
+func isExcludedMsgIdPresent(msg string, envExcludeIds []string) bool {
+	for _, id := range envExcludeIds {
+		if id != "" && strings.Contains(msg, strings.TrimSpace(id)) {
+			return true
+		}
 	}
 	return false
 }
@@ -237,4 +356,69 @@ func logDiagnostics() {
 
 		log.Debug("---  End Diagnostics  ---")
 	}
+}
+
+// Returns the value of MQ_LOGGING_CONSOLE_SOURCE environment variable
+func getMQLogConsoleSource() string {
+	return strings.ToLower(strings.TrimSpace(os.Getenv("MQ_LOGGING_CONSOLE_SOURCE")))
+
+}
+
+// Function to check if valid values are provided for environment variable MQ_LOGGING_CONSOLE_SOURCE. If not valid, main program throws a warning to console
+func isLogConsoleSourceValid() bool {
+	mqLogSource := getMQLogConsoleSource()
+	retValue := false
+	//If nothing is set, we will mirror all, so valid
+	if mqLogSource == "" {
+		return true
+	}
+
+	logConsoleSource := strings.Split(mqLogSource, ",")
+	//This will find out if the environment variable contains permitted values and is comma separated
+	for _, src := range logConsoleSource {
+		switch strings.TrimSpace(src) {
+		//If it is a permitted value, it is valid. Keep it as true, but dont return it. We may encounter something junk soon
+		case "qmgr", "web", "":
+			retValue = true
+		//If invalid entry arrives in-between/anywhere, just return false, there is no turning back
+		default:
+			return false
+		}
+	}
+
+	return retValue
+}
+
+// To check which all logs have to be mirrored
+func checkLogSourceForMirroring(source string) bool {
+	logsrcs := getMQLogConsoleSource()
+
+	//Nothing set, this is when we mirror all
+	if logsrcs == "" {
+		return true
+	}
+
+	//Split the csv environment value so that we get an accurate comparison instead of a contains() check
+	logSrcArr := strings.Split(logsrcs, ",")
+
+	//Iterate through the array to decide on mirroring
+	for _, arr := range logSrcArr {
+		switch strings.TrimSpace(arr) {
+		case "qmgr":
+			//If value of source is qmgr and it exists in environment variable, mirror qmgr logs
+			if source == "qmgr" {
+				return true
+			}
+		case "web":
+			//If value of source is web and it exists in environment variable, and mirror web logs
+			if source == "web" {
+				//If older environment variable is set make sure to print appropriate message
+				if os.Getenv("MQ_ENABLE_EMBEDDED_WEB_SERVER_LOG") != "" {
+					log.Println("Environment variable MQ_ENABLE_EMBEDDED_WEB_SERVER_LOG has now been replaced. Use MQ_LOGGING_CONSOLE_SOURCE instead.")
+				}
+				return true
+			}
+		}
+	}
+	return false
 }
