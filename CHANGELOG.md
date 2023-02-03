@@ -3,6 +3,7 @@
 ## 9.3.2.0 (2023-02)
 
 * Updated to MQ version 9.3.2.0
+* Queue manager certificates with the same Subject Distinguished Name (DN) as the issuer (CA) certificate are not supported. A certificate must have a unique Subject Distinguished Name.
 
 ## 9.3.1.0-r2 (2022-11)
 

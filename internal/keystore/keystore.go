@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2022
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -182,8 +182,8 @@ func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
 	var labels []string
 	for scanner.Scan() {
 		s := scanner.Text()
-		if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "*-") || strings.HasPrefix(s, "!") {
-			s := strings.TrimLeft(s, "-*!")
+		if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "*-") {
+			s := strings.TrimLeft(s, "-*")
 			labels = append(labels, strings.TrimSpace(s))
 		}
 	}
@@ -226,6 +226,8 @@ func (ks *KeyStore) ListAllCertificates() ([]string, error) {
 	var labels []string
 	for scanner.Scan() {
 		s := scanner.Text()
+		// Check for trusted certficates as well here as this method can
+		// be called for trusted store as well.
 		if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "*-") || strings.HasPrefix(s, "!") {
 			s := strings.TrimLeft(s, "-*!")
 			labels = append(labels, strings.TrimSpace(s))

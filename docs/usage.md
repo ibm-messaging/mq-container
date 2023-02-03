@@ -112,3 +112,5 @@ For example, if you have an identity certificate you wish to add with the label 
 This can be achieved by either mounting the directories or files into the container when you run it or by baking the files into the correct location in the image. 
 
 If you supply multiple identity certificates then the first label alphabetically will be chosen as the certificate to be used by the MQ Console and the default certificate for the queue manager. If you wish to use a different certificate on the queue manager then you can change the certificate to use at runtime by executing the MQSC command `ALTER QMGR CERTLABL('<newlabel>')`
+
+It must be noted that queue manager certificate with a Subject Distinguished Name (DN) same as it's Issuer certificate (CA) is not supported. Certificates must have a unique Subject Distinguished Name.

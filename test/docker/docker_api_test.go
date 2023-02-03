@@ -1476,8 +1476,8 @@ func TestEndMQMOpts(t *testing.T) {
 	}
 }
 
-//TestCustomLogFilePages starts a qmgr with a custom number of logfilepages set.
-//Check that the number of logfilepages matches.
+// TestCustomLogFilePages starts a qmgr with a custom number of logfilepages set.
+// Check that the number of logfilepages matches.
 func TestCustomLogFilePages(t *testing.T) {
 	t.Parallel()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -1780,4 +1780,130 @@ func TestLoggingConsoleSetToQmgr(t *testing.T) {
 
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
+
+}
+
+// Test queue manager with both personal and CA certificate having the same DN
+func TestSameSubDNError(t *testing.T) {
+	expectedOutput := "Error: The Subject DN of the Issuer Certificate and the Queue Manager are same"
+	utilSubDNTest(t, "../tlssamesubdn", "true", expectedOutput, false)
+}
+
+// Test queue manager with both personal and CA certificate having the same DN
+// but override the changed behavior via environment variable
+func TestSameSubDNErrorOverride(t *testing.T) {
+	expectedOutput := "Failed to relabel certificate for"
+	utilSubDNTest(t, "../tlssamesubdn", "false", expectedOutput, false)
+}
+
+// Test queue manager with root CA certificate
+func TestWithCASignedCerts(t *testing.T) {
+	expectedOutput := "Creating queue manager MQQM"
+	utilSubDNTest(t, "../tlsdifferentsubdn", "true", expectedOutput, true)
+}
+
+// Test queue manager with intermediate CA certificate
+func TestWithIntermediateCASignedCerts(t *testing.T) {
+	expectedOutput := "Creating queue manager MQQM"
+	utilSubDNTest(t, "../tlsintermediateca", "true", expectedOutput, true)
+}
+
+// Scan the console output for required content.
+func scanForText(output string, prefix string, findText string) (int, bool) {
+	var count int
+	var found bool
+	scanner := bufio.NewScanner(strings.NewReader(output))
+	for scanner.Scan() {
+		s := scanner.Text()
+		if strings.HasPrefix(s, prefix) {
+			count++
+		}
+		if strings.Contains(s, findText) {
+			found = true
+		}
+	}
+	return count, found
+}
+
+// Utility function to test Certificate relabel issues.
+func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOutPut string, waitLong bool) {
+	t.Parallel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containerConfig := container.Config{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=QM1",
+			"MQ_ENABLE_CERT_VALIDATION=" + overrideFlag,
+		},
+		Image: imageName(),
+	}
+	hostConfig := container.HostConfig{
+		Binds: []string{
+			coverageBind(t),
+			tlsDirDN(t, false, certPath) + ":/etc/mqm/pki/keys/QM1",
+		},
+	}
+
+	networkingConfig := network.NetworkingConfig{}
+	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, ctr.ID)
+	startContainer(t, cli, ctr.ID)
+
+	if waitLong {
+		waitForReady(t, cli, ctr.ID)
+		_, output := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
+		if !strings.Contains(output, "SSLKEYR(/run/runmqserver/tls/key)") {
+			t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"", output)
+		}
+
+		if !strings.Contains(output, "CERTLABL(QM1)") {
+			t.Errorf("Expected CERTLABL to be 'default' but it is not; got \"%v\"", output)
+		}
+		_, output = execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "runmqakm -cert -list -type cms -db /run/runmqserver/tls/key.kdb -stashed"})
+		if strings.EqualFold(t.Name(), "TestWithCASignedCerts") {
+			// There should be one personal certificate and one trusted certificate.
+			count, found := scanForText(output, "!", "CN=MQMFTQM,OU=ISL,O=IBM,L=BLR,ST=KA,C=IN")
+			if count != 1 && !found {
+				t.Errorf("Expected 1 trusted certificate with name containing CN=MQMFTQM. But found %v", output)
+			}
+			// One personal certificate that relabeld as QM1
+			count, found = scanForText(output, "-", "QM1")
+			if count != 1 && !found {
+				t.Errorf("Expected 1 personal certificate with name containing QM1. But found %v", output)
+			}
+		} else if strings.EqualFold(t.Name(), "TestWithIntermediateCASignedCerts") {
+			// There should be one personal certificate and two trusted certificates
+			// an intermediate CA and the root CA.
+			count, found := scanForText(output, "!", "ST=HANTS,C=GB")
+			if count != 2 && !found {
+				t.Errorf("Expected 2 trusted certificate with name containing 'ST=HANTS,C=GB'. But found %v", output)
+			}
+			// One personal certificate that is correctly relabeld as QM1
+			count, found = scanForText(output, "-", "QM1")
+			if count != 1 && !found {
+				t.Errorf("Expected 1 personal certificate with name containing QM1. But found %v", output)
+			}
+		}
+	} else {
+		rc := waitForContainer(t, cli, ctr.ID, 20*time.Second)
+		// Expect return code 1 if container failed to create.
+		if rc == 1 {
+			// Get container logs and search for specific message.
+			logs := inspectLogs(t, cli, ctr.ID)
+			if !strings.Contains(logs, expecteOutPut) {
+				t.Errorf("Container creating failed because of invalid certifates")
+			}
+		} else {
+			// Some other error occurred
+			t.Errorf("Some other error occurred %v", rc)
+		}
+	}
 }

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2022
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -954,7 +954,7 @@ func startContainerError(t *testing.T, cli *client.Client, ID string) error {
 	return nil
 }
 
-//testLogFilePages validates that the specified number of logFilePages is present in the qm.ini file.
+// testLogFilePages validates that the specified number of logFilePages is present in the qm.ini file.
 func testLogFilePages(t *testing.T, cli *client.Client, id string, qmName string, expectedLogFilePages string) {
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/" + qmName + "/qm.ini")
 	_, iniContent := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
@@ -962,4 +962,9 @@ func testLogFilePages(t *testing.T, cli *client.Client, id string, qmName string
 	if !strings.Contains(iniContent, "LogFilePages="+expectedLogFilePages) {
 		t.Errorf("Expected qm.ini to contain LogFilePages="+expectedLogFilePages+"; got qm.ini \"%v\"", iniContent)
 	}
+}
+
+// Returns fully qualified path
+func tlsDirDN(t *testing.T, unixPath bool, certPath string) string {
+	return filepath.Join(getCwd(t, unixPath), certPath)
 }

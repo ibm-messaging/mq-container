@@ -255,6 +255,13 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 				return "", err
 			}
 
+			// Validate certificates for duplicate Subject DNs
+			if len(caCertificate) > 0 {
+				errCertValid := validateCertificates(publicCertificate, caCertificate)
+				if errCertValid != nil {
+					return "", errCertValid
+				}
+			}
 			// Create a new PKCS#12 Keystore - containing private key, public certificate & optional CA certificate
 			file, err := pkcs.Encode(rand.Reader, privateKey, publicCertificate, caCertificate, tlsStore.Keystore.Password)
 			if err != nil {
@@ -646,4 +653,20 @@ func haveKeysAndCerts(keyDir string) bool {
 		}
 	}
 	return false
+}
+
+// Iterate through the certificates to ensure there are no two certificates with same Subject DN.
+// GSKit does not allow two certificates with same Subject DN/Friendly Names
+func validateCertificates(personalCert *x509.Certificate, caCertificates []*x509.Certificate) error {
+	// Check if we have been asked to override certificate validation by setting
+	// MQ_ENABLE_CERT_VALIDATION to false
+	enableValidation, enableValidationSet := os.LookupEnv("MQ_ENABLE_CERT_VALIDATION")
+	if !enableValidationSet || (enableValidationSet && !strings.EqualFold(strings.Trim(enableValidation, ""), "false")) {
+		for _, caCert := range caCertificates {
+			if strings.EqualFold(personalCert.Subject.String(), caCert.Subject.String()) {
+				return fmt.Errorf("Error: The Subject DN of the Issuer Certificate and the Queue Manager are same")
+			}
+		}
+	}
+	return nil
 }
