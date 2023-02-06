@@ -964,6 +964,24 @@ func testLogFilePages(t *testing.T, cli *client.Client, id string, qmName string
 	}
 }
 
+//waitForMessageInLog will check for a particular message with wait
+func waitForMessageInLog(t *testing.T, cli *client.Client, id string, expecteMessageId string) (string, error) {
+	var jsonLogs string
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	for {
+		select {
+		case <-time.After(1 * time.Second):
+			jsonLogs = inspectLogs(t, cli, id)
+			if strings.Contains(jsonLogs, expecteMessageId) {
+				return jsonLogs, nil
+			}
+		case <-ctx.Done():
+			return "", fmt.Errorf("Expected message Id %s was not logged.", expecteMessageId)
+		}
+	}
+}
+
 // Returns fully qualified path
 func tlsDirDN(t *testing.T, unixPath bool, certPath string) string {
 	return filepath.Join(getCwd(t, unixPath), certPath)
