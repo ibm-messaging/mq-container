@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017, 2022
+# © Copyright IBM Corporation 2017, 2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,8 +70,6 @@ VOLUME_MOUNT_OPTIONS ?= :Z
 ###############################################################################
 # Other variables
 ###############################################################################
-# Build doesn't work if BuildKit is enabled
-DOCKER_BUILDKIT=0
 # Lock Docker API version for compatibility with Podman and with the Docker version in Travis' Ubuntu Bionic
 DOCKER_API_VERSION=1.40
 GO_PKG_DIRS = ./cmd ./internal ./test
@@ -345,7 +343,7 @@ endef
 
 # Build using a separate container to host the MQ download files.
 # To minimize the layers in the resulting image, the download files can't be part of the build context.
-# The "docker build" command (and "podman build" on macOS) don't allow you to mount a directory into the build, so a 
+# The "docker build" command (and "podman build" on macOS) don't allow you to mount a directory into the build, so a
 # separate container is used to host a web server.
 # Note that for Podman, this means that you need to be using the "rootful" mode, because the rootless mode doesn't allow
 # much control of networking, so the containers can't talk to each other.
@@ -359,7 +357,7 @@ define build-mq-using-web-server
 	  --detach \
 	  registry.access.redhat.com/ubi8/nginx-120 nginx -g "daemon off;" || ($(COMMAND) network rm $(BUILD_SERVER_NETWORK) && exit 1)
 	BUILD_SERVER_IP=$$($(COMMAND) inspect -f '{{ .NetworkSettings.Networks.$(BUILD_SERVER_NETWORK).IPAddress }}' $(BUILD_SERVER_CONTAINER)); \
-	$(call build-mq-command,$1,$2,$3,--network build --build-arg MQ_URL=http://$$BUILD_SERVER_IP:8080/$4,$5) || ($(COMMAND) rm -f $(BUILD_SERVER_CONTAINER) && $(COMMAND) network rm $(BUILD_SERVER_NETWORK) && exit 1)
+	DOCKER_BUILDKIT=0 $(call build-mq-command,$1,$2,$3,--network build --build-arg MQ_URL=http://$$BUILD_SERVER_IP:8080/$4,$5) || ($(COMMAND) rm -f $(BUILD_SERVER_CONTAINER) && $(COMMAND) network rm $(BUILD_SERVER_NETWORK) && exit 1)
 	$(COMMAND) rm -f $(BUILD_SERVER_CONTAINER)
 	$(COMMAND) network rm $(BUILD_SERVER_NETWORK)
 endef
