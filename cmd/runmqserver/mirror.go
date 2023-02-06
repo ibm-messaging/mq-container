@@ -95,6 +95,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 		// the file is open before the queue manager is created or started.
 		// Otherwise, there would be the potential for a nearly-full file to
 		// rotate before the goroutine had a chance to open it.
+		// #nosec G304 - no harm, we open readonly and check error.
 		f, err = os.OpenFile(path, os.O_RDONLY, 0)
 		if err != nil {
 			return nil, err
@@ -122,6 +123,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 				return
 			}
 			log.Debugf("File exists: %v, %v", path, fi.Size())
+			// #nosec G304 - no harm, we open readonly and check error.
 			f, err = os.OpenFile(path, os.O_RDONLY, 0)
 			if err != nil {
 				log.Error(err)
@@ -169,6 +171,7 @@ func mirrorLog(ctx context.Context, wg *sync.WaitGroup, path string, fromStart b
 				}
 				// Re-open file
 				log.Debugf("Re-opening error log file %v", path)
+				// #nosec G304 - no harm, we open readonly and check error.
 				f, err = os.OpenFile(path, os.O_RDONLY, 0)
 				if err != nil {
 					log.Error(err)

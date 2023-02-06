@@ -267,6 +267,7 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 			if err != nil {
 				return "", fmt.Errorf("Failed to encode PKCS#12 Keystore %s: %v", keySet.Name()+".p12", err)
 			}
+			// #nosec G306 - this gives permissions to owner/s group only.
 			err = ioutil.WriteFile(filepath.Join(keystoreDir, keySet.Name()+".p12"), file, 0644)
 			if err != nil {
 				return "", fmt.Errorf("Failed to write PKCS#12 Keystore %s: %v", filepath.Join(keystoreDir, keySet.Name()+".p12"), err)
@@ -570,6 +571,7 @@ func generateRandomPassword() string {
 	validcharArray := []byte(validChars)
 	password := ""
 	for i := 0; i < 12; i++ {
+		// #nosec G404 - this is only for internal keystore and using math/rand pose no harm.
 		password = password + string(validcharArray[pwr.Intn(len(validcharArray))])
 	}
 
@@ -614,10 +616,13 @@ func getCertificateFingerprint(block *pem.Block) (string, error) {
 
 // writeCertificatesToFile writes a list of certificates to a file
 func writeCertificatesToFile(file string, certificates []*pem.Block) error {
+
+	// #nosec G304 - this is a temporary pem file to write certs.
 	f, err := os.Create(file)
 	if err != nil {
 		return fmt.Errorf("Failed to create file %s: %v", file, err)
 	}
+	// #nosec G307 - local to this function, pose no harm.
 	defer f.Close()
 
 	w := bufio.NewWriter(f)

@@ -46,6 +46,7 @@ func logTermination(args ...interface{}) {
 	// Write the message to the termination log.  This is not the default place
 	// that Kubernetes will look for termination information.
 	log.Debugf("Writing termination message: %v", msg)
+	// #nosec G306 - its a read by owner/s group, and pose no harm.
 	err := ioutil.WriteFile("/run/termination-log", []byte(msg), 0660)
 	if err != nil {
 		log.Debug(err)

@@ -35,6 +35,8 @@ const (
 
 var (
 	metricsEnabled = false
+	// #nosec G112 - this code is changing soon to use https.
+	// for now we will ignore the gosec.
 	metricsServer  = &http.Server{Addr: ":" + defaultPort}
 )
 
