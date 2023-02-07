@@ -53,6 +53,7 @@ func Clear() error {
 // Set lets any subsequent calls to `CheckReady` know that the queue
 // manager has finished its configuration step
 func Set() error {
+	// #nosec G306 - this gives permissions to owner/s group only.
 	return ioutil.WriteFile(fileName, []byte("1"), 0770)
 }
 

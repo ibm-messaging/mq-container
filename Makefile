@@ -567,29 +567,16 @@ lint: $(addsuffix /$(wildcard *.go), $(GO_PKG_DIRS))
 .PHONY: gosec
 gosec:
 	$(info $(SPACER)$(shell printf "Running gosec test"$(END)))
-	@gosec -fmt=json -out=gosec_results.json cmd/... internal/... 2> /dev/null ;\
-	cat "gosec_results.json" ;\
-	cat gosec_results.json | grep HIGH | grep severity > /dev/null ;\
-	if [ $$? -eq 0 ]; then \
-		printf "\nFAILURE: gosec found files containing HIGH severity issues - see results.json\n" ;\
+	@gosecrc=0; gosec -fmt=json -out=gosec_results.json cmd/... internal/... 2> /dev/null || gosecrc=$$?; \
+	cat gosec_results.json | jq '{"GolangErrors": (.["Golang errors"]|length>0),"Issues":(.Issues|length>0)}' | grep 'true' >/dev/null ;\
+	if [ $$? -eq 0 ] || [ $$gosecrc -ne 0 ]; then \
+		printf "FAILURE: Issues found running gosec - see gosec_results.json\n" ;\
+		cat "gosec_results.json" ;\
 		exit 1 ;\
 	else \
-		printf "\ngosec found no HIGH severity issues\n" ;\
-	fi ;\
-	cat gosec_results.json | grep MEDIUM | grep severity > /dev/null ;\
-	if [ $$? -eq 0 ]; then \
-		printf "\nFAILURE: gosec found files containing MEDIUM severity issues - see results.json\n" ;\
-		exit 1 ;\
-	else \
-		printf "\ngosec found no MEDIUM severity issues\n" ;\
-	fi ;\
-	cat gosec_results.json | grep LOW | grep severity > /dev/null;\
-	if [ $$? -eq 0 ]; then \
-		printf "\nFAILURE: gosec found files containing LOW severity issues - see results.json\n" ;\
-		exit 1;\
-	else \
-		printf "\ngosec found no LOW severity issues\n" ;\
-fi ;\
+		printf "gosec found no issues\n" ;\
+		cat "gosec_results.json" ;\
+	fi
 
 .PHONY: update-release-information
 update-release-information:

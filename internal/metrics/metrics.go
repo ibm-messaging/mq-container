@@ -35,6 +35,8 @@ const (
 
 var (
 	metricsEnabled = false
+	// #nosec G112 - this needs investigation to find reasonable timeout.
+	// git-issue 233 to cover this..
 	metricsServer  = &http.Server{Addr: ":" + defaultPort}
 )
 

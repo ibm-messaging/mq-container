@@ -108,5 +108,6 @@ func (htpfile mapHtPasswd) updateHtPasswordFile(isTest bool) error {
 	if isTest {
 		file = "my.htpasswd"
 	}
+	// #nosec G306 - its a read by owner/s group, and pose no harm.
 	return ioutil.WriteFile(file, htpfile.GetBytes(), 0660)
 }
