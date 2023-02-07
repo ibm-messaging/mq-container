@@ -95,17 +95,10 @@ func formatBasic(obj map[string]interface{}) string {
 	}
 	// Convert time zone information from some logs (e.g. Liberty) for consistency
 	obj["ibm_datetime"] = strings.Replace(obj["ibm_datetime"].(string), "+0000", "Z", 1)
+	// Escape any new-line characters, so that we don't get multi-line messages messing up the output
+	obj["message"] = strings.ReplaceAll(obj["message"].(string), "\n", "\\n")
 
-	if obj["type"] == "liberty_message" {
-		message := obj["message"].(string)
-		if obj["ibm_messageId"] == nil {
-			// Liberty logs at least one message without a message ID, but which spans multiple lines.
-			// A missing message ID might imply more free-form text, so process the whitespace for better
-			// visibility
-			message = strings.ReplaceAll(strings.TrimSpace(message), "\n", "\n                         ")
-		}
-		return fmt.Sprintf("%s %s\n", obj["ibm_datetime"], message)
-	} else if obj["type"] != nil && (obj["type"] == "liberty_trace") {
+	if obj["type"] != nil && (obj["type"] == "liberty_trace") {
 		timeStamp := obj["ibm_datetime"]
 		threadID := ""
 		srtModuleName := ""
