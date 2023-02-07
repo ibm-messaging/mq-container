@@ -243,7 +243,9 @@ func doMain() error {
 
 	//For mirroring web server logs if source variable is set
 	if checkLogSourceForMirroring("web") {
-		_, err = mirrorWebServerLogs(ctx, &wg, name, newQM, mf)
+		// Always log from the start of the web server messages.log, as
+		// Liberty resets it.
+		_, err = mirrorWebServerLogs(ctx, &wg, name, true, mf)
 		if err != nil {
 			logTermination(err)
 			return err
