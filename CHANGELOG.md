@@ -4,7 +4,8 @@
 
 * Updated to MQ version 9.3.2.0
 * Queue manager certificates with the same Subject Distinguished Name (DN) as the issuer (CA) certificate are not supported. A certificate must have a unique Subject Distinguished Name.
-* New environment variables MQ_LOGGING_CONSOLE_SOURCE, MQ_LOGGING_CONSOLE_FORMAT, MQ_LOGGING_CONSOLE_EXCLUDE_ID.  The LOG_FORMAT variable is deprecated.
+* New logging environment variables: MQ_LOGGING_CONSOLE_SOURCE, MQ_LOGGING_CONSOLE_FORMAT, MQ_LOGGING_CONSOLE_EXCLUDE_ID.  The LOG_FORMAT variable is deprecated.
+* New environment variable: MQ_QMGR_LOG_FILE_PAGES
 
 ## 9.3.1.0-r2 (2022-11)
 
