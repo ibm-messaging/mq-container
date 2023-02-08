@@ -38,7 +38,7 @@ If you want to use IBM MQ on [Kubernetes](https://kubernetes.io), you can find a
 
 ## Issues and contributions
 
-For issues relating specifically to the container image or Helm chart, please use the [GitHub issue tracker](https://github.com/ibm-messaging/mq-container/issues). If you do submit a Pull Request related to this Docker image, please indicate in the Pull Request that you accept and agree to be bound by the terms of the [IBM Contributor License Agreement](CLA.md).
+For issues relating specifically to the container image or Helm chart, please use the [GitHub issue tracker](https://github.com/ibm-messaging/mq-container/issues). Pull requests are not currently accepted.
 
 ## License
 
@@ -53,4 +53,4 @@ Note: The IBM MQ Advanced for Developers license does not permit further distrib
 
 ## Copyright
 
-© Copyright IBM Corporation 2015, 2022
+© Copyright IBM Corporation 2015, 2023
