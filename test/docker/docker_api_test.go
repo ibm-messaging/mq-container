@@ -1520,11 +1520,6 @@ func TestLoggingConsoleSource(t *testing.T) {
 		t.Errorf("%v", errJson)
 	}
 
-	jsonLogs, errJson = waitForMessageInLog(t, cli, id, "CWWKF0011I")
-	if errJson != nil {
-		t.Errorf("%v", errJson)
-	}
-
 	isMessageFound := scanForExcludedEntries(jsonLogs)
 
 	if isMessageFound == true {
@@ -1669,7 +1664,7 @@ func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 		t.Fatalf("Expected all log lines to be valid JSON.  But got error %v ", err)
 	}
 
-	if strings.Contains(jsonLogs, "AMQ7230I") || strings.Contains(jsonLogs, "CWWKF0011I")  {
+	if strings.Contains(jsonLogs, "AMQ7230I") || strings.Contains(jsonLogs, "CWWKF0011I") {
 		t.Errorf("Expected to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
 	}
 

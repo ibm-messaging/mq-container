@@ -371,7 +371,7 @@ func getMQLogConsoleSource() string {
 func isLogConsoleSourceValid() bool {
 	mqLogSource := getMQLogConsoleSource()
 	retValue := false
-	//If nothing is set, we will mirror all, so valid
+	//If nothing is set, we will mirror qmgr, so valid
 	if mqLogSource == "" {
 		return true
 	}
@@ -396,9 +396,14 @@ func isLogConsoleSourceValid() bool {
 func checkLogSourceForMirroring(source string) bool {
 	logsrcs := getMQLogConsoleSource()
 
-	//Nothing set, this is when we mirror all
+	//Nothing set, this is when we mirror qmgr
 	if logsrcs == "" {
-		return true
+		if source == "qmgr" {
+			return true
+		} else {
+			return false
+		}
+
 	}
 
 	//Split the csv environment value so that we get an accurate comparison instead of a contains() check
