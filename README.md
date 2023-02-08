@@ -27,7 +27,9 @@ Note that in order to use the image, it is necessary to accept the terms of the 
 - **LICENSE** - Set this to `accept` to agree to the MQ Advanced for Developers license. If you wish to see the license you can set this to `view`.
 - **LANG** - Set this to the language you would like the license to be printed in.
 - **MQ_QMGR_NAME** - Set this to the name you want your Queue Manager to be created with.
-- **LOG_FORMAT** - Set this to change the format of the logs which are printed on the container's stdout.  Set to "json" to use JSON format (JSON object per line); set to "basic" to use a simple human-readable format.  Defaults to "basic".
+- **MQ_LOGGING_CONSOLE_SOURCE** - Specifies a comma-separated list of sources for logs which are mirrored to the container's stdout. The valid values are "qmgr" and "web". Defaults to "qmgr".
+- **MQ_LOGGING_CONSOLE_FORMAT** - Changes the format of the logs which are printed on the container's stdout.  Set to "json" to use JSON format (JSON object per line); set to "basic" to use a simple human-readable format.  Defaults to "basic".
+- **MQ_LOGGING_CONSOLE_EXCLUDE_ID** - Excludes log messages with the specified ID.  The log messages still appear in the log file on disk, but are excluded from the container's stdout.  Defaults to "AMQ5041I,AMQ5052I,AMQ5051I,AMQ5037I,AMQ5975I".
 - **MQ_ENABLE_METRICS** - Set this to `true` to generate Prometheus metrics for your Queue Manager.
 
 See the [default developer configuration docs](docs/developer-config.md) for the extra environment variables supported by the MQ Advanced for Developers image.
