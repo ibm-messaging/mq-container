@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2022
+# © Copyright IBM Corporation 2015, 2023
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,21 +42,12 @@ if ($UBUNTU); then
   echo "deb ${APT_URL} ${UBUNTU_CODENAME}-security main restricted" >> /etc/apt/sources.list
   # Install additional packages required by MQ, this install process and the runtime scripts
   EXTRA_DEBS="bash bc ca-certificates coreutils curl debianutils file findutils gawk grep libc-bin mount passwd procps sed tar util-linux"
-  # On ARM CPUs, there is no IBM JRE, so install another one
-  if [ "${CPU_ARCH}" == "aarch64" ]; then
-    EXTRA_DEBS="${EXTRA_DEBS} openjdk-8-jre"
-  fi
   apt-get update
   apt-get install -y --no-install-recommends ${EXTRA_DEBS}
 fi
 
 if ($RPM); then
   EXTRA_RPMS="bash bc ca-certificates file findutils gawk glibc-common grep ncurses-compat-libs passwd procps-ng sed shadow-utils tar util-linux which"
-  # On ARM CPUs, there is no IBM JRE, so install another one
-  if [ "${CPU_ARCH}" == "aarch64" ]; then
-    EXTRA_RPMS="${EXTRA_RPMS} java-1.8.0-openjdk-headless"
-  fi
-
   # Install additional packages required by MQ, this install process and the runtime scripts
   $YUM && yum -y install --setopt install_weak_deps=false ${EXTRA_RPMS}
   $MICRODNF && microdnf --disableplugin=subscription-manager install ${EXTRA_RPMS}
