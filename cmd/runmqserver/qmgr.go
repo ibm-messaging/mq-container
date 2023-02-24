@@ -286,7 +286,8 @@ func updateQMini(qmname string) error {
 	if strings.Contains(qminiConfigStr, "ServiceComponent:") {
 		var re = regexp.MustCompile(`(?m)^.*ServiceComponent.*$\s^.*Service.*$\s^.*Name.*$\s^.*Module.*$\s^.*ComponentDataSize.*$`)
 		curFile := re.ReplaceAllString(qminiConfigStr, "")
-		// #nosec G304 - qmgrDir filepath is derived from dspmqinf
+		// #nosec G304 G306 - qmgrDir filepath is derived from dspmqinf and
+		// its a read by owner/s group, and pose no harm.
 		err := ioutil.WriteFile(qmgrDir, []byte(curFile), 0660)
 		if err != nil {
 			return err

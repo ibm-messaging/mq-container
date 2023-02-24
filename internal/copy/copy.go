@@ -36,12 +36,15 @@ func CopyFileMode(src, dest string, perm os.FileMode) error {
 	if err != nil {
 		return fmt.Errorf("failed to open %s for copy: %v", src, err)
 	}
+	// #nosec G307 - local to this function, pose no harm.
 	defer in.Close()
 
+	// #nosec G304 - this func creates based on the input filemode.
 	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY, perm)
 	if err != nil {
 		return fmt.Errorf("failed to open %s for copy: %v", dest, err)
 	}
+	// #nosec G307 - local to this function, pose no harm.
 	defer out.Close()
 
 	_, err = io.Copy(out, in)

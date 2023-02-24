@@ -48,8 +48,10 @@ func ProcessTemplateFile(templateFile, destFile string, data interface{}, log *l
 			return err
 		}
 	}
-	// #nosec G302
+
+	// #nosec G302 G304 G306 - its a read by owner/s group, and pose no harm.
 	f, err := os.OpenFile(destFile, os.O_CREATE|os.O_WRONLY, 0660)
+	// #nosec G307 - local to this function, pose no harm.
 	defer f.Close()
 	err = t.Execute(f, data)
 	if err != nil {
