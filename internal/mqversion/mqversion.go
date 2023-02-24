@@ -18,6 +18,7 @@ package mqversion
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
@@ -38,14 +39,59 @@ func Compare(checkVersion string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	// trim any suffix from MQ version x.x.x.x
-	currentVersion = currentVersion[0:7]
-	if currentVersion < checkVersion {
-		return -1, nil
-	} else if currentVersion == checkVersion {
-		return 0, nil
-	} else if currentVersion > checkVersion {
-		return 1, nil
+
+	currentVRMF, err := parseVRMF(currentVersion)
+	if err != nil {
+		return 0, err
 	}
-	return 0, fmt.Errorf("Failed to compare MQ versions")
+	compareVRMF, err := parseVRMF(checkVersion)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse compare version: %w", err)
+	}
+	return currentVRMF.compare(*compareVRMF), nil
+}
+
+type vrmf [4]int
+
+func (v vrmf) String() string {
+	return fmt.Sprintf("%d.%d.%d.%d", v[0], v[1], v[2], v[3])
+}
+
+func (v vrmf) compare(to vrmf) int {
+	for idx := 0; idx < 4; idx++ {
+		if v[idx] < to[idx] {
+			return -1
+		}
+		if v[idx] > to[idx] {
+			return 1
+		}
+	}
+	return 0
+}
+
+func parseVRMF(vrmfString string) (*vrmf, error) {
+	versionParts := strings.Split(vrmfString, ".")
+	if len(versionParts) != 4 {
+		return nil, fmt.Errorf("incorrect number of parts to version string: expected 4, got %d", len(versionParts))
+	}
+	vmrfPartNames := []string{"version", "release", "minor", "fix"}
+	parsed := vrmf{}
+	for idx, value := range versionParts {
+		partName := vmrfPartNames[idx]
+		if value == "" {
+			return nil, fmt.Errorf("empty %s found in VRMF", partName)
+		}
+		val, err := strconv.Atoi(value)
+		if err != nil {
+			return nil, fmt.Errorf("non-numeric %s found in VRMF", partName)
+		}
+		if val < 0 {
+			return nil, fmt.Errorf("negative %s found in VRMF", partName)
+		}
+		if idx == 0 && val == 0 {
+			return nil, fmt.Errorf("zero value for version not allowed")
+		}
+		parsed[idx] = val
+	}
+	return &parsed, nil
 }
