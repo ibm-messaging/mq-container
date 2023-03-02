@@ -35,10 +35,13 @@ go_minor="${go_version_parts[1]}"
 if [[ "$go_major" -eq 1 && "$go_minor" -lt 18 ]]; then
     echo "Go version ${go_major}.${go_minor} < 1.18... Pinning credential-helper commit"
     git checkout ab7fd12c67d83193072fa91e5648b036547f6323
+    make pass
+    cp bin/docker-credential-pass $GOPATH/bin/docker-credential-pass
+else
+    make pass
+    cp bin/build/docker-credential-pass $GOPATH/bin/docker-credential-pass
 fi
 
-make pass
-cp bin/docker-credential-pass $GOPATH/bin/docker-credential-pass
 mkdir -p /home/travis/.docker
 echo '{ "credsStore": "pass" }' | tee /home/travis/.docker/config.json
 gpg2 --batch --gen-key <<-EOF
