@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021, 2022
+© Copyright IBM Corporation 2021, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,20 +16,19 @@ limitations under the License.
 package main
 
 import (
-	"github.com/docker/docker/client"
 	"strings"
 	"testing"
+	"time"
+
+	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
 
 // TestNativeHABasic creates 3 containers in a Native HA queue manager configuration
 // and ensures the queue manger and replicas start as expected
 func TestNativeHABasic(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	version, err := getMQVersion(t, cli)
+	version, err := cli.GetMQVersion(imageName())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,21 +39,18 @@ func TestNativeHABasic(t *testing.T) {
 	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
 	qmReplicaIDs := [3]string{}
 	qmVolumes := []string{}
-	qmNetwork, err := createBridgeNetwork(cli, t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer removeBridgeNetwork(cli, qmNetwork.ID)
-
+	//Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	//If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
 	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
 		vol := createVolume(t, cli, containerNames[i])
-		defer removeVolume(t, cli, vol.Name)
-		qmVolumes = append(qmVolumes, vol.Name)
-
-		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, defaultHAPort)
-		hostConfig := getHostConfig(t, 1, "", "", vol.Name)
-		networkingConfig := getNativeHANetworkConfig(qmNetwork.ID)
-
+		defer removeVolume(t, cli, vol)
+		qmVolumes = append(qmVolumes, vol)
+		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
+		hostConfig := getHostConfig(t, 1, "", "", vol)
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
 		defer cleanContainer(t, cli, ctr)
 		qmReplicaIDs[i] = ctr
@@ -74,12 +70,9 @@ func TestNativeHABasic(t *testing.T) {
 // queue manager comes back as a replica
 func TestNativeHAFailover(t *testing.T) {
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	version, err := getMQVersion(t, cli)
+	version, err := cli.GetMQVersion(imageName())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,21 +83,18 @@ func TestNativeHAFailover(t *testing.T) {
 	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
 	qmReplicaIDs := [3]string{}
 	qmVolumes := []string{}
-	qmNetwork, err := createBridgeNetwork(cli, t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer removeBridgeNetwork(cli, qmNetwork.ID)
-
+	//Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	//If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
 	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
 		vol := createVolume(t, cli, containerNames[i])
-		defer removeVolume(t, cli, vol.Name)
-		qmVolumes = append(qmVolumes, vol.Name)
-
-		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, defaultHAPort)
-		hostConfig := getHostConfig(t, 1, "", "", vol.Name)
-		networkingConfig := getNativeHANetworkConfig(qmNetwork.ID)
-
+		defer removeVolume(t, cli, vol)
+		qmVolumes = append(qmVolumes, vol)
+		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
+		hostConfig := getHostConfig(t, 1, "", "", vol)
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
 		defer cleanContainer(t, cli, ctr)
 		qmReplicaIDs[i] = ctr
@@ -132,33 +122,31 @@ func TestNativeHAFailover(t *testing.T) {
 // TestNativeHASecure creates 3 containers in a Native HA queue manager configuration
 // with HA TLS enabled, and ensures the queue manger and replicas start as expected
 func TestNativeHASecure(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	version, err := getMQVersion(t, cli)
+	version, err := cli.GetMQVersion(imageName())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if version < "9.2.2.0" {
 		t.Skipf("Skipping %s as test requires at least MQ 9.2.2.0, but image is version %s", t.Name(), version)
 	}
+	if isARM(t) {
+		t.Skip("Skipping as an issue has been identified for the arm64 MQ image")
+	}
 
 	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
 	qmReplicaIDs := [3]string{}
-	qmNetwork, err := createBridgeNetwork(cli, t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer removeBridgeNetwork(cli, qmNetwork.ID)
-
+	//Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	//If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
 	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
 		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, defaultHAPort)
 		containerConfig.Env = append(containerConfig.Env, "MQ_NATIVE_HA_TLS=true")
 		hostConfig := getNativeHASecureHostConfig(t)
-		networkingConfig := getNativeHANetworkConfig(qmNetwork.ID)
-
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
 		defer cleanContainer(t, cli, ctr)
 		qmReplicaIDs[i] = ctr
@@ -177,12 +165,9 @@ func TestNativeHASecure(t *testing.T) {
 // with HA TLS enabled, overrides the default CipherSpec, and ensures the queue manger
 // and replicas start as expected
 func TestNativeHASecureCipherSpec(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	version, err := getMQVersion(t, cli)
+	version, err := cli.GetMQVersion(imageName())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -192,18 +177,16 @@ func TestNativeHASecureCipherSpec(t *testing.T) {
 
 	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
 	qmReplicaIDs := [3]string{}
-	qmNetwork, err := createBridgeNetwork(cli, t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer removeBridgeNetwork(cli, qmNetwork.ID)
-
+	//Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	//If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
 	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
 		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, defaultHAPort)
 		containerConfig.Env = append(containerConfig.Env, "MQ_NATIVE_HA_TLS=true", "MQ_NATIVE_HA_CIPHERSPEC=TLS_AES_256_GCM_SHA384")
 		hostConfig := getNativeHASecureHostConfig(t)
-		networkingConfig := getNativeHANetworkConfig(qmNetwork.ID)
-
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
 		defer cleanContainer(t, cli, ctr)
 		qmReplicaIDs[i] = ctr
@@ -222,12 +205,9 @@ func TestNativeHASecureCipherSpec(t *testing.T) {
 // with HA TLS FIPS enabled, overrides the default CipherSpec, and ensures the queue manger
 // and replicas start as expected. This test uses FIPS compliant cipher.
 func TestNativeHASecureCipherSpecFIPS(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	version, err := getMQVersion(t, cli)
+	version, err := cli.GetMQVersion(imageName())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,19 +217,17 @@ func TestNativeHASecureCipherSpecFIPS(t *testing.T) {
 
 	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
 	qmReplicaIDs := [3]string{}
-	qmNetwork, err := createBridgeNetwork(cli, t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer removeBridgeNetwork(cli, qmNetwork.ID)
-
+	//Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	//If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
 	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
 		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, defaultHAPort)
 		// MQ_NATIVE_HA_CIPHERSPEC is set a FIPS compliant cipherspec.
 		containerConfig.Env = append(containerConfig.Env, "MQ_NATIVE_HA_TLS=true", "MQ_NATIVE_HA_CIPHERSPEC=TLS_RSA_WITH_AES_128_GCM_SHA256", "MQ_ENABLE_FIPS=true")
 		hostConfig := getNativeHASecureHostConfig(t)
-		networkingConfig := getNativeHANetworkConfig(qmNetwork.ID)
-
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
 		defer cleanContainer(t, cli, ctr)
 		qmReplicaIDs[i] = ctr
@@ -272,12 +250,9 @@ func TestNativeHASecureCipherSpecFIPS(t *testing.T) {
 // with HA TLS FIPS enabled with non-FIPS cipher, overrides the default CipherSpec, and
 // ensures the queue manger and replicas don't start as expected
 func TestNativeHASecureCipherSpecNonFIPSCipher(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	version, err := getMQVersion(t, cli)
+	version, err := cli.GetMQVersion(imageName())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -287,26 +262,24 @@ func TestNativeHASecureCipherSpecNonFIPSCipher(t *testing.T) {
 
 	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
 	qmReplicaIDs := [3]string{}
-	qmNetwork, err := createBridgeNetwork(cli, t)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer removeBridgeNetwork(cli, qmNetwork.ID)
-
+	//Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	//If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
 	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
 		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, defaultHAPort)
 		// MQ_NATIVE_HA_CIPHERSPEC is set a FIPS non-compliant cipherspec - SSL_ECDHE_ECDSA_WITH_RC4_128_SHA
-		containerConfig.Env = append(containerConfig.Env, "MQ_NATIVE_HA_TLS=true", "MQ_NATIVE_HA_CIPHERSPEC=TLS_RSA_WITH_AES_128_GCM_SHA256", "MQ_ENABLE_FIPS=true")
+		containerConfig.Env = append(containerConfig.Env, "MQ_NATIVE_HA_TLS=true", "MQ_NATIVE_HA_CIPHERSPEC=SSL_ECDHE_ECDSA_WITH_RC4_128_SHA", "MQ_ENABLE_FIPS=true")
 		hostConfig := getNativeHASecureHostConfig(t)
-		networkingConfig := getNativeHANetworkConfig(qmNetwork.ID)
-
-		ctr, err := runContainerWithAllConfigError(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+		networkingConfig := getNativeHANetworkConfig("host")
+		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
 		defer cleanContainer(t, cli, ctr)
 		// We expect container to fail in this case because the cipher is non-FIPS and we have asked for FIPS compliance
 		// by setting MQ_ENABLE_FIPS=true
-		if err == nil {
-			t.Logf("Container start expected to fail but did not. %v", err)
-		}
 		qmReplicaIDs[i] = ctr
+	}
+	for i := 0; i <= 2; i++ {
+		waitForTerminationMessage(t, cli, qmReplicaIDs[i], "/opt/mqm/bin/strmqm: exit status 23", 60*time.Second)
 	}
 }

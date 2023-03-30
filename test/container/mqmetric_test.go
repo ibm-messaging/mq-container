@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2022
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,20 +22,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/client"
+	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
 
 func TestGoldenPathMetric(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
 
-	port := getPort(t, cli, id, defaultMetricPort)
+	port, err := cli.GetContainerPort(id, defaultMetricPort)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
 
@@ -55,14 +55,14 @@ func TestGoldenPathMetric(t *testing.T) {
 func TestMetricNames(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
 
-	port := getPort(t, cli, id, defaultMetricPort)
+	port, err := cli.GetContainerPort(id, defaultMetricPort)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
 
@@ -99,14 +99,14 @@ func TestMetricNames(t *testing.T) {
 func TestMetricLabels(t *testing.T) {
 	t.Parallel()
 
+	cli := ce.NewContainerClient()
 	requiredLabels := []string{"qmgr"}
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
+	defer cleanContainer(t, cli, id)
+	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
 		t.Fatal(err)
 	}
-	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id)
-	port := getPort(t, cli, id, defaultMetricPort)
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
@@ -148,13 +148,13 @@ func TestMetricLabels(t *testing.T) {
 func TestRapidFirePrometheus(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli := ce.NewContainerClient()
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
+	defer cleanContainer(t, cli, id)
+	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
 		t.Fatal(err)
 	}
-	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id)
-	port := getPort(t, cli, id, defaultMetricPort)
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
@@ -182,13 +182,13 @@ func TestRapidFirePrometheus(t *testing.T) {
 func TestSlowPrometheus(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli := ce.NewContainerClient()
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
+	defer cleanContainer(t, cli, id)
+	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
 		t.Fatal(err)
 	}
-	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id)
-	port := getPort(t, cli, id, defaultMetricPort)
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
@@ -213,14 +213,13 @@ func TestSlowPrometheus(t *testing.T) {
 func TestContainerRestart(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli := ce.NewContainerClient()
+	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
+	defer cleanContainer(t, cli, id)
+	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id)
-	port := getPort(t, cli, id, defaultMetricPort)
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
@@ -239,7 +238,10 @@ func TestContainerRestart(t *testing.T) {
 	stopContainer(t, cli, id)
 	// Start the container cleanly
 	startContainer(t, cli, id)
-	port = getPort(t, cli, id, defaultMetricPort)
+	port, err = cli.GetContainerPort(id, defaultMetricPort)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
@@ -261,15 +263,14 @@ func TestContainerRestart(t *testing.T) {
 func TestQMRestart(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
 
-	port := getPort(t, cli, id, defaultMetricPort)
+	port, err := cli.GetContainerPort(id, defaultMetricPort)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
@@ -319,14 +320,14 @@ func TestQMRestart(t *testing.T) {
 func TestValidValues(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
 	defer cleanContainer(t, cli, id)
 	// hostname := getIPAddress(t, cli, id)
-	port := getPort(t, cli, id, defaultMetricPort)
+	port, err := cli.GetContainerPort(id, defaultMetricPort)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
 
@@ -343,7 +344,7 @@ func TestValidValues(t *testing.T) {
 	// Check that the values for each metric are valid numbers
 	// can be either int, float or exponential - all these can be parsed by ParseFloat function
 	for _, e := range metrics {
-		if _, err = strconv.ParseFloat(e.Value, 64); err != nil {
+		if _, err := strconv.ParseFloat(e.Value, 64); err != nil {
 			t.Errorf("Value (%s) for key (%s) is not a valid number", e.Value, e.Key)
 		}
 	}
@@ -355,14 +356,14 @@ func TestValidValues(t *testing.T) {
 func TestChangingValues(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{1414, defaultMetricPort})
 	defer cleanContainer(t, cli, id)
 	// hostname := getIPAddress(t, cli, id)
-	port := getPort(t, cli, id, defaultMetricPort)
+	port, err := cli.GetContainerPort(id, defaultMetricPort)
+	if err != nil {
+		t.Fatal(err)
+	}
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port)
 
@@ -386,7 +387,11 @@ func TestChangingValues(t *testing.T) {
 	}
 
 	// Send invalid data to the MQ listener to generate a FDC
-	listener := fmt.Sprintf("localhost:%s", getPort(t, cli, id, 1414))
+	noport, err := cli.GetContainerPort(id, 1414)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listener := fmt.Sprintf("localhost:%s", noport)
 	conn, err := net.Dial("tcp", listener)
 	if err != nil {
 		t.Fatalf("Could not connect to the listener - %v", err)

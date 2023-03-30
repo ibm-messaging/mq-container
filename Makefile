@@ -45,10 +45,10 @@ MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION_VRM)_$(MQ_ARCHIVE_TYPE)_$(MQ_ARCHIVE_ARCH)_NOI
 MQ_ARCHIVE_DEV ?= $(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-$(MQ_ARCHIVE_DEV_TYPE)$(MQ_ARCHIVE_DEV_ARCH).tar.gz
 # MQ_SDK_ARCHIVE specifies the archive to use for building the golang programs.  Defaults vary on developer or advanced.
 MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
-# Options to `go test` for the Docker tests
-TEST_OPTS_DOCKER ?=
-# Timeout for the Docker tests
-TEST_TIMEOUT_DOCKER ?= 45m
+# Options to `go test` for the Container tests
+TEST_OPTS_CONTAINER ?=
+# Timeout for the  tests
+TEST_TIMEOUT_CONTAINER ?= 45m
 # MQ_IMAGE_ADVANCEDSERVER is the name of the built MQ Advanced image
 MQ_IMAGE_ADVANCEDSERVER ?=ibm-mqadvanced-server
 # MQ_IMAGE_DEVSERVER is the name of the built MQ Advanced for Developers image
@@ -278,9 +278,9 @@ cache-mq-tag:
 # Test targets
 ###############################################################################
 
-# Vendor Go dependencies for the Docker tests
-test/docker/vendor:
-	cd test/docker && go mod vendor
+# Vendor Go dependencies for the Container tests
+test/container/vendor:
+	cd test/container && go mod vendor
 
 # Shortcut to just run the unit tests
 .PHONY: test-unit
@@ -288,28 +288,28 @@ test-unit:
 	$(COMMAND) build --target builder --file Dockerfile-server .
 
 .PHONY: test-advancedserver
-test-advancedserver: test/docker/vendor
+test-advancedserver: test/container/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(COMMAND) inspect $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production DOCKER_API_VERSION=$(DOCKER_API_VERSION) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) $(TEST_OPTS_DOCKER)
+	cd test/container && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) $(TEST_OPTS_CONTAINER)
 
 .PHONY: build-devjmstest
 build-devjmstest:
 	$(info $(SPACER)$(shell printf $(TITLE)"Build JMS tests for developer config"$(END)))
-	cd test/messaging && docker build --tag $(DEV_JMS_IMAGE) .
+	cd test/messaging && $(COMMAND) build --tag $(DEV_JMS_IMAGE) .
 
 .PHONY: test-devserver
-test-devserver: test/docker/vendor
+test-devserver: test/container/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(COMMAND) inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=false DOCKER_API_VERSION=$(DOCKER_API_VERSION) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_DOCKER) -tags mqdev $(TEST_OPTS_DOCKER)
+	cd test/container && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=false DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) -tags mqdev $(TEST_OPTS_CONTAINER)
 
 .PHONY: coverage
 coverage:
 	mkdir coverage
 
 .PHONY: test-advancedserver-cover
-test-advancedserver-cover: test/docker/vendor coverage
+test-advancedserver-cover: test/container/vendor coverage
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) with code coverage on $(shell $(COMMAND) --version)"$(END)))
 	rm -f ./coverage/unit*.cov
 	# Run unit tests with coverage, for each package under 'internal'
@@ -319,16 +319,16 @@ test-advancedserver-cover: test/docker/vendor coverage
 	tail -q -n +2 ./coverage/unit-*.cov >> ./coverage/unit.cov
 	go tool cover -html=./coverage/unit.cov -o ./coverage/unit.html
 
-	rm -f ./test/docker/coverage/*.cov
-	rm -f ./coverage/docker.*
-	mkdir -p ./test/docker/coverage/
-	cd test/docker && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover TEST_COVER=true DOCKER_API_VERSION=$(DOCKER_API_VERSION) go test $(TEST_OPTS_DOCKER)
-	echo 'mode: count' > ./coverage/docker.cov
-	tail -q -n +2 ./test/docker/coverage/*.cov >> ./coverage/docker.cov
-	go tool cover -html=./coverage/docker.cov -o ./coverage/docker.html
+	rm -f ./test/container/coverage/*.cov
+	rm -f ./coverage/container.*
+	mkdir -p ./test/container/coverage/
+	cd test/container && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)-cover TEST_COVER=true DOCKER_API_VERSION=$(DOCKER_API_VERSION) go test $(TEST_OPTS_CONTAINER)
+	echo 'mode: count' > ./coverage/container.cov
+	tail -q -n +2 ./test/container/coverage/*.cov >> ./coverage/container.cov
+	go tool cover -html=./coverage/container.cov -o ./coverage/container.html
 
 	echo 'mode: count' > ./coverage/combined.cov
-	tail -q -n +2 ./coverage/unit.cov ./coverage/docker.cov  >> ./coverage/combined.cov
+	tail -q -n +2 ./coverage/unit.cov ./coverage/container.cov  >> ./coverage/combined.cov
 	go tool cover -html=./coverage/combined.cov -o ./coverage/combined.html
 
 ###############################################################################

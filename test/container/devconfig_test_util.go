@@ -2,7 +2,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2022
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,9 +34,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
+	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
 
 const defaultAdminPassword string = "passw0rd"
@@ -49,7 +47,7 @@ var insecureTLSConfig *tls.Config = &tls.Config{
 	InsecureSkipVerify: true,
 }
 
-func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config) {
+func waitForWebReady(t *testing.T, cli ce.ContainerInterface, ID string, tlsConfig *tls.Config) {
 	t.Logf("%s Waiting for web server to be ready", time.Now().Format(time.RFC3339))
 	httpClient := http.Client{
 		Timeout: time.Duration(10 * time.Second),
@@ -57,7 +55,11 @@ func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls
 			TLSClientConfig: tlsConfig,
 		},
 	}
-	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getPort(t, cli, ID, 9443))
+	port, err := cli.GetContainerPort(ID, 9443)
+	if err != nil {
+		t.Fatal(err)
+	}
+	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", port)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -91,11 +93,16 @@ func tlsDirInvalid(t *testing.T, unixPath bool) string {
 }
 
 // runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID
-func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, password string, ibmjre string, cipherName string) {
-	containerConfig := container.Config{
+func runJMSTests(t *testing.T, cli ce.ContainerInterface, ID string, tls bool, user, password string, ibmjre string, cipherName string) {
+	port, err := cli.GetContainerPort(ID, 1414)
+	if err != nil {
+		t.Error(err)
+	}
+	containerConfig := ce.ContainerConfig{
 		// -e MQ_PORT_1414_TCP_ADDR=9.145.14.173 -e MQ_USERNAME=app -e MQ_PASSWORD=passw0rd -e MQ_CHANNEL=DEV.APP.SVRCONN -e MQ_TLS_TRUSTSTORE=/tls/test.p12 -e MQ_TLS_PASSPHRASE=passw0rd -v /Users/arthurbarr/go/src/github.com/ibm-messaging/mq-container/test/tls:/tls msgtest
 		Env: []string{
-			"MQ_PORT_1414_TCP_ADDR=" + getIPAddress(t, cli, ID),
+			"MQ_PORT_1414_TCP_ADDR=127.0.0.1",
+			"MQ_PORT_1414_OVERRIDE=" + port,
 			"MQ_USERNAME=" + user,
 			"MQ_CHANNEL=DEV.APP.SVRCONN",
 			"IBMJRE=" + ibmjre,
@@ -114,26 +121,28 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, pa
 			"MQ_TLS_CIPHER=" + cipherName,
 		}...)
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDir(t, false) + ":/var/tls",
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, strings.Replace(t.Name()+"JMS", "/", "", -1))
+	networkingConfig := ce.ContainerNetworkSettings{
+		Networks: []string{"host"},
+	}
+	jmsID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, strings.Replace(t.Name()+"JMS", "/", "", -1))
 	if err != nil {
 		t.Fatal(err)
 	}
-	startContainer(t, cli, ctr.ID)
-	rc := waitForContainer(t, cli, ctr.ID, 2*time.Minute)
+	startContainer(t, cli, jmsID)
+	rc := waitForContainer(t, cli, jmsID, 2*time.Minute)
 	if rc != 0 {
 		t.Errorf("JUnit container failed with rc=%v", rc)
 	}
 
 	// Get console output of the container and process the lines
 	// to see if we have any failures
-	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, ctr.ID)))
+	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, jmsID)))
 	for scanner.Scan() {
 		s := scanner.Text()
 		if processJunitLogLine(s) {
@@ -141,7 +150,7 @@ func runJMSTests(t *testing.T, cli *client.Client, ID string, tls bool, user, pa
 		}
 	}
 
-	defer cleanContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, jmsID)
 }
 
 // Parse JUnit log line and return true if line contains failed or aborted tests
@@ -205,14 +214,18 @@ func createTLSConfig(t *testing.T, certFile, password string) *tls.Config {
 	}
 }
 
-func testRESTAdmin(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config, errorExpected string) {
+func testRESTAdmin(t *testing.T, cli ce.ContainerInterface, ID string, tlsConfig *tls.Config, errorExpected string) {
 	httpClient := http.Client{
 		Timeout: time.Duration(30 * time.Second),
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
 		},
 	}
-	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", getPort(t, cli, ID, 9443))
+	port, err := cli.GetContainerPort(ID, 9443)
+	if err != nil {
+		t.Fatal(err)
+	}
+	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", port)
 	req, err := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth("admin", defaultAdminPassword)
 	resp, err := httpClient.Do(req)
@@ -248,7 +261,7 @@ func logHTTPResponse(t *testing.T, resp *http.Response) {
 	t.Logf("HTTP response: %v", string(d))
 }
 
-func testRESTMessaging(t *testing.T, cli *client.Client, ID string, tlsConfig *tls.Config, qmName string, user string, password string, errorExpected string) {
+func testRESTMessaging(t *testing.T, cli ce.ContainerInterface, ID string, tlsConfig *tls.Config, qmName string, user string, password string, errorExpected string) {
 	httpClient := http.Client{
 		Timeout: time.Duration(30 * time.Second),
 		Transport: &http.Transport{
@@ -256,7 +269,11 @@ func testRESTMessaging(t *testing.T, cli *client.Client, ID string, tlsConfig *t
 		},
 	}
 	q := "DEV.QUEUE.1"
-	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/messaging/qmgr/%s/queue/%s/message", getPort(t, cli, ID, 9443), qmName, q)
+	port, err := cli.GetContainerPort(ID, 9443)
+	if err != nil {
+		t.Fatal(err)
+	}
+	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/messaging/qmgr/%s/queue/%s/message", port, qmName, q)
 	putMessage := []byte("Hello")
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(putMessage))
 	req.SetBasicAuth(user, password)

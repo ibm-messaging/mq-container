@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019, 2022
+© Copyright IBM Corporation 2019, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/client"
+	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
 
 var miEnv = []string{
@@ -34,10 +34,7 @@ var miEnv = []string{
 // and starts/stop them checking we always have an active and standby
 func TestMultiInstanceStartStop(t *testing.T) {
 	t.Skipf("Skipping %v until test defect fixed", t.Name())
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli)
 	if err != nil {
 		t.Fatal(err)
@@ -76,10 +73,7 @@ func TestMultiInstanceStartStop(t *testing.T) {
 // TestMultiInstanceContainerStop starts 2 containers in a multi instance queue manager configuration,
 // stops the active queue manager, then checks to ensure the backup queue manager becomes active
 func TestMultiInstanceContainerStop(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli)
 	if err != nil {
 		t.Fatal(err)
@@ -122,21 +116,16 @@ func TestMultiInstanceContainerStop(t *testing.T) {
 // configuration, then checks to ensure that both an active and standby queue manager have been started
 func TestMultiInstanceRace(t *testing.T) {
 	t.Skipf("Skipping %v until file lock is implemented", t.Name())
-
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	cli := ce.NewContainerClient()
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
-	defer removeVolume(t, cli, qmsharedlogs.Name)
+	defer removeVolume(t, cli, qmsharedlogs)
 	qmshareddata := createVolume(t, cli, "qmshareddata")
-	defer removeVolume(t, cli, qmshareddata.Name)
+	defer removeVolume(t, cli, qmshareddata)
 
 	qmsChannel := make(chan QMChan)
 
-	go singleMultiInstanceQueueManager(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
-	go singleMultiInstanceQueueManager(t, cli, qmsharedlogs.Name, qmshareddata.Name, qmsChannel)
+	go singleMultiInstanceQueueManager(t, cli, qmsharedlogs, qmshareddata, qmsChannel)
+	go singleMultiInstanceQueueManager(t, cli, qmsharedlogs, qmshareddata, qmsChannel)
 
 	qm1a := <-qmsChannel
 	if qm1a.Error != nil {
@@ -159,7 +148,7 @@ func TestMultiInstanceRace(t *testing.T) {
 	waitForReady(t, cli, qm1aId)
 	waitForReady(t, cli, qm1bId)
 
-	err, _, _ = getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
+	err, _, _ := getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,10 +158,7 @@ func TestMultiInstanceRace(t *testing.T) {
 // mounts, then checks to ensure that the container terminates with the expected message
 func TestMultiInstanceNoSharedMounts(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, "", "", miEnv)
 	if err != nil {
@@ -188,15 +174,12 @@ func TestMultiInstanceNoSharedMounts(t *testing.T) {
 // TestMultiInstanceNoSharedLogs starts 2 multi instance queue managers without providing a shared log
 // mount, then checks to ensure that the container terminates with the expected message
 func TestMultiInstanceNoSharedLogs(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	qmshareddata := createVolume(t, cli, "qmshareddata")
-	defer removeVolume(t, cli, qmshareddata.Name)
+	defer removeVolume(t, cli, qmshareddata)
 
-	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata.Name, miEnv)
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata, miEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -210,15 +193,12 @@ func TestMultiInstanceNoSharedLogs(t *testing.T) {
 // TestMultiInstanceNoSharedData starts 2 multi instance queue managers without providing a shared data
 // mount, then checks to ensure that the container terminates with the expected message
 func TestMultiInstanceNoSharedData(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
-	defer removeVolume(t, cli, qmsharedlogs.Name)
+	defer removeVolume(t, cli, qmsharedlogs)
 
-	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, "", miEnv)
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, "", miEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,10 +212,7 @@ func TestMultiInstanceNoSharedData(t *testing.T) {
 // TestMultiInstanceNoMounts starts 2 multi instance queue managers without providing a shared data
 // mount, then checks to ensure that the container terminates with the expected message
 func TestMultiInstanceNoMounts(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, false, "", "", miEnv)
 	if err != nil {

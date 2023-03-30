@@ -34,27 +34,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/volume"
-	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/docker/go-connections/nat"
+	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
-
-type containerDetails struct {
-	ID      string
-	Name    string
-	Image   string
-	Path    string
-	Args    []string
-	CapAdd  []string
-	CapDrop []string
-	User    string
-	Env     []string
-}
 
 func imageName() string {
 	image, ok := os.LookupEnv("TEST_IMAGE")
@@ -73,7 +54,7 @@ func imageNameDevJMS() string {
 }
 
 // baseImage returns the ID of the underlying base image (e.g. "ubuntu" or "rhel")
-func baseImage(t *testing.T, cli *client.Client) string {
+func baseImage(t *testing.T, cli ce.ContainerInterface) string {
 	rc, out := runContainerOneShot(t, cli, "grep", "^ID=", "/etc/os-release")
 	if rc != 0 {
 		t.Fatal("Couldn't determine base image")
@@ -87,7 +68,7 @@ func baseImage(t *testing.T, cli *client.Client) string {
 
 // devImage returns true if the image under test is a developer image,
 // determined by use of the MQ_ADMIN_PASSWORD environment variable
-func devImage(t *testing.T, cli *client.Client) bool {
+func devImage(t *testing.T, cli ce.ContainerInterface) bool {
 	rc, _ := runContainerOneShot(t, cli, "printenv", "MQ_ADMIN_PASSWORD")
 	if rc == 0 {
 		return true
@@ -105,6 +86,11 @@ func isWSL(t *testing.T) bool {
 		return strings.Contains(string(uname), "Microsoft")
 	}
 	return false
+}
+
+// isARM returns whether we are running an arm64 MacOS machine
+func isARM(t *testing.T) bool {
+	return runtime.GOARCH == "arm64"
 }
 
 // getCwd returns the working directory, in an os-specific or UNIX form
@@ -161,29 +147,17 @@ func getTempDir(t *testing.T, unixStylePath bool) string {
 }
 
 // terminationMessage return the termination message, or an empty string if not set
-func terminationMessage(t *testing.T, cli *client.Client, ID string) string {
-	r, _, err := cli.CopyFromContainer(context.Background(), ID, "/run/termination-log")
+func terminationMessage(t *testing.T, cli ce.ContainerInterface, ID string) string {
+	r, err := cli.CopyFromContainer(ID, "/run/termination-log")
 	if err != nil {
 		t.Log(err)
+		t.Log(string(r))
 		return ""
 	}
-	b, err := ioutil.ReadAll(r)
-	tr := tar.NewReader(bytes.NewReader(b))
-	_, err = tr.Next()
-	if err != nil {
-		t.Log(err)
-		return ""
-	}
-	// read the complete content of the file h.Name into the bs []byte
-	content, err := ioutil.ReadAll(tr)
-	if err != nil {
-		t.Log(err)
-		return ""
-	}
-	return string(content)
+	return string(r)
 }
 
-func expectTerminationMessage(t *testing.T, cli *client.Client, ID string) {
+func expectTerminationMessage(t *testing.T, cli ce.ContainerInterface, ID string) {
 	m := terminationMessage(t, cli, ID)
 	if m == "" {
 		t.Error("Expected termination message to be set")
@@ -191,10 +165,10 @@ func expectTerminationMessage(t *testing.T, cli *client.Client, ID string) {
 }
 
 // logContainerDetails logs selected details about the container
-func logContainerDetails(t *testing.T, cli *client.Client, ID string) {
-	i, err := cli.ContainerInspect(context.Background(), ID)
+func logContainerDetails(t *testing.T, cli ce.ContainerInterface, ID string) {
+	i, err := cli.ContainerInspect(ID)
 	if err == nil {
-		d := containerDetails{
+		d := ce.ContainerDetailsLogging{
 			ID:      ID,
 			Name:    i.Name,
 			Image:   i.Image,
@@ -210,29 +184,29 @@ func logContainerDetails(t *testing.T, cli *client.Client, ID string) {
 	}
 }
 
-func cleanContainerQuiet(t *testing.T, cli *client.Client, ID string) {
+func cleanContainerQuiet(t *testing.T, cli ce.ContainerInterface, ID string) {
 	timeout := 10 * time.Second
-	err := cli.ContainerStop(context.Background(), ID, &timeout)
+	err := cli.ContainerStop(ID, &timeout)
 	if err != nil {
 		// Just log the error and continue
 		t.Log(err)
 	}
-	opts := types.ContainerRemoveOptions{
+	opts := ce.ContainerRemoveOptions{
 		RemoveVolumes: true,
 		Force:         true,
 	}
-	err = cli.ContainerRemove(context.Background(), ID, opts)
+	err = cli.ContainerRemove(ID, opts)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
-func cleanContainer(t *testing.T, cli *client.Client, ID string) {
+func cleanContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 	logContainerDetails(t, cli, ID)
 	t.Logf("Stopping container: %v", ID)
 	timeout := 10 * time.Second
 	// Stop the container.  This allows the coverage output to be generated.
-	err := cli.ContainerStop(context.Background(), ID, &timeout)
+	err := cli.ContainerStop(ID, &timeout)
 	if err != nil {
 		// Just log the error and continue
 		t.Log(err)
@@ -250,11 +224,11 @@ func cleanContainer(t *testing.T, cli *client.Client, ID string) {
 	}
 
 	t.Logf("Removing container: %s", ID)
-	opts := types.ContainerRemoveOptions{
+	opts := ce.ContainerRemoveOptions{
 		RemoveVolumes: true,
 		Force:         true,
 	}
-	err = cli.ContainerRemove(context.Background(), ID, opts)
+	err = cli.ContainerRemove(ID, opts)
 	if err != nil {
 		t.Error(err)
 	}
@@ -268,12 +242,12 @@ func generateRandomUID() string {
 }
 
 // getDefaultHostConfig creates a HostConfig and populates it with the defaults used in testing
-func getDefaultHostConfig(t *testing.T, cli *client.Client) *container.HostConfig {
-	hostConfig := container.HostConfig{
+func getDefaultHostConfig(t *testing.T, cli ce.ContainerInterface) *ce.ContainerHostConfig {
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 		},
-		PortBindings: nat.PortMap{},
+		PortBindings: []ce.PortBinding{},
 		CapDrop: []string{
 			"ALL",
 		},
@@ -292,7 +266,7 @@ func getDefaultHostConfig(t *testing.T, cli *client.Client) *container.HostConfi
 
 // runContainerWithHostConfig creates and starts a container, using the supplied HostConfig.
 // Note that a default HostConfig can be created using getDefaultHostConfig.
-func runContainerWithHostConfig(t *testing.T, cli *client.Client, containerConfig *container.Config, hostConfig *container.HostConfig) string {
+func runContainerWithHostConfig(t *testing.T, cli ce.ContainerInterface, containerConfig *ce.ContainerConfig, hostConfig *ce.ContainerHostConfig) string {
 	if containerConfig.Image == "" {
 		containerConfig.Image = imageName()
 	}
@@ -303,19 +277,19 @@ func runContainerWithHostConfig(t *testing.T, cli *client.Client, containerConfi
 	// if coverage
 	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
 	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
-	networkingConfig := network.NetworkingConfig{}
+	networkingConfig := ce.ContainerNetworkSettings{}
 	t.Logf("Running container (%s)", containerConfig.Image)
-	ctr, err := cli.ContainerCreate(context.Background(), containerConfig, hostConfig, &networkingConfig, t.Name())
+	ID, err := cli.ContainerCreate(containerConfig, hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	startContainer(t, cli, ctr.ID)
-	return ctr.ID
+	startContainer(t, cli, ID)
+	return ID
 }
 
 // runContainerWithAllConfig creates and starts a container, using the supplied ContainerConfig, HostConfig,
 // NetworkingConfig, and container name (or the value of t.Name if containerName="").
-func runContainerWithAllConfig(t *testing.T, cli *client.Client, containerConfig *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, containerName string) string {
+func runContainerWithAllConfig(t *testing.T, cli ce.ContainerInterface, containerConfig *ce.ContainerConfig, hostConfig *ce.ContainerHostConfig, networkingConfig *ce.ContainerNetworkSettings, containerName string) string {
 	if containerName == "" {
 		containerName = t.Name()
 	}
@@ -330,26 +304,27 @@ func runContainerWithAllConfig(t *testing.T, cli *client.Client, containerConfig
 	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
 	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
 	t.Logf("Running container (%s)", containerConfig.Image)
-	ctr, err := cli.ContainerCreate(context.Background(), containerConfig, hostConfig, networkingConfig, containerName)
+	ID, err := cli.ContainerCreate(containerConfig, hostConfig, networkingConfig, containerName)
 	if err != nil {
 		t.Fatal(err)
 	}
-	startContainer(t, cli, ctr.ID)
-	return ctr.ID
+	startContainer(t, cli, ID)
+	return ID
 }
 
 // runContainerWithPorts creates and starts a container, exposing the specified ports on the host.
 // If no image is specified in the container config, then the image name is retrieved from the TEST_IMAGE
 // environment variable.
-func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *container.Config, ports []int) string {
+func runContainerWithPorts(t *testing.T, cli ce.ContainerInterface, containerConfig *ce.ContainerConfig, ports []int) string {
 	hostConfig := getDefaultHostConfig(t, cli)
+	var binding ce.PortBinding
 	for _, p := range ports {
-		port := nat.Port(fmt.Sprintf("%v/tcp", p))
-		hostConfig.PortBindings[port] = []nat.PortBinding{
-			{
-				HostIP: "0.0.0.0",
-			},
+		port := fmt.Sprintf("%v/tcp", p)
+		binding = ce.PortBinding{
+			ContainerPort: port,
+			HostIP:        "0.0.0.0",
 		}
+		hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
 	}
 	return runContainerWithHostConfig(t, cli, containerConfig, hostConfig)
 }
@@ -357,112 +332,112 @@ func runContainerWithPorts(t *testing.T, cli *client.Client, containerConfig *co
 // runContainer creates and starts a container.  If no image is specified in
 // the container config, then the image name is retrieved from the TEST_IMAGE
 // environment variable.
-func runContainer(t *testing.T, cli *client.Client, containerConfig *container.Config) string {
+func runContainer(t *testing.T, cli ce.ContainerInterface, containerConfig *ce.ContainerConfig) string {
 	return runContainerWithPorts(t, cli, containerConfig, nil)
 }
 
 // runContainerOneShot runs a container with a custom entrypoint, as the root
 // user and with default capabilities
-func runContainerOneShot(t *testing.T, cli *client.Client, command ...string) (int64, string) {
-	containerConfig := container.Config{
+func runContainerOneShot(t *testing.T, cli ce.ContainerInterface, command ...string) (int64, string) {
+	containerConfig := ce.ContainerConfig{
 		Entrypoint: command,
 		User:       "root",
 		Image:      imageName(),
 	}
-	hostConfig := container.HostConfig{}
-	networkingConfig := network.NetworkingConfig{}
+	hostConfig := ce.ContainerHostConfig{}
+	networkingConfig := ce.ContainerNetworkSettings{}
 	t.Logf("Running one shot container (%s): %v", containerConfig.Image, command)
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+"OneShot")
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name()+"OneShot")
 	if err != nil {
 		t.Fatal(err)
 	}
-	startOptions := types.ContainerStartOptions{}
-	err = cli.ContainerStart(context.Background(), ctr.ID, startOptions)
+	startOptions := ce.ContainerStartOptions{}
+	err = cli.ContainerStart(ID, startOptions)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainerQuiet(t, cli, ctr.ID)
-	rc := waitForContainer(t, cli, ctr.ID, 20*time.Second)
-	out := inspectLogs(t, cli, ctr.ID)
+	defer cleanContainerQuiet(t, cli, ID)
+	rc := waitForContainer(t, cli, ID, 20*time.Second)
+	out := inspectLogs(t, cli, ID)
 	t.Logf("One shot container finished with rc=%v, output=%v", rc, out)
 	return rc, out
 }
 
 // runContainerOneShot runs a container with a custom entrypoint, as the root
 // user, with default capabilities, and a volume mounted
-func runContainerOneShotWithVolume(t *testing.T, cli *client.Client, bind string, command ...string) (int64, string) {
-	containerConfig := container.Config{
+func runContainerOneShotWithVolume(t *testing.T, cli ce.ContainerInterface, bind string, command ...string) (int64, string) {
+	containerConfig := ce.ContainerConfig{
 		Entrypoint: command,
 		User:       "root",
 		Image:      imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			bind,
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
+	networkingConfig := ce.ContainerNetworkSettings{}
 	t.Logf("Running one shot container with volume (%s): %v", containerConfig.Image, command)
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+"OneShotVolume")
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name()+"OneShotVolume")
 	if err != nil {
 		t.Fatal(err)
 	}
-	startOptions := types.ContainerStartOptions{}
-	err = cli.ContainerStart(context.Background(), ctr.ID, startOptions)
+	startOptions := ce.ContainerStartOptions{}
+	err = cli.ContainerStart(ID, startOptions)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainerQuiet(t, cli, ctr.ID)
-	rc := waitForContainer(t, cli, ctr.ID, 20*time.Second)
-	out := inspectLogs(t, cli, ctr.ID)
+	defer cleanContainerQuiet(t, cli, ID)
+	rc := waitForContainer(t, cli, ID, 20*time.Second)
+	out := inspectLogs(t, cli, ID)
 	t.Logf("One shot container finished with rc=%v, output=%v", rc, out)
 	return rc, out
 }
 
-func startMultiVolumeQueueManager(t *testing.T, cli *client.Client, dataVol bool, qmsharedlogs string, qmshareddata string, env []string) (error, string, string) {
+func startMultiVolumeQueueManager(t *testing.T, cli ce.ContainerInterface, dataVol bool, qmsharedlogs string, qmshareddata string, env []string) (error, string, string) {
 	id := strconv.FormatInt(time.Now().UnixNano(), 10)
-	qmdata := createVolume(t, cli, id)
-	containerConfig := container.Config{
+	volume := createVolume(t, cli, id)
+	containerConfig := ce.ContainerConfig{
 		Image: imageName(),
 		Env:   env,
 	}
-	var hostConfig container.HostConfig
+	var hostConfig ce.ContainerHostConfig
 
 	if !dataVol {
-		hostConfig = container.HostConfig{}
+		hostConfig = ce.ContainerHostConfig{}
 	} else if qmsharedlogs == "" && qmshareddata == "" {
-		hostConfig = getHostConfig(t, 1, "", "", qmdata.Name)
+		hostConfig = getHostConfig(t, 1, "", "", volume)
 	} else if qmsharedlogs == "" {
-		hostConfig = getHostConfig(t, 2, "", qmshareddata, qmdata.Name)
+		hostConfig = getHostConfig(t, 2, "", qmshareddata, volume)
 	} else if qmshareddata == "" {
-		hostConfig = getHostConfig(t, 3, qmsharedlogs, "", qmdata.Name)
+		hostConfig = getHostConfig(t, 3, qmsharedlogs, "", volume)
 	} else {
-		hostConfig = getHostConfig(t, 4, qmsharedlogs, qmshareddata, qmdata.Name)
+		hostConfig = getHostConfig(t, 4, qmsharedlogs, qmshareddata, volume)
 	}
-	networkingConfig := network.NetworkingConfig{}
-	qm, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+id)
+	networkingConfig := ce.ContainerNetworkSettings{}
+	qmID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name()+id)
 	if err != nil {
 		return err, "", ""
 	}
-	startContainer(t, cli, qm.ID)
+	startContainer(t, cli, qmID)
 
-	return nil, qm.ID, qmdata.Name
+	return nil, qmID, volume
 }
 
-func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata string, qmdata string) container.HostConfig {
+func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata string, qmdata string) ce.ContainerHostConfig {
 
-	var hostConfig container.HostConfig
+	var hostConfig ce.ContainerHostConfig
 
 	switch mounts {
 	case 1:
-		hostConfig = container.HostConfig{
+		hostConfig = ce.ContainerHostConfig{
 			Binds: []string{
 				coverageBind(t),
 				qmdata + ":/mnt/mqm",
 			},
 		}
 	case 2:
-		hostConfig = container.HostConfig{
+		hostConfig = ce.ContainerHostConfig{
 			Binds: []string{
 				coverageBind(t),
 				qmdata + ":/mnt/mqm",
@@ -470,7 +445,7 @@ func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata s
 			},
 		}
 	case 3:
-		hostConfig = container.HostConfig{
+		hostConfig = ce.ContainerHostConfig{
 			Binds: []string{
 				coverageBind(t),
 				qmdata + ":/mnt/mqm",
@@ -478,7 +453,7 @@ func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata s
 			},
 		}
 	case 4:
-		hostConfig = container.HostConfig{
+		hostConfig = ce.ContainerHostConfig{
 			Binds: []string{
 				coverageBind(t),
 				qmdata + ":/mnt/mqm",
@@ -491,27 +466,28 @@ func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata s
 	return hostConfig
 }
 
-func startContainer(t *testing.T, cli *client.Client, ID string) {
+func startContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 	t.Logf("Starting container: %v", ID)
-	startOptions := types.ContainerStartOptions{}
-	err := cli.ContainerStart(context.Background(), ID, startOptions)
+	startOptions := ce.ContainerStartOptions{}
+	err := cli.ContainerStart(ID, startOptions)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func stopContainer(t *testing.T, cli *client.Client, ID string) {
+func stopContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 	t.Logf("Stopping container: %v", ID)
 	timeout := 10 * time.Second
-	err := cli.ContainerStop(context.Background(), ID, &timeout) //Duration(20)*time.Second)
+	err := cli.ContainerStop(ID, &timeout) //Duration(20)*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		// Just log the error and continue
+		t.Log(err)
 	}
 }
 
-func killContainer(t *testing.T, cli *client.Client, ID string, signal string) {
+func killContainer(t *testing.T, cli ce.ContainerInterface, ID string, signal string) {
 	t.Logf("Killing container: %v", ID)
-	err := cli.ContainerKill(context.Background(), ID, signal)
+	err := cli.ContainerKill(ID, signal)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -545,17 +521,17 @@ func getCoverageExitCode(t *testing.T, orig int64) int64 {
 }
 
 // waitForContainer waits until a container has exited
-func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout time.Duration) int64 {
+func waitForContainer(t *testing.T, cli ce.ContainerInterface, ID string, timeout time.Duration) int64 {
 	c, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	t.Logf("Waiting for container for %s", timeout)
-	okC, errC := cli.ContainerWait(c, ID, container.WaitConditionNotRunning)
+	okC, errC := cli.ContainerWait(c, ID, ce.ContainerStateNotRunning)
 	var rc int64
 	select {
 	case err := <-errC:
 		t.Fatal(err)
 	case ok := <-okC:
-		rc = ok.StatusCode
+		rc = ok
 	}
 	if coverage() {
 		// COVERAGE: When running coverage, the exit code is written to a file,
@@ -567,76 +543,13 @@ func waitForContainer(t *testing.T, cli *client.Client, ID string, timeout time.
 }
 
 // execContainer runs a command in a running container, and returns the exit code and output
-func execContainer(t *testing.T, cli *client.Client, ID string, user string, cmd []string) (int, string) {
+func execContainer(t *testing.T, cli ce.ContainerInterface, ID string, user string, cmd []string) (int, string) {
 	t.Logf("Running command: %v", cmd)
-	config := types.ExecConfig{
-		User:        user,
-		Privileged:  false,
-		Tty:         false,
-		AttachStdin: false,
-		// Note that you still need to attach stdout/stderr, even though they're not wanted
-		AttachStdout: true,
-		AttachStderr: true,
-		Detach:       false,
-		Cmd:          cmd,
-	}
-	resp, err := cli.ContainerExecCreate(context.Background(), ID, config)
-	if err != nil {
-		t.Fatal(err)
-	}
-	hijack, err := cli.ContainerExecAttach(context.Background(), resp.ID, types.ExecStartCheck{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer hijack.Close()
-	time.Sleep(time.Millisecond * 10)
-	err = cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
-		Detach: false,
-		Tty:    false,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Wait for the command to finish
-	var exitcode int
-	var outputStr string
-	for {
-		inspect, err := cli.ContainerExecInspect(context.Background(), resp.ID)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if inspect.Running {
-			continue
-		}
-
-		exitcode = inspect.ExitCode
-		buf := new(bytes.Buffer)
-		// Each output line has a header, which needs to be removed
-		_, err = stdcopy.StdCopy(buf, buf, hijack.Reader)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		outputStr = strings.TrimSpace(buf.String())
-
-		/* Commented out on 14/06/2018 as it might not be needed after adding
-		 * pause between ContainerExecAttach and ContainerExecStart.
-		 * TODO If intermittent failures do not occur, remove and refactor.
-		 *
-		 *   // Before we go let's just double check it did actually finish running
-		 *   // because sometimes we get a "Exec command already running error"
-		 *   alreadyRunningErr := regexp.MustCompile("Error: Exec command .* is already running")
-		 *   if alreadyRunningErr.MatchString(outputStr) {
-		 *   	continue
-		 *   }
-		 */
-		break
-	}
-
+	exitcode, outputStr := cli.ExecContainer(ID, user, cmd)
 	return exitcode, outputStr
 }
 
-func waitForReady(t *testing.T, cli *client.Client, ID string) {
+func waitForReady(t *testing.T, cli ce.ContainerInterface, ID string) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -662,57 +575,47 @@ func waitForReady(t *testing.T, cli *client.Client, ID string) {
 	}
 }
 
-func getIPAddress(t *testing.T, cli *client.Client, ID string) string {
-	ctr, err := cli.ContainerInspect(context.Background(), ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return ctr.NetworkSettings.IPAddress
-}
-
-func createNetwork(t *testing.T, cli *client.Client) string {
+func createNetwork(t *testing.T, cli ce.ContainerInterface) string {
 	name := "test"
 	t.Logf("Creating network: %v", name)
-	opts := types.NetworkCreate{}
-	net, err := cli.NetworkCreate(context.Background(), name, opts)
+	opts := ce.NetworkCreateOptions{}
+	netID, err := cli.NetworkCreate(name, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Created network %v with ID %v", name, net.ID)
-	return net.ID
+	t.Logf("Created network %v with ID %v", name, netID)
+	return netID
 }
 
-func removeNetwork(t *testing.T, cli *client.Client, ID string) {
+func removeNetwork(t *testing.T, cli ce.ContainerInterface, ID string) {
 	t.Logf("Removing network ID: %v", ID)
-	err := cli.NetworkRemove(context.Background(), ID)
+	err := cli.NetworkRemove(ID)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func createVolume(t *testing.T, cli *client.Client, name string) types.Volume {
-	v, err := cli.VolumeCreate(context.Background(), volume.VolumeCreateBody{
-		Driver:     "local",
-		DriverOpts: map[string]string{},
-		Labels:     map[string]string{},
-		Name:       name,
+func createVolume(t *testing.T, cli ce.ContainerInterface, name string) string {
+	v, err := cli.VolumeCreate(ce.VolumeCreateOptions{
+		Driver: "local",
+		Name:   name,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Created volume %v", v.Name)
+	t.Logf("Created volume %v", v)
 	return v
 }
 
-func removeVolume(t *testing.T, cli *client.Client, name string) {
+func removeVolume(t *testing.T, cli ce.ContainerInterface, name string) {
 	t.Logf("Removing volume %v", name)
-	err := cli.VolumeRemove(context.Background(), name, true)
+	err := cli.VolumeRemove(name, true)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func inspectTextLogs(t *testing.T, cli *client.Client, ID string) string {
+func inspectTextLogs(t *testing.T, cli ce.ContainerInterface, ID string) string {
 	jsonLogs := inspectLogs(t, cli, ID)
 	scanner := bufio.NewScanner(strings.NewReader(jsonLogs))
 	b := make([]byte, 64*1024)
@@ -734,24 +637,14 @@ func inspectTextLogs(t *testing.T, cli *client.Client, ID string) string {
 	return buf.String()
 }
 
-func inspectLogs(t *testing.T, cli *client.Client, ID string) string {
+func inspectLogs(t *testing.T, cli ce.ContainerInterface, ID string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	reader, err := cli.ContainerLogs(ctx, ID, types.ContainerLogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-	})
+	logs, err := cli.GetContainerLogs(ctx, ID, ce.ContainerLogsOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	buf := new(bytes.Buffer)
-
-	// Each output line has a header, which needs to be removed
-	_, err = stdcopy.StdCopy(buf, buf, reader)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return buf.String()
+	return logs
 }
 
 // generateTAR creates a TAR-formatted []byte, with the specified files included.
@@ -781,74 +674,52 @@ func generateTAR(t *testing.T, files []struct{ Name, Body string }) []byte {
 }
 
 // createImage creates a new Docker image with the specified files included.
-func createImage(t *testing.T, cli *client.Client, files []struct{ Name, Body string }) string {
+func createImage(t *testing.T, cli ce.ContainerInterface, files []struct{ Name, Body string }) string {
 	r := bytes.NewReader(generateTAR(t, files))
 	tag := strings.ToLower(t.Name())
-	buildOptions := types.ImageBuildOptions{
-		Context: r,
-		Tags:    []string{tag},
-	}
-	resp, err := cli.ImageBuild(context.Background(), r, buildOptions)
+
+	tmpDir, err := os.MkdirTemp("", "tmp")
 	if err != nil {
 		t.Fatal(err)
 	}
-	// resp (ImageBuildResponse) contains a series of JSON messages
-	dec := json.NewDecoder(resp.Body)
-	for {
-		m := jsonmessage.JSONMessage{}
-		err := dec.Decode(&m)
-		if m.Error != nil {
-			t.Fatal(m.ErrorMessage)
-		}
-		t.Log(strings.TrimSpace(m.Stream))
-		if err == io.EOF {
-			break
-		}
+
+	defer os.RemoveAll(tmpDir)
+
+	//Write files to temp directory
+	for _, file := range files {
+		//Add tag to file name to allow parallel testing
+		f, err := os.Create(filepath.Join(tmpDir, file.Name))
 		if err != nil {
 			t.Fatal(err)
 		}
+		defer f.Close()
+
+		body := []byte(file.Body)
+		_, err = f.Write(body)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	_, err = cli.ImageBuild(r, tag, filepath.Join(tmpDir, files[0].Name))
+	if err != nil {
+		t.Fatal(err)
 	}
 	return tag
 }
 
 // deleteImage deletes a Docker image
-func deleteImage(t *testing.T, cli *client.Client, id string) {
-	cli.ImageRemove(context.Background(), id, types.ImageRemoveOptions{
+func deleteImage(t *testing.T, cli ce.ContainerInterface, id string) {
+	cli.ImageRemove(id, ce.ImageRemoveOptions{
 		Force: true,
 	})
 }
 
-func copyFromContainer(t *testing.T, cli *client.Client, id string, file string) []byte {
-	reader, _, err := cli.CopyFromContainer(context.Background(), id, file)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer reader.Close()
-	b, err := ioutil.ReadAll(reader)
+func copyFromContainer(t *testing.T, cli ce.ContainerInterface, id string, file string) []byte {
+	b, err := cli.CopyFromContainer(id, file)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return b
-}
-
-func getPort(t *testing.T, cli *client.Client, ID string, port int) string {
-	var inspectInfo types.ContainerJSON
-	var err error
-	for attemptsRemaining := 3; attemptsRemaining > 0; attemptsRemaining-- {
-		inspectInfo, err = cli.ContainerInspect(context.Background(), ID)
-		if err != nil {
-			t.Fatal(err)
-		}
-		portNat := nat.Port(fmt.Sprintf("%d/tcp", port))
-		if inspectInfo.NetworkSettings.Ports[portNat] == nil || len(inspectInfo.NetworkSettings.Ports[portNat]) == 0 {
-			t.Log("Container port not yet bound")
-			time.Sleep(1 * time.Second)
-			continue
-		}
-		return inspectInfo.NetworkSettings.Ports[portNat][0].HostPort
-	}
-	t.Fatal("Failed to get port")
-	return ""
 }
 
 func countLines(t *testing.T, r io.Reader) int {
@@ -882,15 +753,6 @@ func countTarLines(t *testing.T, b []byte) int {
 	return total
 }
 
-func getMQVersion(t *testing.T, cli *client.Client) (string, error) {
-	inspect, _, err := cli.ImageInspectWithRaw(context.Background(), imageName())
-	if err != nil {
-		return "", err
-	}
-	version := inspect.ContainerConfig.Labels["version"]
-	return version, nil
-}
-
 // scanForExcludedEntries scans for default excluded messages
 func scanForExcludedEntries(msg string) bool {
 	if strings.Contains(msg, "AMQ5041I") || strings.Contains(msg, "AMQ5052I") ||
@@ -917,7 +779,7 @@ func checkLogForValidJSON(jsonLogs string) bool {
 
 // runContainerWithAllConfig creates and starts a container, using the supplied ContainerConfig, HostConfig,
 // NetworkingConfig, and container name (or the value of t.Name if containerName="").
-func runContainerWithAllConfigError(t *testing.T, cli *client.Client, containerConfig *container.Config, hostConfig *container.HostConfig, networkingConfig *network.NetworkingConfig, containerName string) (string, error) {
+func runContainerWithAllConfigError(t *testing.T, cli ce.ContainerInterface, containerConfig *ce.ContainerConfig, hostConfig *ce.ContainerHostConfig, networkingConfig *ce.ContainerNetworkSettings, containerName string) (string, error) {
 	if containerName == "" {
 		containerName = t.Name()
 	}
@@ -932,21 +794,21 @@ func runContainerWithAllConfigError(t *testing.T, cli *client.Client, containerC
 	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
 	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
 	t.Logf("Running container (%s)", containerConfig.Image)
-	ctr, err := cli.ContainerCreate(context.Background(), containerConfig, hostConfig, networkingConfig, containerName)
+	ID, err := cli.ContainerCreate(containerConfig, hostConfig, networkingConfig, containerName)
 	if err != nil {
 		return "", err
 	}
-	err = startContainerError(t, cli, ctr.ID)
+	err = startContainerError(t, cli, ID)
 	if err != nil {
 		return "", err
 	}
-	return ctr.ID, nil
+	return ID, nil
 }
 
-func startContainerError(t *testing.T, cli *client.Client, ID string) error {
+func startContainerError(t *testing.T, cli ce.ContainerInterface, ID string) error {
 	t.Logf("Starting container: %v", ID)
-	startOptions := types.ContainerStartOptions{}
-	err := cli.ContainerStart(context.Background(), ID, startOptions)
+	startOptions := ce.ContainerStartOptions{}
+	err := cli.ContainerStart(ID, startOptions)
 	if err != nil {
 		return err
 	}
@@ -955,7 +817,7 @@ func startContainerError(t *testing.T, cli *client.Client, ID string) error {
 }
 
 // testLogFilePages validates that the specified number of logFilePages is present in the qm.ini file.
-func testLogFilePages(t *testing.T, cli *client.Client, id string, qmName string, expectedLogFilePages string) {
+func testLogFilePages(t *testing.T, cli ce.ContainerInterface, id string, qmName string, expectedLogFilePages string) {
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/" + qmName + "/qm.ini")
 	_, iniContent := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
 
@@ -964,8 +826,8 @@ func testLogFilePages(t *testing.T, cli *client.Client, id string, qmName string
 	}
 }
 
-//waitForMessageInLog will check for a particular message with wait
-func waitForMessageInLog(t *testing.T, cli *client.Client, id string, expecteMessageId string) (string, error) {
+// waitForMessageInLog will check for a particular message with wait
+func waitForMessageInLog(t *testing.T, cli ce.ContainerInterface, id string, expecteMessageId string) (string, error) {
 	var jsonLogs string
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()

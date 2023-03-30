@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2022
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ class JMSTests {
     private static final Logger LOGGER = Logger.getLogger(JMSTests.class.getName());
     protected static final String ADDR = System.getenv("MQ_PORT_1414_TCP_ADDR");
     protected static final String USER = System.getenv("MQ_USERNAME");
+    protected static final String PORT = System.getenv().getOrDefault("MQ_PORT_1414_OVERRIDE", "1414");
     protected static final String PASSWORD = System.getenv("MQ_PASSWORD");
     protected static final String CHANNEL = System.getenv("MQ_CHANNEL");
     protected static final String TRUSTSTORE = System.getenv("MQ_TLS_TRUSTSTORE");
@@ -67,11 +68,11 @@ class JMSTests {
         return ctx.getSocketFactory();
     }
 
-    static MQConnectionFactory createMQConnectionFactory(String channel, String addr) throws JMSException, IOException, GeneralSecurityException {
+    static MQConnectionFactory createMQConnectionFactory(String channel, String addr, String port) throws JMSException, IOException, GeneralSecurityException {
         MQConnectionFactory factory = new MQConnectionFactory();
         factory.setTransportType(WMQConstants.WMQ_CM_CLIENT);
         factory.setChannel(channel);
-        factory.setConnectionNameList(String.format("%s(1414)", addr));
+        factory.setConnectionNameList(String.format("%s(%s)", addr, port));
         if (TRUSTSTORE == null) {
             LOGGER.info("Not using TLS");
         }
@@ -83,7 +84,7 @@ class JMSTests {
             if (ibmjre){
                 System.setProperty("com.ibm.mq.cfg.useIBMCipherMappings", "true");
             } else {
-                 System.setProperty("com.ibm.mq.cfg.useIBMCipherMappings", "false");
+                System.setProperty("com.ibm.mq.cfg.useIBMCipherMappings", "false");
             }
             factory.setSSLCipherSuite(System.getenv("MQ_TLS_CIPHER"));
         }
@@ -93,9 +94,9 @@ class JMSTests {
     /**
      * Create a JMSContext with the supplied user and password.
      */
-    static JMSContext create(String channel, String addr, String user, String password) throws JMSException, IOException, GeneralSecurityException {
-        LOGGER.info(String.format("Connecting to %s/TCP/%s(1414) as %s", channel, addr, user));
-        MQConnectionFactory factory = createMQConnectionFactory(channel, addr);
+    static JMSContext create(String channel, String addr, String port, String user, String password) throws JMSException, IOException, GeneralSecurityException {
+        LOGGER.info(String.format("Connecting to %s/TCP/%s(%s) as %s", channel, addr, port, user));
+        MQConnectionFactory factory = createMQConnectionFactory(channel, addr, port);
         // If a password is set, make sure it gets sent to the queue manager for authentication
         if (password != null) {
             factory.setBooleanProperty(WMQConstants.USER_AUTHENTICATION_MQCSP, true);
@@ -107,9 +108,9 @@ class JMSTests {
     /**
      * Create a JMSContext with the default user identity (from the OS)
      */
-    static JMSContext create(String channel, String addr) throws JMSException, IOException, GeneralSecurityException {
-        LOGGER.info(String.format("Connecting to %s/TCP/%s(1414) as OS user '%s'", channel, addr, System.getProperty("user.name")));
-        MQConnectionFactory factory = createMQConnectionFactory(channel, addr);
+    static JMSContext create(String channel, String addr, String port) throws JMSException, IOException, GeneralSecurityException {
+        LOGGER.info(String.format("Connecting to %s/TCP/%s(%s) as OS user '%s'", channel, addr, port, System.getProperty("user.name")));
+        MQConnectionFactory factory = createMQConnectionFactory(channel, addr, port);
         LOGGER.info(String.format("CSP authentication: %s", factory.getBooleanProperty(WMQConstants.USER_AUTHENTICATION_MQCSP)));
         return factory.createContext();
     }
@@ -118,7 +119,7 @@ class JMSTests {
     private static void waitForQueueManager() {
         for (int i = 0; i < 20; i++) {
             try {
-                Socket s = new Socket(ADDR, 1414);
+                Socket s = new Socket(ADDR, Integer.parseInt(PORT));
                 s.close();
                 return;
             } catch (IOException e) {
@@ -132,7 +133,7 @@ class JMSTests {
 
     @Test
     void putGetTest(TestInfo t) throws Exception {
-        context = create(CHANNEL, ADDR, USER, PASSWORD);
+        context = create(CHANNEL, ADDR, PORT, USER, PASSWORD);
         Queue queue = new MQQueue("DEV.QUEUE.1");
         context.createProducer().send(queue, t.getDisplayName());
         Message m = context.createConsumer(queue).receive();
@@ -144,7 +145,7 @@ class JMSTests {
         LOGGER.info(String.format("Password='%s'", PASSWORD));
         try {
             // Don't pass a user/password, which should cause the default identity to be used
-            context = create(CHANNEL, ADDR);
+            context = create(CHANNEL, ADDR, PORT);
         } catch (DetailedJMSSecurityRuntimeException ex) {
             Throwable cause = ex.getCause();
             assertNotNull(cause);

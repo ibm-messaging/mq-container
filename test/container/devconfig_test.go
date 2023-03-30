@@ -2,7 +2,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2022
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,37 +19,30 @@ limitations under the License.
 package main
 
 import (
-	"context"
+	"crypto/tls"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
-	"crypto/tls"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
+	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
 
 // TestDevGoldenPath tests using the default values for the default developer config.
 // Note: This test requires a separate container image to be available for the JMS tests.
 func TestDevGoldenPath(t *testing.T) {
 	t.Parallel()
-
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	qm := "qm1"
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qm,
 			"DEBUG=true",
 		},
 	}
-	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
+	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443, 1414})
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	waitForWebReady(t, cli, id, insecureTLSConfig)
@@ -74,15 +67,12 @@ func TestDevGoldenPath(t *testing.T) {
 func TestDevSecure(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	const tlsPassPhrase string = "passw0rd"
 	qm := "qm1"
 	appPassword := "differentPassw0rd"
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qm,
@@ -93,67 +83,67 @@ func TestDevSecure(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
-		// Assign a random port for the web server on the host
-		// TODO: Don't do this for all tests
-		PortBindings: nat.PortMap{
-			"9443/tcp": []nat.PortBinding{
-				{
-					HostIP: "0.0.0.0",
-				},
-			},
-		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	// Assign a random port for the web server on the host
+	// TODO: Don't do this for all tests
+	var binding ce.PortBinding
+	ports := []int{9443, 1414}
+	for _, p := range ports {
+		port := fmt.Sprintf("%v/tcp", p)
+		binding = ce.PortBinding{
+			ContainerPort: port,
+			HostIP:        "0.0.0.0",
+		}
+		hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
+	}
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	startContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ID)
+	startContainer(t, cli, ID)
+	waitForReady(t, cli, ID)
 	cert := filepath.Join(tlsDir(t, true), "server.crt")
-	waitForWebReady(t, cli, ctr.ID, createTLSConfig(t, cert, tlsPassPhrase))
+	waitForWebReady(t, cli, ID, createTLSConfig(t, cert, tlsPassPhrase))
 
 	t.Run("JMS", func(t *testing.T) {
 		// OpenJDK is used for running tests, hence pass "false" for 7th parameter.
 		// Cipher name specified is compliant with non-IBM JRE naming.
-		runJMSTests(t, cli, ctr.ID, true, "app", appPassword, "false", "TLS_RSA_WITH_AES_256_CBC_SHA256")
+		runJMSTests(t, cli, ID, true, "app", appPassword, "false", "TLS_RSA_WITH_AES_256_CBC_SHA256")
 	})
 	t.Run("REST admin", func(t *testing.T) {
-		testRESTAdmin(t, cli, ctr.ID, insecureTLSConfig, "")
+		testRESTAdmin(t, cli, ID, insecureTLSConfig, "")
 	})
 	t.Run("REST messaging", func(t *testing.T) {
-		testRESTMessaging(t, cli, ctr.ID, insecureTLSConfig, qm, "app", appPassword, "")
+		testRESTMessaging(t, cli, ID, insecureTLSConfig, qm, "app", appPassword, "")
 	})
 
 	// Stop the container cleanly
-	stopContainer(t, cli, ctr.ID)
+	stopContainer(t, cli, ID)
 }
 
 func TestDevWebDisabled(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
 		},
 	}
-	id := runContainer(t, cli, &containerConfig)
+	id := runContainerWithPorts(t, cli, &containerConfig, []int{1414})
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	t.Run("Web", func(t *testing.T) {
-		_, dspmqweb := execContainer(t, cli, id, "", []string{"dspmqweb"})
+		_, dspmqweb := cli.ExecContainer(id, "", []string{"dspmqweb"})
 		if !strings.Contains(dspmqweb, "Server mqweb is not running.") && !strings.Contains(dspmqweb, "MQWB1125I") {
 			t.Errorf("Expected dspmqweb to say 'Server is not running' or 'MQWB1125I'; got \"%v\"", dspmqweb)
 		}
@@ -171,11 +161,8 @@ func TestDevWebDisabled(t *testing.T) {
 func TestDevConfigDisabled(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
@@ -199,11 +186,8 @@ func TestDevConfigDisabled(t *testing.T) {
 func TestSSLKEYRBlank(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=QM1",
@@ -246,12 +230,9 @@ func TestSSLKEYRBlank(t *testing.T) {
 func TestSSLKEYRWithSuppliedKeyAndCert(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=QM1",
@@ -259,24 +240,24 @@ func TestSSLKEYRWithSuppliedKeyAndCert(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	startContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ID)
+	startContainer(t, cli, ID)
+	waitForReady(t, cli, ID)
 
 	// execute runmqsc to display qmgr SSLKEYR and CERTLABL attibutes.
 	// Search the console output for exepcted values
-	_, sslkeyROutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
+	_, sslkeyROutput := execContainer(t, cli, ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
 	if !strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") || !strings.Contains(sslkeyROutput, "CERTLABL(default)") {
 		// Although queue manager is ready, it may be that MQSC scripts have not been applied yet.
 		// Hence wait for a second and retry few times before giving up.
@@ -284,33 +265,30 @@ func TestSSLKEYRWithSuppliedKeyAndCert(t *testing.T) {
 		var i int
 		for i = 0; i < waitCount; i++ {
 			time.Sleep(1 * time.Second)
-			_, sslkeyROutput = execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
+			_, sslkeyROutput = execContainer(t, cli, ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
 			if strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") && strings.Contains(sslkeyROutput, "CERTLABL(default)") {
 				break
 			}
 		}
 		// Failed to get expected output? dump the contents of mqsc files.
 		if i == waitCount {
-			_, tls15mqsc := execContainer(t, cli, ctr.ID, "", []string{"cat", "/etc/mqm/15-tls.mqsc"})
-			_, autoMQSC := execContainer(t, cli, ctr.ID, "", []string{"cat", "/mnt/mqm/data/qmgrs/QM1/autocfg/cached.mqsc"})
+			_, tls15mqsc := execContainer(t, cli, ID, "", []string{"cat", "/etc/mqm/15-tls.mqsc"})
+			_, autoMQSC := execContainer(t, cli, ID, "", []string{"cat", "/mnt/mqm/data/qmgrs/QM1/autocfg/cached.mqsc"})
 			t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\" \n AutoConfig MQSC file contents %v\n 15-tls: %v", sslkeyROutput, autoMQSC, tls15mqsc)
 		}
 	}
 
 	// Stop the container cleanly
-	stopContainer(t, cli, ctr.ID)
+	stopContainer(t, cli, ID)
 }
 
 // Test with CA cert
 func TestSSLKEYRWithCACert(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=QM1",
@@ -318,32 +296,35 @@ func TestSSLKEYRWithCACert(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDirWithCA(t, false) + ":/etc/mqm/pki/keys/QM1CA",
 		},
-		// Assign a random port for the web server on the host
-		PortBindings: nat.PortMap{
-			"9443/tcp": []nat.PortBinding{
-				{
-					HostIP: "0.0.0.0",
-				},
-			},
-		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	// Assign a random port for the web server on the host
+	var binding ce.PortBinding
+	ports := []int{9443}
+	for _, p := range ports {
+		port := fmt.Sprintf("%v/tcp", p)
+		binding = ce.PortBinding{
+			ContainerPort: port,
+			HostIP:        "0.0.0.0",
+		}
+		hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
+	}
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	startContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ID)
+	startContainer(t, cli, ID)
+	waitForReady(t, cli, ID)
 
 	// execute runmqsc to display qmgr SSLKEYR and CERTLABL attibutes.
 	// Search the console output for exepcted values
-	_, sslkeyROutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
+	_, sslkeyROutput := execContainer(t, cli, ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
 
 	if !strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") {
 		// Although queue manager is ready, it may be that MQSC scripts have not been applied yet.
@@ -352,38 +333,35 @@ func TestSSLKEYRWithCACert(t *testing.T) {
 		var i int
 		for i = 0; i < waitCount; i++ {
 			time.Sleep(1 * time.Second)
-			_, sslkeyROutput = execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
+			_, sslkeyROutput = execContainer(t, cli, ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL' | runmqsc"})
 			if strings.Contains(sslkeyROutput, "SSLKEYR(/run/runmqserver/tls/key)") {
 				break
 			}
 		}
 		// Failed to get expected output? dump the contents of mqsc files.
 		if i == waitCount {
-			_, tls15mqsc := execContainer(t, cli, ctr.ID, "", []string{"cat", "/etc/mqm/15-tls.mqsc"})
-			_, autoMQSC := execContainer(t, cli, ctr.ID, "", []string{"cat", "/mnt/mqm/data/qmgrs/QM1/autocfg/cached.mqsc"})
+			_, tls15mqsc := execContainer(t, cli, ID, "", []string{"cat", "/etc/mqm/15-tls.mqsc"})
+			_, autoMQSC := execContainer(t, cli, ID, "", []string{"cat", "/mnt/mqm/data/qmgrs/QM1/autocfg/cached.mqsc"})
 			t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"\n AutoConfig MQSC file contents %v\n 15-tls: %v", sslkeyROutput, autoMQSC, tls15mqsc)
 		}
 	}
 
 	if !strings.Contains(sslkeyROutput, "CERTLABL(QM1CA)") {
-		_, autoMQSC := execContainer(t, cli, ctr.ID, "", []string{"cat", "/etc/mqm/15-tls.mqsc"})
+		_, autoMQSC := execContainer(t, cli, ID, "", []string{"cat", "/etc/mqm/15-tls.mqsc"})
 		t.Errorf("Expected CERTLABL to be 'QM1CA' but it is not; got \"%v\" \n MQSC File contents %v", sslkeyROutput, autoMQSC)
 	}
 
 	// Stop the container cleanly
-	stopContainer(t, cli, ctr.ID)
+	stopContainer(t, cli, ID)
 }
 
 // Verifies SSLFIPS is set to NO if MQ_ENABLE_FIPS=false
 func TestSSLFIPSNO(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=QM1",
@@ -392,24 +370,24 @@ func TestSSLFIPSNO(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	startContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ID)
+	startContainer(t, cli, ID)
+	waitForReady(t, cli, ID)
 
 	// execute runmqsc to display qmgr SSLKEYR, SSLFIPS and CERTLABL attibutes.
 	// Search the console output for exepcted values
-	_, sslFIPSOutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
+	_, sslFIPSOutput := execContainer(t, cli, ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
 	if !strings.Contains(sslFIPSOutput, "SSLKEYR(/run/runmqserver/tls/key)") {
 		t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"", sslFIPSOutput)
 	}
@@ -422,7 +400,7 @@ func TestSSLFIPSNO(t *testing.T) {
 	}
 
 	// Stop the container cleanly
-	stopContainer(t, cli, ctr.ID)
+	stopContainer(t, cli, ID)
 }
 
 // Verifies SSLFIPS is set to YES if certificates for queue manager
@@ -430,13 +408,10 @@ func TestSSLFIPSNO(t *testing.T) {
 func TestSSLFIPSYES(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	appPassword := "differentPassw0rd"
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_APP_PASSWORD=" + appPassword,
@@ -446,30 +421,40 @@ func TestSSLFIPSYES(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	var binding ce.PortBinding
+	ports := []int{1414}
+	for _, p := range ports {
+		port := fmt.Sprintf("%v/tcp", p)
+		binding = ce.PortBinding{
+			ContainerPort: port,
+			HostIP:        "0.0.0.0",
+		}
+		hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
+	}
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	startContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ID)
+	startContainer(t, cli, ID)
+	waitForReady(t, cli, ID)
 
 	// Check for expected message on container log
-	logs := inspectLogs(t, cli, ctr.ID)
+	logs := inspectLogs(t, cli, ID)
 	if !strings.Contains(logs, "FIPS cryptography is enabled.") {
 		t.Errorf("Expected 'FIPS cryptography is enabled.' but got %v\n", logs)
 	}
 
 	// execute runmqsc to display qmgr SSLKEYR, SSLFIPS and CERTLABL attibutes.
 	// Search the console output for exepcted values
-	_, sslFIPSOutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
+	_, sslFIPSOutput := execContainer(t, cli, ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
 	if !strings.Contains(sslFIPSOutput, "SSLKEYR(/run/runmqserver/tls/key)") {
 		t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"", sslFIPSOutput)
 	}
@@ -483,26 +468,23 @@ func TestSSLFIPSYES(t *testing.T) {
 
 	t.Run("JMS", func(t *testing.T) {
 		// Run the JMS tests, with no password specified
-		runJMSTests(t, cli, ctr.ID, true, "app", appPassword, "false", "TLS_RSA_WITH_AES_256_CBC_SHA256")
+		runJMSTests(t, cli, ID, true, "app", appPassword, "false", "TLS_RSA_WITH_AES_256_CBC_SHA256")
 	})
 
 	// Stop the container cleanly
-	stopContainer(t, cli, ctr.ID)
+	stopContainer(t, cli, ID)
 }
 
 // TestDevSecureFIPSYESWeb verifies if the MQ Web Server is running in FIPS mode
 func TestDevSecureFIPSTrueWeb(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	const tlsPassPhrase string = "passw0rd"
 	qm := "qm1"
 	appPassword := "differentPassw0rd"
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qm,
@@ -514,65 +496,65 @@ func TestDevSecureFIPSTrueWeb(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 			tlsDir(t, false) + ":/etc/mqm/pki/trust/default",
 		},
-		// Assign a random port for the web server on the host
-		// TODO: Don't do this for all tests
-		PortBindings: nat.PortMap{
-			"9443/tcp": []nat.PortBinding{
-				{
-					HostIP: "0.0.0.0",
-				},
-			},
-		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	// Assign a random port for the web server on the host
+	// TODO: Don't do this for all tests
+	var binding ce.PortBinding
+	ports := []int{9443}
+	for _, p := range ports {
+		port := fmt.Sprintf("%v/tcp", p)
+		binding = ce.PortBinding{
+			ContainerPort: port,
+			HostIP:        "0.0.0.0",
+		}
+		hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
+	}
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ID)
 
-	startContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	startContainer(t, cli, ID)
+	waitForReady(t, cli, ID)
 	cert := filepath.Join(tlsDir(t, true), "server.crt")
-	waitForWebReady(t, cli, ctr.ID, createTLSConfig(t, cert, tlsPassPhrase))
+	waitForWebReady(t, cli, ID, createTLSConfig(t, cert, tlsPassPhrase))
 
 	// Create a TLS Config with a cipher to use when connecting over HTTPS
 	var secureTLSConfig *tls.Config = createTLSConfigWithCipher(t, cert, tlsPassPhrase, []uint16{tls.TLS_RSA_WITH_AES_256_GCM_SHA384})
 	// Put a message to queue
 	t.Run("REST messaging", func(t *testing.T) {
-		testRESTMessaging(t, cli, ctr.ID, secureTLSConfig, qm, "app", appPassword, "")
+		testRESTMessaging(t, cli, ID, secureTLSConfig, qm, "app", appPassword, "")
 	})
 
 	// Create a TLS Config with a non-FIPS cipher to use when connecting over HTTPS
 	var secureNonFIPSCipherConfig *tls.Config = createTLSConfigWithCipher(t, cert, tlsPassPhrase, []uint16{tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA})
 	// Put a message to queue - the attempt to put message will fail with a EOF return message.
 	t.Run("REST messaging", func(t *testing.T) {
-		testRESTMessaging(t, cli, ctr.ID, secureNonFIPSCipherConfig, qm, "app", appPassword, "EOF")
+		testRESTMessaging(t, cli, ID, secureNonFIPSCipherConfig, qm, "app", appPassword, "EOF")
 	})
 
 	// Stop the container cleanly
-	stopContainer(t, cli, ctr.ID)
+	stopContainer(t, cli, ID)
 }
 
 // TestDevSecureNOFIPSWeb verifies if the MQ Web Server is not running in FIPS mode
 func TestDevSecureFalseFIPSWeb(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	const tlsPassPhrase string = "passw0rd"
 	qm := "qm1"
 	appPassword := "differentPassw0rd"
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qm,
@@ -584,38 +566,41 @@ func TestDevSecureFalseFIPSWeb(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 			tlsDir(t, false) + ":/etc/mqm/pki/trust/default",
 		},
-		// Assign a random port for the web server on the host
-		PortBindings: nat.PortMap{
-			"9443/tcp": []nat.PortBinding{
-				{
-					HostIP: "0.0.0.0",
-				},
-			},
-		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	// Assign a random port for the web server on the host
+	var binding ce.PortBinding
+	ports := []int{9443}
+	for _, p := range ports {
+		port := fmt.Sprintf("%v/tcp", p)
+		binding = ce.PortBinding{
+			ContainerPort: port,
+			HostIP:        "0.0.0.0",
+		}
+		hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
+	}
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	startContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ID)
+	startContainer(t, cli, ID)
+	waitForReady(t, cli, ID)
 
 	cert := filepath.Join(tlsDir(t, true), "server.crt")
-	waitForWebReady(t, cli, ctr.ID, createTLSConfig(t, cert, tlsPassPhrase))
+	waitForWebReady(t, cli, ID, createTLSConfig(t, cert, tlsPassPhrase))
 
 	// As FIPS is not enabled, the MQ WebServer (actually Java) will choose a JSSE provider from the list
 	// specified in java.security file. We will need to enable java.net.debug and then parse the web server
 	// logs to check what JJSE provider is being used. Hence just check the jvm.options file does not contain
 	// -Dcom.ibm.jsse2.usefipsprovider line.
-	_, jvmOptionsOutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "cat /var/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults/jvm.options"})
+	_, jvmOptionsOutput := execContainer(t, cli, ID, "", []string{"bash", "-c", "cat /var/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults/jvm.options"})
 	if strings.Contains(jvmOptionsOutput, "-Dcom.ibm.jsse2.usefipsprovider") {
 		t.Errorf("Did not expect -Dcom.ibm.jsse2.usefipsprovider but it is not; got \"%v\"", jvmOptionsOutput)
 	}
@@ -623,24 +608,21 @@ func TestDevSecureFalseFIPSWeb(t *testing.T) {
 	// Just do a HTTPS GET as well to query installation details.
 	var secureTLSConfig *tls.Config = createTLSConfigWithCipher(t, cert, tlsPassPhrase, []uint16{tls.TLS_RSA_WITH_AES_256_GCM_SHA384})
 	t.Run("REST admin", func(t *testing.T) {
-		testRESTAdmin(t, cli, ctr.ID, secureTLSConfig, "")
+		testRESTAdmin(t, cli, ID, secureTLSConfig, "")
 	})
 
 	// Stop the container cleanly
-	stopContainer(t, cli, ctr.ID)
+	stopContainer(t, cli, ID)
 }
 
 // Verify SSLFIPS is set to NO if no certificates were supplied
 func TestSSLFIPSTrueNoCerts(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	appPassword := "differentPassw0rd"
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_APP_PASSWORD=" + appPassword,
@@ -650,23 +632,23 @@ func TestSSLFIPSTrueNoCerts(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	startContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ID)
+	startContainer(t, cli, ID)
+	waitForReady(t, cli, ID)
 
 	// execute runmqsc to display qmgr SSLKEYR, SSLFIPS and CERTLABL attibutes.
 	// Search the console output for exepcted values
-	_, sslFIPSOutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
+	_, sslFIPSOutput := execContainer(t, cli, ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
 	if !strings.Contains(sslFIPSOutput, "SSLKEYR( )") {
 		t.Errorf("Expected SSLKEYR to be ' ' but it is not; got \"%v\"", sslFIPSOutput)
 	}
@@ -679,19 +661,16 @@ func TestSSLFIPSTrueNoCerts(t *testing.T) {
 	}
 
 	// Stop the container cleanly
-	stopContainer(t, cli, ctr.ID)
+	stopContainer(t, cli, ID)
 }
 
 // Verifies SSLFIPS is set to NO if MQ_ENABLE_FIPS=tru (invalid value)
 func TestSSLFIPSInvalidValue(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=QM1",
@@ -700,24 +679,24 @@ func TestSSLFIPSInvalidValue(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	startContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ID)
+	startContainer(t, cli, ID)
+	waitForReady(t, cli, ID)
 
 	// execute runmqsc to display qmgr SSLKEYR, SSLFIPS and CERTLABL attibutes.
 	// Search the console output for exepcted values
-	_, sslFIPSOutput := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
+	_, sslFIPSOutput := execContainer(t, cli, ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
 	if !strings.Contains(sslFIPSOutput, "SSLKEYR(/run/runmqserver/tls/key)") {
 		t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"", sslFIPSOutput)
 	}
@@ -731,19 +710,16 @@ func TestSSLFIPSInvalidValue(t *testing.T) {
 	}
 
 	// Stop the container cleanly
-	stopContainer(t, cli, ctr.ID)
+	stopContainer(t, cli, ID)
 }
 
 // Container creation fails when invalid certs are passed and MQ_ENABLE_FIPS set true
 func TestSSLFIPSBadCerts(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=QM1",
@@ -752,25 +728,25 @@ func TestSSLFIPSBadCerts(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDirInvalid(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ID)
+	startContainer(t, cli, ID)
 
-	rc := waitForContainer(t, cli, ctr.ID, 20*time.Second)
+	rc := waitForContainer(t, cli, ID, 20*time.Second)
 	// Expect return code 1 if container failed to create.
 	if rc == 1 {
 		// Get container logs and search for specific message.
-		logs := inspectLogs(t, cli, ctr.ID)
+		logs := inspectLogs(t, cli, ID)
 		if strings.Contains(logs, "Failed to parse private key") {
 			t.Logf("Container creating failed because of invalid certifates")
 		}
@@ -780,5 +756,5 @@ func TestSSLFIPSBadCerts(t *testing.T) {
 	}
 
 	// Stop the container cleanly
-	stopContainer(t, cli, ctr.ID)
+	stopContainer(t, cli, ID)
 }

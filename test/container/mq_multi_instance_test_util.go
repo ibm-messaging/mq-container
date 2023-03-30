@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019, 2022
+© Copyright IBM Corporation 2019, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/client"
+	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
 
 type QMChan struct {
@@ -34,27 +34,27 @@ type QMChan struct {
 
 // configureMultiInstance creates the volumes and containers required for basic testing
 // of multi instance queue managers. Returns error, qm1a ID, qm1b ID, slice of volume names
-func configureMultiInstance(t *testing.T, cli *client.Client) (error, string, string, []string) {
+func configureMultiInstance(t *testing.T, cli ce.ContainerInterface) (error, string, string, []string) {
 
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
 	qmshareddata := createVolume(t, cli, "qmshareddata")
 
-	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, qmshareddata.Name, miEnv)
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, miEnv)
 	if err != nil {
 		return err, "", "", []string{}
 	}
 	time.Sleep(10 * time.Second)
-	err, qm1bId, qm1bData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, qmshareddata.Name, miEnv)
+	err, qm1bId, qm1bData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, miEnv)
 	if err != nil {
 		return err, "", "", []string{}
 	}
 
-	volumes := []string{qmsharedlogs.Name, qmshareddata.Name, qm1aData, qm1bData}
+	volumes := []string{qmsharedlogs, qmshareddata, qm1aData, qm1bData}
 
 	return nil, qm1aId, qm1bId, volumes
 }
 
-func singleMultiInstanceQueueManager(t *testing.T, cli *client.Client, qmsharedlogs string, qmshareddata string, qmsChannel chan QMChan) {
+func singleMultiInstanceQueueManager(t *testing.T, cli ce.ContainerInterface, qmsharedlogs string, qmshareddata string, qmsChannel chan QMChan) {
 	err, qmId, qmData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, miEnv)
 	if err != nil {
 		qmsChannel <- QMChan{Error: err}
@@ -62,7 +62,7 @@ func singleMultiInstanceQueueManager(t *testing.T, cli *client.Client, qmsharedl
 	qmsChannel <- QMChan{QMId: qmId, QMData: qmData}
 }
 
-func getActiveStandbyQueueManager(t *testing.T, cli *client.Client, qm1aId string, qm1bId string) (error, string, string) {
+func getActiveStandbyQueueManager(t *testing.T, cli ce.ContainerInterface, qm1aId string, qm1bId string) (error, string, string) {
 	qm1aStatus := getQueueManagerStatus(t, cli, qm1aId, "QM1")
 	qm1bStatus := getQueueManagerStatus(t, cli, qm1bId, "QM1")
 
@@ -75,7 +75,7 @@ func getActiveStandbyQueueManager(t *testing.T, cli *client.Client, qm1aId strin
 	return err, "", ""
 }
 
-func getQueueManagerStatus(t *testing.T, cli *client.Client, containerID string, queueManagerName string) string {
+func getQueueManagerStatus(t *testing.T, cli ce.ContainerInterface, containerID string, queueManagerName string) string {
 	_, dspmqOut := execContainer(t, cli, containerID, "", []string{"bash", "-c", "dspmq", "-m", queueManagerName})
 	t.Logf("dspmq for %v (%v) returned: %v", containerID, queueManagerName, dspmqOut)
 	regex := regexp.MustCompile(`STATUS\(.*\)`)
@@ -84,7 +84,7 @@ func getQueueManagerStatus(t *testing.T, cli *client.Client, containerID string,
 	return status
 }
 
-func waitForTerminationMessage(t *testing.T, cli *client.Client, qmId string, terminationString string, timeout time.Duration) {
+func waitForTerminationMessage(t *testing.T, cli ce.ContainerInterface, qmId string, terminationString string, timeout time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	for {
@@ -93,7 +93,7 @@ func waitForTerminationMessage(t *testing.T, cli *client.Client, qmId string, te
 			m := terminationMessage(t, cli, qmId)
 			if m != "" {
 				if !strings.Contains(m, terminationString) {
-					t.Fatalf("Expected container to fail on missing required mount. Got termination message: %v", m)
+					t.Fatalf("Expected container to fail with termination message %v. Got termination message: %v", terminationString, m)
 				}
 				return
 			}

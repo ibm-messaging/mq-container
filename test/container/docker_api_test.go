@@ -18,7 +18,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -29,23 +28,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
+	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
 
 func TestLicenseNotSet(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{}
+	cli := ce.NewContainerClient()
+
+	containerConfig := ce.ContainerConfig{}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 20*time.Second)
+	rc := waitForContainer(t, cli, id, 30*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -57,16 +51,14 @@ func TestLicenseNotSet(t *testing.T) {
 func TestLicenseView(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+
+	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=view"},
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 20*time.Second)
+	rc := waitForContainer(t, cli, id, 30*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -91,11 +83,9 @@ func TestGoldenPathNoMetrics(t *testing.T) {
 
 // Actual test function for TestGoldenPathNoMetrics & TestGoldenPathWithMetrics
 func goldenPath(t *testing.T, metrics bool) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+
+	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
 	if metrics {
@@ -128,11 +118,8 @@ func goldenPath(t *testing.T, metrics bool) {
 
 func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName string) {
 	search := "QMNAME(" + expectedName + ")"
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env:      []string{"LICENSE=accept"},
 		Hostname: hostName,
 	}
@@ -175,13 +162,10 @@ func TestWithVolumeNoMetrics(t *testing.T) {
 
 // Actual test function for TestWithVolumeNoMetrics & TestWithVolumeAndMetrics
 func withVolume(t *testing.T, metric bool) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	vol := createVolume(t, cli, t.Name())
-	defer removeVolume(t, cli, vol.Name)
-	containerConfig := container.Config{
+	defer removeVolume(t, cli, vol)
+	containerConfig := ce.ContainerConfig{
 		Image: imageName(),
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
@@ -189,47 +173,47 @@ func withVolume(t *testing.T, metric bool) {
 		containerConfig.Env = append(containerConfig.Env, "MQ_ENABLE_METRICS=true")
 	}
 
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
-			vol.Name + ":/mnt/mqm",
+			vol + ":/mnt/mqm",
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	startContainer(t, cli, ctr.ID)
+	startContainer(t, cli, ID)
 	// TODO: If this test gets an error waiting for readiness, the first container might not get cleaned up
-	waitForReady(t, cli, ctr.ID)
+	waitForReady(t, cli, ID)
 
 	// Delete the first container
-	cleanContainer(t, cli, ctr.ID)
+	cleanContainer(t, cli, ID)
 
 	// Start a new container with the same volume
-	ctr2, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	ID2, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr2.ID)
-	startContainer(t, cli, ctr2.ID)
-	waitForReady(t, cli, ctr2.ID)
+	defer cleanContainer(t, cli, ID2)
+	startContainer(t, cli, ID2)
+	waitForReady(t, cli, ID2)
 }
 
 // TestWithSplitVolumesLogsData starts a queue manager with separate log/data mounts
 func TestWithSplitVolumesLogsData(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli := ce.NewContainerClient()
+
+	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
+	defer removeVolume(t, cli, qmsharedlogs)
+	qmshareddata := createVolume(t, cli, "qmshareddata")
+	defer removeVolume(t, cli, qmshareddata)
+
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
-	defer removeVolume(t, cli, qmsharedlogs.Name)
-	qmshareddata := createVolume(t, cli, "qmshareddata")
-	defer removeVolume(t, cli, qmshareddata.Name)
-
-	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, qmshareddata.Name, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
 
 	defer removeVolume(t, cli, qmVol)
 	defer cleanContainer(t, cli, qmID)
@@ -239,15 +223,15 @@ func TestWithSplitVolumesLogsData(t *testing.T) {
 
 // TestWithSplitVolumesLogsOnly starts a queue manager with a separate log mount
 func TestWithSplitVolumesLogsOnly(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli := ce.NewContainerClient()
+
+	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
+	defer removeVolume(t, cli, qmsharedlogs)
+
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, "", []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
-	defer removeVolume(t, cli, qmsharedlogs.Name)
-
-	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs.Name, "", []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
 
 	defer removeVolume(t, cli, qmVol)
 	defer cleanContainer(t, cli, qmID)
@@ -257,15 +241,15 @@ func TestWithSplitVolumesLogsOnly(t *testing.T) {
 
 // TestWithSplitVolumesDataOnly starts a queue manager with a separate data mount
 func TestWithSplitVolumesDataOnly(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli := ce.NewContainerClient()
+
+	qmshareddata := createVolume(t, cli, "qmshareddata")
+	defer removeVolume(t, cli, qmshareddata)
+
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	qmshareddata := createVolume(t, cli, "qmshareddata")
-	defer removeVolume(t, cli, qmshareddata.Name)
-
-	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata.Name, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
 
 	defer removeVolume(t, cli, qmVol)
 	defer cleanContainer(t, cli, qmID)
@@ -278,11 +262,8 @@ func TestWithSplitVolumesDataOnly(t *testing.T) {
 func TestNoVolumeWithRestart(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -298,73 +279,78 @@ func TestNoVolumeWithRestart(t *testing.T) {
 // where `runmqserver -i` is run to initialize the storage.  Then the
 // container can be run as normal.
 func TestVolumeRequiresRoot(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
+	cli := ce.NewContainerClient()
+
+	// ":nocopy" requires podman version 4.2
+	if cli.ContainerTool == "podman" && cli.Version < "4.2.0" {
+		t.Skipf("Skipping as 'nocopy' is not available before podman version 4.2.0. Detected podman version %v", cli.Version)
 	}
+
 	vol := createVolume(t, cli, t.Name())
-	defer removeVolume(t, cli, vol.Name)
+	defer removeVolume(t, cli, vol)
 
 	// Set permissions on the volume to only allow root to write it
 	// It's important that read and execute permissions are given to other users
-	rc, _ := runContainerOneShotWithVolume(t, cli, vol.Name+":/mnt/mqm:nocopy", "bash", "-c", "chown 65534:4294967294 /mnt/mqm/ && chmod 0755 /mnt/mqm/ && ls -lan /mnt/mqm/")
+	// This test was previously using nobody:nogroup and is now using nobody:nobody for compatibility
+	rc, _ := runContainerOneShotWithVolume(t, cli, vol+":/mnt/mqm:nocopy", "chown", "nobody:nobody", "/mnt/mqm/")
 	if rc != 0 {
-		t.Errorf("Expected one shot container to return rc=0, got rc=%v", rc)
+		t.Fatalf("Expected one shot container to return rc=0, got rc=%v", rc)
+	}
+	rc, _ = runContainerOneShotWithVolume(t, cli, vol+":/mnt/mqm:nocopy", "chmod", "0755", "/mnt/mqm/")
+	if rc != 0 {
+		t.Fatalf("Expected one shot container to return rc=0, got rc=%v", rc)
 	}
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Image: imageName(),
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
-			vol.Name + ":/mnt/mqm:nocopy",
+			vol + ":/mnt/mqm:nocopy",
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
+	networkingConfig := ce.ContainerNetworkSettings{}
 
 	// Run an "init container" as root, with the "-i" option, to initialize the volume
-	containerConfig = container.Config{
+	containerConfig = ce.ContainerConfig{
 		Image:      imageName(),
 		Env:        []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=true"},
 		User:       "0",
 		Entrypoint: []string{"runmqserver", "-i"},
 	}
-	initCtr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+"Init")
+	initCtrID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name()+"Init")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, initCtr.ID)
-	t.Logf("Init container ID=%v", initCtr.ID)
-	startContainer(t, cli, initCtr.ID)
-	rc = waitForContainer(t, cli, initCtr.ID, 20*time.Second)
+	defer cleanContainer(t, cli, initCtrID)
+	t.Logf("Init container ID=%v", initCtrID)
+	startContainer(t, cli, initCtrID)
+	rc = waitForContainer(t, cli, initCtrID, 30*time.Second)
 	if rc != 0 {
 		t.Errorf("Expected init container to exit with rc=0, got rc=%v", rc)
 	}
 
-	containerConfig = container.Config{
+	containerConfig = ce.ContainerConfig{
 		Image: imageName(),
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=true"},
 	}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name()+"Main")
+	ctrID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name()+"Main")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	t.Logf("Main container ID=%v", ctr.ID)
-	startContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctrID)
+	t.Logf("Main container ID=%v", ctrID)
+	startContainer(t, cli, ctrID)
+	waitForReady(t, cli, ctrID)
 }
 
 // TestCreateQueueManagerFail causes a failure of `crtmqm`
 func TestCreateQueueManagerFail(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	var files = []struct {
 		Name, Body string
 	}{
@@ -377,13 +363,13 @@ func TestCreateQueueManagerFail(t *testing.T) {
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 10*time.Second)
+	rc := waitForContainer(t, cli, id, 30*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -394,10 +380,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 func TestStartQueueManagerFail(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	var files = []struct {
 		Name, Body string
 	}{
@@ -410,13 +393,13 @@ func TestStartQueueManagerFail(t *testing.T) {
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 20*time.Second)
+	rc := waitForContainer(t, cli, id, 30*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -430,46 +413,43 @@ func TestStartQueueManagerFail(t *testing.T) {
 func TestVolumeUnmount(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	vol := createVolume(t, cli, t.Name())
-	defer removeVolume(t, cli, vol.Name)
-	containerConfig := container.Config{
+	defer removeVolume(t, cli, vol)
+	containerConfig := ce.ContainerConfig{
 		Image: imageName(),
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		// SYS_ADMIN capability is required to unmount file systems
 		CapAdd: []string{
 			"SYS_ADMIN",
 		},
 		Binds: []string{
 			coverageBind(t),
-			vol.Name + ":/mnt/mqm",
+			vol + ":/mnt/mqm",
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ctrID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	startContainer(t, cli, ctr.ID)
-	defer cleanContainer(t, cli, ctr.ID)
-	waitForReady(t, cli, ctr.ID)
+	startContainer(t, cli, ctrID)
+	defer cleanContainer(t, cli, ctrID)
+	waitForReady(t, cli, ctrID)
 	// Unmount the volume as root
-	rc, out := execContainer(t, cli, ctr.ID, "root", []string{"umount", "-l", "-f", "/mnt/mqm"})
+	rc, out := execContainer(t, cli, ctrID, "root", []string{"umount", "-l", "/mnt/mqm"})
 	if rc != 0 {
 		t.Fatalf("Expected umount to work with rc=0, got %v. Output was: %s", rc, out)
 	}
 	time.Sleep(3 * time.Second)
-	rc, _ = execContainer(t, cli, ctr.ID, "", []string{"chkmqhealthy"})
+	rc, _ = execContainer(t, cli, ctrID, "", []string{"chkmqhealthy"})
 	if rc == 0 {
 		t.Errorf("Expected chkmqhealthy to fail")
-		_, df := execContainer(t, cli, ctr.ID, "", []string{"df"})
+		_, df := execContainer(t, cli, ctrID, "", []string{"df"})
 		t.Logf(df)
-		_, ps := execContainer(t, cli, ctr.ID, "", []string{"ps", "-ef"})
+		_, ps := execContainer(t, cli, ctrID, "", []string{"ps", "-ef"})
 		t.Logf(ps)
 	}
 }
@@ -479,16 +459,10 @@ func TestVolumeUnmount(t *testing.T) {
 func TestZombies(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
-		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=true"},
-		//ExposedPorts: ports,
-		ExposedPorts: nat.PortSet{
-			"1414/tcp": struct{}{},
-		},
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
+		Env:          []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=true"},
+		ExposedPorts: []string{"1414/tcp"},
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
@@ -516,10 +490,7 @@ func TestZombies(t *testing.T) {
 func TestMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	var files = []struct {
 		Name, Body string
 	}{
@@ -535,7 +506,7 @@ func TestMQSC(t *testing.T) {
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
@@ -563,10 +534,7 @@ func TestMQSC(t *testing.T) {
 func TestLargeMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	const numQueues = 1000
 	var buf bytes.Buffer
 	for i := 1; i <= numQueues; i++ {
@@ -587,7 +555,7 @@ func TestLargeMQSC(t *testing.T) {
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
@@ -615,10 +583,7 @@ func TestLargeMQSC(t *testing.T) {
 func TestRedactValidMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	var buf bytes.Buffer
 	passwords := "hippoman4567"
 	sslcryp := fmt.Sprintf("GSK_PKCS11=/usr/lib/pkcs11/PKCS11_API.so;token-label;%s;SYMMETRIC_CIPHER_ON;", passwords)
@@ -667,7 +632,7 @@ func TestRedactValidMQSC(t *testing.T) {
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
@@ -682,7 +647,7 @@ func TestRedactValidMQSC(t *testing.T) {
 			t.Fatalf("Expected redacted MQSC output, got: %v", s)
 		}
 	}
-	err = scanner.Err()
+	err := scanner.Err()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -693,10 +658,7 @@ func TestRedactValidMQSC(t *testing.T) {
 func TestRedactInvalidMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	var buf bytes.Buffer
 	passwords := "hippoman4567"
 	sslcryp := fmt.Sprintf("GSK_PKCS11=/usr/lib/pkcs11/PKCS11_API.so;token-label;%s;SYMMETRIC_CIPHER_ON;", passwords)
@@ -739,13 +701,13 @@ func TestRedactInvalidMQSC(t *testing.T) {
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 20*time.Second)
+	rc := waitForContainer(t, cli, id, 30*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -756,7 +718,7 @@ func TestRedactInvalidMQSC(t *testing.T) {
 			t.Fatalf("Expected redacted MQSC output, got: %v", s)
 		}
 	}
-	err = scanner.Err()
+	err := scanner.Err()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -766,10 +728,7 @@ func TestRedactInvalidMQSC(t *testing.T) {
 // tries to start a container based on that image, and checks that container terminates
 func TestInvalidMQSC(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	var files = []struct {
 		Name, Body string
 	}{
@@ -785,7 +744,7 @@ func TestInvalidMQSC(t *testing.T) {
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
@@ -800,10 +759,7 @@ func TestInvalidMQSC(t *testing.T) {
 
 func TestSimpleMQIniMerge(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	var files = []struct {
 		Name, Body string
 	}{
@@ -819,7 +775,7 @@ func TestSimpleMQIniMerge(t *testing.T) {
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
@@ -838,10 +794,7 @@ func TestSimpleMQIniMerge(t *testing.T) {
 }
 func TestMultipleIniMerge(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	var files = []struct {
 		Name, Body string
 	}{
@@ -865,7 +818,7 @@ func TestMultipleIniMerge(t *testing.T) {
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
@@ -887,10 +840,7 @@ func TestMultipleIniMerge(t *testing.T) {
 }
 
 func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	var filesFirstContainer = []struct {
 		Name, Body string
@@ -907,37 +857,37 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 	firstImage := createImage(t, cli, filesFirstContainer)
 	defer deleteImage(t, cli, firstImage)
 	vol := createVolume(t, cli, t.Name())
-	defer removeVolume(t, cli, vol.Name)
+	defer removeVolume(t, cli, vol)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Image: firstImage,
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
 
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
-			vol.Name + ":/mnt/mqm",
+			vol + ":/mnt/mqm",
 		},
 	}
-	networkingConfig := network.NetworkingConfig{}
-	ctr1, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ctr1ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	startContainer(t, cli, ctr1.ID)
-	waitForReady(t, cli, ctr1.ID)
+	startContainer(t, cli, ctr1ID)
+	waitForReady(t, cli, ctr1ID)
 
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
-	_, test := execContainer(t, cli, ctr1.ID, "", []string{"bash", "-c", catIniFileCommand})
+	_, test := execContainer(t, cli, ctr1ID, "", []string{"bash", "-c", catIniFileCommand})
 	addedStanza := strings.Contains(test, "ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF")
 
 	if addedStanza != true {
 		t.Error("ERROR: The Files are not merged correctly")
 	}
 	// Delete the first container
-	cleanContainer(t, cli, ctr1.ID)
+	cleanContainer(t, cli, ctr1ID)
 
 	var filesSecondContainer = []struct {
 		Name, Body string
@@ -955,20 +905,20 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 	secondImage := createImage(t, cli, filesSecondContainer)
 	defer deleteImage(t, cli, secondImage)
 
-	containerConfig2 := container.Config{
+	containerConfig2 := ce.ContainerConfig{
 		Image: secondImage,
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
 
-	ctr2, err := cli.ContainerCreate(context.Background(), &containerConfig2, &hostConfig, &networkingConfig, t.Name())
+	ctr2ID, err := cli.ContainerCreate(&containerConfig2, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr2.ID)
-	startContainer(t, cli, ctr2.ID)
-	waitForReady(t, cli, ctr2.ID)
+	defer cleanContainer(t, cli, ctr2ID)
+	startContainer(t, cli, ctr2ID)
+	waitForReady(t, cli, ctr2ID)
 
-	_, test2 := execContainer(t, cli, ctr2.ID, "", []string{"bash", "-c", catIniFileCommand})
+	_, test2 := execContainer(t, cli, ctr2ID, "", []string{"bash", "-c", catIniFileCommand})
 	changedStanza := strings.Contains(test2, "LogBufferPages=128")
 	//check if stanza that was merged in the first container doesnt exist in this one.
 	firstMergedStanza := strings.Contains(test2, "ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF")
@@ -985,10 +935,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 func TestReadiness(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 	const numQueues = 3
 	var buf bytes.Buffer
 	for i := 1; i <= numQueues; i++ {
@@ -1009,7 +956,7 @@ func TestReadiness(t *testing.T) {
 	tag := createImage(t, cli, files)
 	defer deleteImage(t, cli, tag)
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=1"},
 		Image: tag,
 	}
@@ -1048,10 +995,7 @@ func TestErrorLogRotation(t *testing.T) {
 	t.Skipf("Skipping %v until test defect fixed", t.Name())
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
 	logsize := 65536
 
@@ -1062,7 +1006,7 @@ func TestErrorLogRotation(t *testing.T) {
 	}
 
 	qmName := "qm1"
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qmName,
@@ -1070,9 +1014,7 @@ func TestErrorLogRotation(t *testing.T) {
 			"LOG_FORMAT=json",
 			fmt.Sprintf("AMQ_EXTRA_QM_STANZAS=QMErrorLog:ErrorLogSize=%d", logsize),
 		},
-		ExposedPorts: nat.PortSet{
-			"1414/tcp": struct{}{},
-		},
+		ExposedPorts: []string{"1414/tcp"},
 	}
 
 	id := runContainer(t, cli, &containerConfig)
@@ -1110,7 +1052,7 @@ func TestErrorLogRotation(t *testing.T) {
 			totalMirrored++
 		}
 	}
-	err = scanner.Err()
+	err := scanner.Err()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1138,11 +1080,8 @@ func TestJSONLogFormatNoMetrics(t *testing.T) {
 
 // Actual test function for TestJSONLogFormatWithMetrics & TestJSONLogFormatNoMetrics
 func jsonLogFormat(t *testing.T, metric bool) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"LOG_FORMAT=json",
@@ -1165,7 +1104,7 @@ func jsonLogFormat(t *testing.T, metric bool) {
 			t.Fatalf("Expected all log lines to be valid JSON.  Got error %v for line %v", err, s)
 		}
 	}
-	err = scanner.Err()
+	err := scanner.Err()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1176,11 +1115,8 @@ func jsonLogFormat(t *testing.T, metric bool) {
 func TestMQJSONDisabled(t *testing.T) {
 	t.SkipNow()
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
@@ -1204,12 +1140,9 @@ func TestCorrectLicense(t *testing.T) {
 		t.Fatal("Required test environment variable 'EXPECTED_LICENSE' was not set.")
 	}
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept"},
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -1220,6 +1153,7 @@ func TestCorrectLicense(t *testing.T) {
 	if rc != 0 {
 		t.Fatalf("Failed to get license string. RC=%d. Output=%s", rc, license)
 	}
+	license = ce.SanitizeString(license)
 
 	if license != expectedLicense {
 		t.Errorf("Expected license to be '%s' but was '%s", expectedLicense, license)
@@ -1229,12 +1163,9 @@ func TestCorrectLicense(t *testing.T) {
 func TestVersioning(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept"},
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -1350,12 +1281,9 @@ func TestVersioning(t *testing.T) {
 func TestTraceStrmqm(t *testing.T) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_ENABLE_TRACE_STRMQM=1",
@@ -1375,11 +1303,8 @@ func TestTraceStrmqm(t *testing.T) {
 // privileges enabled or disabled.  Otherwise the same as the golden path tests.
 func utilTestHealthCheck(t *testing.T, nonewpriv bool) {
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
 	hostConfig := getDefaultHostConfig(t, cli)
@@ -1404,7 +1329,7 @@ func TestHealthCheckWithNoNewPrivileges(t *testing.T) {
 	utilTestHealthCheck(t, true)
 }
 
-// TestHealthCheckWithNoNewPrivileges tests golden path start/stop plus
+// TestHealthCheckWithNewPrivileges tests golden path start/stop plus
 // chkmqhealthy when running in a container where new privileges are
 // allowed (i.e. setuid is allowed)
 // See https://github.com/ibm-messaging/mq-container/issues/428
@@ -1416,11 +1341,8 @@ func TestHealthCheckWithNewPrivileges(t *testing.T) {
 // privileges enabled or disabled.  Otherwise the same as the golden path tests.
 func utilTestStartedCheck(t *testing.T, nonewpriv bool) {
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
 	hostConfig := getDefaultHostConfig(t, cli)
@@ -1445,7 +1367,7 @@ func TestStartedCheckWithNoNewPrivileges(t *testing.T) {
 	utilTestStartedCheck(t, true)
 }
 
-// TestStartedCheckWithNoNewPrivileges tests golden path start/stop plus
+// TestStartedCheckWithNewPrivileges tests golden path start/stop plus
 // chkmqstarted when running in a container where new privileges are
 // allowed (i.e. setuid is allowed)
 // See https://github.com/ibm-messaging/mq-container/issues/428
@@ -1457,11 +1379,8 @@ func TestStartedCheckWithNewPrivileges(t *testing.T) {
 // Check that when the container is stopped that the command endmqm has option -tp and x
 func TestEndMQMOpts(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_GRACE_PERIOD=27"},
 	}
 
@@ -1480,11 +1399,8 @@ func TestEndMQMOpts(t *testing.T) {
 // Check that the number of logfilepages matches.
 func TestCustomLogFilePages(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_LOG_FILE_PAGES=8192", "MQ_QMGR_NAME=qmlfp"},
 	}
 
@@ -1500,11 +1416,8 @@ func TestCustomLogFilePages(t *testing.T) {
 func TestLoggingConsoleSource(t *testing.T) {
 
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
@@ -1534,11 +1447,8 @@ func TestLoggingConsoleSource(t *testing.T) {
 func TestOldBehaviorWebConsole(t *testing.T) {
 
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
@@ -1565,7 +1475,7 @@ func TestOldBehaviorWebConsole(t *testing.T) {
 	isValidJSON := checkLogForValidJSON(jsonLogs)
 
 	if !isValidJSON {
-		t.Fatalf("Expected all log lines to be valid JSON.  But got error %v ", err)
+		t.Fatalf("Expected all log lines to be valid JSON.  Logs: %v ", jsonLogs)
 	}
 
 	// Stop the container cleanly
@@ -1578,11 +1488,8 @@ func TestLoggingConsoleWithContRestart(t *testing.T) {
 
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
@@ -1633,11 +1540,8 @@ func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
@@ -1661,7 +1565,7 @@ func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 	isValidJSON := checkLogForValidJSON(jsonLogs)
 
 	if !isValidJSON {
-		t.Fatalf("Expected all log lines to be valid JSON.  But got error %v ", err)
+		t.Fatalf("Expected all log lines to be valid JSON.  Logs: %v ", jsonLogs)
 	}
 
 	if strings.Contains(jsonLogs, "AMQ7230I") || strings.Contains(jsonLogs, "CWWKF0011I") {
@@ -1693,11 +1597,8 @@ func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 func TestLoggingConsoleSetToWeb(t *testing.T) {
 
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
@@ -1735,11 +1636,8 @@ func TestLoggingConsoleSetToWeb(t *testing.T) {
 // json and check that log is in json format
 func TestLoggingConsoleSetToQmgr(t *testing.T) {
 	t.Parallel()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	containerConfig := container.Config{
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
@@ -1767,12 +1665,11 @@ func TestLoggingConsoleSetToQmgr(t *testing.T) {
 	isValidJSON := checkLogForValidJSON(jsonLogs)
 
 	if !isValidJSON {
-		t.Fatalf("Expected all log lines to be valid JSON.  But got error %v ", err)
+		t.Fatalf("Expected all log lines to be valid JSON.  Logs: %v ", jsonLogs)
 	}
 
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
-
 }
 
 // Test queue manager with both personal and CA certificate having the same DN
@@ -1821,12 +1718,9 @@ func scanForText(output string, prefix string, findText string) (int, bool) {
 func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOutPut string, waitLong bool) {
 	t.Parallel()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cli := ce.NewContainerClient()
 
-	containerConfig := container.Config{
+	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=QM1",
@@ -1834,24 +1728,24 @@ func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOu
 		},
 		Image: imageName(),
 	}
-	hostConfig := container.HostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			tlsDirDN(t, false, certPath) + ":/etc/mqm/pki/keys/QM1",
 		},
 	}
 
-	networkingConfig := network.NetworkingConfig{}
-	ctr, err := cli.ContainerCreate(context.Background(), &containerConfig, &hostConfig, &networkingConfig, t.Name())
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ctrID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr.ID)
-	startContainer(t, cli, ctr.ID)
+	defer cleanContainer(t, cli, ctrID)
+	startContainer(t, cli, ctrID)
 
 	if waitLong {
-		waitForReady(t, cli, ctr.ID)
-		_, output := execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
+		waitForReady(t, cli, ctrID)
+		_, output := execContainer(t, cli, ctrID, "", []string{"bash", "-c", "echo 'DISPLAY QMGR SSLKEYR CERTLABL SSLFIPS' | runmqsc"})
 		if !strings.Contains(output, "SSLKEYR(/run/runmqserver/tls/key)") {
 			t.Errorf("Expected SSLKEYR to be '/run/runmqserver/tls/key' but it is not; got \"%v\"", output)
 		}
@@ -1859,7 +1753,7 @@ func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOu
 		if !strings.Contains(output, "CERTLABL(QM1)") {
 			t.Errorf("Expected CERTLABL to be 'default' but it is not; got \"%v\"", output)
 		}
-		_, output = execContainer(t, cli, ctr.ID, "", []string{"bash", "-c", "runmqakm -cert -list -type cms -db /run/runmqserver/tls/key.kdb -stashed"})
+		_, output = execContainer(t, cli, ctrID, "", []string{"bash", "-c", "runmqakm -cert -list -type cms -db /run/runmqserver/tls/key.kdb -stashed"})
 		if strings.EqualFold(t.Name(), "TestWithCASignedCerts") {
 			// There should be one personal certificate and one trusted certificate.
 			count, found := scanForText(output, "!", "CN=MQMFTQM,OU=ISL,O=IBM,L=BLR,ST=KA,C=IN")
@@ -1885,11 +1779,11 @@ func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOu
 			}
 		}
 	} else {
-		rc := waitForContainer(t, cli, ctr.ID, 20*time.Second)
+		rc := waitForContainer(t, cli, ctrID, 30*time.Second)
 		// Expect return code 1 if container failed to create.
 		if rc == 1 {
 			// Get container logs and search for specific message.
-			logs := inspectLogs(t, cli, ctr.ID)
+			logs := inspectLogs(t, cli, ctrID)
 			if !strings.Contains(logs, expecteOutPut) {
 				t.Errorf("Container creating failed because of invalid certifates")
 			}

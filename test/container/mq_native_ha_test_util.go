@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021
+© Copyright IBM Corporation 2021, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,13 +19,11 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
+	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
 
 const defaultHAPort = 9414
@@ -36,16 +34,8 @@ type HAReplicaStatus struct {
 	Replica [2]string
 }
 
-func createBridgeNetwork(cli *client.Client, t *testing.T) (types.NetworkCreateResponse, error) {
-	return cli.NetworkCreate(context.Background(), t.Name(), types.NetworkCreate{})
-}
-
-func removeBridgeNetwork(cli *client.Client, networkID string) error {
-	return cli.NetworkRemove(context.Background(), networkID)
-}
-
-func getNativeHAContainerConfig(containerName string, replicaNames [3]string, haPort int) container.Config {
-	return container.Config{
+func getNativeHAContainerConfig(containerName string, replicaNames [3]string, haPort int) ce.ContainerConfig {
+	return ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=QM1",
@@ -55,15 +45,18 @@ func getNativeHAContainerConfig(containerName string, replicaNames [3]string, ha
 			fmt.Sprintf("MQ_NATIVE_HA_INSTANCE_0_NAME=%s", replicaNames[0]),
 			fmt.Sprintf("MQ_NATIVE_HA_INSTANCE_1_NAME=%s", replicaNames[1]),
 			fmt.Sprintf("MQ_NATIVE_HA_INSTANCE_2_NAME=%s", replicaNames[2]),
-			fmt.Sprintf("MQ_NATIVE_HA_INSTANCE_0_REPLICATION_ADDRESS=%s(%d)", replicaNames[0], haPort),
-			fmt.Sprintf("MQ_NATIVE_HA_INSTANCE_1_REPLICATION_ADDRESS=%s(%d)", replicaNames[1], haPort),
-			fmt.Sprintf("MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS=%s(%d)", replicaNames[2], haPort),
+			fmt.Sprintf("MQ_NATIVE_HA_INSTANCE_0_REPLICATION_ADDRESS=%s(%d)", "127.0.0.1", haPort+0),
+			fmt.Sprintf("MQ_NATIVE_HA_INSTANCE_1_REPLICATION_ADDRESS=%s(%d)", "127.0.0.1", haPort+1),
+			fmt.Sprintf("MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS=%s(%d)", "127.0.0.1", haPort+2),
 		},
+		//When using the host for networking a consistent user was required. If a random user is used then the following example error was recorded.
+		//AMQ3209E: Native HA connection rejected due to configuration mismatch of 'QmgrUserId=5024'
+		User: "1111",
 	}
 }
 
-func getNativeHASecureHostConfig(t *testing.T) container.HostConfig {
-	return container.HostConfig{
+func getNativeHASecureHostConfig(t *testing.T) ce.ContainerHostConfig {
+	return ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
 			filepath.Join(getCwd(t, true), "../tls") + ":/etc/mqm/ha/pki/keys/ha",
@@ -71,15 +64,30 @@ func getNativeHASecureHostConfig(t *testing.T) container.HostConfig {
 	}
 }
 
-func getNativeHANetworkConfig(networkID string) network.NetworkingConfig {
-	return network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
-			networkID: &network.EndpointSettings{},
-		},
+func getNativeHANetworkConfig(networkID string) ce.ContainerNetworkSettings {
+	return ce.ContainerNetworkSettings{
+		Networks: []string{networkID},
 	}
 }
 
-func getActiveReplicaInstances(t *testing.T, cli *client.Client, qmReplicaIDs [3]string) (HAReplicaStatus, error) {
+// populatePortBindings writes port bindings to the host config
+func populateNativeHAPortBindings(ports []int, nativeHaPort int, hostConfig ce.ContainerHostConfig) ce.ContainerHostConfig {
+	hostConfig.PortBindings = []ce.PortBinding{}
+	var binding ce.PortBinding
+	for i, p := range ports {
+		port := fmt.Sprintf("%v/tcp", p)
+		binding = ce.PortBinding{
+			ContainerPort: port,
+			HostIP:        "0.0.0.0",
+			//Offset the ports by 50 if there are multiple
+			HostPort: strconv.Itoa(nativeHaPort + 50*i),
+		}
+		hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
+	}
+	return hostConfig
+}
+
+func getActiveReplicaInstances(t *testing.T, cli ce.ContainerInterface, qmReplicaIDs [3]string) (HAReplicaStatus, error) {
 
 	var actives []string
 	var replicas []string
@@ -104,7 +112,7 @@ func getActiveReplicaInstances(t *testing.T, cli *client.Client, qmReplicaIDs [3
 	return HAReplicaStatus{actives[0], [2]string{replicas[0], replicas[1]}}, nil
 }
 
-func waitForReadyHA(t *testing.T, cli *client.Client, qmReplicaIDs [3]string) {
+func waitForReadyHA(t *testing.T, cli ce.ContainerInterface, qmReplicaIDs [3]string) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
@@ -129,7 +137,7 @@ func waitForReadyHA(t *testing.T, cli *client.Client, qmReplicaIDs [3]string) {
 	}
 }
 
-func waitForFailoverHA(t *testing.T, cli *client.Client, replicas [2]string) {
+func waitForFailoverHA(t *testing.T, cli ce.ContainerInterface, replicas [2]string) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()

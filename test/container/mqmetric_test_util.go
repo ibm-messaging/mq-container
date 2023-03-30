@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
+	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
 
 type mqmetric struct {
@@ -146,8 +146,8 @@ func waitForMetricReady(t *testing.T, port string) {
 	t.Fatalf("Metric endpoint failed to startup in timely manner")
 }
 
-func metricsContainerConfig() *container.Config {
-	return &container.Config{
+func metricsContainerConfig() *ce.ContainerConfig {
+	return &ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + defaultMetricQMName,
