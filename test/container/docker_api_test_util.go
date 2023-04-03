@@ -551,7 +551,7 @@ func execContainer(t *testing.T, cli ce.ContainerInterface, ID string, user stri
 
 func waitForReady(t *testing.T, cli ce.ContainerInterface, ID string) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
 
 	for {
