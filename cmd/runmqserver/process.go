@@ -44,12 +44,22 @@ func verifySingleProcess() error {
 func verifyOnlyOne(programName string) (int, error) {
 	// #nosec G104
 	out, _, _ := command.Run("ps", "-e", "--format", "cmd")
-	//if this goes wrong then assume we are the only one
-	numOfProg := strings.Count(out, programName)
+	lines := strings.Split(out, "\n")
+	numOfProg := countLinesWith(lines, programName)
 	if numOfProg != 1 {
 		return numOfProg, fmt.Errorf("Expected there to be only 1 instance of %s but found %d", programName, numOfProg)
 	}
 	return numOfProg, nil
+}
+
+func countLinesWith(lines []string, pattern string) int {
+	var occurrences int
+	for i := range lines {
+		if strings.Contains(lines[i], pattern) {
+			occurrences += 1
+		}
+	}
+	return occurrences
 }
 
 // Determines the name of the currently running executable.
