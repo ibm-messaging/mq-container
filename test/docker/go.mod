@@ -1,6 +1,6 @@
 module github.com/ibm-messaging/mq-container/test/docker
 
-go 1.18
+go 1.19
 
 require (
 	// Note: This is not actually Docker v17.12!
