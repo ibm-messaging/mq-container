@@ -1,6 +1,6 @@
 module github.com/ibm-messaging/mq-container
 
-go 1.18
+go 1.19
 
 require (
 	github.com/genuinetools/amicontained v0.4.3
