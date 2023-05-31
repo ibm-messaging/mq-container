@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019
+© Copyright IBM Corporation 2019, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ func getActiveStandbyQueueManager(t *testing.T, cli *client.Client, qm1aId strin
 
 func getQueueManagerStatus(t *testing.T, cli *client.Client, containerID string, queueManagerName string) string {
 	_, dspmqOut := execContainer(t, cli, containerID, "", []string{"bash", "-c", "dspmq", "-m", queueManagerName})
+	t.Logf("dspmq for %v (%v) returned: %v", containerID, queueManagerName, dspmqOut)
 	regex := regexp.MustCompile(`STATUS\(.*\)`)
 	status := regex.FindString(dspmqOut)
 	status = strings.TrimSuffix(strings.TrimPrefix(status, "STATUS("), ")")
