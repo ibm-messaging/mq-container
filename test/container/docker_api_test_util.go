@@ -623,9 +623,11 @@ func inspectTextLogs(t *testing.T, cli ce.ContainerInterface, ID string) string 
 	for scanner.Scan() {
 		text := scanner.Text()
 		if strings.HasPrefix(text, "{") {
+			// If it's a JSON log message, it makes it hard to debug the test, as the JSON
+			// is embedded in the long test output.  So just summarize the JSON instead.
 			var e map[string]interface{}
 			json.Unmarshal([]byte(text), &e)
-			fmt.Fprintf(buf, "{\"message\": \"%v\", ...}\n", e["message"])
+			fmt.Fprintf(buf, "{\"ibm_datetime\": \"%v\", \"message\": \"%v\", ...}\n", e["ibm_datetime"], e["message"])
 		} else {
 			fmt.Fprintln(buf, text)
 		}
