@@ -1672,6 +1672,51 @@ func TestLoggingConsoleSetToQmgr(t *testing.T) {
 	stopContainer(t, cli, id)
 }
 
+func TestWebLogsHeaderRotation(t *testing.T) {
+
+	t.Parallel()
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=true",
+			"MQ_LOGGING_CONSOLE_SOURCE=qmgr,web",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	consoleLogs, errJson := waitForMessageInLog(t, cli, id, "CWWKF0011I")
+	if errJson != nil {
+		t.Errorf("%v", errJson)
+	}
+	//The below variable represents the first message in messages.log of web server, considered as the header message
+	webLogheader := "product = WebSphere Application Server"
+
+	if !strings.Contains(consoleLogs, webLogheader) {
+		t.Errorf("Console log is without web server header message\n \"%v\"", consoleLogs)
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+	startContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	consoleLogs2, errJson := waitForMessageCountInLog(t, cli, id, "CWWKF0011I", 2)
+	if errJson != nil {
+		t.Errorf("%v", errJson)
+	}
+	t.Logf("Total headers found is %v", strings.Count(consoleLogs2, webLogheader))
+	if strings.Count(consoleLogs2, webLogheader) != 2 {
+		t.Errorf("Console logs do not contain header message after restart \"%v\"", consoleLogs2)
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
 // Test queue manager with both personal and CA certificate having the same DN
 func TestSameSubDNError(t *testing.T) {
 	expectedOutput := "Error: The Subject DN of the Issuer Certificate and the Queue Manager are same"

@@ -211,7 +211,7 @@ func mirrorHTPasswdLogs(ctx context.Context, wg *sync.WaitGroup, name string, fr
 
 // mirrorWebServerLogs starts a goroutine to mirror the contents of the Liberty web server messages.log
 func mirrorWebServerLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool, mf mirrorFunc) (chan error, error) {
-	return mirrorLog(ctx, wg, "/var/mqm/web/installations/Installation1/servers/mqweb/logs/messages.log", false, mf, true)
+	return mirrorLog(ctx, wg, "/var/mqm/web/installations/Installation1/servers/mqweb/logs/messages.log", fromStart, mf, true)
 }
 
 func getDebug() bool {

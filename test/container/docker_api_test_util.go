@@ -827,7 +827,7 @@ func testLogFilePages(t *testing.T, cli ce.ContainerInterface, id string, qmName
 }
 
 // waitForMessageInLog will check for a particular message with wait
-func waitForMessageInLog(t *testing.T, cli ce.ContainerInterface, id string, expecteMessageId string) (string, error) {
+func waitForMessageInLog(t *testing.T, cli ce.ContainerInterface, id string, expectedMessageId string) (string, error) {
 	var jsonLogs string
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -835,11 +835,29 @@ func waitForMessageInLog(t *testing.T, cli ce.ContainerInterface, id string, exp
 		select {
 		case <-time.After(1 * time.Second):
 			jsonLogs = inspectLogs(t, cli, id)
-			if strings.Contains(jsonLogs, expecteMessageId) {
+			if strings.Contains(jsonLogs, expectedMessageId) {
 				return jsonLogs, nil
 			}
 		case <-ctx.Done():
-			return "", fmt.Errorf("Expected message Id %s was not logged.", expecteMessageId)
+			return "", fmt.Errorf("expected message Id %s was not logged", expectedMessageId)
+		}
+	}
+}
+
+// waitForMessageCountInLog will check for a particular message with wait and must occur exact number of times in log as specified by count
+func waitForMessageCountInLog(t *testing.T, cli ce.ContainerInterface, id string, expectedMessageId string, count int) (string, error) {
+	var jsonLogs string
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	for {
+		select {
+		case <-time.After(1 * time.Second):
+			jsonLogs = inspectLogs(t, cli, id)
+			if strings.Contains(jsonLogs, expectedMessageId) && strings.Count(jsonLogs, expectedMessageId) == count {
+				return jsonLogs, nil
+			}
+		case <-ctx.Done():
+			return "", fmt.Errorf("expected message Id %s was not logged or it was not logged %v times", expectedMessageId, count)
 		}
 	}
 }

@@ -165,6 +165,27 @@ func doMain() error {
 		log.Println("One or more invalid value is provided for MQ_LOGGING_CONSOLE_SOURCE. Allowed values are 'qmgr' & 'web' in csv format")
 	}
 
+	var wg sync.WaitGroup
+	defer func() {
+		log.Debug("Waiting for log mirroring to complete")
+		wg.Wait()
+	}()
+	ctx, cancelMirror := context.WithCancel(context.Background())
+	defer func() {
+		log.Debug("Cancel log mirroring")
+		cancelMirror()
+	}()
+
+	//For mirroring web server logs if source variable is set
+	if checkLogSourceForMirroring("web") {
+		// Always log from the end of the web server messages.log, because the log rotation should happen as soon as the web server starts
+		_, err = mirrorWebServerLogs(ctx, &wg, name, false, mf)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+
 	err = postInit(name, keyLabel, defaultP12Truststore)
 	if err != nil {
 		logTermination(err)
@@ -205,17 +226,6 @@ func doMain() error {
 		}
 	}
 
-	var wg sync.WaitGroup
-	defer func() {
-		log.Debug("Waiting for log mirroring to complete")
-		wg.Wait()
-	}()
-	ctx, cancelMirror := context.WithCancel(context.Background())
-	defer func() {
-		log.Debug("Cancel log mirroring")
-		cancelMirror()
-	}()
-
 	//For mirroring mq system logs and qm logs, if environment variable is set
 	if checkLogSourceForMirroring("qmgr") {
 		//Mirror MQ system logs
@@ -235,17 +245,6 @@ func doMain() error {
 
 	if *devFlag {
 		_, err = mirrorHTPasswdLogs(ctx, &wg, name, newQM, mf)
-		if err != nil {
-			logTermination(err)
-			return err
-		}
-	}
-
-	//For mirroring web server logs if source variable is set
-	if checkLogSourceForMirroring("web") {
-		// Always log from the start of the web server messages.log, as
-		// Liberty resets it.
-		_, err = mirrorWebServerLogs(ctx, &wg, name, true, mf)
 		if err != nil {
 			logTermination(err)
 			return err
