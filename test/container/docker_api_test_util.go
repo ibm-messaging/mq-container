@@ -244,14 +244,14 @@ func generateRandomUID() string {
 // getDefaultHostConfig creates a HostConfig and populates it with the defaults used in testing
 func getDefaultHostConfig(t *testing.T, cli ce.ContainerInterface) *ce.ContainerHostConfig {
 	hostConfig := ce.ContainerHostConfig{
-		Binds: []string{
-			coverageBind(t),
-		},
 		PortBindings: []ce.PortBinding{},
 		CapDrop: []string{
 			"ALL",
 		},
 		Privileged: false,
+	}
+	if coverage() {
+		hostConfig.Binds = append(hostConfig.Binds, coverageBind(t))
 	}
 	if devImage(t, cli) {
 		// Only needed for a RHEL-based image
@@ -274,9 +274,10 @@ func runContainerWithHostConfig(t *testing.T, cli ce.ContainerInterface, contain
 	if containerConfig.User == "" {
 		containerConfig.User = generateRandomUID()
 	}
-	// if coverage
-	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
-	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
+	if coverage() {
+		containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
+		containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
+	}
 	networkingConfig := ce.ContainerNetworkSettings{}
 	t.Logf("Running container (%s)", containerConfig.Image)
 	ID, err := cli.ContainerCreate(containerConfig, hostConfig, &networkingConfig, t.Name())
@@ -300,9 +301,10 @@ func runContainerWithAllConfig(t *testing.T, cli ce.ContainerInterface, containe
 	if containerConfig.User == "" {
 		containerConfig.User = generateRandomUID()
 	}
-	// if coverage
-	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
-	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
+	if coverage() {
+		containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
+		containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
+	}
 	t.Logf("Running container (%s)", containerConfig.Image)
 	ID, err := cli.ContainerCreate(containerConfig, hostConfig, networkingConfig, containerName)
 	if err != nil {
@@ -432,14 +434,12 @@ func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata s
 	case 1:
 		hostConfig = ce.ContainerHostConfig{
 			Binds: []string{
-				coverageBind(t),
 				qmdata + ":/mnt/mqm",
 			},
 		}
 	case 2:
 		hostConfig = ce.ContainerHostConfig{
 			Binds: []string{
-				coverageBind(t),
 				qmdata + ":/mnt/mqm",
 				qmshareddata + ":/mnt/mqm-data",
 			},
@@ -447,7 +447,6 @@ func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata s
 	case 3:
 		hostConfig = ce.ContainerHostConfig{
 			Binds: []string{
-				coverageBind(t),
 				qmdata + ":/mnt/mqm",
 				qmsharedlogs + ":/mnt/mqm-log",
 			},
@@ -455,14 +454,15 @@ func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata s
 	case 4:
 		hostConfig = ce.ContainerHostConfig{
 			Binds: []string{
-				coverageBind(t),
 				qmdata + ":/mnt/mqm",
 				qmsharedlogs + ":/mnt/mqm-log",
 				qmshareddata + ":/mnt/mqm-data",
 			},
 		}
 	}
-
+	if coverage() {
+		hostConfig.Binds = append(hostConfig.Binds, coverageBind(t))
+	}
 	return hostConfig
 }
 
@@ -625,7 +625,7 @@ func inspectTextLogs(t *testing.T, cli ce.ContainerInterface, ID string) string 
 		if strings.HasPrefix(text, "{") {
 			var e map[string]interface{}
 			json.Unmarshal([]byte(text), &e)
-			fmt.Fprintf(buf, "{\"message\": \"%v\"}\n", e["message"])
+			fmt.Fprintf(buf, "{\"message\": \"%v\", ...}\n", e["message"])
 		} else {
 			fmt.Fprintln(buf, text)
 		}
@@ -790,9 +790,10 @@ func runContainerWithAllConfigError(t *testing.T, cli ce.ContainerInterface, con
 	if containerConfig.User == "" {
 		containerConfig.User = generateRandomUID()
 	}
-	// if coverage
-	containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
-	containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
+	if coverage() {
+		containerConfig.Env = append(containerConfig.Env, "COVERAGE_FILE="+t.Name()+".cov")
+		containerConfig.Env = append(containerConfig.Env, "EXIT_CODE_FILE="+getExitCodeFilename(t))
+	}
 	t.Logf("Running container (%s)", containerConfig.Image)
 	ID, err := cli.ContainerCreate(containerConfig, hostConfig, networkingConfig, containerName)
 	if err != nil {
