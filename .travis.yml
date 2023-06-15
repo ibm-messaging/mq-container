@@ -64,7 +64,9 @@ jobs:
     - stage: build
       if: branch = v9.3.0.x OR tag =~ ^release-candidate*
       name: "Multi-Arch S390X build"
-      os: linux-s390
+      os: linux
+      arch: s390x
+      group: vms390
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
@@ -74,7 +76,9 @@ jobs:
     - stage: build
       if: branch = v9.3.0.x OR tag =~ ^release-candidate*
       name: "Multi-Arch PPC64LE build"
-      os: linux-ppc64le
+      os: linux
+      arch: ppc64le
+      group: power-focal
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
