@@ -24,7 +24,7 @@ while true; do
         echo "Keepalive $i"
     done
     echo -e "\ntravis_fold:end:build_heartbeat.$k\r"
-    sleep 480
+    sleep 120
     k=$((k+1))
     dd=$(date)
 done
