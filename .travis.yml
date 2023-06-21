@@ -60,27 +60,37 @@ jobs:
         - BUILD_ALL=true
         - MQ_ARCHIVE_REPOSITORY=$MQ_933_ARCHIVE_REPOSITORY_AMD64
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_933_ARCHIVE_REPOSITORY_DEV_AMD64
-      script: bash -e travis-build-scripts/run.sh
+      script:
+      - bash travis-build-scripts/travis-log-keepalive.sh &
+      - bash -e travis-build-scripts/run.sh
     - stage: build
       if: branch = v9.3.3 OR tag =~ ^release-candidate*
       name: "Multi-Arch S390X build"
-      os: linux-s390
+      os: linux
+      arch: s390x
+      group: vms390
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=$MQ_933_ARCHIVE_REPOSITORY_S390X
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_933_ARCHIVE_REPOSITORY_DEV_S390X
-      script: bash -e travis-build-scripts/run.sh
+      script: 
+      - bash travis-build-scripts/travis-log-keepalive.sh &
+      - bash -e travis-build-scripts/run.sh
     - stage: build
       if: branch = v9.3.3 OR tag =~ ^release-candidate*
       name: "Multi-Arch PPC64LE build"
-      os: linux-ppc64le
+      os: linux
+      arch: ppc64le
+      group: power-focal
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=$MQ_933_ARCHIVE_REPOSITORY_PPC64LE
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_933_ARCHIVE_REPOSITORY_DEV_PPC64LE
-      script: bash -e travis-build-scripts/run.sh
+      script:
+      - bash travis-build-scripts/travis-log-keepalive.sh &
+      - bash -e travis-build-scripts/run.sh
     - stage: push-manifest
       if: branch = v9.3.3 AND type != pull_request OR tag =~ ^release-candidate*
       name: "Push Manifest-list to registry"
