@@ -38,7 +38,7 @@ However, if you wish to build the previous MQ LTS, use the [instructions](https:
 
 ## Building a developer image
 
-Run `make build-devserver`, which will download the latest version of MQ Advanced for Developers from IBM developerWorks.  This is currently only available on the `amd64` architecture.
+Run `make build-devserver`, which will download the latest version of MQ Advanced for Developers.  This is available on the `amd64` and `arm64` (Apple Silicon) architectures.
 
 You can use the environment variable `MQ_ARCHIVE_DEV` to specify an alternative local file to install from (which must be in the `downloads` directory).
 
