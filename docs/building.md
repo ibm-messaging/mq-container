@@ -9,6 +9,13 @@ You need to have the following tools installed:
 
 If you are working in the Windows Subsystem for Linux, follow [this guide by Microsoft to set up Docker](https://blogs.msdn.microsoft.com/commandline/2017/12/08/cross-post-wsl-interoperability-with-docker/) first.
 
+## Building Images
+
+To build an IBM MQ image, navigate to the appropriate section:
+
+- [Building a production image](#building-a-production-image)
+- [Building a developer image](#building-a-developer-image)
+
 ## Building a production image
 
 From MQ 9.2.X, the MQ container adds support for MQ Long Term Support (LTS) **production licensed** releases.
