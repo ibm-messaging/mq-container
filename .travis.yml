@@ -18,7 +18,7 @@ sudo: required
 language: go
 
 go:
-  - "1.19.9"
+  - "1.19.10"
 
 services:
   - docker
@@ -27,7 +27,7 @@ env:
   global:
     - MAIN_BRANCH=v9.3.3
     - TAGCACHE_FILE=tagcache
-    - RELEASE=r1
+    - RELEASE=r2
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
