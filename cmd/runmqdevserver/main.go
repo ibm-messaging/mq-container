@@ -22,6 +22,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/ibm-messaging/mq-container/internal/copy"
 	"github.com/ibm-messaging/mq-container/internal/htpasswd"
 	"github.com/ibm-messaging/mq-container/pkg/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
@@ -107,6 +108,29 @@ func doMain() error {
 	}
 
 	err = containerruntimelogger.LogContainerDetails(log)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Initialise 10-dev.mqsc file on ephemeral volume
+	// #nosec G306 - its a read by owner/s group, and pose no harm.
+	err = ioutil.WriteFile("/run/10-dev.mqsc", []byte(""), 0660)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Initialise 20-dev-tls.mqsc file on ephemeral volume
+	// #nosec G306 - its a read by owner/s group, and pose no harm.
+	err = ioutil.WriteFile("/run/20-dev-tls.mqsc", []byte(""), 0660)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Copy default mq.htpasswd file to ephemeral volume
+	err = copy.CopyFile("/etc/mqm/mq.htpasswd.default", "/run/mq.htpasswd")
 	if err != nil {
 		logTermination(err)
 		return err

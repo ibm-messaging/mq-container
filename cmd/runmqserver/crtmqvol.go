@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 )
 
 func createVolume(dataPath string) error {
@@ -32,5 +33,25 @@ func createVolume(dataPath string) error {
 			return err
 		}
 	}
+	return nil
+}
+
+// Delete files/directories from specified path
+func cleanVolume(cleanPath string) error {
+	// #nosec G304
+	dirContents, err := os.ReadDir(cleanPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+	}
+
+	for _, name := range dirContents {
+		err = os.RemoveAll(filepath.Join(cleanPath, name.Name()))
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

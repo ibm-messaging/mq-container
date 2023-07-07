@@ -115,8 +115,8 @@ func ConfigureHATLSKeystore() (string, KeyStoreData, KeyStoreData, error) {
 // ConfigureTLS configures TLS for the queue manager
 func ConfigureTLS(keyLabel string, cmsKeystore KeyStoreData, devMode bool, log *logger.Logger) error {
 
-	const mqsc string = "/etc/mqm/15-tls.mqsc"
-	const mqscTemplate string = mqsc + ".tpl"
+	const mqscLink string = "/run/15-tls.mqsc"
+	const mqscTemplate string = "/etc/mqm/15-tls.mqsc.tpl"
 	sslKeyRing := ""
 	var fipsEnabled = "NO"
 
@@ -132,8 +132,7 @@ func ConfigureTLS(keyLabel string, cmsKeystore KeyStoreData, devMode bool, log *
 			fipsEnabled = "YES"
 		}
 	}
-
-	err := mqtemplate.ProcessTemplateFile(mqscTemplate, mqsc, map[string]string{
+	err := mqtemplate.ProcessTemplateFile(mqscTemplate, mqscLink, map[string]string{
 		"SSLKeyR":          sslKeyRing,
 		"CertificateLabel": keyLabel,
 		"SSLFips":          fipsEnabled,
@@ -155,21 +154,13 @@ func ConfigureTLS(keyLabel string, cmsKeystore KeyStoreData, devMode bool, log *
 // configureTLSDev configures TLS for the developer defaults
 func configureTLSDev(log *logger.Logger) error {
 
-	const mqsc string = "/etc/mqm/20-dev-tls.mqsc"
-	const mqscTemplate string = mqsc + ".tpl"
+	const mqscLink string = "/run/20-dev-tls.mqsc"
+	const mqscTemplate string = "/etc/mqm/20-dev-tls.mqsc.tpl"
 
 	if os.Getenv("MQ_DEV") == "true" {
-		err := mqtemplate.ProcessTemplateFile(mqscTemplate, mqsc, map[string]string{}, log)
+		err := mqtemplate.ProcessTemplateFile(mqscTemplate, mqscLink, map[string]string{}, log)
 		if err != nil {
 			return err
-		}
-	} else {
-		_, err := os.Stat(mqsc)
-		if !os.IsNotExist(err) {
-			err = os.Remove(mqsc)
-			if err != nil {
-				return fmt.Errorf("Failed to remove file %s: %v", mqsc, err)
-			}
 		}
 	}
 

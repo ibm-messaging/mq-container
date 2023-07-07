@@ -210,7 +210,7 @@ func TestWithSplitVolumesLogsData(t *testing.T) {
 	qmshareddata := createVolume(t, cli, "qmshareddata")
 	defer removeVolume(t, cli, qmshareddata)
 
-	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"}, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,7 +228,7 @@ func TestWithSplitVolumesLogsOnly(t *testing.T) {
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
 	defer removeVolume(t, cli, qmsharedlogs)
 
-	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, "", []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, "", []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"}, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,7 +246,7 @@ func TestWithSplitVolumesDataOnly(t *testing.T) {
 	qmshareddata := createVolume(t, cli, "qmshareddata")
 	defer removeVolume(t, cli, qmshareddata)
 
-	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"})
+	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"}, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -357,7 +357,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 		{"Dockerfile", fmt.Sprintf(`
 		FROM %v
 		USER root
-		RUN echo '#!/bin/bash\nexit 999' > /opt/mqm/bin/crtmqm
+		RUN echo -e '#!/bin/bash\nexit 999' > /opt/mqm/bin/crtmqm
 		USER 1001`, imageName())},
 	}
 	tag := createImage(t, cli, files)
@@ -1544,7 +1544,7 @@ func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
-			"MQ_QMGR_NAME=qm1",
+			"MQ_QMGR_NAME=" + qmgrName,
 			"MQ_LOGGING_CONSOLE_SOURCE=qmgr",
 			"MQ_LOGGING_CONSOLE_FORMAT=json",
 			"MQ_LOGGING_CONSOLE_EXCLUDE_ID=amq7230I",
@@ -1837,4 +1837,186 @@ func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOu
 			t.Errorf("Some other error occurred %v", rc)
 		}
 	}
+}
+
+// Attempt to run container with read-only root filesystem. Container
+// should fail with a "read-only file system" error message.
+func TestReadOnlyRootFilesystem(t *testing.T) {
+	t.Parallel()
+
+	cli := ce.NewContainerClient()
+	containerConfig := ce.ContainerConfig{
+		Image: imageName(),
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=QM1"},
+	}
+	hostConfig := ce.ContainerHostConfig{
+		Binds: []string{
+			coverageBind(t),
+		},
+		ReadOnlyRootfs: true,
+	}
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ctrID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	startContainer(t, cli, ctrID)
+	defer cleanContainer(t, cli, ctrID)
+
+	rc := waitForContainer(t, cli, ctrID, 30*time.Second)
+	if rc != 1 {
+		t.Errorf("Expected rc=1, got rc=%v", rc)
+	}
+
+	messageToSearch := "read-only file system"
+	l := inspectLogs(t, cli, ctrID)
+	if !strings.Contains(l, messageToSearch) {
+		t.Fatalf("Expected 'read-only file system' in the logs but was not found. The output was: %s", l)
+	}
+}
+
+// Verify symlinks have been correctly created
+func TestRORFSVerifySymLinks(t *testing.T) {
+	t.Parallel()
+
+	cli := ce.NewContainerClient()
+
+	const tlsPassPhrase string = "passw0rd"
+	qm := "QM1"
+	appPassword := "differentPassw0rd"
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=" + qm,
+			"MQ_APP_PASSWORD=" + appPassword,
+			"DEBUG=1",
+			"WLP_LOGGING_MESSAGE_FORMAT=JSON",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER_LOG=true",
+			"MQ_ENABLE_FIPS=true",
+		},
+		Image: imageName(),
+	}
+
+	ephData := createVolume(t, cli, "ephData"+t.Name())
+	defer removeVolume(t, cli, ephData)
+	ephRun := createVolume(t, cli, "ephRun"+t.Name())
+	defer removeVolume(t, cli, ephRun)
+	ephTmp := createVolume(t, cli, "ephTmp"+t.Name())
+	defer removeVolume(t, cli, ephTmp)
+	hostConfig := ce.ContainerHostConfig{
+		Binds: []string{
+			coverageBind(t),
+			ephRun + ":/run",
+			ephTmp + ":/tmp",
+			ephData + ":/mnt/mqm",
+			tlsDirDN(t, false, "../tls") + ":/etc/mqm/pki/keys/default",
+			tlsDirDN(t, false, "../tls") + ":/etc/mqm/pki/trust/default",
+		},
+		ReadOnlyRootfs: true,
+	}
+
+	// Assign a random port for the web server on the host
+	var binding ce.PortBinding
+	ports := []int{9443}
+	for _, p := range ports {
+		port := fmt.Sprintf("%v/tcp", p)
+		binding = ce.PortBinding{
+			ContainerPort: port,
+			HostIP:        "0.0.0.0",
+		}
+		hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
+	}
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, ID)
+
+	startContainer(t, cli, ID)
+	waitForReady(t, cli, ID)
+
+	// Check both qmgr keystore and web keystores are created in /run/runmqserver directory
+	// Check there are valid symlinks created.
+	var symLinks = []struct {
+		origin      string
+		symLinkName string
+	}{
+		{
+			origin:      "/etc/mqm/web/installations/Installation1/servers/mqweb/mqwebuser.xml",
+			symLinkName: "-> /run/mqwebuser.xml",
+		},
+		{
+			origin:      "/etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml",
+			symLinkName: "-> /run/tls.xml",
+		},
+		{
+			origin:      "/etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults/jvm.options",
+			symLinkName: "-> /run/jvm.options",
+		},
+		{
+			origin:      "/etc/mqm/15-tls.mqsc",
+			symLinkName: "-> /run/15-tls.mqsc",
+		},
+		{
+			origin:      "/etc/mqm/native-ha.ini",
+			symLinkName: "-> /run/native-ha.ini",
+		},
+		{
+			origin:      "/run/runmqserver",
+			symLinkName: "-> /run/scratch/runmqserver",
+		},
+	}
+
+	for _, symLink := range symLinks {
+		_, out := execContainer(t, cli, ID, "", []string{"ls", "-l", symLink.origin})
+		if !strings.Contains(out, symLink.symLinkName) {
+			t.Errorf("Expected symlink =%v, but did not get. Got %v", symLink.origin, out)
+		}
+	}
+
+	// Verify keystore and trust stores are created as expected
+	var fileNamesAndPermissions = []struct {
+		fileName    string
+		permissions string
+	}{
+		{
+			fileName:    "/run/runmqserver/tls/default.p12",
+			permissions: "-rw-r--r--",
+		},
+		{
+			fileName:    "/run/runmqserver/tls/key.crl",
+			permissions: "-rw-------",
+		},
+		{
+			fileName:    "/run/runmqserver/tls/key.kdb",
+			permissions: "-rw-------",
+		},
+		{
+			fileName:    "/run/runmqserver/tls/key.rdb",
+			permissions: "-rw-------",
+		},
+		{
+			fileName:    "/run/runmqserver/tls/key.sth",
+			permissions: "-rw-------",
+		},
+		{
+			fileName:    "/run/runmqserver/tls/trust.p12",
+			permissions: "-rw-------",
+		},
+		{
+			fileName:    "/run/runmqserver/tls/trust.sth",
+			permissions: "-rw-------",
+		},
+	}
+
+	for _, filePerm := range fileNamesAndPermissions {
+		_, out := execContainer(t, cli, ID, "", []string{"ls", "-lR", filePerm.fileName})
+		if !strings.Contains(out, filePerm.fileName) || !strings.Contains(out, filePerm.permissions) {
+			t.Errorf("Expected file=%v or permisions =%v was not found, Got %v", filePerm.fileName, filePerm.permissions, out)
+		}
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, ID)
 }

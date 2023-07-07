@@ -35,15 +35,25 @@ install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-log
 install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-log/log
 install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-data
 install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-data/qmgrs
+install --directory --mode 2775 --owner 1001 --group root /run
 
 # Create the directory for MQ configuration files
 install --directory --mode 2775 --owner 1001 --group root /etc/mqm
 
+# Create the directory for scratch volume 
+install --directory --mode 2775 --owner 1001 --group root /run/scratch
+
+# Create the directory for runmqserver files
+install --directory --mode 2775 --owner 1001 --group root /run/scratch/runmqserver
+
 # Create the directory for MQ runtime files
-install --directory --mode 2775 --owner 1001 --group root /run/mqm
+install --directory --mode 2775 --owner 1001 --group root /run/scratch/mqm
 
 # Create a symlink for /var/mqm -> /mnt/mqm/data
 ln -s /mnt/mqm/data /var/mqm
+
+# Create a symlink for /run/runmqserver -> /run/scratch/runmqserver
+ln -s /run/scratch/runmqserver /run/runmqserver
 
 # Optional: Ensure any passwords expire in a timely manner
 sed -i 's/PASS_MAX_DAYS\t99999/PASS_MAX_DAYS\t90/' /etc/login.defs

@@ -29,9 +29,6 @@ import (
 // ConfigureNativeHA configures native high availability
 func ConfigureNativeHA(log *logger.Logger) error {
 
-	file := "/etc/mqm/native-ha.ini"
-	templateFile := file + ".tpl"
-
 	templateMap := map[string]string{}
 	templateMap["Name"] = os.Getenv("HOSTNAME")
 	templateMap["NativeHAInstance0_Name"] = os.Getenv("MQ_NATIVE_HA_INSTANCE_0_NAME")
@@ -67,7 +64,10 @@ func ConfigureNativeHA(log *logger.Logger) error {
 		}
 	}
 
-	err := mqtemplate.ProcessTemplateFile(templateFile, file, templateMap, log)
+	fileLink := "/run/native-ha.ini"
+	templateFile := "/etc/mqm/native-ha.ini.tpl"
+
+	err := mqtemplate.ProcessTemplateFile(templateFile, fileLink, templateMap, log)
 	if err != nil {
 		return err
 	}

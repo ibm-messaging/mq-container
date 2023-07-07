@@ -36,7 +36,7 @@ The `runmqdevserver` command is added to the MQ Advanced for Developers image on
 
 1. Sets passwords based on supplied environment variables
 2. Generates MQSC files to put in `/etc/mqm`, based on a template, which is updated with values based on supplied environment variables.
-3. If requested, it creates TLS key stores under `/run/runmqdevserver`, and configures MQ and the web server to use them
+3. If requested, it creates TLS key stores under `/run/runmqserver`, and configures MQ and the web server to use them
 
 ## Prometheus metrics
 [Prometheus](https://prometheus.io) metrics are generated for the queue manager as follows:

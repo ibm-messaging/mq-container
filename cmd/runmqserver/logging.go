@@ -348,6 +348,9 @@ func logDiagnostics() {
 		// #nosec G104
 		out, _, _ = command.Run("ls", "-l", "/etc/mqm")
 		log.Debugf("/etc/mqm:\n%s", out)
+		// #nosec G104
+		out, _, _ = command.Run("ls", "-l", "/run")
+		log.Debugf("/run:\n%s", out)
 
 		// Print out summary of any FDCs
 		// #nosec G204

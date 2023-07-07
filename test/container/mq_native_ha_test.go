@@ -48,7 +48,7 @@ func TestNativeHABasic(t *testing.T) {
 		defer removeVolume(t, cli, vol)
 		qmVolumes = append(qmVolumes, vol)
 		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
-		hostConfig := getHostConfig(t, 1, "", "", vol)
+		hostConfig := getHostConfig(t, 1, "", "", vol, "", "", false)
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
@@ -92,7 +92,7 @@ func TestNativeHAFailover(t *testing.T) {
 		defer removeVolume(t, cli, vol)
 		qmVolumes = append(qmVolumes, vol)
 		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
-		hostConfig := getHostConfig(t, 1, "", "", vol)
+		hostConfig := getHostConfig(t, 1, "", "", vol, "", "", false)
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
@@ -281,5 +281,66 @@ func TestNativeHASecureCipherSpecNonFIPSCipher(t *testing.T) {
 	}
 	for i := 0; i <= 2; i++ {
 		waitForTerminationMessage(t, cli, qmReplicaIDs[i], "/opt/mqm/bin/strmqm: exit status 23", 60*time.Second)
+	}
+}
+
+// TestNativeHAFailover creates 3 containers in a Native HA queue manager configuration,
+// stops the active queue manager, checks a replica becomes active, and ensures the stopped
+// queue manager comes back as a replica
+func TestNativeHAFailoverWithRoRFs(t *testing.T) {
+
+	cli := ce.NewContainerClient()
+
+	version, err := cli.GetMQVersion(imageName())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if version < "9.2.2.0" {
+		t.Skipf("Skipping %s as test requires at least MQ 9.2.2.0, but image is version %s", t.Name(), version)
+	}
+
+	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
+	qmReplicaIDs := [3]string{}
+	qmVolumes := []string{}
+	//Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	//If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
+	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
+		vol := createVolume(t, cli, containerNames[i])
+		defer removeVolume(t, cli, vol)
+		volRun := createVolume(t, cli, "ephRun"+containerNames[i])
+		defer removeVolume(t, cli, volRun)
+		volTmp := createVolume(t, cli, "ephTmp"+containerNames[i])
+		defer removeVolume(t, cli, volTmp)
+
+		qmVolumes = append(qmVolumes, vol)
+		qmVolumes = append(qmVolumes, volRun)
+		qmVolumes = append(qmVolumes, volTmp)
+
+		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
+		hostConfig := getHostConfig(t, 1, "", "", vol, volRun, volTmp, true)
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+		networkingConfig := getNativeHANetworkConfig("host")
+		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
+		defer cleanContainer(t, cli, ctr)
+		qmReplicaIDs[i] = ctr
+	}
+
+	waitForReadyHA(t, cli, qmReplicaIDs)
+
+	haStatus, err := getActiveReplicaInstances(t, cli, qmReplicaIDs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stopContainer(t, cli, haStatus.Active)
+	waitForFailoverHA(t, cli, haStatus.Replica)
+	startContainer(t, cli, haStatus.Active)
+	waitForReady(t, cli, haStatus.Active)
+
+	_, err = getActiveReplicaInstances(t, cli, qmReplicaIDs)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

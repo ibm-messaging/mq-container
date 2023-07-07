@@ -34,28 +34,38 @@ type QMChan struct {
 
 // configureMultiInstance creates the volumes and containers required for basic testing
 // of multi instance queue managers. Returns error, qm1a ID, qm1b ID, slice of volume names
-func configureMultiInstance(t *testing.T, cli ce.ContainerInterface) (error, string, string, []string) {
+func configureMultiInstance(t *testing.T, cli ce.ContainerInterface, readOnlyRootFs bool) (error, string, string, []string) {
 
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
 	qmshareddata := createVolume(t, cli, "qmshareddata")
 
-	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, miEnv)
+	// Create tmp and run volumes
+	var qmRunVol, qmTmpVol string
+	if readOnlyRootFs {
+		qmRunVol = createVolume(t, cli, "qmRunVolume")
+		qmTmpVol = createVolume(t, cli, "qmTmpVolume")
+	}
+
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, miEnv, qmRunVol, qmTmpVol, readOnlyRootFs)
 	if err != nil {
 		return err, "", "", []string{}
 	}
 	time.Sleep(10 * time.Second)
-	err, qm1bId, qm1bData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, miEnv)
+	err, qm1bId, qm1bData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, miEnv, qmRunVol, qmTmpVol, readOnlyRootFs)
 	if err != nil {
 		return err, "", "", []string{}
 	}
 
 	volumes := []string{qmsharedlogs, qmshareddata, qm1aData, qm1bData}
-
+	if readOnlyRootFs {
+		volumes = append(volumes, qmRunVol)
+		volumes = append(volumes, qmTmpVol)
+	}
 	return nil, qm1aId, qm1bId, volumes
 }
 
 func singleMultiInstanceQueueManager(t *testing.T, cli ce.ContainerInterface, qmsharedlogs string, qmshareddata string, qmsChannel chan QMChan) {
-	err, qmId, qmData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, miEnv)
+	err, qmId, qmData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, miEnv, "", "", false)
 	if err != nil {
 		qmsChannel <- QMChan{Error: err}
 	}

@@ -21,9 +21,11 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"io/ioutil"
 	"os"
 	"sync"
 
+	"github.com/ibm-messaging/mq-container/internal/copy"
 	"github.com/ibm-messaging/mq-container/internal/fips"
 	"github.com/ibm-messaging/mq-container/internal/ha"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
@@ -103,12 +105,80 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
 	err = createVolume("/mnt/mqm-log/log")
 	if err != nil {
 		logTermination(err)
 		return err
 	}
+
 	err = createVolume("/mnt/mqm-data/qmgrs")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Delete contents of /run/scratch directory.
+	err = cleanVolume("/run/scratch")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Delete contents of /run/mqm directory.
+	err = cleanVolume("/run/mqm")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Create ephemeral volumes
+	err = createVolume("/run/scratch/runmqserver")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Queue manager i.e crtmqm command creates socket and
+	// others files in /run/mqm directory.
+	err = createVolume("/run/mqm")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Initialise 15-tls.mqsc file on ephemeral volume
+	// #nosec G306 - its a read by owner/s group, and pose no harm.
+	err = ioutil.WriteFile("/run/15-tls.mqsc", []byte(""), 0660)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Initialise native-ha.ini file on ephemeral volume
+	// #nosec G306 - its a read by owner/s group, and pose no harm.
+	err = ioutil.WriteFile("/run/native-ha.ini", []byte(""), 0660)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Copy default mqwebuser.xml file to ephemeral volume
+	err = copy.CopyFile("/etc/mqm/web/installations/Installation1/servers/mqweb/mqwebuser.xml.default", "/run/mqwebuser.xml")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Copy default tls.xml file to ephemeral volume
+	err = copy.CopyFile("/etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml.default", "/run/tls.xml")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	// Copy default jvm.options file to ephemeral volume
+	err = copy.CopyFile("/etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults/jvm.options.default", "/run/jvm.options")
 	if err != nil {
 		logTermination(err)
 		return err

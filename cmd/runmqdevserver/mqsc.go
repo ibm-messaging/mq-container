@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,29 +22,24 @@ import (
 )
 
 func updateMQSC(appPasswordRequired bool) error {
+
 	var checkClient string
 	if appPasswordRequired {
 		checkClient = "REQUIRED"
 	} else {
 		checkClient = "ASQMGR"
 	}
-	const mqsc string = "/etc/mqm/10-dev.mqsc"
+
+	const mqscLink string = "/run/10-dev.mqsc"
+	const mqscTemplate string = "/etc/mqm/10-dev.mqsc.tpl"
+
 	if os.Getenv("MQ_DEV") == "true" {
-		const mqscTemplate string = mqsc + ".tpl"
 		// Re-configure channel if app password not set
-		err := mqtemplate.ProcessTemplateFile(mqsc+".tpl", mqsc, map[string]string{"ChckClnt": checkClient}, log)
+		err := mqtemplate.ProcessTemplateFile(mqscTemplate, mqscLink, map[string]string{"ChckClnt": checkClient}, log)
 		if err != nil {
 			return err
 		}
-	} else {
-		_, err := os.Stat(mqsc)
-		if !os.IsNotExist(err) {
-			err = os.Remove(mqsc)
-			if err != nil {
-				log.Errorf("Error removing file %s: %v", mqsc, err)
-				return err
-			}
-		}
 	}
+
 	return nil
 }

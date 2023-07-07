@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2022
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -104,9 +104,12 @@ func configureSSO(p12TrustStore tls.KeyStoreData, webKeystore string) (string, e
 		return "", err
 	}
 
+	const mqwebuserLink string = "/run/mqwebuser.xml"
+	const mqwebuserTemplate string = mqwebDir + "/mqwebuser.xml.tpl"
+
 	// Process SSO template for generating file mqwebuser.xml
 	adminUsers := strings.Split(os.Getenv("MQ_WEB_ADMIN_USERS"), "\n")
-	err = mqtemplate.ProcessTemplateFile(mqwebDir+"/mqwebuser.xml.tpl", mqwebDir+"/mqwebuser.xml", map[string][]string{"AdminUser": adminUsers}, log)
+	err = mqtemplate.ProcessTemplateFile(mqwebuserTemplate, mqwebuserLink, map[string][]string{"AdminUser": adminUsers}, log)
 	if err != nil {
 		return "", err
 	}
@@ -119,7 +122,7 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 	var webKeystore string
 
 	// Configure TLS for Web Console first if we have a certificate to use
-	err := tls.ConfigureWebTLS(keyLabel)
+	err := tls.ConfigureWebTLS(keyLabel, log)
 	if err != nil {
 		return "", err
 	}
@@ -200,22 +203,21 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 
 // Configure FIPS mode for MQ Web Server
 func configureFIPSWebServer(p12TrustStore tls.KeyStoreData) error {
-	var errOut error
+
 	// Need to update jvm.options file of MQ Web Server. We don't update the jvm.options file
 	// in /etc/mqm/web/installations/Installation1/servers/mqweb directory. Instead we update
 	// the one in /etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults.
 	// During runtime MQ Web Server merges the data from two files.
-	mqwebJvmOptsDir := "/etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults"
-	_, errOut = os.Stat(mqwebJvmOptsDir)
-	if errOut == nil {
-		// Update the jvm.options file using the data from template file. Tell the MQ Web Server
-		// use a FIPS provider by setting "-Dcom.ibm.jsse2.usefipsprovider=true" and then tell it
-		// use a specific FIPS provider by setting "Dcom.ibm.jsse2.usefipsProviderName=IBMJCEPlusFIPS".
-		errOut = mqtemplate.ProcessTemplateFile(mqwebJvmOptsDir+"/jvm.options.tpl",
-			mqwebJvmOptsDir+"/jvm.options", map[string]string{
-				"FipsProvider":     "true",
-				"FipsProviderName": "IBMJCEPlusFIPS",
-			}, log)
-	}
-	return errOut
+	const jvmOptsLink string = "/run/jvm.options"
+	const jvmOptsTemplate string = "/etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults/jvm.options.tpl"
+
+	// Update the jvm.options file using the data from template file. Tell the MQ Web Server
+	// use a FIPS provider by setting "-Dcom.ibm.jsse2.usefipsprovider=true" and then tell it
+	// use a specific FIPS provider by setting "Dcom.ibm.jsse2.usefipsProviderName=IBMJCEPlusFIPS".
+	err := mqtemplate.ProcessTemplateFile(jvmOptsTemplate, jvmOptsLink, map[string]string{
+		"FipsProvider":     "true",
+		"FipsProviderName": "IBMJCEPlusFIPS",
+	}, log)
+
+	return err
 }

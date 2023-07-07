@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021, 2022
+© Copyright IBM Corporation 2021, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ static MQZ_FREE_USER mqhtpass_free_user;
 static MQZ_TERM_AUTHORITY mqhtpass_terminate;
 
 #define LOG_FILE "/var/mqm/errors/mqhtpass.json"
-#define HTPASSWD_FILE "/etc/mqm/mq.htpasswd"
+#define HTPASSWD_FILE "/run/mq.htpasswd"
 #define NAME "MQ Advanced for Developers custom authentication service"
 
 /**

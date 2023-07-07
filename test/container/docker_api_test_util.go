@@ -396,7 +396,7 @@ func runContainerOneShotWithVolume(t *testing.T, cli ce.ContainerInterface, bind
 	return rc, out
 }
 
-func startMultiVolumeQueueManager(t *testing.T, cli ce.ContainerInterface, dataVol bool, qmsharedlogs string, qmshareddata string, env []string) (error, string, string) {
+func startMultiVolumeQueueManager(t *testing.T, cli ce.ContainerInterface, dataVol bool, qmsharedlogs string, qmshareddata string, env []string, qmRun string, qmTmp string, readOnlyRootFs bool) (error, string, string) {
 	id := strconv.FormatInt(time.Now().UnixNano(), 10)
 	volume := createVolume(t, cli, id)
 	containerConfig := ce.ContainerConfig{
@@ -407,14 +407,19 @@ func startMultiVolumeQueueManager(t *testing.T, cli ce.ContainerInterface, dataV
 
 	if !dataVol {
 		hostConfig = ce.ContainerHostConfig{}
+		if readOnlyRootFs {
+			hostConfig.Binds = append(hostConfig.Binds, qmRun+":/run")
+			hostConfig.Binds = append(hostConfig.Binds, qmTmp+":/tmp")
+			hostConfig.ReadOnlyRootfs = true
+		}
 	} else if qmsharedlogs == "" && qmshareddata == "" {
-		hostConfig = getHostConfig(t, 1, "", "", volume)
+		hostConfig = getHostConfig(t, 1, "", "", volume, qmRun, qmTmp, readOnlyRootFs)
 	} else if qmsharedlogs == "" {
-		hostConfig = getHostConfig(t, 2, "", qmshareddata, volume)
+		hostConfig = getHostConfig(t, 2, "", qmshareddata, volume, qmRun, qmTmp, readOnlyRootFs)
 	} else if qmshareddata == "" {
-		hostConfig = getHostConfig(t, 3, qmsharedlogs, "", volume)
+		hostConfig = getHostConfig(t, 3, qmsharedlogs, "", volume, qmRun, qmTmp, readOnlyRootFs)
 	} else {
-		hostConfig = getHostConfig(t, 4, qmsharedlogs, qmshareddata, volume)
+		hostConfig = getHostConfig(t, 4, qmsharedlogs, qmshareddata, volume, qmRun, qmTmp, readOnlyRootFs)
 	}
 	networkingConfig := ce.ContainerNetworkSettings{}
 	qmID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name()+id)
@@ -426,7 +431,7 @@ func startMultiVolumeQueueManager(t *testing.T, cli ce.ContainerInterface, dataV
 	return nil, qmID, volume
 }
 
-func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata string, qmdata string) ce.ContainerHostConfig {
+func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata string, qmdata string, qmRun string, qmTmp string, readOnlyRootFS bool) ce.ContainerHostConfig {
 
 	var hostConfig ce.ContainerHostConfig
 
@@ -462,6 +467,11 @@ func getHostConfig(t *testing.T, mounts int, qmsharedlogs string, qmshareddata s
 	}
 	if coverage() {
 		hostConfig.Binds = append(hostConfig.Binds, coverageBind(t))
+	}
+	if readOnlyRootFS {
+		hostConfig.Binds = append(hostConfig.Binds, qmRun+":/run")
+		hostConfig.Binds = append(hostConfig.Binds, qmTmp+":/tmp")
+		hostConfig.ReadOnlyRootfs = true
 	}
 	return hostConfig
 }

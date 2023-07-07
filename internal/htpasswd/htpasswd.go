@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020, 2021
+© Copyright IBM Corporation 2020, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ func (htpfile mapHtPasswd) GetBytes() (passwordBytes []byte) {
 // ReadHtPasswordFile parses the htpasswd file
 func (htpfile mapHtPasswd) ReadHtPasswordFile(isTest bool) error {
 
-	file := "/etc/mqm/mq.htpasswd"
+	file := "/run/mq.htpasswd"
 	if isTest {
 		file = "my.htpasswd"
 	}
@@ -104,7 +104,7 @@ func (htpfile mapHtPasswd) ReadHtPasswordFile(isTest bool) error {
 
 func (htpfile mapHtPasswd) updateHtPasswordFile(isTest bool) error {
 
-	file := "/etc/mqm/mq.htpasswd"
+	file := "/run/mq.htpasswd"
 	if isTest {
 		file = "my.htpasswd"
 	}

@@ -124,11 +124,15 @@ COPY ha/native-ha.ini.tpl /etc/mqm/native-ha.ini.tpl
 # Copy web XML files
 COPY web /etc/mqm/web
 COPY etc/mqm/*.tpl /etc/mqm/
+RUN ln -s /run/mqwebuser.xml /etc/mqm/web/installations/Installation1/servers/mqweb/mqwebuser.xml \
+  && ln -s /run/tls.xml /etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml \
+  && ln -s /run/jvm.options /etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults/jvm.options \
+  && ln -s /run/15-tls.mqsc /etc/mqm/15-tls.mqsc \
+  && ln -s /run/native-ha.ini /etc/mqm/native-ha.ini
 RUN chmod ug+x /usr/local/bin/runmqserver \
   && chown 1001:root /usr/local/bin/*mq* \
   && chmod ug+x /usr/local/bin/chkmq* \
   && chown -R 1001:root /etc/mqm/* \
-  && install --directory --mode 2775 --owner 1001 --group root /run/runmqserver \
   && touch /run/termination-log \
   && chown 1001:root /run/termination-log \
   && chmod 0660 /run/termination-log \
@@ -178,7 +182,7 @@ LABEL summary="IBM MQ Advanced for Developers Server" \
 USER 0
 COPY --from=cbuilder /opt/app-root/src/authservice/mqhtpass/build/mqhtpass.so /opt/mqm/lib64/
 COPY etc/mqm/*.ini /etc/mqm/
-COPY etc/mqm/mq.htpasswd /etc/mqm/
+COPY etc/mqm/mq.htpasswd.default /etc/mqm/
 COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
 RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
   && sleep 1 \
@@ -188,11 +192,13 @@ COPY --from=builder $GO_WORKDIR/runmqdevserver /usr/local/bin/
 COPY incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
 # Copy web XML files for default developer configuration
 COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
+RUN ln -s /run/10-dev.mqsc /etc/mqm/10-dev.mqsc \
+  && ln -s /run/20-dev-tls.mqsc /etc/mqm/20-dev-tls.mqsc
 RUN chown -R 1001:root /etc/mqm/* \
   && chmod -R g+w /etc/mqm/web \
   && chmod +x /usr/local/bin/runmq* \
-  && chmod 0660 /etc/mqm/mq.htpasswd \
-  && install --directory --mode 2775 --owner 1001 --group root /run/runmqdevserver
+  && chmod 0660 /etc/mqm/mq.htpasswd.default
+  
 ENV MQ_DEV=true \
     MQ_ENABLE_EMBEDDED_WEB_SERVER=1 \
     MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost \

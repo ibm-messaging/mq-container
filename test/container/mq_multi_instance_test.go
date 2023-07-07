@@ -35,7 +35,7 @@ var miEnv = []string{
 func TestMultiInstanceStartStop(t *testing.T) {
 	t.Skipf("Skipping %v until test defect fixed", t.Name())
 	cli := ce.NewContainerClient()
-	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli)
+	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestMultiInstanceStartStop(t *testing.T) {
 // stops the active queue manager, then checks to ensure the backup queue manager becomes active
 func TestMultiInstanceContainerStop(t *testing.T) {
 	cli := ce.NewContainerClient()
-	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli)
+	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +160,7 @@ func TestMultiInstanceNoSharedMounts(t *testing.T) {
 	t.Parallel()
 	cli := ce.NewContainerClient()
 
-	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, "", "", miEnv)
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, "", "", miEnv, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +179,7 @@ func TestMultiInstanceNoSharedLogs(t *testing.T) {
 	qmshareddata := createVolume(t, cli, "qmshareddata")
 	defer removeVolume(t, cli, qmshareddata)
 
-	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata, miEnv)
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata, miEnv, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +198,7 @@ func TestMultiInstanceNoSharedData(t *testing.T) {
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
 	defer removeVolume(t, cli, qmsharedlogs)
 
-	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, "", miEnv)
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, "", miEnv, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,7 +214,7 @@ func TestMultiInstanceNoSharedData(t *testing.T) {
 func TestMultiInstanceNoMounts(t *testing.T) {
 	cli := ce.NewContainerClient()
 
-	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, false, "", "", miEnv)
+	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, false, "", "", miEnv, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -223,4 +223,47 @@ func TestMultiInstanceNoMounts(t *testing.T) {
 	defer cleanContainer(t, cli, qm1aId)
 
 	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount '/mnt/mqm'", 30*time.Second)
+}
+
+// TestRoRFsMultiInstanceContainerStop starts 2 containers in a multi instance queue manager configuration,
+// with read-only root filesystem stops the active queue manager, then checks to ensure the backup queue
+// manager becomes active
+func TestRoRFsMultiInstanceContainerStop(t *testing.T) {
+	cli := ce.NewContainerClient()
+	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, volume := range volumes {
+		defer removeVolume(t, cli, volume)
+	}
+	defer cleanContainer(t, cli, qm1aId)
+	defer cleanContainer(t, cli, qm1bId)
+
+	waitForReady(t, cli, qm1aId)
+	waitForReady(t, cli, qm1bId)
+
+	err, originalActive, originalStandby := getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	stopContainer(t, cli, originalActive)
+
+	for {
+		status := getQueueManagerStatus(t, cli, originalStandby, "QM1")
+		select {
+		case <-time.After(1 * time.Second):
+			if status == "Running" {
+				t.Logf("Original standby is now the active")
+				return
+			} else if status == "Starting" {
+				t.Logf("Original standby is starting")
+			}
+		case <-ctx.Done():
+			t.Fatalf("%s Timed out waiting for standby to become the active.  Status=%v", time.Now().Format(time.RFC3339), status)
+		}
+	}
 }

@@ -105,6 +105,7 @@ var argFormat = "--format"
 var argNetwork = "--network"
 var argSecurityOptions = "--security-opt"
 var argSignal = "--signal"
+var argReadOnlyRootfs = "--read-only"
 
 // generic
 var toolVersion = "version"
@@ -143,12 +144,13 @@ type ContainerDetailsLogging struct {
 }
 
 type ContainerHostConfig struct {
-	Binds        []string      // Bindings onto a volume
-	PortBindings []PortBinding //Bindings from a container port to a port on the host
-	Privileged   bool          // Give extended privileges to container
-	CapAdd       []string      // Linux capabilities to add to the container
-	CapDrop      []string      // Linux capabilities to drop from the container
-	SecurityOpt  []string
+	Binds          []string      // Bindings onto a volume
+	PortBindings   []PortBinding //Bindings from a container port to a port on the host
+	Privileged     bool          // Give extended privileges to container
+	CapAdd         []string      // Linux capabilities to add to the container
+	CapDrop        []string      // Linux capabilities to drop from the container
+	SecurityOpt    []string
+	ReadOnlyRootfs bool // Readonly root file system
 }
 
 type ContainerNetworkSettings struct {
@@ -648,6 +650,11 @@ func getHostConfigArgs(args []string, hostConfig *ContainerHostConfig) []string 
 			args = append(args, []string{argSecurityOptions, string(securityOption)}...)
 		}
 	}
+	// Add --read-only flag to enable Read Only Root File system on the container
+	if hostConfig.ReadOnlyRootfs {
+		args = append(args, []string{argReadOnlyRootfs}...)
+	}
+
 	return args
 }
 

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019, 2021
+© Copyright IBM Corporation 2019, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,34 +21,27 @@ import (
 	"path/filepath"
 
 	"github.com/ibm-messaging/mq-container/internal/keystore"
+	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
+	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
 // webKeystoreDefault is the name of the default web server Keystore
 const webKeystoreDefault = "default.p12"
 
 // ConfigureWebTLS configures TLS for the web server
-func ConfigureWebTLS(keyLabel string) error {
+func ConfigureWebTLS(keyLabel string, log *logger.Logger) error {
 
 	// Return immediately if we have no certificate to use as identity
 	if keyLabel == "" && os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") == "" {
 		return nil
 	}
 
-	webConfigDir := "/etc/mqm/web/installations/Installation1/servers/mqweb"
-	tls := "tls.xml"
+	tlsConfigLink := "/run/tls.xml"
+	tlsConfigTemplate := "/etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml.tpl"
 
-	tlsConfig := filepath.Join(webConfigDir, tls)
-	newTLSConfig := filepath.Join(webConfigDir, tls+".tpl")
-
-	err := os.Remove(tlsConfig)
+	err := mqtemplate.ProcessTemplateFile(tlsConfigTemplate, tlsConfigLink, map[string]string{}, log)
 	if err != nil {
-		return fmt.Errorf("Failed to delete file %s: %v", tlsConfig, err)
-	}
-
-	// Symlink here to prevent issues on restart
-	err = os.Symlink(newTLSConfig, tlsConfig)
-	if err != nil {
-		return fmt.Errorf("Failed to create symlink %s->%s: %v", newTLSConfig, tlsConfig, err)
+		return err
 	}
 
 	return nil
