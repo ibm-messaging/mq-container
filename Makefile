@@ -581,15 +581,14 @@ gosec:
 .PHONY: update-release-information
 update-release-information:
 	sed -i.bak 's/ARG MQ_URL=.*-LinuxX64.tar.gz"/ARG MQ_URL="https:\/\/public.dhe.ibm.com\/ibmdl\/export\/pub\/software\/websphere\/messaging\/mqadv\/$(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"/g' Dockerfile-server && rm Dockerfile-server.bak
-	$(eval MQ_VERSION_1=$(shell echo '${MQ_VERSION}' | rev | cut -c 3- | rev))
-	sed -i.bak 's/IBM_MQ_.*_LINUX_X86-64_NOINST.tar.gz/IBM_MQ_${MQ_VERSION_1}_LINUX_X86-64_NOINST.tar.gz/g' docs/building.md && rm docs/building.md.bak
+	sed -i.bak 's/IBM_MQ_.*_LINUX_X86-64_NOINST.tar.gz/IBM_MQ_${MQ_VERSION_VRM}_LINUX_X86-64_NOINST.tar.gz/g' docs/building.md && rm docs/building.md.bak
 	sed -i.bak 's/ibm-mqadvanced-server:.*-amd64/ibm-mqadvanced-server:$(MQ_VERSION)-amd64/g' docs/security.md
 	sed -i.bak 's/ibm-mqadvanced-server-dev.*-amd64/ibm-mqadvanced-server-dev:$(MQ_VERSION)-amd64/g' docs/security.md && rm docs/security.md.bak
 	sed -i.bak 's/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:.*-amd64/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:$(MQ_VERSION)-amd64/g' docs/testing.md && rm docs/testing.md.bak
-	$(eval MQ_VERSION_2=$(shell echo '${MQ_VERSION_1}' | rev | cut -c 3- | rev))
-	sed -i.bak 's/knowledgecenter\/SSFKSJ_.*\/com/knowledgecenter\/SSFKSJ_${MQ_VERSION_2}.0\/com/g' docs/usage.md && rm docs/usage.md.bak
-	$(eval MQ_VERSION_3=$(shell echo '${MQ_VERSION_1}' | sed "s/\.//g"))
-	sed -i.bak 's/MQ_..._ARCHIVE_REPOSITORY/MQ_${MQ_VERSION_3}_ARCHIVE_REPOSITORY/g' .travis.yml && rm .travis.yml.bak
+	$(eval MQ_VERSION_VR=$(subst $(SPACE),.,$(wordlist 1,2,$(subst .,$(SPACE),$(MQ_VERSION_VRM)))))
+	sed -i.bak 's/knowledgecenter\/SSFKSJ_.*\/com/knowledgecenter\/SSFKSJ_${MQ_VERSION_VR}.0\/com/g' docs/usage.md && rm docs/usage.md.bak
+	$(eval MQ_VERSION_VRM_FLAT=$(shell echo '${MQ_VERSION_VRM}' | sed "s/\.//g"))
+	sed -i.bak 's/MQ_..._ARCHIVE_REPOSITORY/MQ_${MQ_VERSION_VRM_FLAT}_ARCHIVE_REPOSITORY/g' .travis.yml && rm .travis.yml.bak
 
 COMMAND_SERVER_VERSION=$(shell $(COMMAND) version --format "{{ .Server.Version }}")
 COMMAND_CLIENT_VERSION=$(shell $(COMMAND) version --format "{{ .Client.Version }}")
