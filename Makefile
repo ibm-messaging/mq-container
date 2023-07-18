@@ -547,7 +547,6 @@ gosec:
 .PHONY: update-release-information
 update-release-information:
 	sed -i.bak 's/ARG MQ_ARCHIVE=.*-LinuxX64.tar.gz"/ARG MQ_ARCHIVE="downloads\/$(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"/g' Dockerfile-server && rm Dockerfile-server.bak
-	sed -i.bak 's/IBM_MQ_.*_LINUX_X86-64_NOINST.tar.gz/IBM_MQ_${MQ_VERSION_VRM}_LINUX_X86-64_NOINST.tar.gz/g' docs/building.md && rm docs/building.md.bak
 	sed -i.bak 's/ibm-mqadvanced-server:.*-amd64/ibm-mqadvanced-server:$(MQ_VERSION)-amd64/g' docs/security.md
 	sed -i.bak 's/ibm-mqadvanced-server-dev.*-amd64/ibm-mqadvanced-server-dev:$(MQ_VERSION)-amd64/g' docs/security.md && rm docs/security.md.bak
 	sed -i.bak 's/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:.*-amd64/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:$(MQ_VERSION)-amd64/g' docs/testing.md && rm docs/testing.md.bak
