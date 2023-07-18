@@ -13,11 +13,24 @@ If you are working in the Windows Subsystem for Linux, follow [this guide by Mic
 
 From MQ 9.2.X, the MQ container adds support for MQ Long Term Support (LTS) **production licensed** releases.
 
-### Building MQ 9.3 Long Term Support (LTS) and Continuous Delivery (CD)
+### MQ Continuous Delivery (CD)
 
-**Note**: MQ 9.3 is the latest MQ version with MQ Long Term Support (LTS), as well as being the latest Continuous Delivery (CD) version.
+The procedure below is for building the 9.3.3 release, on `amd64`, `ppc64le` and `s390x` architectures.
 
-The procedure below is for building the 9.3 release, on `amd64`, `ppc64le` and `s390x` architectures.
+1. Create a `downloads` directory in the root of this repository
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/). Identify the correct 'Continuous Delivery release' eImage part number for your architecture from the 9.3.3 tab at https://www.ibm.com/support/pages/downloading-ibm-mq-933-continuous-delivery
+3. Ensure the `tar.gz` file is in the `downloads` directory
+4. Run `make build-advancedserver`
+
+If you have an MQ archive file with a different file name, you can specify a particular file (which must be in the `downloads` directory).  You should also specify the MQ version, so that the resulting image is tagged correctly, for example:
+
+```bash
+MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
+```
+
+### MQ Long Term Support (LTS)
+
+The procedure below is for building the 9.3.0 release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
 2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/). Identify the correct 'Long Term Support Release for Containers' eImage part number for your architecture from the 9.3.0 LTS tab at https://www.ibm.com/support/pages/downloading-ibm-mq-930
@@ -29,12 +42,6 @@ If you have an MQ archive file with a different file name, you can specify a par
 ```bash
 MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 ```
-
-### Building previous MQ Long Term Support (LTS)
-
-**Note**: MQ 9.3 is the latest MQ version with MQ Long Term Support (LTS), as well as being the latest Continuous Delivery (CD) version. Therefore, to build build 9.3.0.X, follow the [instructions above for MQ 9.3](#building-mq-93-long-term-support-lts-and-continuous-delivery-cd).
-
-However, if you wish to build the previous MQ LTS, use the [instructions](https://github.ibm.com/mq-cloudpak/mq-container/blob/v9.2.0.x-eus/docs/building.md#mq-long-term-support-lts) in the `v9.2.0.x-eus` branch.
 
 ## Building a developer image
 
