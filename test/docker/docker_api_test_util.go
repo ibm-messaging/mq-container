@@ -889,3 +889,13 @@ func getMQVersion(t *testing.T, cli *client.Client) (string, error) {
 	version := inspect.ContainerConfig.Labels["version"]
 	return version, nil
 }
+
+//testLogFilePages validates that the specified number of logFilePages is present in the qm.ini file.
+func testLogFilePages(t *testing.T, cli *client.Client, id string, qmName string, expectedLogFilePages string) {
+	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/" + qmName + "/qm.ini")
+	_, iniContent := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
+
+	if !strings.Contains(iniContent, "LogFilePages="+expectedLogFilePages) {
+		t.Errorf("Expected qm.ini to contain LogFilePages="+expectedLogFilePages+"; got qm.ini \"%v\"", iniContent)
+	}
+}

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2022
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -101,19 +101,17 @@ func TestEndMQMOpts(t *testing.T) {
 // TestGoldenPath starts a queue manager successfully when metrics are enabled
 func TestGoldenPathWithMetrics(t *testing.T) {
 	t.Parallel()
-
 	goldenPath(t, true)
 }
 
 // TestGoldenPath starts a queue manager successfully when metrics are disabled
 func TestGoldenPathNoMetrics(t *testing.T) {
 	t.Parallel()
-
 	goldenPath(t, false)
 }
 
 // Actual test function for TestGoldenPathNoMetrics & TestGoldenPathWithMetrics
-func goldenPath(t *testing.T, metric bool) {
+func goldenPath(t *testing.T, metrics bool) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		t.Fatal(err)
@@ -121,13 +119,17 @@ func goldenPath(t *testing.T, metric bool) {
 	containerConfig := container.Config{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
-	if metric {
+	if metrics {
 		containerConfig.Env = append(containerConfig.Env, "MQ_ENABLE_METRICS=true")
 	}
 
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
+
+	t.Run("Validate Default LogFilePages", func(t *testing.T) {
+		testLogFilePages(t, cli, id, "qm1", "4096")
+	})
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
@@ -1515,4 +1517,23 @@ func TestStartedCheckWithNoNewPrivileges(t *testing.T) {
 // See https://github.com/ibm-messaging/mq-container/issues/428
 func TestStartedCheckWithNewPrivileges(t *testing.T) {
 	utilTestStartedCheck(t, false)
+}
+
+//TestCustomLogFilePages starts a qmgr with a custom number of logfilepages set.
+//Check that the number of logfilepages matches.
+func TestCustomLogFilePages(t *testing.T) {
+	t.Parallel()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	containerConfig := container.Config{
+		Env: []string{"LICENSE=accept", "MQ_QMGR_LOG_FILE_PAGES=8192", "MQ_QMGR_NAME=qmlfp"},
+	}
+
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	testLogFilePages(t, cli, id, "qmlfp", "8192")
 }
