@@ -27,7 +27,7 @@ env:
   global:
     - MAIN_BRANCH=v9.3.3
     - TAGCACHE_FILE=tagcache
-    - RELEASE=r2
+    - RELEASE=r1
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
@@ -74,7 +74,7 @@ jobs:
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=$MQ_933_ARCHIVE_REPOSITORY_S390X
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_933_ARCHIVE_REPOSITORY_DEV_S390X
-      script: 
+      script:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
     - stage: build
