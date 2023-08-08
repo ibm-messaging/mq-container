@@ -114,3 +114,33 @@ This can be achieved by either mounting the directories or files into the contai
 If you supply multiple identity certificates then the first label alphabetically will be chosen as the certificate to be used by the MQ Console and the default certificate for the queue manager. If you wish to use a different certificate on the queue manager then you can change the certificate to use at runtime by executing the MQSC command `ALTER QMGR CERTLABL('<newlabel>')`
 
 It must be noted that queue manager certificate with a Subject Distinguished Name (DN) same as it's Issuer certificate (CA) is not supported. Certificates must have a unique Subject Distinguished Name.
+
+## Running with a read-only root filesystem
+Starting with version 9.3.4.0, you can run MQ container with a read-only root filesystem. In order to do this, you need to mount three [volumes](https://docs.docker.com/storage/volumes/) into the MQ container, one for queue manager data, one for `run` directory that will contain files used for queue manager configuration and one for `tmp` directory that will be used for collecting diagnostic data. You also need specify `--read-only` parameter while starting the container. Following describes the steps to run MQ container with a read-only root filesystem. 
+
+```sh
+docker volume create qm1data
+```
+
+```sh
+docker volume create run
+```
+
+```sh
+docker volume create tmp
+```
+
+You can then run a queue manager with a read-only root filesystem as follows:
+
+```sh
+docker run \
+  --env LICENSE=accept \
+  --env MQ\_QMGR\_NAME=QM1 \
+  --mount type=volume,source=run,destination=/run \
+  --mount type=volume,source=tmp,destination=/tmp \
+  --mount type=volume,source=qm1data,destination=/mnt/mqm \
+  --read-only \
+  --publish 1414:1414 \
+  --detach \
+  icr.io/ibm-messaging/mq
+```
