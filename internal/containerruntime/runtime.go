@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019
+© Copyright IBM Corporation 2019,2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,11 +20,10 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/genuinetools/amicontained/container"
 )
 
-func GetContainerRuntime() (string, error) {
-	return container.DetectRuntime()
+func DetectContainerRuntime() ContainerRuntime {
+	return GetContainerRuntime(0, 1)
 }
 
 func GetBaseImage() (string, error) {
@@ -45,17 +44,15 @@ func GetBaseImage() (string, error) {
 }
 
 // GetCapabilities gets the Linux capabilities (e.g. setuid, setgid).  See https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities
-func GetCapabilities() (map[string][]string, error) {
-	return container.Capabilities()
+func GetContainerCapabilities() (map[string][]string, error) {
+	//passing the pid as 1 since runmqserver initializes, creates and starts a queue manager, as PID 1 in a container
+	return GetCapabilities(1)
 }
 
 // GetSeccomp gets the seccomp enforcing mode, which affects which kernel calls can be made
-func GetSeccomp() (string, error) {
-	s, err := container.SeccompEnforcingMode()
-	if err != nil {
-		return "", fmt.Errorf("Failed to get container SeccompEnforcingMode: %v", err)
-	}
-	return s, nil
+func GetSeccomp() SeccompMode {
+	//passing the pid as 1 since runmqserver initializes, creates and starts a queue manager, as PID 1 in a container
+	return GetSeccompEnforcingMode(1)
 }
 
 // GetSecurityAttributes gets the security attributes of the current process.

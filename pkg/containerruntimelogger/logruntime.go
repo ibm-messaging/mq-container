@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2020
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,10 +36,9 @@ func LogContainerDetails(log *logger.Logger) error {
 	if err == nil {
 		log.Printf("Linux kernel version: %v", kv)
 	}
-	cr, err := containerruntime.GetContainerRuntime()
-	if err == nil {
-		log.Printf("Container runtime: %v", cr)
-	}
+	cr := containerruntime.DetectContainerRuntime()
+	log.Printf("Container runtime: %v", cr)
+
 	bi, err := containerruntime.GetBaseImage()
 	if err == nil {
 		log.Printf("Base image: %v", bi)
@@ -55,7 +54,7 @@ func LogContainerDetails(log *logger.Logger) error {
 			log.Printf("Running as user ID %v with primary group %v, and supplementary groups %v", u.UID, u.PrimaryGID, strings.Trim(strings.Join(strings.Fields(fmt.Sprint(u.SupplementalGID)), ","), "[]"))
 		}
 	}
-	caps, err := containerruntime.GetCapabilities()
+	caps, err := containerruntime.GetCapabilities(1)
 	capLogged := false
 	if err == nil {
 		for k, v := range caps {
@@ -70,10 +69,9 @@ func LogContainerDetails(log *logger.Logger) error {
 	} else {
 		log.Errorf("Error getting capabilities: %v", err)
 	}
-	sc, err := containerruntime.GetSeccomp()
-	if err == nil {
-		log.Printf("seccomp enforcing mode: %v", sc)
-	}
+	sc := containerruntime.GetSeccomp()
+	log.Printf("seccomp enforcing mode: %v", sc)
+
 	log.Printf("Process security attributes: %v", containerruntime.GetSecurityAttributes())
 	m, err := containerruntime.GetMounts()
 	if err == nil {
