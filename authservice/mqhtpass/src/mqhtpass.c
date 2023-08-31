@@ -103,7 +103,7 @@ void MQENTRY MQStart(
   {
     hc->MQZEP_Call(hc, MQZID_FREE_USER, (PMQFUNC)mqhtpass_free_user, &CC, &Reason);
   }
-  *Version = MQZAS_VERSION_5;
+  *Version = MQZAS_VERSION_6;
   *pCompCode = CC;
   *pReason = Reason;
   return;
