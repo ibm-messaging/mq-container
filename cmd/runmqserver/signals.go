@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2022
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,13 +30,27 @@ const (
 	reapNow      = iota
 )
 
-func signalHandler(qmgr string) chan int {
+func signalHandler(qmgr string, startupCtx context.Context) chan int {
 	control := make(chan int)
 	// Use separate channels for the signals, to avoid SIGCHLD signals swamping
 	// the buffer, and preventing other signals.
 	stopSignals := make(chan os.Signal, 1)
 	reapSignals := make(chan os.Signal, 1)
 	signal.Notify(stopSignals, syscall.SIGTERM, syscall.SIGINT)
+
+	// Pulling out as function as reused for shutdown and standard control flow
+	processControlSignal := func(job int) {
+		switch {
+		case job == startReaping:
+			// Add SIGCHLD to the list of signals we're listening to
+			log.Debug("Listening for SIGCHLD signals")
+			signal.Notify(reapSignals, syscall.SIGCHLD)
+		case job == reapNow:
+			reapZombies()
+		}
+	}
+
+	// Start handling signals
 	go func() {
 		for {
 			select {
@@ -43,11 +58,27 @@ func signalHandler(qmgr string) chan int {
 				log.Printf("Signal received: %v", sig)
 				signal.Stop(reapSignals)
 				signal.Stop(stopSignals)
+				// If a stop signal is received during the startup process continue processing control signals until the main thread marks startup as complete
+				// Don't close the control channel until the main thread has been allowed to finish spawning processes and marks startup as complete
+				// Continue to process job control signals to avoid a deadlock
+				done := false
+				for !done {
+					select {
+					// When the main thread has cancelled the startup context due to completion or an error stop processing control signals
+					case <-startupCtx.Done():
+						done = true
+					// Keep processing control signals until the main thread has finished its startup
+					case job := <-control:
+						processControlSignal(job)
+					}
+				}
 				metrics.StopMetricsGathering(log)
 				// #nosec G104
 				stopQueueManager(qmgr)
 				// One final reap
+				// This occurs after all startup processes have been spawned
 				reapZombies()
+
 				close(control)
 				// End the goroutine
 				return
@@ -55,14 +86,7 @@ func signalHandler(qmgr string) chan int {
 				log.Debug("Received SIGCHLD signal")
 				reapZombies()
 			case job := <-control:
-				switch {
-				case job == startReaping:
-					// Add SIGCHLD to the list of signals we're listening to
-					log.Debug("Listening for SIGCHLD signals")
-					signal.Notify(reapSignals, syscall.SIGCHLD)
-				case job == reapNow:
-					reapZombies()
-				}
+				processControlSignal(job)
 			}
 		}
 	}()

@@ -109,8 +109,8 @@ func createQueueManager(name string, devMode bool) (bool, error) {
 	return true, nil
 }
 
-//readQMIni reads the qm.ini file and returns it as a byte array
-//This function is specific to comply with the nosec.
+// readQMIni reads the qm.ini file and returns it as a byte array
+// This function is specific to comply with the nosec.
 func readQMIni(dataDir string) ([]byte, error) {
 	qmgrDir := filepath.Join(dataDir, "qm.ini")
 	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
@@ -121,7 +121,7 @@ func readQMIni(dataDir string) ([]byte, error) {
 	return iniFileBytes, err
 }
 
-//validateLogFilePageSetting validates if the specified logFilePage number is equal to the existing value in the qm.ini
+// validateLogFilePageSetting validates if the specified logFilePage number is equal to the existing value in the qm.ini
 func validateLogFilePageSetting(iniFileBytes []byte, logFilePages string) bool {
 	lfpString := "LogFilePages=" + logFilePages
 	qminiConfigStr := string(iniFileBytes)

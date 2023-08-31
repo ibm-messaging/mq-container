@@ -87,8 +87,17 @@ func doMain() error {
 	}
 	log.Printf("Using queue manager name: %v", name)
 
+	// Create a startup context to be used by the signalHandler to ensure the final reap of zombie processes only occurs after all startup processes are spawned
+	startupCtx, markStartupComplete := context.WithCancel(context.Background())
+	var startupMarkedComplete bool
+	// If the main thread returns before completing startup, cancel the startup context to unblock the signalHandler
+	defer func() {
+		if !startupMarkedComplete {
+			markStartupComplete()
+		}
+	}()
 	// Start signal handler
-	signalControl := signalHandler(name)
+	signalControl := signalHandler(name, startupCtx)
 	// Enable diagnostic collecting on failure
 	collectDiagOnFail = true
 
@@ -373,6 +382,10 @@ func doMain() error {
 	signalControl <- startReaping
 	// Reap zombies now, just in case we've already got some
 	signalControl <- reapNow
+
+	startupMarkedComplete = true
+	markStartupComplete()
+
 	// Write a file to indicate that chkmqready should now work as normal
 	err = ready.Set()
 	if err != nil {
