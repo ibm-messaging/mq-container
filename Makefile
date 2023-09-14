@@ -417,7 +417,7 @@ log-build-env: log-build-vars
 	@echo Command version: $(shell $(COMMAND) --version)
 	$(COMMAND) info
 
-include formatting.mk
+include Makefile.formatting.mk
 
 ###############################################################################
 # Push/pull targets
