@@ -1691,28 +1691,32 @@ func TestWebLogsHeaderRotation(t *testing.T) {
 	consoleLogs, errJson := waitForMessageInLog(t, cli, id, "CWWKF0011I")
 	if errJson != nil {
 		t.Errorf("%v", errJson)
-	}
-	//The below variable represents the first message in messages.log of web server, considered as the header message
-	webLogheader := "product = WebSphere Application Server"
+		//If there is error jump to last step and stop the container, else continue
+	} else {
+		//The below variable represents the first message in messages.log of web server, considered as the header message
+		webLogheader := "product = WebSphere Application Server"
 
-	if !strings.Contains(consoleLogs, webLogheader) {
-		t.Errorf("Console log is without web server header message\n \"%v\"", consoleLogs)
-	}
+		if !strings.Contains(consoleLogs, webLogheader) {
+			t.Errorf("Console log is without web server header message\n \"%v\"", consoleLogs)
+			//If there is error jump to last step and stop the container, else continue
+		} else {
+			// Stop the container cleanly
+			stopContainer(t, cli, id)
+			startContainer(t, cli, id)
+			waitForReady(t, cli, id)
 
-	// Stop the container cleanly
-	stopContainer(t, cli, id)
-	startContainer(t, cli, id)
-	waitForReady(t, cli, id)
-
-	consoleLogs2, errJson := waitForMessageCountInLog(t, cli, id, "CWWKF0011I", 2)
-	if errJson != nil {
-		t.Errorf("%v", errJson)
+			consoleLogs2, errJson := waitForMessageCountInLog(t, cli, id, "CWWKF0011I", 2)
+			if errJson != nil {
+				t.Errorf("%v", errJson)
+				//If there is error jump to last step and stop the container, else continue
+			} else {
+				t.Logf("Total headers found is %v", strings.Count(consoleLogs2, webLogheader))
+				if strings.Count(consoleLogs2, webLogheader) != 2 {
+					t.Errorf("Console logs do not contain header message after restart \"%v\"", consoleLogs2)
+				}
+			}
+		}
 	}
-	t.Logf("Total headers found is %v", strings.Count(consoleLogs2, webLogheader))
-	if strings.Count(consoleLogs2, webLogheader) != 2 {
-		t.Errorf("Console logs do not contain header message after restart \"%v\"", consoleLogs2)
-	}
-
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
