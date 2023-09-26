@@ -19,7 +19,6 @@ package ready
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -55,7 +54,7 @@ func Clear() error {
 // manager has finished its configuration step
 func Set() error {
 	// #nosec G306 - this gives permissions to owner/s group only.
-	return ioutil.WriteFile(fileName, []byte("1"), 0770)
+	return os.WriteFile(fileName, []byte("1"), 0770)
 }
 
 // Check checks whether or not the queue manager has finished its
