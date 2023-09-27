@@ -172,7 +172,6 @@ func TestDevConfigDisabled(t *testing.T) {
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
-	waitForWebReady(t, cli, id, insecureTLSConfig)
 	rc, _ := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'display qlocal(DEV*)' | runmqsc"})
 	if rc == 0 {
 		t.Errorf("Expected DEV queues to be missing")

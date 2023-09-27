@@ -172,11 +172,19 @@ func doMain() error {
 		return err
 	}
 
-	// Copy default mqwebuser.xml file to ephemeral volume
-	err = copy.CopyFile("/etc/mqm/web/installations/Installation1/servers/mqweb/mqwebuser.xml.default", "/run/mqwebuser.xml")
-	if err != nil {
-		logTermination(err)
-		return err
+	// Copy default mqwebexternal.xml file to ephemeral volume
+	if *devFlag && os.Getenv("MQ_DEV") == "true" {
+		err = copy.CopyFile("/etc/mqm/web/installations/Installation1/servers/mqweb/mqwebexternal.xml.dev", "/run/mqwebexternal.xml")
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	} else {
+		err = copy.CopyFile("/etc/mqm/web/installations/Installation1/servers/mqweb/mqwebexternal.xml.default", "/run/mqwebexternal.xml")
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	// Copy default tls.xml file to ephemeral volume

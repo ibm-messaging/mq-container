@@ -48,16 +48,20 @@ func ConfigureWebTLS(keyLabel string, log *logger.Logger) error {
 }
 
 // ConfigureWebKeyStore configures the Web Keystore
-func ConfigureWebKeystore(p12Truststore KeyStoreData, webKeystore string) (string, error) {
+func ConfigureWebKeystore(p12Truststore KeyStoreData, keyLabel string) (string, error) {
 
-	if webKeystore == "" {
-		webKeystore = webKeystoreDefault
+	webKeystore := webKeystoreDefault
+	if keyLabel != "" {
+		webKeystore = keyLabel + ".p12"
 	}
 	webKeystoreFile := filepath.Join(keystoreDirDefault, webKeystore)
 
 	// Check if a new self-signed certificate should be generated
-	genHostName := os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME")
-	if genHostName != "" {
+	if keyLabel == "" {
+
+		// Get hostname to use for self-signed certificate
+		genHostName := os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME")
+
 		// Create the Web Keystore
 		newWebKeystore := keystore.NewPKCS12KeyStore(webKeystoreFile, p12Truststore.Password)
 		err := newWebKeystore.Create()

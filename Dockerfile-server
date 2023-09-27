@@ -124,7 +124,7 @@ COPY ha/native-ha.ini.tpl /etc/mqm/native-ha.ini.tpl
 # Copy web XML files
 COPY web /etc/mqm/web
 COPY etc/mqm/*.tpl /etc/mqm/
-RUN ln -s /run/mqwebuser.xml /etc/mqm/web/installations/Installation1/servers/mqweb/mqwebuser.xml \
+RUN ln -s /run/mqwebexternal.xml /etc/mqm/web/installations/Installation1/servers/mqweb/mqwebexternal.xml \
   && ln -s /run/tls.xml /etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml \
   && ln -s /run/jvm.options /etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults/jvm.options \
   && ln -s /run/15-tls.mqsc /etc/mqm/15-tls.mqsc \

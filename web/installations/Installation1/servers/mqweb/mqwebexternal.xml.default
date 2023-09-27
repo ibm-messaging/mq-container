@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server>
+    <featureManager>
+        <feature>appSecurity-2.0</feature>
+    </featureManager>
+    <variable name="httpHost" value="*"/>
+    <variable name="managementMode" value="externallyprovisioned"/>
+    <variable name="mqConsoleRemoteSupportEnabled" value="false"/>
+    <variable name="mqConsoleEnableUnsafeInline" value="true"/>
+    <jndiEntry jndiName="mqConsoleDefaultCCDTHostname" value="${env.MQ_CONSOLE_DEFAULT_CCDT_HOSTNAME}"/>
+    <jndiEntry jndiName="mqConsoleDefaultCCDTPort" value="${env.MQ_CONSOLE_DEFAULT_CCDT_PORT}"/>
+    <include location="tls.xml"/>
+</server>

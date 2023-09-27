@@ -20,7 +20,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/copy"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
@@ -61,84 +60,19 @@ func startWebServer(webKeystore, webkeystorePW, webTruststoreRef string) error {
 	return nil
 }
 
-func configureSSO(p12TrustStore tls.KeyStoreData, webKeystore string) (string, error) {
-	requiredEnvVars := []string{}
-	_, set := os.LookupEnv("MQ_ZEN_INTERNAL_ENDPOINT")
-	if !set {
-		// Ensure all required environment variables are set for SSO
-		requiredEnvVars = []string{
-			"MQ_OIDC_CLIENT_ID",
-			"MQ_OIDC_CLIENT_SECRET",
-			"MQ_OIDC_UNIQUE_USER_IDENTIFIER",
-			"MQ_OIDC_AUTHORIZATION_ENDPOINT",
-			"MQ_OIDC_TOKEN_ENDPOINT",
-			"MQ_OIDC_JWK_ENDPOINT",
-			"MQ_OIDC_ISSUER_IDENTIFIER",
-		}
-	} else {
-		// Ensure all required environment variables are set for Zen SSO
-		requiredEnvVars = []string{
-			"MQ_ZEN_UNIQUE_USER_IDENTIFIER",
-			"MQ_ZEN_INTERNAL_ENDPOINT",
-			"MQ_ZEN_ISSUER_IDENTIFIER",
-			"MQ_ZEN_AUDIENCES",
-			"MQ_ZEN_CONTEXT_NAME",
-			"MQ_ZEN_BASE_URI",
-			"MQ_ZEN_CONTEXT_NAMESPACE",
-			"IAM_URL",
-		}
-	}
-	for _, envVar := range requiredEnvVars {
-		if len(os.Getenv(envVar)) == 0 {
-			return "", fmt.Errorf("%v must be set when MQ_BETA_ENABLE_SSO=true", envVar)
-		}
-	}
-
-	// Check mqweb directory exists
-	const mqwebDir string = "/etc/mqm/web/installations/Installation1/servers/mqweb"
-	_, err := os.Stat(mqwebDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", nil
-		}
-		return "", err
-	}
-
-	const mqwebuserLink string = "/run/mqwebuser.xml"
-	const mqwebuserTemplate string = mqwebDir + "/mqwebuser.xml.tpl"
-
-	// Process SSO template for generating file mqwebuser.xml
-	adminUsers := strings.Split(os.Getenv("MQ_WEB_ADMIN_USERS"), "\n")
-	err = mqtemplate.ProcessTemplateFile(mqwebuserTemplate, mqwebuserLink, map[string][]string{"AdminUser": adminUsers}, log)
-	if err != nil {
-		return "", err
-	}
-
-	// Configure SSO TLS
-	return tls.ConfigureWebKeystore(p12TrustStore, webKeystore)
-}
-
 func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string, error) {
-	var webKeystore string
 
-	// Configure TLS for Web Console first if we have a certificate to use
+	webKeystore := ""
+
+	// Configure TLS for the Web Console
 	err := tls.ConfigureWebTLS(keyLabel, log)
 	if err != nil {
 		return "", err
 	}
-	if keyLabel != "" {
-		webKeystore = keyLabel + ".p12"
-	}
 
-	// Configure Single-Sign-On for the web server (if enabled)
-	enableSSO := os.Getenv("MQ_BETA_ENABLE_SSO")
-	if enableSSO == "true" || enableSSO == "1" {
-		webKeystore, err = configureSSO(p12Truststore, webKeystore)
-		if err != nil {
-			return "", err
-		}
-	} else if keyLabel == "" && os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") != "" {
-		webKeystore, err = tls.ConfigureWebKeystore(p12Truststore, webKeystore)
+	// Configure the Web Keystore
+	if keyLabel != "" || os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") != "" {
+		webKeystore, err = tls.ConfigureWebKeystore(p12Truststore, keyLabel)
 		if err != nil {
 			return "", err
 		}

@@ -1874,7 +1874,7 @@ func TestReadOnlyRootFilesystem(t *testing.T) {
 
 	messageToSearch := "read-only file system"
 	l := inspectLogs(t, cli, ctrID)
-	if !strings.Contains(l, messageToSearch) {
+	if !strings.Contains(strings.ToLower(l), messageToSearch) {
 		t.Fatalf("Expected 'read-only file system' in the logs but was not found. The output was: %s", l)
 	}
 }
@@ -1947,8 +1947,8 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 		symLinkName string
 	}{
 		{
-			origin:      "/etc/mqm/web/installations/Installation1/servers/mqweb/mqwebuser.xml",
-			symLinkName: "-> /run/mqwebuser.xml",
+			origin:      "/etc/mqm/web/installations/Installation1/servers/mqweb/mqwebexternal.xml",
+			symLinkName: "-> /run/mqwebexternal.xml",
 		},
 		{
 			origin:      "/etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml",
