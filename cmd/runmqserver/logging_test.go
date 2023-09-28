@@ -67,7 +67,7 @@ var mqLogSourcesTests = []struct {
 	{2, "qmgr", true, true, false},
 	{3, "web,qmgr", true, true, true},
 	{4, "web", true, false, true},
-	{5, " ", true, true, false},
+	{5, " ", true, true, true},
 	{6, "QMGR,WEB", true, true, true},
 	{7, "qmgr,     ", true, true, false},
 	{8, "qmgr   ,    web", true, true, true},
@@ -77,7 +77,7 @@ var mqLogSourcesTests = []struct {
 	{12, "fake,dummy,web", false, false, true},
 	{13, "true", false, false, false},
 	{14, "false", false, false, false},
-	{15, "", true, true, false},
+	{15, "", true, true, true},
 }
 
 func TestLoggingConsoleSourceInputs(t *testing.T) {

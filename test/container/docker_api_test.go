@@ -105,10 +105,6 @@ func goldenPath(t *testing.T, metrics bool) {
 		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
 	}
 
-	if strings.Contains(jsonLogs, "CWWKF0011I") {
-		t.Errorf("Web Server is off....CWWKF0011I message id is not expected")
-	}
-
 	t.Run("Validate Default LogFilePages", func(t *testing.T) {
 		testLogFilePages(t, cli, id, "qm1", "4096")
 	})
@@ -1429,6 +1425,12 @@ func TestLoggingConsoleSource(t *testing.T) {
 	waitForReady(t, cli, id)
 
 	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "AMQ6206I")
+	if errJson != nil {
+		t.Errorf("%v", errJson)
+	}
+	
+	//Check for web server logs existence in console logs since its visibility is default along with qmgr logs
+	jsonLogs, errJson = waitForMessageInLog(t, cli, id, "CWWKF0011I")
 	if errJson != nil {
 		t.Errorf("%v", errJson)
 	}
