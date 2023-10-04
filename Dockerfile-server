@@ -13,11 +13,11 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=registry.access.redhat.com/ubi8/ubi-minimal
-ARG BASE_TAG=8.8-1037
+ARG BASE_TAG=8.8-1072
 ARG BUILDER_IMAGE=registry.access.redhat.com/ubi8/go-toolset
-ARG BUILDER_TAG=1.19.10-10
+ARG BUILDER_TAG=1.19.10-16.1695267225
 ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
-ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.3.0.10-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
+ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.3.0.11-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
