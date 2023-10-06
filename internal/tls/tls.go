@@ -246,6 +246,12 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 				return "", err
 			}
 
+			// Return an error if corresponding public certificate was not found. Both private key and
+			// it's corresponding public certificate are required.
+			if publicCertificate == nil {
+				return "", fmt.Errorf("Failed to find public certificate in directory %s", keyDir)
+			}
+
 			// Validate certificates for duplicate Subject DNs
 			if len(caCertificate) > 0 {
 				errCertValid := validateCertificates(publicCertificate, caCertificate)
@@ -411,7 +417,7 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 			// Add to known certificates for the CMS Keystore
 			err = addToKnownCertificates(block, cmsKeystore, false)
 			if err != nil {
-				return nil, nil, fmt.Errorf("Failed to add to know certificates for CMS Keystore")
+				return nil, nil, fmt.Errorf("Failed to add to known certificates for CMS Keystore")
 			}
 
 		} else if strings.HasSuffix(key.Name(), ".crt") {
@@ -431,14 +437,14 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 				// Add to known certificates for the CMS Keystore
 				err = addToKnownCertificates(block, cmsKeystore, false)
 				if err != nil {
-					return nil, nil, fmt.Errorf("Failed to add to know certificates for CMS Keystore")
+					return nil, nil, fmt.Errorf("Failed to add to known certificates for CMS Keystore")
 				}
 
 				if p12Truststore.Keystore != nil {
 					// Add to known certificates for the PKCS#12 Truststore
 					err = addToKnownCertificates(block, p12Truststore, true)
 					if err != nil {
-						return nil, nil, fmt.Errorf("Failed to add to know certificates for PKCS#12 Truststore")
+						return nil, nil, fmt.Errorf("Failed to add to known certificates for PKCS#12 Truststore")
 					}
 				}
 

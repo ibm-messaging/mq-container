@@ -1428,7 +1428,7 @@ func TestLoggingConsoleSource(t *testing.T) {
 	if errJson != nil {
 		t.Errorf("%v", errJson)
 	}
-	
+
 	//Check for web server logs existence in console logs since its visibility is default along with qmgr logs
 	jsonLogs, errJson = waitForMessageInLog(t, cli, id, "CWWKF0011I")
 	if errJson != nil {
@@ -2025,4 +2025,48 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 
 	// Stop the container cleanly
 	stopContainer(t, cli, ID)
+}
+
+// Quick test to check expected error message is displayed on the
+// console if only key file is provided and no certificate.
+func TestMissingCertError(t *testing.T) {
+	t.Parallel()
+
+	cli := ce.NewContainerClient()
+
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=QM1",
+		},
+		Image: imageName(),
+	}
+	hostConfig := ce.ContainerHostConfig{
+		Binds: []string{
+			coverageBind(t),
+			tlsDirDN(t, false, "../tlsnocert") + ":/etc/mqm/pki/keys/QM1",
+		},
+	}
+
+	networkingConfig := ce.ContainerNetworkSettings{}
+	ctrID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, ctrID)
+	startContainer(t, cli, ctrID)
+
+	rc := waitForContainer(t, cli, ctrID, 30*time.Second)
+	// Expect return code 1 if container failed to create.
+	if rc == 1 {
+		// Get container logs and search for specific message.
+		logs := inspectLogs(t, cli, ctrID)
+		expectedMessage := "Failed to find public certificate in directory"
+		if !strings.Contains(logs, expectedMessage) {
+			t.Errorf("Expected to find '%s' but was not found", expectedMessage)
+		}
+	} else {
+		// Some other error occurred
+		t.Errorf("Some other error occurred %v", rc)
+	}
 }
