@@ -61,7 +61,7 @@ func createQueueManager(name string, devMode bool) (bool, error) {
 		return false, err
 	}
 
-	dataDir := getQueueManagerDataDir(mounts, name)
+	dataDir := getQueueManagerDataDir(mounts, replaceCharsInQMName(name))
 
 	// Run 'dspmqinf' to check if 'mqs.ini' configuration file exists
 	// If command succeeds, the queue manager (or standby queue manager) has already been created
@@ -316,7 +316,7 @@ func updateQMini(qmname string) error {
 		log.Printf("Error getting mounts for queue manager")
 		return err
 	}
-	dataDir := getQueueManagerDataDir(mounts, qmname)
+	dataDir := getQueueManagerDataDir(mounts, replaceCharsInQMName(qmname))
 	qmgrDir := filepath.Join(dataDir, "qm.ini")
 	//read the initial version.
 	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
@@ -336,4 +336,18 @@ func updateQMini(qmname string) error {
 		}
 	}
 	return nil
+}
+
+// If queue manager name contains a '.', then the '.' will be replaced with '!'
+// in the name of the data directory created by the queue manager. Similarly
+// '/' will be replaced with '&'.
+func replaceCharsInQMName(qmname string) string {
+	replacedName := qmname
+	if strings.Contains(replacedName, ".") {
+		replacedName = strings.ReplaceAll(replacedName, ".", "!")
+	}
+	if strings.Contains(replacedName, "/") {
+		replacedName = strings.ReplaceAll(replacedName, "/", "&")
+	}
+	return replacedName
 }

@@ -17,6 +17,7 @@ package main
 
 import (
 	"io/ioutil"
+	"strings"
 	"testing"
 )
 
@@ -82,5 +83,40 @@ func Test_validateLogFilePageSetting(t *testing.T) {
 				t.Fatalf("Expected ini file validation output to be %v got %v", tt.args.isValid, validate)
 			}
 		})
+	}
+}
+
+// Unit test for special character in queue manager names
+func Test_SpecialCharInQMNameReplacements(t *testing.T) {
+	type qmNames struct {
+		qmName         string
+		replacedQMName string
+	}
+
+	tests := []qmNames{
+		{
+			qmName:         "QM.",
+			replacedQMName: "QM!",
+		}, {
+			qmName:         "QM/",
+			replacedQMName: "QM&",
+		},
+		{
+			qmName:         "QM.GR.NAME",
+			replacedQMName: "QM!GR!NAME",
+		}, {
+			qmName:         "QM/GR/NAME",
+			replacedQMName: "QM&GR&NAME",
+		}, {
+			qmName:         "QMGRNAME",
+			replacedQMName: "QMGRNAME",
+		},
+	}
+
+	for _, test := range tests {
+		replacedQMName := replaceCharsInQMName(test.qmName)
+		if !strings.EqualFold(replacedQMName, test.replacedQMName) {
+			t.Fatalf("QMName replacement failed. Expected %s but got %s\n", test.replacedQMName, replacedQMName)
+		}
 	}
 }
