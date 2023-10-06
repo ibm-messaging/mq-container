@@ -18,7 +18,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -47,7 +47,7 @@ func getMetrics(t *testing.T, port string) []mqmetric {
 		return returned
 	}
 	defer resp.Body.Close()
-	metricsRaw, err := ioutil.ReadAll(resp.Body)
+	metricsRaw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("Error reading metrics data: %v", err)
 		return returned

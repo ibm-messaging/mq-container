@@ -30,11 +30,15 @@ SOFTWARE.
 
 */
 
+// Adding IBM Copyright since the forked code had to be modified to remove deprecated ioutil package
+/*
+© Copyright IBM Corporation 2023
+*/
+
 package containerruntime
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -178,7 +182,8 @@ func readFile(file string) []byte {
 	}
 	// filepath.clean was added to resolve the gosec build failure
 	// with error "Potential file inclusion via variable"
-	b, err := ioutil.ReadFile(filepath.Clean(file))
+	// IBM Modified the below line to remove the deprecated ioutil dependency
+	b, err := os.ReadFile(filepath.Clean(file))
 	if err != nil {
 		return nil
 	}

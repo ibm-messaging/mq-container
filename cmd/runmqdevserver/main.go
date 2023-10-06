@@ -17,7 +17,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"syscall"
@@ -93,7 +92,7 @@ func logTermination(args ...interface{}) {
 	// that Kubernetes will look for termination information.
 	log.Debugf("Writing termination message: %v", msg)
 	// #nosec G306 - its a read by owner/s group, and pose no harm.
-	err := ioutil.WriteFile("/run/termination-log", []byte(msg), 0660)
+	err := os.WriteFile("/run/termination-log", []byte(msg), 0660)
 	if err != nil {
 		log.Debug(err)
 	}
@@ -115,7 +114,7 @@ func doMain() error {
 
 	// Initialise 10-dev.mqsc file on ephemeral volume
 	// #nosec G306 - its a read by owner/s group, and pose no harm.
-	err = ioutil.WriteFile("/run/10-dev.mqsc", []byte(""), 0660)
+	err = os.WriteFile("/run/10-dev.mqsc", []byte(""), 0660)
 	if err != nil {
 		logTermination(err)
 		return err
@@ -123,7 +122,7 @@ func doMain() error {
 
 	// Initialise 20-dev-tls.mqsc file on ephemeral volume
 	// #nosec G306 - its a read by owner/s group, and pose no harm.
-	err = ioutil.WriteFile("/run/20-dev-tls.mqsc", []byte(""), 0660)
+	err = os.WriteFile("/run/20-dev-tls.mqsc", []byte(""), 0660)
 	if err != nil {
 		logTermination(err)
 		return err

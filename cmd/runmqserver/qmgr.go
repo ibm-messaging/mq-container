@@ -18,7 +18,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -114,7 +113,7 @@ func createQueueManager(name string, devMode bool) (bool, error) {
 func readQMIni(dataDir string) ([]byte, error) {
 	qmgrDir := filepath.Join(dataDir, "qm.ini")
 	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
-	iniFileBytes, err := ioutil.ReadFile(qmgrDir)
+	iniFileBytes, err := os.ReadFile(qmgrDir)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +319,7 @@ func updateQMini(qmname string) error {
 	qmgrDir := filepath.Join(dataDir, "qm.ini")
 	//read the initial version.
 	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
-	iniFileBytes, err := ioutil.ReadFile(qmgrDir)
+	iniFileBytes, err := os.ReadFile(qmgrDir)
 	if err != nil {
 		return err
 	}
@@ -330,7 +329,7 @@ func updateQMini(qmname string) error {
 		curFile := re.ReplaceAllString(qminiConfigStr, "")
 		// #nosec G304 G306 - qmgrDir filepath is derived from dspmqinf and
 		// its a read by owner/s group, and pose no harm.
-		err := ioutil.WriteFile(qmgrDir, []byte(curFile), 0660)
+		err := os.WriteFile(qmgrDir, []byte(curFile), 0660)
 		if err != nil {
 			return err
 		}

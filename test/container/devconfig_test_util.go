@@ -25,9 +25,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -198,7 +199,7 @@ func createTLSConfig(t *testing.T, certFile, password string) *tls.Config {
 		t.Fatal(err)
 	}
 	// Read in the cert file
-	cert, err := ioutil.ReadFile(certFile)
+	cert, err := os.ReadFile(certFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,7 +317,7 @@ func testRESTMessaging(t *testing.T, cli ce.ContainerInterface, ID string, tlsCo
 		t.Logf("HTTP response: %+v", resp)
 		t.Fail()
 	}
-	gotMessage, err := ioutil.ReadAll(resp.Body)
+	gotMessage, err := io.ReadAll(resp.Body)
 	//gotMessage := string(b)
 	if string(gotMessage) != string(putMessage) {
 		t.Errorf("Expected payload to be \"%s\"; got \"%s\"", putMessage, gotMessage)
@@ -331,7 +332,7 @@ func createTLSConfigWithCipher(t *testing.T, certFile, password string, ciphers 
 		t.Fatal(err)
 	}
 	// Read in the cert file
-	cert, err := ioutil.ReadFile(certFile)
+	cert, err := os.ReadFile(certFile)
 	if err != nil {
 		t.Fatal(err)
 	}

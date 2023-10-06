@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"io/ioutil"
 	"os"
 	"sync"
 
@@ -158,7 +157,7 @@ func doMain() error {
 
 	// Initialise 15-tls.mqsc file on ephemeral volume
 	// #nosec G306 - its a read by owner/s group, and pose no harm.
-	err = ioutil.WriteFile("/run/15-tls.mqsc", []byte(""), 0660)
+	err = os.WriteFile("/run/15-tls.mqsc", []byte(""), 0660)
 	if err != nil {
 		logTermination(err)
 		return err
@@ -166,7 +165,7 @@ func doMain() error {
 
 	// Initialise native-ha.ini file on ephemeral volume
 	// #nosec G306 - its a read by owner/s group, and pose no harm.
-	err = ioutil.WriteFile("/run/native-ha.ini", []byte(""), 0660)
+	err = os.WriteFile("/run/native-ha.ini", []byte(""), 0660)
 	if err != nil {
 		logTermination(err)
 		return err
