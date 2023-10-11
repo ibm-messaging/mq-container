@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -506,7 +505,7 @@ func getCoverageExitCode(t *testing.T, orig int64) int64 {
 	}
 	// Remove the file, ready for the next test
 	defer os.Remove(f)
-	buf, err := ioutil.ReadFile(f)
+	buf, err := os.ReadFile(f)
 	if err != nil {
 		t.Log(err)
 		return orig

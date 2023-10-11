@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2019
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -51,7 +50,7 @@ func TestSystem(t *testing.T) {
 		osExit = func(rc int) {
 			// Write the exit code to a file instead
 			log.Printf("Writing exit code %v to file %v", strconv.Itoa(rc), filename)
-			err := ioutil.WriteFile(filename, []byte(strconv.Itoa(rc)), 0644)
+			err := os.WriteFile(filename, []byte(strconv.Itoa(rc)), 0644)
 			if err != nil {
 				log.Print(err)
 			}
