@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -32,7 +31,7 @@ func TestMirrorLogWithoutRotation(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		t.Run(t.Name()+strconv.Itoa(i), func(t *testing.T) {
 			// Use just the sub-test name in the file name
-			tmp, err := ioutil.TempFile("", strings.Split(t.Name(), "/")[1])
+			tmp, err := os.CreateTemp("", strings.Split(t.Name(), "/")[1])
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -71,7 +70,7 @@ func TestMirrorLogWithRotation(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		t.Run(t.Name()+strconv.Itoa(i), func(t *testing.T) {
 			// Use just the sub-test name in the file name
-			tmp, err := ioutil.TempFile("", strings.Split(t.Name(), "/")[1])
+			tmp, err := os.CreateTemp("", strings.Split(t.Name(), "/")[1])
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -126,13 +125,13 @@ func TestMirrorLogWithRotation(t *testing.T) {
 }
 
 func testMirrorLogExistingFile(t *testing.T, newQM bool) int {
-	tmp, err := ioutil.TempFile("", t.Name())
+	tmp, err := os.CreateTemp("", t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(tmp.Name())
 	log.Println("Logging 1 message before we start")
-	ioutil.WriteFile(tmp.Name(), []byte("{\"message\"=\"A\"}\n"), 0600)
+	os.WriteFile(tmp.Name(), []byte("{\"message\"=\"A\"}\n"), 0600)
 	defer os.Remove(tmp.Name())
 	count := 0
 	ctx, cancel := context.WithCancel(context.Background())

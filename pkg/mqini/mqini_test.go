@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ limitations under the License.
 package mqini
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -35,7 +35,7 @@ var getQueueManagerTests = []struct {
 func TestGetQueueManager(t *testing.T) {
 	for _, table := range getQueueManagerTests {
 		t.Run(table.file, func(t *testing.T) {
-			b, err := ioutil.ReadFile(table.file)
+			b, err := os.ReadFile(table.file)
 			if err != nil {
 				t.Fatal(err)
 			}

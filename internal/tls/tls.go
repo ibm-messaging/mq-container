@@ -18,7 +18,6 @@ package tls
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	pwr "math/rand"
 	"os"
 	"path/filepath"
@@ -201,12 +200,12 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 	keyLabel := ""
 
 	// Process all keys
-	keyList, err := ioutil.ReadDir(keyDir)
+	keyList, err := os.ReadDir(keyDir)
 	if err == nil && len(keyList) > 0 {
 
 		// Process each set of keys - each set should contain files: *.key & *.crt
 		for _, keySet := range keyList {
-			keys, _ := ioutil.ReadDir(filepath.Join(keyDir, keySet.Name()))
+			keys, _ := os.ReadDir(filepath.Join(keyDir, keySet.Name()))
 
 			// Ensure the label of the set of keys does not match the name of the PKCS#12 Truststore
 			if keySet.Name() == p12TruststoreName[0:len(p12TruststoreName)-len(filepath.Ext(p12TruststoreName))] {
@@ -236,7 +235,7 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 				return "", fmt.Errorf("Failed to encode PKCS#12 Keystore %s: %v", keySet.Name()+".p12", err)
 			}
 			// #nosec G306 - this gives permissions to owner/s group only.
-			err = ioutil.WriteFile(filepath.Join(keystoreDir, keySet.Name()+".p12"), file, 0644)
+			err = os.WriteFile(filepath.Join(keystoreDir, keySet.Name()+".p12"), file, 0644)
 			if err != nil {
 				return "", fmt.Errorf("Failed to write PKCS#12 Keystore %s: %v", filepath.Join(keystoreDir, keySet.Name()+".p12"), err)
 			}
@@ -267,17 +266,17 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 func processTrustCertificates(tlsStore *TLSStore, trustDir string) error {
 
 	// Process all trust certiifcates
-	trustList, err := ioutil.ReadDir(trustDir)
+	trustList, err := os.ReadDir(trustDir)
 	if err == nil && len(trustList) > 0 {
 
 		// Process each set of keys
 		for _, trustSet := range trustList {
-			keys, _ := ioutil.ReadDir(filepath.Join(trustDir, trustSet.Name()))
+			keys, _ := os.ReadDir(filepath.Join(trustDir, trustSet.Name()))
 
 			for _, key := range keys {
 				if strings.HasSuffix(key.Name(), ".crt") {
 					// #nosec G304 - filename variable is derived from contents of 'trustDir' which is a defined constant
-					file, err := ioutil.ReadFile(filepath.Join(trustDir, trustSet.Name(), key.Name()))
+					file, err := os.ReadFile(filepath.Join(trustDir, trustSet.Name(), key.Name()))
 					if err != nil {
 						return fmt.Errorf("Failed to read file %s: %v", filepath.Join(trustDir, trustSet.Name(), key.Name()), err)
 					}
@@ -328,7 +327,7 @@ func processTrustCertificates(tlsStore *TLSStore, trustDir string) error {
 }
 
 // processPrivateKey processes the private key (*.key) from a set of keys
-func processPrivateKey(keyDir string, keySetName string, keys []os.FileInfo) (interface{}, string, error) {
+func processPrivateKey(keyDir string, keySetName string, keys []os.DirEntry) (interface{}, string, error) {
 
 	var privateKey interface{}
 	keyPrefix := ""
@@ -337,7 +336,7 @@ func processPrivateKey(keyDir string, keySetName string, keys []os.FileInfo) (in
 
 		if strings.HasSuffix(key.Name(), ".key") {
 			// #nosec G304 - filename variable is derived from contents of 'keyDir' which is a defined constant
-			file, err := ioutil.ReadFile(filepath.Join(keyDir, keySetName, key.Name()))
+			file, err := os.ReadFile(filepath.Join(keyDir, keySetName, key.Name()))
 			if err != nil {
 				return nil, "", fmt.Errorf("Failed to read private key %s: %v", filepath.Join(keyDir, keySetName, key.Name()), err)
 			}
@@ -363,7 +362,7 @@ func processPrivateKey(keyDir string, keySetName string, keys []os.FileInfo) (in
 }
 
 // processCertificates processes the certificates (*.crt) from a set of keys
-func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.FileInfo, cmsKeystore, p12Truststore *KeyStoreData) (*x509.Certificate, []*x509.Certificate, error) {
+func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.DirEntry, cmsKeystore, p12Truststore *KeyStoreData) (*x509.Certificate, []*x509.Certificate, error) {
 
 	var publicCertificate *x509.Certificate
 	var caCertificate []*x509.Certificate
@@ -372,7 +371,7 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 
 		if strings.HasPrefix(key.Name(), keyPrefix) && strings.HasSuffix(key.Name(), ".crt") {
 			// #nosec G304 - filename variable is derived from contents of 'keyDir' which is a defined constant
-			file, err := ioutil.ReadFile(filepath.Join(keyDir, keySetName, key.Name()))
+			file, err := os.ReadFile(filepath.Join(keyDir, keySetName, key.Name()))
 			if err != nil {
 				return nil, nil, fmt.Errorf("Failed to read public certificate %s: %v", filepath.Join(keyDir, keySetName, key.Name()), err)
 			}
@@ -393,7 +392,7 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 
 		} else if strings.HasSuffix(key.Name(), ".crt") {
 			// #nosec G304 - filename variable is derived from contents of 'keyDir' which is a defined constant
-			file, err := ioutil.ReadFile(filepath.Join(keyDir, keySetName, key.Name()))
+			file, err := os.ReadFile(filepath.Join(keyDir, keySetName, key.Name()))
 			if err != nil {
 				return nil, nil, fmt.Errorf("Failed to read CA certificate %s: %v", filepath.Join(keyDir, keySetName, key.Name()), err)
 			}
