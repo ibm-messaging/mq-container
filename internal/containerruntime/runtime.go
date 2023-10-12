@@ -17,7 +17,7 @@ package containerruntime
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -26,7 +26,7 @@ func DetectContainerRuntime() ContainerRuntime {
 }
 
 func GetBaseImage() (string, error) {
-	buf, err := ioutil.ReadFile("/etc/os-release")
+	buf, err := os.ReadFile("/etc/os-release")
 	if err != nil {
 		return "", fmt.Errorf("Failed to read /etc/os-release: %v", err)
 	}
@@ -70,7 +70,7 @@ func GetSecurityAttributes() string {
 
 func readProc(filename string) (value string, err error) {
 	// #nosec G304
-	buf, err := ioutil.ReadFile(filename)
+	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return "", err
 	}

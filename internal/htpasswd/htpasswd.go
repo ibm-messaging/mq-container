@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020, 2021
+© Copyright IBM Corporation 2020, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package htpasswd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -79,7 +79,7 @@ func (htpfile mapHtPasswd) ReadHtPasswordFile(isTest bool) error {
 		file = "my.htpasswd"
 	}
 
-	pwdsBytes, err := ioutil.ReadFile(file)
+	pwdsBytes, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}
@@ -109,5 +109,5 @@ func (htpfile mapHtPasswd) updateHtPasswordFile(isTest bool) error {
 		file = "my.htpasswd"
 	}
 	// #nosec G306 - its a read by owner/s group, and pose no harm.
-	return ioutil.WriteFile(file, htpfile.GetBytes(), 0660)
+	return os.WriteFile(file, htpfile.GetBytes(), 0660)
 }
