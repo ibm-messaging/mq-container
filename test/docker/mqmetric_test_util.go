@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -47,7 +47,7 @@ func getMetrics(t *testing.T, port string) []mqmetric {
 		return returned
 	}
 	defer resp.Body.Close()
-	metricsRaw, err := ioutil.ReadAll(resp.Body)
+	metricsRaw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("Error reading metrics data: %v", err)
 		return returned

@@ -1,7 +1,8 @@
+//go:build mqdev
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2021
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,7 +24,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -130,7 +131,7 @@ func createTLSConfig(t *testing.T, certFile, password string) *tls.Config {
 		t.Fatal(err)
 	}
 	// Read in the cert file
-	cert, err := ioutil.ReadFile(certFile)
+	cert, err := os.ReadFile(certFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,7 +226,7 @@ func testRESTMessaging(t *testing.T, cli *client.Client, ID string, tlsConfig *t
 		t.Logf("HTTP response: %+v", resp)
 		t.Fail()
 	}
-	gotMessage, err := ioutil.ReadAll(resp.Body)
+	gotMessage, err := io.ReadAll(resp.Body)
 	//gotMessage := string(b)
 	if string(gotMessage) != string(putMessage) {
 		t.Errorf("Expected payload to be \"%s\"; got \"%s\"", putMessage, gotMessage)

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2021
+© Copyright IBM Corporation 2018, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"syscall"
 
@@ -78,7 +77,7 @@ func logTermination(args ...interface{}) {
 	// that Kubernetes will look for termination information.
 	log.Debugf("Writing termination message: %v", msg)
 	// #nosec G306 - its a read by owner/s group, and pose no harm.
-	err := ioutil.WriteFile("/run/termination-log", []byte(msg), 0660)
+	err := os.WriteFile("/run/termination-log", []byte(msg), 0660)
 	if err != nil {
 		log.Debug(err)
 	}

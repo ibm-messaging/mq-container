@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2022
+© Copyright IBM Corporation 2017, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -167,7 +166,7 @@ func terminationMessage(t *testing.T, cli *client.Client, ID string) string {
 		t.Log(err)
 		return ""
 	}
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	tr := tar.NewReader(bytes.NewReader(b))
 	_, err = tr.Next()
 	if err != nil {
@@ -175,7 +174,7 @@ func terminationMessage(t *testing.T, cli *client.Client, ID string) string {
 		return ""
 	}
 	// read the complete content of the file h.Name into the bs []byte
-	content, err := ioutil.ReadAll(tr)
+	content, err := io.ReadAll(tr)
 	if err != nil {
 		t.Log(err)
 		return ""
@@ -530,7 +529,7 @@ func getCoverageExitCode(t *testing.T, orig int64) int64 {
 	}
 	// Remove the file, ready for the next test
 	defer os.Remove(f)
-	buf, err := ioutil.ReadFile(f)
+	buf, err := os.ReadFile(f)
 	if err != nil {
 		t.Log(err)
 		return orig
@@ -823,7 +822,7 @@ func copyFromContainer(t *testing.T, cli *client.Client, id string, file string)
 		t.Fatal(err)
 	}
 	defer reader.Close()
-	b, err := ioutil.ReadAll(reader)
+	b, err := io.ReadAll(reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -890,7 +889,7 @@ func getMQVersion(t *testing.T, cli *client.Client) (string, error) {
 	return version, nil
 }
 
-//testLogFilePages validates that the specified number of logFilePages is present in the qm.ini file.
+// testLogFilePages validates that the specified number of logFilePages is present in the qm.ini file.
 func testLogFilePages(t *testing.T, cli *client.Client, id string, qmName string, expectedLogFilePages string) {
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/" + qmName + "/qm.ini")
 	_, iniContent := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
