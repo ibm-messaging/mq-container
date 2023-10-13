@@ -6,6 +6,18 @@
 * Fixed the signal handler so that it correctly processes control signals if a termination signal is received before startup is complete
 * The default value for the environment variable MQ_LOGGING_CONSOLE_SOURCE is now "qmgr,web" instead of "qmgr". 
 
+## 9.3.3.2-r1 (2023-10)
+
+* Updated to MQ version 9.3.3.0
+
+## 9.3.3.1-r1 (2023-08)
+
+* Updated to MQ version 9.3.3.0
+
+## 9.3.3.0-r2 (2023-07)
+
+* Updated to MQ version 9.3.3.0
+
 ## 9.3.3.0 (2023-06)
 
 * Updated to MQ version 9.3.3.0
