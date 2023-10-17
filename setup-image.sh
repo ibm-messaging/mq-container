@@ -76,5 +76,5 @@ sed -i 's/v7.0/v8.0/g' /opt/mqm/licenses/non_ibm_license.txt
 mkdir -p /licenses
 cp /opt/mqm/licenses/*.txt /licenses/
 
-# Update server.xml to include mqwebexternal.xml
-sed -i 's|<include location="mqwebuser.xml"/>|<include location="mqwebexternal.xml"/>\n    <include location="mqwebuser.xml"/>|' /opt/mqm/samp/web/server.xml
+# Update server.xml to include mqwebcontainer.xml & mqwebexternal.xml
+sed -i 's|<include location="mqwebuser.xml"/>|<include location="mqwebcontainer.xml"/>\n    <include location="mqwebexternal.xml"/>\n    <include location="mqwebuser.xml"/>|' /opt/mqm/samp/web/server.xml

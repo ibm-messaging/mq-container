@@ -1949,8 +1949,8 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 		symLinkName string
 	}{
 		{
-			origin:      "/etc/mqm/web/installations/Installation1/servers/mqweb/mqwebexternal.xml",
-			symLinkName: "-> /run/mqwebexternal.xml",
+			origin:      "/etc/mqm/web/installations/Installation1/servers/mqweb/mqwebcontainer.xml",
+			symLinkName: "-> /run/mqwebcontainer.xml",
 		},
 		{
 			origin:      "/etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml",
