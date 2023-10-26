@@ -4,6 +4,7 @@
 test/docker/coverage
 test/docker/vendor
 test/kubernetes/vendor
+test/messaging/target
 build
 coverage
 downloads
