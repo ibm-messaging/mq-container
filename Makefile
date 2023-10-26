@@ -84,9 +84,6 @@ MQ_ARCHIVE_DEV_TYPE=Linux
 BUILD_SERVER_CONTAINER=build-server
 # BUILD_SERVER_NETWORK is the name of the network to use for the web server container used at build time
 BUILD_SERVER_NETWORK=build
-# NUM_CPU is the number of CPUs available to Docker.  Used to control how many
-# test run in parallel
-NUM_CPU ?= $(or $(shell $(COMMAND) info --format "{{ .NCPU }}"),2)
 # BASE_IMAGE_TAG is a normalized version of BASE_IMAGE, suitable for use in a Docker tag
 BASE_IMAGE_TAG=$(lastword $(subst /, ,$(subst :,-,$(BASE_IMAGE))))
 #BASE_IMAGE_TAG=$(subst /,-,$(subst :,-,$(BASE_IMAGE)))
@@ -100,6 +97,14 @@ EMPTY:=
 SPACE:= $(EMPTY) $(EMPTY)
 # MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.2.0 instead of 9.2.0.0
 MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
+
+ifeq "$(COMMAND)" "podman"
+	NUM_CPU ?= $(or $(shell podman info --format "{{.Host.CPUs}}"),2)
+else ifeq "$(COMMAND)" "docker"
+	NUM_CPU ?= $(or $(shell docker info --format "{{ .NCPU }}"),2)
+else
+	NUM_CPU ?= 2
+endif
 
 ifneq (,$(findstring Microsoft,$(shell uname -r)))
 	DOWNLOADS_DIR=$(patsubst /mnt/c%,C:%,$(realpath ./downloads/))
@@ -287,10 +292,14 @@ test/container/vendor:
 test-unit:
 	$(COMMAND) build --target builder --file Dockerfile-server .
 
+define inspect-image
+	@$(COMMAND) inspect --format ">>> IMAGE UNDER TEST\n    RepoTags:     {{.RepoTags}}\n    RepoDigests:  {{.RepoDigests}}\n    Created:      {{.Created}}\n    Architecture: {{.Architecture}}" $1:$2
+endef
+
 .PHONY: test-advancedserver
 test-advancedserver: test/container/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
-	$(COMMAND) inspect $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
+	$(call inspect-image,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG))
 	cd test/container && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) $(TEST_OPTS_CONTAINER)
 
 .PHONY: build-devjmstest
@@ -301,7 +310,7 @@ build-devjmstest:
 .PHONY: test-devserver
 test-devserver: test/container/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
-	$(COMMAND) inspect $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
+	$(call inspect-image,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG))
 	cd test/container && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=false DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) -tags mqdev $(TEST_OPTS_CONTAINER)
 
 .PHONY: coverage
