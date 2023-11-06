@@ -27,7 +27,7 @@ env:
   global:
     - MAIN_BRANCH=v9.3.3
     - TAGCACHE_FILE=tagcache
-    - RELEASE=r1
+    - RELEASE=r2
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
@@ -61,8 +61,8 @@ jobs:
         - MQ_ARCHIVE_REPOSITORY=$MQ_933_ARCHIVE_REPOSITORY_AMD64
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_933_ARCHIVE_REPOSITORY_DEV_AMD64
       script:
-      - bash travis-build-scripts/travis-log-keepalive.sh &
-      - bash -e travis-build-scripts/run.sh
+        - bash travis-build-scripts/travis-log-keepalive.sh &
+        - bash -e travis-build-scripts/run.sh
     - stage: build
       if: branch = v9.3.3 OR tag =~ ^release-candidate*
       name: "Multi-Arch S390X build"
@@ -75,8 +75,8 @@ jobs:
         - MQ_ARCHIVE_REPOSITORY=$MQ_933_ARCHIVE_REPOSITORY_S390X
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_933_ARCHIVE_REPOSITORY_DEV_S390X
       script:
-      - bash travis-build-scripts/travis-log-keepalive.sh &
-      - bash -e travis-build-scripts/run.sh
+        - bash travis-build-scripts/travis-log-keepalive.sh &
+        - bash -e travis-build-scripts/run.sh
     - stage: build
       if: branch = v9.3.3 OR tag =~ ^release-candidate*
       name: "Multi-Arch PPC64LE build"
@@ -89,8 +89,8 @@ jobs:
         - MQ_ARCHIVE_REPOSITORY=$MQ_933_ARCHIVE_REPOSITORY_PPC64LE
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_933_ARCHIVE_REPOSITORY_DEV_PPC64LE
       script:
-      - bash travis-build-scripts/travis-log-keepalive.sh &
-      - bash -e travis-build-scripts/run.sh
+        - bash travis-build-scripts/travis-log-keepalive.sh &
+        - bash -e travis-build-scripts/run.sh
     - stage: push-manifest
       if: branch = v9.3.3 AND type != pull_request OR tag =~ ^release-candidate*
       name: "Push Manifest-list to registry"
