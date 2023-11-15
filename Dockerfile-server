@@ -32,8 +32,8 @@ USER 0
 WORKDIR $GO_WORKDIR/
 ADD $MQ_ARCHIVE /opt/mqm
 ENV CGO_CFLAGS="-I/opt/mqm/inc/" \
-    CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
-    PATH="${PATH}:/opt/mqm/bin"
+  CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
+  PATH="${PATH}:/opt/mqm/bin"
 COPY go.mod go.sum ./
 COPY cmd/ ./cmd
 COPY internal/ ./internal
@@ -62,27 +62,27 @@ ARG BASE_TAG
 ARG MQ_ARCHIVE
 WORKDIR /tmp/mq
 ENV genmqpkg_inc32=0 \
-    genmqpkg_incadm=1 \
-    genmqpkg_incamqp=0 \
-    genmqpkg_incams=1 \
-    genmqpkg_inccbl=0 \
-    genmqpkg_inccics=0 \
-    genmqpkg_inccpp=0 \
-    genmqpkg_incdnet=0 \
-    genmqpkg_incjava=1 \
-    genmqpkg_incjre=1 \
-    genmqpkg_incman=0 \
-    genmqpkg_incmqbc=0 \
-    genmqpkg_incmqft=0 \
-    genmqpkg_incmqsf=0 \
-    genmqpkg_incmqxr=0 \
-    genmqpkg_incnls=1 \
-    genmqpkg_incras=1 \
-    genmqpkg_incsamp=1 \
-    genmqpkg_incsdk=0 \
-    genmqpkg_inctls=1 \
-    genmqpkg_incunthrd=0 \
-    genmqpkg_incweb=1
+  genmqpkg_incadm=1 \
+  genmqpkg_incamqp=0 \
+  genmqpkg_incams=1 \
+  genmqpkg_inccbl=0 \
+  genmqpkg_inccics=0 \
+  genmqpkg_inccpp=0 \
+  genmqpkg_incdnet=0 \
+  genmqpkg_incjava=1 \
+  genmqpkg_incjre=1 \
+  genmqpkg_incman=0 \
+  genmqpkg_incmqbc=0 \
+  genmqpkg_incmqft=0 \
+  genmqpkg_incmqsf=0 \
+  genmqpkg_incmqxr=0 \
+  genmqpkg_incnls=1 \
+  genmqpkg_incras=1 \
+  genmqpkg_incsamp=1 \
+  genmqpkg_incsdk=0 \
+  genmqpkg_inctls=1 \
+  genmqpkg_incunthrd=0 \
+  genmqpkg_incweb=1
 ADD $MQ_ARCHIVE /opt/mqm-noinstall
 # Run genmqpkg to reduce the MQ packages included
 RUN /opt/mqm-noinstall/bin/genmqpkg.sh -b /opt/mqm-redux
@@ -96,17 +96,17 @@ ARG BASE_IMAGE
 ARG BASE_TAG
 ARG GO_WORKDIR
 LABEL summary="IBM MQ Advanced Server" \
-      description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
-      vendor="IBM" \
-      maintainer="IBM" \
-      distribution-scope="private" \
-      authoritative-source-url="https://www.ibm.com/software/passportadvantage/" \
-      url="https://www.ibm.com/products/mq/advanced" \
-      io.openshift.tags="mq messaging" \
-      io.k8s.display-name="IBM MQ Advanced Server" \
-      io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
-      base-image=$BASE_IMAGE \
-      base-image-release=$BASE_TAG
+  description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
+  vendor="IBM" \
+  maintainer="IBM" \
+  distribution-scope="private" \
+  authoritative-source-url="https://www.ibm.com/software/passportadvantage/" \
+  url="https://www.ibm.com/products/mq/advanced" \
+  io.openshift.tags="mq messaging" \
+  io.k8s.display-name="IBM MQ Advanced Server" \
+  io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
+  base-image=$BASE_IMAGE \
+  base-image-release=$BASE_TAG
 COPY --from=mq-redux /opt/mqm-redux/ /opt/mqm/
 COPY setup-image.sh /usr/local/bin/
 COPY install-mq-server-prereqs.sh /usr/local/bin/
@@ -169,19 +169,19 @@ ARG BASE_IMAGE
 ARG BASE_TAG
 ARG GO_WORKDIR
 LABEL summary="IBM MQ Advanced for Developers Server" \
-      description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
-      vendor="IBM" \
-      distribution-scope="private" \
-      authoritative-source-url="https://www.ibm.com/software/passportadvantage/" \
-      url="https://www.ibm.com/products/mq/advanced" \
-      io.openshift.tags="mq messaging" \
-      io.k8s.display-name="IBM MQ Advanced for Developers Server" \
-      io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
-      base-image=$BASE_IMAGE \
-      base-image-release=$BASE_TAG
+  description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
+  vendor="IBM" \
+  distribution-scope="private" \
+  authoritative-source-url="https://www.ibm.com/software/passportadvantage/" \
+  url="https://www.ibm.com/products/mq/advanced" \
+  io.openshift.tags="mq messaging" \
+  io.k8s.display-name="IBM MQ Advanced for Developers Server" \
+  io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
+  base-image=$BASE_IMAGE \
+  base-image-release=$BASE_TAG
 USER 0
 COPY --from=cbuilder /opt/app-root/src/authservice/mqhtpass/build/mqhtpass.so /opt/mqm/lib64/
-COPY etc/mqm/*.ini /etc/mqm/
+COPY etc/mqm/qm-service-component.ini /run
 COPY etc/mqm/mq.htpasswd.default /etc/mqm/
 COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
 RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
@@ -197,13 +197,16 @@ RUN ln -s /run/10-dev.mqsc /etc/mqm/10-dev.mqsc \
 RUN chown -R 1001:root /etc/mqm/* \
   && chmod -R g+w /etc/mqm/web \
   && chmod +x /usr/local/bin/runmq* \
-  && chmod 0660 /etc/mqm/mq.htpasswd.default
-  
+  && chmod 0660 /etc/mqm/mq.htpasswd.default \
+  # Allow contents of qm-service-component.ini to be cleaned if MQ_CONNAUTH_USE_HTP is not set to true
+  && chmod 0660 /run/qm-service-component.ini \
+  && ln -s /run/qm-service-component.ini /etc/mqm/qm-service-component.ini
+
 ENV MQ_DEV=true \
-    MQ_ENABLE_EMBEDDED_WEB_SERVER=1 \
-    MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost \
-    LD_LIBRARY_PATH=/opt/mqm/lib64 \
-    MQ_CONNAUTH_USE_HTP=true \
-    MQS_PERMIT_UNKNOWN_ID=true
+  MQ_ENABLE_EMBEDDED_WEB_SERVER=1 \
+  MQ_GENERATE_CERTIFICATE_HOSTNAME=localhost \
+  LD_LIBRARY_PATH=/opt/mqm/lib64 \
+  MQ_CONNAUTH_USE_HTP=true \
+  MQS_PERMIT_UNKNOWN_ID=true
 USER 1001
 ENTRYPOINT ["runmqdevserver"]

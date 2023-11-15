@@ -128,33 +128,43 @@ func doMain() error {
 		return err
 	}
 
-	// Copy default mq.htpasswd file to ephemeral volume
-	err = copy.CopyFile("/etc/mqm/mq.htpasswd.default", "/run/mq.htpasswd")
-	if err != nil {
-		logTermination(err)
-		return err
-	}
-
-	adminPassword, set := os.LookupEnv("MQ_ADMIN_PASSWORD")
-	if !set {
-		adminPassword = "passw0rd"
-		err = os.Setenv("MQ_ADMIN_PASSWORD", adminPassword)
+	// Enable mq htpasswd if MQ_CONNAUTH_USE_HTP is set true
+	// and either or both of MQ_APP_PASSWORD and MQ_ADMIN_PASSWORD
+	// environment variables specified.
+	enableHtPwd, set := os.LookupEnv("MQ_CONNAUTH_USE_HTP")
+	adminPassword, adminPwdset := os.LookupEnv("MQ_ADMIN_PASSWORD")
+	appPassword, appPwdset := os.LookupEnv("MQ_APP_PASSWORD")
+	if set && strings.EqualFold(enableHtPwd, "true") &&
+		(adminPwdset && len(strings.TrimSpace(adminPassword)) > 0 || appPwdset && len(strings.TrimSpace(appPassword)) > 0) {
+		// Copy default mq.htpasswd file to ephemeral volume
+		err = copy.CopyFile("/etc/mqm/mq.htpasswd.default", "/run/mq.htpasswd")
 		if err != nil {
-			logTerminationf("Error setting admin password variable: %v", err)
+			logTermination(err)
 			return err
 		}
-	}
-	err = htpasswd.SetPassword("admin", adminPassword, false)
-	if err != nil {
-		logTerminationf("Error setting admin password: %v", err)
-		return err
-	}
 
-	appPassword, set := os.LookupEnv("MQ_APP_PASSWORD")
-	if set {
-		err = htpasswd.SetPassword("app", appPassword, false)
+		if adminPwdset {
+			err = htpasswd.SetPassword("admin", adminPassword, false)
+			if err != nil {
+				logTerminationf("Error setting admin password: %v", err)
+				return err
+			}
+		}
+
+		if appPwdset {
+			err = htpasswd.SetPassword("app", appPassword, false)
+			if err != nil {
+				logTerminationf("Error setting app password: %v", err)
+				return err
+			}
+		}
+	} else {
+		// Clean contents of qm-service-component.ini if MQ_CONNAUTH_USE_HTP is not set to true
+		// so that mq.htpasswd exit is not loaded by queue manager
+		// #nosec G306 - its a write by owner/s group, and pose no harm.
+		err = os.WriteFile("/run/qm-service-component.ini", []byte(""), 0660)
 		if err != nil {
-			logTerminationf("Error setting app password: %v", err)
+			logTermination(err)
 			return err
 		}
 	}

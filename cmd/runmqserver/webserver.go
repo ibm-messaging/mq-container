@@ -35,14 +35,9 @@ func startWebServer(webKeystore, webkeystorePW, webTruststoreRef string) error {
 	log.Println("Starting web server")
 	// #nosec G204 - command is fixed, no injection vector
 	cmd := exec.Command("strmqweb")
-	// Set a default app password for the web server, if one isn't already set
-	_, set := os.LookupEnv("MQ_APP_PASSWORD")
-	if !set {
-		// Take all current environment variables, and add the app password
-		cmd.Env = append(os.Environ(), "MQ_APP_PASSWORD=passw0rd")
-	} else {
-		cmd.Env = os.Environ()
-	}
+
+	// Pass all the environment to MQ Web Server JVM
+	cmd.Env = os.Environ()
 
 	// TLS enabled
 	if webKeystore != "" {

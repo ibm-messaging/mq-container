@@ -111,3 +111,15 @@ func (htpfile mapHtPasswd) updateHtPasswordFile(isTest bool) error {
 	// #nosec G306 - its a read by owner/s group, and pose no harm.
 	return os.WriteFile(file, htpfile.GetBytes(), 0660)
 }
+
+func IsEnabled() bool {
+	htpassEnabled := false
+	enableHtPwd, set := os.LookupEnv("MQ_CONNAUTH_USE_HTP")
+	adminPassword, adminPwdset := os.LookupEnv("MQ_ADMIN_PASSWORD")
+	appPassword, appPwdset := os.LookupEnv("MQ_APP_PASSWORD")
+	if set && strings.EqualFold(enableHtPwd, "true") &&
+		(adminPwdset && len(strings.TrimSpace(adminPassword)) > 0 || appPwdset && len(strings.TrimSpace(appPassword)) > 0) {
+		htpassEnabled = true
+	}
+	return htpassEnabled
+}

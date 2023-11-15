@@ -39,7 +39,7 @@ import (
 )
 
 const defaultAdminPassword string = "passw0rd"
-const defaultAppPasswordOS string = ""
+const defaultAppPasswordOS string = "passw0rd"
 const defaultAppPasswordWeb string = "passw0rd"
 
 // Disable TLS verification (server uses a self-signed certificate by default,
@@ -296,9 +296,14 @@ func testRESTMessaging(t *testing.T, cli ce.ContainerInterface, ID string, tlsCo
 	}
 	logHTTPResponse(t, resp)
 	if resp != nil && resp.StatusCode != http.StatusCreated {
-		t.Errorf("Expected HTTP status code %v from 'POST to queue'; got %v", http.StatusOK, resp.StatusCode)
-		t.Logf("HTTP response: %+v", resp)
-		t.Fail()
+		if strings.Contains(resp.Status, errorExpected) {
+			t.Logf("HTTP Response code is as expected. %s", resp.Status)
+			return
+		} else {
+			t.Errorf("Expected HTTP status code %v from 'POST to queue'; got %v", http.StatusOK, resp.StatusCode)
+			t.Logf("HTTP response: %+v", resp)
+			t.Fail()
+		}
 	}
 
 	req, err = http.NewRequest("DELETE", url, nil)

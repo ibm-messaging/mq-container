@@ -698,7 +698,7 @@ func TestRedactInvalidMQSC(t *testing.T) {
 	defer deleteImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
-		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "MQ_CONNAUTH_USE_HTP=true", "MQ_APP_PASSWORD=passw0rd"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -1418,6 +1418,8 @@ func TestLoggingConsoleSource(t *testing.T) {
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER=true",
+			"MQ_CONNAUTH_USE_HTP=true",
+			"MQ_APP_PASSWORD=passw0rd",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -1608,6 +1610,8 @@ func TestLoggingConsoleSetToWeb(t *testing.T) {
 			"MQ_LOGGING_CONSOLE_SOURCE=web",
 			"MQ_LOGGING_CONSOLE_EXCLUDE_ID=CWWKG0028A,CWWKS4105I",
 			"MQ_LOGGING_CONSOLE_FORMAT=json",
+			"MQ_CONNAUTH_USE_HTP=true",
+			"MQ_APP_PASSWORD=passw0rd",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
@@ -1684,6 +1688,8 @@ func TestWebLogsHeaderRotation(t *testing.T) {
 			"MQ_QMGR_NAME=qm1",
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER=true",
 			"MQ_LOGGING_CONSOLE_SOURCE=qmgr,web",
+			"MQ_CONNAUTH_USE_HTP=true",
+			"MQ_APP_PASSWORD=passw0rd",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)

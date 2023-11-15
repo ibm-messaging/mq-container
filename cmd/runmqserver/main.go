@@ -27,6 +27,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/copy"
 	"github.com/ibm-messaging/mq-container/internal/fips"
 	"github.com/ibm-messaging/mq-container/internal/ha"
+	"github.com/ibm-messaging/mq-container/internal/htpasswd"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/internal/tls"
@@ -329,7 +330,7 @@ func doMain() error {
 		}
 	}
 
-	if *devFlag {
+	if *devFlag && htpasswd.IsEnabled() {
 		_, err = mirrorHTPasswdLogs(ctx, &wg, name, newQM, mf)
 		if err != nil {
 			logTermination(err)
@@ -354,7 +355,7 @@ func doMain() error {
 
 	// This is a developer image only change
 	// This workaround should be removed and handled via <crtmqm -ii>, when inimerge is ready to handle stanza ordering
-	if *devFlag {
+	if *devFlag && htpasswd.IsEnabled() {
 		err = updateQMini(name)
 		if err != nil {
 			logTermination(err)

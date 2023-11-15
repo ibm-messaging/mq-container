@@ -40,6 +40,9 @@ func TestDevGoldenPath(t *testing.T) {
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qm,
 			"DEBUG=true",
+			"MQ_CONNAUTH_USE_HTP=true",
+			"MQ_APP_PASSWORD=" + defaultAppPasswordWeb,
+			"MQ_ADMIN_PASSWORD=" + defaultAdminPassword,
 		},
 	}
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443, 1414})
@@ -76,7 +79,9 @@ func TestDevSecure(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qm,
+			"MQ_CONNAUTH_USE_HTP=true",
 			"MQ_APP_PASSWORD=" + appPassword,
+			"MQ_ADMIN_PASSWORD=" + defaultAdminPassword,
 			"DEBUG=1",
 			"WLP_LOGGING_MESSAGE_FORMAT=JSON",
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER_LOG=true",
@@ -137,6 +142,7 @@ func TestDevWebDisabled(t *testing.T) {
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
+			"MQ_APP_PASSWORD=" + defaultAppPasswordOS,
 		},
 	}
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{1414})
@@ -487,7 +493,9 @@ func TestDevSecureFIPSTrueWeb(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qm,
+			"MQ_CONNAUTH_USE_HTP=true",
 			"MQ_APP_PASSWORD=" + appPassword,
+			"MQ_ADMIN_PASSWORD=" + defaultAdminPassword,
 			"DEBUG=1",
 			"WLP_LOGGING_MESSAGE_FORMAT=JSON",
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER_LOG=true",
@@ -557,7 +565,9 @@ func TestDevSecureFalseFIPSWeb(t *testing.T) {
 		Env: []string{
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=" + qm,
+			"MQ_CONNAUTH_USE_HTP=true",
 			"MQ_APP_PASSWORD=" + appPassword,
+			"MQ_ADMIN_PASSWORD=" + defaultAdminPassword,
 			"DEBUG=1",
 			"WLP_LOGGING_MESSAGE_FORMAT=JSON",
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER_LOG=true",
@@ -624,6 +634,7 @@ func TestSSLFIPSTrueNoCerts(t *testing.T) {
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
+			"MQ_CONNAUTH_USE_HTP=true",
 			"MQ_APP_PASSWORD=" + appPassword,
 			"MQ_QMGR_NAME=QM1",
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
@@ -756,4 +767,83 @@ func TestSSLFIPSBadCerts(t *testing.T) {
 
 	// Stop the container cleanly
 	stopContainer(t, cli, ID)
+}
+
+// Test REST messaging with default developer configuration
+// MQ_CONNAUTH_USE_HTP is set to true in the dev image. The test
+// specifies password for admin userId via MQ_ADMIN_PASSWORD
+// environment variable but then attempts to do REST messaging
+// usig 'app' userId. HTTP 401 is expected.
+func TestDevNoDefCreds(t *testing.T) {
+	t.Parallel()
+	cli := ce.NewContainerClient()
+	qm := "qm1"
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=" + qm,
+			"DEBUG=true",
+			"MQ_ADMIN_PASSWORD=" + defaultAdminPassword,
+		},
+	}
+	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443, 1414})
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	waitForWebReady(t, cli, id, insecureTLSConfig)
+	// Expect a 401 Unauthorized HTTP Response
+	testRESTMessaging(t, cli, id, insecureTLSConfig, qm, "app", defaultAppPasswordWeb, "401 Unauthorized")
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+// MQ_CONNAUTH_USE_HTP is set to false. There should be no 'mqhtpasswd:' entries in pod log
+// eventhough MQ_ADMIN_PASSWORD is also specified.
+func TestDevNoDefCredsLogMessageConnAuthFalse(t *testing.T) {
+	t.Parallel()
+	testDevNoDefaultCredsUtil(t, []string{"MQ_CONNAUTH_USE_HTP=false", "MQ_ADMIN_PASSWORD=passw0rd"}, false)
+}
+
+// MQ_CONNAUTH_USE_HTP is true with neither Admin nor App password specified,
+// so there should be no 'mqhtpasswd:' entries in the pod log
+func TestDevNoDefCredsLogMessageConnAuthTrue(t *testing.T) {
+	t.Parallel()
+	testDevNoDefaultCredsUtil(t, []string{"MQ_CONNAUTH_USE_HTP=true"}, false)
+}
+
+// MQ_CONNAUTH_USE_HTP is true with App password specified,
+// there should be at least one 'mqhtpasswd:' entry in the pod log
+func TestDevNoDefCredsLogMessageConnAuthTrueWithPwd(t *testing.T) {
+	t.Parallel()
+	testDevNoDefaultCredsUtil(t, []string{"MQ_CONNAUTH_USE_HTP=true", "MQ_APP_PASSWORD=passw0rd"}, true)
+}
+
+// Utility function for testing mqhtpasswd
+func testDevNoDefaultCredsUtil(t *testing.T, mqhtpassEnvs []string, htpwdInLog bool) {
+	cli := ce.NewContainerClient()
+	qm := "QM1"
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=" + qm,
+			"DEBUG=true",
+		},
+	}
+
+	containerConfig.Env = append(containerConfig.Env, mqhtpassEnvs...)
+
+	id := runContainerWithPorts(t, cli, &containerConfig, []int{1414})
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	defer stopContainer(t, cli, id)
+
+	logs := inspectLogs(t, cli, id)
+	if htpwdInLog {
+		if !strings.Contains(logs, "mqhtpass:") {
+			t.Errorf("Exepcted mqhtpass keyword in pod logs but did not find any.")
+		}
+	} else {
+		if strings.Contains(logs, "mqhtpass:") {
+			t.Errorf("Didn't exepct mqhtpass keyword in pod logs but found at least one.")
+		}
+	}
 }

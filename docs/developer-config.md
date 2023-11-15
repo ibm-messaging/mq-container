@@ -7,15 +7,15 @@ If you build this image with MQ Advanced for Developers, then an optional set of
 The MQ Developer Defaults supports some customization options, these are all controlled using environment variables:
 
 * **MQ_DEV** - Set this to `false` to stop the default objects being created.
-* **MQ_ADMIN_PASSWORD** - Changes the password of the `admin` user. Must be at least 8 characters long.
-* **MQ_APP_PASSWORD** - Changes the password of the app user. If set, this will cause the `DEV.APP.SVRCONN` channel to become secured and only allow connections that supply a valid userid and password. Must be at least 8 characters long.
+* **MQ_ADMIN_PASSWORD** - Specify the password of the `admin` user. Must be at least 8 characters long.
+* **MQ_APP_PASSWORD** - Specify the password of the `app` user. If set, this will cause the `DEV.APP.SVRCONN` channel to become secured and only allow connections that supply a valid userid and password. Must be at least 8 characters long.
 
 ## Details of the default configuration
 
 The following users are created:
 
-* User **admin** for administration.  Default password is **passw0rd**.
-* User **app** for messaging (in a group called `mqclient`).  No password by default.
+* User **admin** for administration.  No password by default. Password must be set using **MQ_ADMIN_PASSWORD**  environment variable.
+* User **app** for messaging (in a group called `mqclient`).  No password by default. Password must be set using **MQ_APP_PASSWORD**  environment variable.
 
 Users in `mqclient` group have been given access connect to all queues and topics starting with `DEV.**` and have `put`, `get`, `pub`, `sub`, `browse` and `inq` permissions.
 
@@ -41,8 +41,6 @@ When you navigate to this page you may be presented with a security exception wa
 If you choose to accept the security warning, you will be presented with the login menu for the IBM MQ Web Console. The default login for the console is:
 
 * **User:** admin
-* **Password:** passw0rd
-
-If you wish to change the password for the admin user, this can be done using the `MQ_ADMIN_PASSWORD` environment variable.
+* **Password:** No password by default. The password for the admin user must be specified using the `MQ_ADMIN_PASSWORD` environment variable.
 
 If you do not wish the web console to run, you can disable it by setting the environment variable `MQ_ENABLE_EMBEDDED_WEB_SERVER` to `false`.
