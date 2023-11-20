@@ -8,7 +8,7 @@ test/messaging/target
 build
 coverage
 downloads
-incubating/mqipt/ms81*
+incubating/mqipt/*-IBM-MQIPT-*.tar*
 vendor/github.com/prometheus/client_model/bin/
 vendor/github.com/prometheus/client_model/.classpath
 vendor/github.com/prometheus/client_model/.project

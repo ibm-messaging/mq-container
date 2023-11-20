@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,21 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ibmcom/ibmjava:jre
-
-ARG IPTFILE=ms81_2.1.0.4_amd64_linux_2.tar
-
-COPY $IPTFILE /opt/
-
-RUN rm -rf /var/lib/apt/lists/* \
-  && cd /opt/ \
-  && tar xvf ./$IPTFILE \
-  && chmod -R a-w /opt/mqipt
-
-ENV MQIPT_PATH=/opt/mqipt
-
+FROM registry.access.redhat.com/ubi8/ubi-minimal
+ARG MQIPT_ARCHIVE=./IBM-MQIPT-LinuxX64.tar
+RUN microdnf --disableplugin=subscription-manager install bash grep procps-ng sed which
+ADD $MQIPT_ARCHIVE /opt
 COPY startMQIPT.sh /usr/local/bin
-
+ENV MQIPT_PATH=/opt/mqipt
+RUN chown -R 1001:0 $MQIPT_PATH \
+  && chown -R 1001:0 /usr/local/bin/startMQIPT.sh \
+  && chmod -R 550 /usr/local/bin/startMQIPT.sh
 VOLUME /var/mqipt
-
+USER 1001
 ENTRYPOINT ["startMQIPT.sh"]

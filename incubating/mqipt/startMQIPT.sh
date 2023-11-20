@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2018
+# © Copyright IBM Corporation 2018, 2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 stop()
 {
-    /opt/mqipt/bin/mqiptAdmin -stop
+    /opt/mqipt/bin/mqiptAdmin -stop -n ipt1
 }
 
 trap stop SIGTERM SIGINT
 
 # Run MQIPT and then wait on the process to end.
-/opt/mqipt/bin/mqipt /var/mqipt &
-MQIPTPROCESS=$!
+/opt/mqipt/bin/mqipt /var/mqipt -n ipt1 &
 
+MQIPTPROCESS=$!
 wait "$MQIPTPROCESS"
