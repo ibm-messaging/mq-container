@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019
+© Copyright IBM Corporation 2019, 2023
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/ibm-messaging/mq-container/internal/pathutils"
 )
 
 // CheckFileSource checks the filename is valid
@@ -29,7 +31,7 @@ func CheckFileSource(fileName string) error {
 
 	prefixes := []string{"bin", "boot", "dev", "lib", "lib64", "proc", "sbin", "sys"}
 	for _, prefix := range prefixes {
-		if strings.HasPrefix(absFile, filepath.Join("/", prefix)) {
+		if strings.HasPrefix(absFile, pathutils.CleanPath("/", prefix)) {
 			return fmt.Errorf("Filename resolves to invalid path '%v'", absFile)
 		}
 	}
