@@ -21,7 +21,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/ibm-messaging/mq-container/internal/copy"
 	"github.com/ibm-messaging/mq-container/internal/htpasswd"
 	"github.com/ibm-messaging/mq-container/pkg/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
@@ -136,8 +135,9 @@ func doMain() error {
 	appPassword, appPwdset := os.LookupEnv("MQ_APP_PASSWORD")
 	if set && strings.EqualFold(enableHtPwd, "true") &&
 		(adminPwdset && len(strings.TrimSpace(adminPassword)) > 0 || appPwdset && len(strings.TrimSpace(appPassword)) > 0) {
-		// Copy default mq.htpasswd file to ephemeral volume
-		err = copy.CopyFile("/etc/mqm/mq.htpasswd.default", "/run/mq.htpasswd")
+		// Create an empty mq.htpasswd file on ephemeral volume
+		// #nosec G306 - its a write by owner/s group, and pose no harm.
+		err = os.WriteFile("/run/mq.htpasswd", []byte(""), 0660)
 		if err != nil {
 			logTermination(err)
 			return err

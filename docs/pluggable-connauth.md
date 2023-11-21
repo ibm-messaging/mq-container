@@ -12,7 +12,7 @@ This pluggable authentication mode is to allow developers using the mq-container
 
 ### Preparing htpasswd file
 
- 1. A default `mq.htpasswd.default` file is provided and placed under /etc/mqm/ directory inside the container.
+ 1. The `mq.htpasswd` file gets generated and placed under /run/ directory inside the container when the password for `admin` or `app` users is set via environment variables. No default password is set for these users.
  2. You can set the password for user `admin` by setting the environment variable `MQ_ADMIN_PASSWORD`.
  3. You can add user `app` into mq.htpasswd file by setting the environment variable `MQ_APP_PASSWORD`. This user `app` can be used to access `DEV.*` objects of the queue manager.
 

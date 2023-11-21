@@ -182,7 +182,6 @@ LABEL summary="IBM MQ Advanced for Developers Server" \
 USER 0
 COPY --from=cbuilder /opt/app-root/src/authservice/mqhtpass/build/mqhtpass.so /opt/mqm/lib64/
 COPY etc/mqm/qm-service-component.ini /run
-COPY etc/mqm/mq.htpasswd.default /etc/mqm/
 COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
 RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
   && sleep 1 \
@@ -197,7 +196,6 @@ RUN ln -s /run/10-dev.mqsc /etc/mqm/10-dev.mqsc \
 RUN chown -R 1001:root /etc/mqm/* \
   && chmod -R g+w /etc/mqm/web \
   && chmod +x /usr/local/bin/runmq* \
-  && chmod 0660 /etc/mqm/mq.htpasswd.default \
   # Allow contents of qm-service-component.ini to be cleaned if MQ_CONNAUTH_USE_HTP is not set to true
   && chmod 0660 /run/qm-service-component.ini \
   && ln -s /run/qm-service-component.ini /etc/mqm/qm-service-component.ini
