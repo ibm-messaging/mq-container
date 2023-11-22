@@ -21,6 +21,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/ibm-messaging/mq-container/internal/copy"
 	"github.com/ibm-messaging/mq-container/internal/htpasswd"
 	"github.com/ibm-messaging/mq-container/pkg/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
@@ -127,6 +128,14 @@ func doMain() error {
 		return err
 	}
 
+	// Initialise /run/qm-service-component.ini file on ephemeral volume
+	// #nosec G306 - its a read by owner/s group, and pose no harm.
+	err = os.WriteFile("/run/qm-service-component.ini", []byte(""), 0660)
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
 	// Enable mq htpasswd if MQ_CONNAUTH_USE_HTP is set true
 	// and either or both of MQ_APP_PASSWORD and MQ_ADMIN_PASSWORD
 	// environment variables specified.
@@ -135,6 +144,11 @@ func doMain() error {
 	appPassword, appPwdset := os.LookupEnv("MQ_APP_PASSWORD")
 	if set && strings.EqualFold(enableHtPwd, "true") &&
 		(adminPwdset && len(strings.TrimSpace(adminPassword)) > 0 || appPwdset && len(strings.TrimSpace(appPassword)) > 0) {
+		err = copy.CopyFile("/etc/mqm/qm-service-component.ini.default", "/run/qm-service-component.ini")
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 		// Create an empty mq.htpasswd file on ephemeral volume
 		// #nosec G306 - its a write by owner/s group, and pose no harm.
 		err = os.WriteFile("/run/mq.htpasswd", []byte(""), 0660)
@@ -157,15 +171,6 @@ func doMain() error {
 				logTerminationf("Error setting app password: %v", err)
 				return err
 			}
-		}
-	} else {
-		// Clean contents of qm-service-component.ini if MQ_CONNAUTH_USE_HTP is not set to true
-		// so that mq.htpasswd exit is not loaded by queue manager
-		// #nosec G306 - its a write by owner/s group, and pose no harm.
-		err = os.WriteFile("/run/qm-service-component.ini", []byte(""), 0660)
-		if err != nil {
-			logTermination(err)
-			return err
 		}
 	}
 

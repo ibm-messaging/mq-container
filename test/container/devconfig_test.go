@@ -847,3 +847,68 @@ func testDevNoDefaultCredsUtil(t *testing.T, mqhtpassEnvs []string, htpwdInLog b
 		}
 	}
 }
+
+// Test REST messaging with default developer configuration
+// MQ_CONNAUTH_USE_HTP is set to true in the dev image with
+// read only root filesystem enabled. The test
+// specifies password for admin userId via MQ_ADMIN_PASSWORD
+// environment variable but then attempts to do REST messaging
+// usig 'app' userId. HTTP 401 is expected.
+func TestRORFSDevNoAppPassword(t *testing.T) {
+	t.Parallel()
+	cli := ce.NewContainerClient()
+	qm := "QM1"
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=" + qm,
+			"DEBUG=true",
+			"MQ_CONNAUTH_USE_HTP=true",
+			"MQ_ADMIN_PASSWORD=" + defaultAdminPassword,
+		},
+		Image: imageName(),
+	}
+
+	// Create volumes for mounting into container
+	ephData := createVolume(t, cli, "ephData"+t.Name())
+	defer removeVolume(t, cli, ephData)
+	ephRun := createVolume(t, cli, "ephRun"+t.Name())
+	defer removeVolume(t, cli, ephRun)
+	ephTmp := createVolume(t, cli, "ephTmp"+t.Name())
+	defer removeVolume(t, cli, ephTmp)
+
+	hostConfig := ce.ContainerHostConfig{
+		Binds: []string{
+			coverageBind(t),
+			ephRun + ":/run",
+			ephTmp + ":/tmp",
+			ephData + ":/mnt/mqm",
+		},
+		ReadOnlyRootfs: true, //Enable read only root filesystem
+	}
+	// Assign a random port for the web server on the host
+	var binding ce.PortBinding
+	ports := []int{9443}
+	for _, p := range ports {
+		port := fmt.Sprintf("%v/tcp", p)
+		binding = ce.PortBinding{
+			ContainerPort: port,
+			HostIP:        "0.0.0.0",
+		}
+		hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
+	}
+	networkingConfig := ce.ContainerNetworkSettings{}
+	id, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanContainer(t, cli, id)
+	startContainer(t, cli, id)
+
+	waitForReady(t, cli, id)
+	waitForWebReady(t, cli, id, insecureTLSConfig)
+	// Expect a 401 Unauthorized HTTP Response
+	testRESTMessaging(t, cli, id, insecureTLSConfig, qm, "app", defaultAppPasswordWeb, "401 Unauthorized")
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
