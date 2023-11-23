@@ -54,7 +54,7 @@ B.2 The PKCS#11 component of IBM Global Security Kit
 B.3 IBM Security Directory Server V6.4 components
 B.4 InstallAnywhere 2020
 B.5 IBM WebSphere Liberty
-B.6 IBM MQ Advanced certified container
+B.6 IBM MQ Advanced container
 
 Section C. below contains provisions relating to certain other components of the Program, as follows:-
 
@@ -7915,7 +7915,7 @@ END OF B.5 IBM WebSphere Liberty
 ===============================================================================
 
 ===============================================================================
-B.6 IBM MQ Advanced certified container
+B.6 IBM MQ Advanced container
 ===============================================================================
 TABLE OF CONTENTS
 
@@ -11002,7 +11002,7 @@ END OF ZOPE PUBLIC LICENSE NOTICES AND INFORMATION
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ===============================================================================
-END OF B.6 IBM MQ Advanced certified container
+END OF B.6 IBM MQ Advanced container
 ===============================================================================
 
 ==========================================================================
