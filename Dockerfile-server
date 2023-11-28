@@ -119,7 +119,6 @@ RUN env \
   && chown -R 1001:root /opt/mqm/*
 COPY --from=builder $GO_WORKDIR/runmqserver /usr/local/bin/
 COPY --from=builder $GO_WORKDIR/chkmq* /usr/local/bin/
-COPY NOTICES.txt /opt/mqm/licenses/notices-container.txt
 COPY ha/native-ha.ini.tpl /etc/mqm/native-ha.ini.tpl
 # Copy web XML files
 COPY web /etc/mqm/web
