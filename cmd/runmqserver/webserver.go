@@ -59,8 +59,15 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 
 	webKeystore := ""
 
+	// Copy server.xml file to ensure that we have the latest expected contents - this file is only populated on QM creation
+	err := copy.CopyFile("/opt/mqm/samp/web/server.xml", "/var/mqm/web/installations/Installation1/servers/mqweb/server.xml")
+	if err != nil {
+		log.Error(err)
+		return "", err
+	}
+
 	// Configure TLS for the Web Console
-	err := tls.ConfigureWebTLS(keyLabel, log)
+	err = tls.ConfigureWebTLS(keyLabel, log)
 	if err != nil {
 		return "", err
 	}
