@@ -25,7 +25,7 @@ func TestClean(t *testing.T) {
 
 	tests := []struct {
 		uncleaned string
-		cons      string
+		filepath      string
 		cleaned   string
 	}{
 		{"/a/rooted/path", "some.file", "/a/rooted/path/some.file"},
@@ -36,7 +36,7 @@ func TestClean(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		cleaned := CleanPath(test.uncleaned, test.cons)
+		cleaned := CleanPath(test.uncleaned, test.filepath)
 
 		if !strings.EqualFold(cleaned, test.cleaned) {
 			t.Fatalf("file path sanitisation failed. Expected %s but got %s\n", test.cleaned, cleaned)
