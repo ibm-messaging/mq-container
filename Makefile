@@ -561,8 +561,8 @@ update-release-information:
 	sed -i.bak 's/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:.*-amd64/MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:$(MQ_VERSION)-amd64/g' docs/testing.md && rm docs/testing.md.bak
 	$(eval MQ_VERSION_VR=$(subst $(SPACE),.,$(wordlist 1,2,$(subst .,$(SPACE),$(MQ_VERSION_VRM)))))
 	sed -i.bak 's/knowledgecenter\/SSFKSJ_.*\/com/knowledgecenter\/SSFKSJ_${MQ_VERSION_VR}.0\/com/g' docs/usage.md && rm docs/usage.md.bak
-	$(eval MQ_VERSION_VRM_FLAT=$(shell echo '${MQ_VERSION_VRM}' | sed "s/\.//g"))
-	sed -i.bak 's/MQ_..._ARCHIVE_REPOSITORY/MQ_${MQ_VERSION_VRM_FLAT}_ARCHIVE_REPOSITORY/g' .travis.yml && rm .travis.yml.bak
+	$(eval MQ_VERSION_VRM_FLAT=$(shell echo '${MQ_VERSION_VRM}' | sed "s/\./_/g"))
+	sed -i.bak 's/MQ_._._._ARCHIVE_REPOSITORY/MQ_${MQ_VERSION_VRM_FLAT}_ARCHIVE_REPOSITORY/g' .travis.yml && rm .travis.yml.bak
 
 COMMAND_SERVER_VERSION=$(shell $(COMMAND) version --format "{{ .Server.Version }}")
 COMMAND_CLIENT_VERSION=$(shell $(COMMAND) version --format "{{ .Client.Version }}")
