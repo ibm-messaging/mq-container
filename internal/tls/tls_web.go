@@ -18,10 +18,10 @@ package tls
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/ibm-messaging/mq-container/internal/keystore"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
+	"github.com/ibm-messaging/mq-container/internal/pathutils"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
@@ -54,7 +54,7 @@ func ConfigureWebKeystore(p12Truststore KeyStoreData, keyLabel string) (string, 
 	if keyLabel != "" {
 		webKeystore = keyLabel + ".p12"
 	}
-	webKeystoreFile := filepath.Join(keystoreDirDefault, webKeystore)
+	webKeystoreFile := pathutils.CleanPath(keystoreDirDefault, webKeystore)
 
 	// Check if a new self-signed certificate should be generated
 	if keyLabel == "" {
