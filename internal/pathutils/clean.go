@@ -14,26 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package filecheck
+// Package pathutils contains code to provide sanitised file paths
+package pathutils
 
 import (
-	"fmt"
+	"path"
 	"path/filepath"
-	"strings"
-
-	"github.com/ibm-messaging/mq-container/internal/pathutils"
 )
 
-// CheckFileSource checks the filename is valid
-func CheckFileSource(fileName string) error {
-
-	absFile, _ := filepath.Abs(fileName)
-
-	prefixes := []string{"bin", "boot", "dev", "lib", "lib64", "proc", "sbin", "sys"}
-	for _, prefix := range prefixes {
-		if strings.HasPrefix(absFile, pathutils.CleanPath("/", prefix)) {
-			return fmt.Errorf("Filename resolves to invalid path '%v'", absFile)
-		}
+// CleanPath returns the result of joining a series of sanitised file paths (preventing directory traversal for each path)
+// If the first path is relative, a relative path is returned
+func CleanPath(paths ...string) string {
+	if len(paths) == 0 {
+		return ""
 	}
-	return nil
+	var combined string
+	if !path.IsAbs(paths[0]) {
+		combined = "./"
+	}
+	for _, part := range paths {
+		combined = filepath.Join(combined, filepath.FromSlash(path.Clean("/"+part)))
+	}
+	return combined
 }
