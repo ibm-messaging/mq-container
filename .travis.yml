@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018, 2023
+# © Copyright IBM Corporation 2018, 2024
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ go_import_path: "github.com/ibm-messaging/mq-container"
 #     - downloads
 
 jobs:
+  allow_failures:
+    - script: bash -e travis-build-scripts/trigger-release-checks.sh
   include:
     - stage: basic-build
       if: branch != v9.3.3 AND tag IS blank
@@ -97,6 +99,10 @@ jobs:
       env:
         - PUSH_MANIFEST_ONLY=true
       script: bash -e travis-build-scripts/run.sh
+    - stage: trigger-release-checks
+      if: branch = v9.3.3 AND type != pull_request OR tag =~ ^release-candidate*
+      name: "Trigger release-checks build"
+      script: bash -e travis-build-scripts/trigger-release-checks.sh
 
 before_install:
   - make install-build-deps
