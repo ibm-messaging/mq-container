@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2019, 2020
+# © Copyright IBM Corporation 2024
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,8 +26,7 @@ TICK="\xE2\x9C\x94"
 CROSS="\xE2\x9C\x97"
 GREENTICK=${GREEN}${TICK}${END}
 REDCROSS=${RED}${CROSS}${END}
-
-echo "${GREENRIGHTARROW} Attempting to trigger new release-checks build"
+printf "${GREENRIGHTARROW} Attempting to trigger new release-checks build\n"
 
 repo_name=$(echo "${TRAVIS_REPO_SLUG}" | cut -d'/' -f2-)
 
@@ -35,8 +34,8 @@ request_body="{ \"request\": { \"message\": \"Trigger release checks build from 
 
 request_response="$(curl -X POST -H "Content-Type: application/json" -H "Travis-API-Version: 3" -H "Authorization: token ${TRAVIS_TOKEN}" -d "${request_body}" https://v3.travis.ibm.com/api/repo/mq-cloudpak%2Frelease-checks/requests -o /dev/null -w "%{http_code}" -s)"
 if [ "$request_response" != "202" ]; then
-    echo "${REDCROSS} ${RED}Could not create new request${END}"
+    printf "${REDCROSS} ${RED}Could not create new request${END}\n"
     exit 1
 else
-    echo "${GREENTICK} Successfully created new request"
+    printf "${GREENTICK} Successfully created new request\n"
 fi
