@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import (
 	"bufio"
 	"errors"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/pathutils"
 )
 
 // QueueManager describe high-level configuration information for a queue manager
@@ -78,7 +78,7 @@ func GetQueueManager(name string) (*QueueManager, error) {
 // GetErrorLogDirectory returns the directory holding the error logs for the
 // specified queue manager
 func GetErrorLogDirectory(qm *QueueManager) string {
-	return filepath.Join(GetDataDirectory(qm), "errors")
+	return pathutils.CleanPath(GetDataDirectory(qm), "errors")
 }
 
 // GetDataDirectory returns the data directory for the specified queue manager
@@ -87,6 +87,6 @@ func GetDataDirectory(qm *QueueManager) string {
 		// Data path has been set explicitly (e.g. for multi-instance queue manager)
 		return qm.DataPath
 	} else {
-		return filepath.Join(qm.Prefix, "qmgrs", qm.Directory)
+		return pathutils.CleanPath(qm.Prefix, "qmgrs", qm.Directory)
 	}
 }

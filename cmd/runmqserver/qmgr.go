@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2023
+© Copyright IBM Corporation 2017, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -28,6 +27,7 @@ import (
 	containerruntime "github.com/ibm-messaging/mq-container/internal/containerruntime"
 	"github.com/ibm-messaging/mq-container/internal/mqscredact"
 	"github.com/ibm-messaging/mq-container/internal/mqversion"
+	"github.com/ibm-messaging/mq-container/internal/pathutils"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 )
 
@@ -84,7 +84,7 @@ func createQueueManager(name string, devMode bool) (bool, error) {
 
 	// Check if 'qm.ini' configuration file exists for the queue manager
 	// TODO : handle possible race condition - use a file lock?
-	_, err = os.Stat(filepath.Join(dataDir, "qm.ini"))
+	_, err = os.Stat(pathutils.CleanPath(dataDir, "qm.ini"))
 	if err != nil {
 		// If 'qm.ini' is not found - run 'crtmqm' to create a new queue manager
 		args := getCreateQueueManagerArgs(mounts, name, devMode)
@@ -111,7 +111,7 @@ func createQueueManager(name string, devMode bool) (bool, error) {
 // readQMIni reads the qm.ini file and returns it as a byte array
 // This function is specific to comply with the nosec.
 func readQMIni(dataDir string) ([]byte, error) {
-	qmgrDir := filepath.Join(dataDir, "qm.ini")
+	qmgrDir := pathutils.CleanPath(dataDir, "qm.ini")
 	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
 	iniFileBytes, err := os.ReadFile(qmgrDir)
 	if err != nil {
@@ -233,9 +233,9 @@ func isStandbyQueueManager(name string) (bool, error) {
 }
 
 func getQueueManagerDataDir(mounts map[string]string, name string) string {
-	dataDir := filepath.Join("/var/mqm/qmgrs", name)
+	dataDir := pathutils.CleanPath("/var/mqm/qmgrs", name)
 	if _, ok := mounts["/mnt/mqm-data"]; ok {
-		dataDir = filepath.Join("/mnt/mqm-data/qmgrs", name)
+		dataDir = pathutils.CleanPath("/mnt/mqm-data/qmgrs", name)
 	}
 	return dataDir
 }
@@ -316,7 +316,7 @@ func updateQMini(qmname string) error {
 		return err
 	}
 	dataDir := getQueueManagerDataDir(mounts, replaceCharsInQMName(qmname))
-	qmgrDir := filepath.Join(dataDir, "qm.ini")
+	qmgrDir := pathutils.CleanPath(dataDir, "qm.ini")
 	//read the initial version.
 	// #nosec G304 - qmgrDir filepath is derived from dspmqinf
 	iniFileBytes, err := os.ReadFile(qmgrDir)
