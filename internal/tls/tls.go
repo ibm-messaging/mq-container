@@ -33,6 +33,7 @@ import (
 
 	"github.com/ibm-messaging/mq-container/internal/keystore"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
+	"github.com/ibm-messaging/mq-container/internal/pathutils"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
@@ -175,7 +176,7 @@ func generateAllKeystores(keystoreDir string, p12TruststoreRequired bool) (TLSSt
 	}
 
 	// Create the CMS Keystore
-	cmsKeystore.Keystore = keystore.NewCMSKeyStore(filepath.Join(keystoreDir, cmsKeystoreName), cmsKeystore.Password)
+	cmsKeystore.Keystore = keystore.NewCMSKeyStore(pathutils.CleanPath(keystoreDir, cmsKeystoreName), cmsKeystore.Password)
 	err = cmsKeystore.Keystore.Create()
 	if err != nil {
 		return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create CMS Keystore: %v", err)
@@ -183,7 +184,7 @@ func generateAllKeystores(keystoreDir string, p12TruststoreRequired bool) (TLSSt
 
 	// Create the PKCS#12 Truststore (if required)
 	if p12TruststoreRequired {
-		p12Truststore.Keystore = keystore.NewPKCS12KeyStore(filepath.Join(keystoreDir, p12TruststoreName), p12Truststore.Password)
+		p12Truststore.Keystore = keystore.NewPKCS12KeyStore(pathutils.CleanPath(keystoreDir, p12TruststoreName), p12Truststore.Password)
 		err = p12Truststore.Keystore.Create()
 		if err != nil {
 			return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create PKCS#12 Truststore: %v", err)
@@ -205,7 +206,7 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 
 		// Process each set of keys - each set should contain files: *.key & *.crt
 		for _, keySet := range keyList {
-			keys, _ := os.ReadDir(filepath.Join(keyDir, keySet.Name()))
+			keys, _ := os.ReadDir(pathutils.CleanPath(keyDir, keySet.Name()))
 
 			// Ensure the label of the set of keys does not match the name of the PKCS#12 Truststore
 			if keySet.Name() == p12TruststoreName[0:len(p12TruststoreName)-len(filepath.Ext(p12TruststoreName))] {
@@ -234,16 +235,17 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 			if err != nil {
 				return "", fmt.Errorf("Failed to encode PKCS#12 Keystore %s: %v", keySet.Name()+".p12", err)
 			}
+			keystorePath := pathutils.CleanPath(keystoreDir, keySet.Name()+".p12")
 			// #nosec G306 - this gives permissions to owner/s group only.
-			err = os.WriteFile(filepath.Join(keystoreDir, keySet.Name()+".p12"), file, 0644)
+			err = os.WriteFile(keystorePath, file, 0644)
 			if err != nil {
-				return "", fmt.Errorf("Failed to write PKCS#12 Keystore %s: %v", filepath.Join(keystoreDir, keySet.Name()+".p12"), err)
+				return "", fmt.Errorf("Failed to write PKCS#12 Keystore %s: %v", keystorePath, err)
 			}
 
 			// Import the new PKCS#12 Keystore into the CMS Keystore
-			err = tlsStore.Keystore.Keystore.Import(filepath.Join(keystoreDir, keySet.Name()+".p12"), tlsStore.Keystore.Password)
+			err = tlsStore.Keystore.Keystore.Import(keystorePath, tlsStore.Keystore.Password)
 			if err != nil {
-				return "", fmt.Errorf("Failed to import keys from %s into CMS Keystore: %v", filepath.Join(keystoreDir, keySet.Name()+".p12"), err)
+				return "", fmt.Errorf("Failed to import keys from %s into CMS Keystore: %v", keystorePath, err)
 			}
 
 			// Relabel the certificate in the CMS Keystore
@@ -271,14 +273,15 @@ func processTrustCertificates(tlsStore *TLSStore, trustDir string) error {
 
 		// Process each set of keys
 		for _, trustSet := range trustList {
-			keys, _ := os.ReadDir(filepath.Join(trustDir, trustSet.Name()))
+			keys, _ := os.ReadDir(pathutils.CleanPath(trustDir, trustSet.Name()))
 
 			for _, key := range keys {
 				if strings.HasSuffix(key.Name(), ".crt") {
+					trustSetPath := pathutils.CleanPath(trustDir, trustSet.Name(), key.Name())
 					// #nosec G304 - filename variable is derived from contents of 'trustDir' which is a defined constant
-					file, err := os.ReadFile(filepath.Join(trustDir, trustSet.Name(), key.Name()))
+					file, err := os.ReadFile(trustSetPath)
 					if err != nil {
-						return fmt.Errorf("Failed to read file %s: %v", filepath.Join(trustDir, trustSet.Name(), key.Name()), err)
+						return fmt.Errorf("Failed to read file %s: %v", trustSetPath, err)
 					}
 
 					for string(file) != "" {
@@ -334,15 +337,16 @@ func processPrivateKey(keyDir string, keySetName string, keys []os.DirEntry) (in
 
 	for _, key := range keys {
 
+		privateKeyPath := pathutils.CleanPath(keyDir, keySetName, key.Name())
 		if strings.HasSuffix(key.Name(), ".key") {
 			// #nosec G304 - filename variable is derived from contents of 'keyDir' which is a defined constant
-			file, err := os.ReadFile(filepath.Join(keyDir, keySetName, key.Name()))
+			file, err := os.ReadFile(privateKeyPath)
 			if err != nil {
-				return nil, "", fmt.Errorf("Failed to read private key %s: %v", filepath.Join(keyDir, keySetName, key.Name()), err)
+				return nil, "", fmt.Errorf("Failed to read private key %s: %v", privateKeyPath, err)
 			}
 			block, _ := pem.Decode(file)
 			if block == nil {
-				return nil, "", fmt.Errorf("Failed to decode private key %s: pem.Decode returned nil", filepath.Join(keyDir, keySetName, key.Name()))
+				return nil, "", fmt.Errorf("Failed to decode private key %s: pem.Decode returned nil", privateKeyPath)
 			}
 
 			// Check if the private key is PKCS1
@@ -351,7 +355,7 @@ func processPrivateKey(keyDir string, keySetName string, keys []os.DirEntry) (in
 				// Check if the private key is PKCS8
 				privateKey, err = x509.ParsePKCS8PrivateKey(block.Bytes)
 				if err != nil {
-					return nil, "", fmt.Errorf("Failed to parse private key %s: %v", filepath.Join(keyDir, keySetName, key.Name()), err)
+					return nil, "", fmt.Errorf("Failed to parse private key %s: %v", privateKeyPath, err)
 				}
 			}
 			keyPrefix = key.Name()[0 : len(key.Name())-len(filepath.Ext(key.Name()))]
@@ -369,19 +373,20 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 
 	for _, key := range keys {
 
+		keystorePath := pathutils.CleanPath(keyDir, keySetName, key.Name())
 		if strings.HasPrefix(key.Name(), keyPrefix) && strings.HasSuffix(key.Name(), ".crt") {
 			// #nosec G304 - filename variable is derived from contents of 'keyDir' which is a defined constant
-			file, err := os.ReadFile(filepath.Join(keyDir, keySetName, key.Name()))
+			file, err := os.ReadFile(keystorePath)
 			if err != nil {
-				return nil, nil, fmt.Errorf("Failed to read public certificate %s: %v", filepath.Join(keyDir, keySetName, key.Name()), err)
+				return nil, nil, fmt.Errorf("Failed to read public certificate %s: %v", keystorePath, err)
 			}
 			block, _ := pem.Decode(file)
 			if block == nil {
-				return nil, nil, fmt.Errorf("Failed to decode public certificate %s: pem.Decode returned nil", filepath.Join(keyDir, keySetName, key.Name()))
+				return nil, nil, fmt.Errorf("Failed to decode public certificate %s: pem.Decode returned nil", keystorePath)
 			}
 			publicCertificate, err = x509.ParseCertificate(block.Bytes)
 			if err != nil {
-				return nil, nil, fmt.Errorf("Failed to parse public certificate %s: %v", filepath.Join(keyDir, keySetName, key.Name()), err)
+				return nil, nil, fmt.Errorf("Failed to parse public certificate %s: %v", keystorePath, err)
 			}
 
 			// Add to known certificates for the CMS Keystore
@@ -392,9 +397,9 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 
 		} else if strings.HasSuffix(key.Name(), ".crt") {
 			// #nosec G304 - filename variable is derived from contents of 'keyDir' which is a defined constant
-			file, err := os.ReadFile(filepath.Join(keyDir, keySetName, key.Name()))
+			file, err := os.ReadFile(keystorePath)
 			if err != nil {
-				return nil, nil, fmt.Errorf("Failed to read CA certificate %s: %v", filepath.Join(keyDir, keySetName, key.Name()), err)
+				return nil, nil, fmt.Errorf("Failed to read CA certificate %s: %v", keystorePath, err)
 			}
 
 			for string(file) != "" {
@@ -420,7 +425,7 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 
 				certificate, err := x509.ParseCertificate(block.Bytes)
 				if err != nil {
-					return nil, nil, fmt.Errorf("Failed to parse CA certificate %s: %v", filepath.Join(keyDir, keySetName, key.Name()), err)
+					return nil, nil, fmt.Errorf("Failed to parse CA certificate %s: %v", keystorePath, err)
 				}
 				caCertificate = append(caCertificate, certificate)
 			}
@@ -467,7 +472,7 @@ func relabelCertificate(newLabel string, cmsKeystore *KeyStoreData) error {
 // addCertificatesToTruststore adds trust certificates to the PKCS#12 Truststore
 func addCertificatesToTruststore(p12Truststore *KeyStoreData) error {
 
-	temporaryPemFile := filepath.Join("/tmp", "trust.pem")
+	temporaryPemFile := pathutils.CleanPath("/tmp", "trust.pem")
 	_, err := os.Stat(temporaryPemFile)
 	if err == nil {
 		err = os.Remove(temporaryPemFile)
@@ -509,7 +514,7 @@ func addCertificatesToTruststore(p12Truststore *KeyStoreData) error {
 // addCertificatesToCMSKeystore adds trust certificates to the CMS keystore
 func addCertificatesToCMSKeystore(cmsKeystore *KeyStoreData) error {
 
-	temporaryPemFile := filepath.Join("/tmp", "cmsTrust.pem")
+	temporaryPemFile := pathutils.CleanPath("/tmp", "cmsTrust.pem")
 	_, err := os.Stat(temporaryPemFile)
 	if err == nil {
 		err = os.Remove(temporaryPemFile)
