@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/ibm-messaging/mq-container/internal/pathutils"
 )
 
 // CheckFileSource checks the filename is valid
@@ -29,7 +31,7 @@ func CheckFileSource(fileName string) error {
 
 	prefixes := []string{"bin", "boot", "dev", "lib", "lib64", "proc", "sbin", "sys"}
 	for _, prefix := range prefixes {
-		if strings.HasPrefix(absFile, filepath.Join("/", prefix)) {
+		if strings.HasPrefix(absFile, pathutils.CleanPath("/", prefix)) {
 			return fmt.Errorf("Filename resolves to invalid path '%v'", absFile)
 		}
 	}

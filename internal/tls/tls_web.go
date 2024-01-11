@@ -18,9 +18,9 @@ package tls
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/ibm-messaging/mq-container/internal/keystore"
+	"github.com/ibm-messaging/mq-container/internal/pathutils"
 )
 
 // webKeystoreDefault is the name of the default web server Keystore
@@ -37,8 +37,8 @@ func ConfigureWebTLS(keyLabel string) error {
 	webConfigDir := "/etc/mqm/web/installations/Installation1/servers/mqweb"
 	tls := "tls.xml"
 
-	tlsConfig := filepath.Join(webConfigDir, tls)
-	newTLSConfig := filepath.Join(webConfigDir, tls+".tpl")
+	tlsConfig := pathutils.CleanPath(webConfigDir, tls)
+	newTLSConfig := pathutils.CleanPath(webConfigDir, tls+".tpl")
 
 	err := os.Remove(tlsConfig)
 	if err != nil {
@@ -60,7 +60,7 @@ func ConfigureWebKeystore(p12Truststore KeyStoreData, webKeystore string) (strin
 	if webKeystore == "" {
 		webKeystore = webKeystoreDefault
 	}
-	webKeystoreFile := filepath.Join(keystoreDirDefault, webKeystore)
+	webKeystoreFile := pathutils.CleanPath(keystoreDirDefault, webKeystore)
 
 	// Check if a new self-signed certificate should be generated
 	genHostName := os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME")
