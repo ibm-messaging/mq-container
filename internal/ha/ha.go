@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020, 2023
+© Copyright IBM Corporation 2020, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,49 +28,114 @@ import (
 
 // ConfigureNativeHA configures native high availability
 func ConfigureNativeHA(log *logger.Logger) error {
-
-	templateMap := map[string]string{}
-	templateMap["Name"] = os.Getenv("HOSTNAME")
-	templateMap["NativeHAInstance0_Name"] = os.Getenv("MQ_NATIVE_HA_INSTANCE_0_NAME")
-	templateMap["NativeHAInstance1_Name"] = os.Getenv("MQ_NATIVE_HA_INSTANCE_1_NAME")
-	templateMap["NativeHAInstance2_Name"] = os.Getenv("MQ_NATIVE_HA_INSTANCE_2_NAME")
-	templateMap["NativeHAInstance0_ReplicationAddress"] = os.Getenv("MQ_NATIVE_HA_INSTANCE_0_REPLICATION_ADDRESS")
-	templateMap["NativeHAInstance1_ReplicationAddress"] = os.Getenv("MQ_NATIVE_HA_INSTANCE_1_REPLICATION_ADDRESS")
-	templateMap["NativeHAInstance2_ReplicationAddress"] = os.Getenv("MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS")
-
-	if os.Getenv("MQ_NATIVE_HA_TLS") == "true" {
-		keyLabel, _, _, err := tls.ConfigureHATLSKeystore()
-		if err != nil {
-			return err
-		}
-		templateMap["CertificateLabel"] = keyLabel
-
-		keyRepository, ok := os.LookupEnv("MQ_NATIVE_HA_KEY_REPOSITORY")
-		if !ok {
-			keyRepository = "/run/runmqserver/ha/tls/key"
-		}
-		templateMap["KeyRepository"] = keyRepository
-
-		cipherSpec, ok := os.LookupEnv("MQ_NATIVE_HA_CIPHERSPEC")
-		if ok {
-			templateMap["CipherSpec"] = cipherSpec
-		}
-
-		// If FIPS is enabled, then set SSLFipsRequired to Yes
-		if fips.IsFIPSEnabled() {
-			templateMap["SSLFipsRequired"] = "Yes"
-		} else {
-			templateMap["SSLFipsRequired"] = "No"
-		}
-	}
-
 	fileLink := "/run/native-ha.ini"
 	templateFile := "/etc/mqm/native-ha.ini.tpl"
+	fipsAvailable := fips.IsFIPSEnabled()
+	return loadConfigAndGenerate(templateFile, fileLink, fipsAvailable, log)
+}
 
-	err := mqtemplate.ProcessTemplateFile(templateFile, fileLink, templateMap, log)
+func loadConfigAndGenerate(templatePath string, outputPath string, fipsAvailable bool, log *logger.Logger) error {
+	cfg, err := loadConfigFromEnv(log)
 	if err != nil {
 		return err
 	}
 
+	err = cfg.updateTLS()
+	if err != nil {
+		return err
+	}
+
+	return cfg.generate(templatePath, outputPath, log)
+}
+
+func loadConfigFromEnv(log *logger.Logger) (*haConfig, error) {
+	cfg := &haConfig{
+		Name: os.Getenv("HOSTNAME"),
+		Instances: [3]haInstance{
+			{
+				Name:               os.Getenv("MQ_NATIVE_HA_INSTANCE_0_NAME"),
+				ReplicationAddress: os.Getenv("MQ_NATIVE_HA_INSTANCE_0_REPLICATION_ADDRESS"),
+			},
+			{
+				Name:               os.Getenv("MQ_NATIVE_HA_INSTANCE_1_NAME"),
+				ReplicationAddress: os.Getenv("MQ_NATIVE_HA_INSTANCE_1_REPLICATION_ADDRESS"),
+			},
+			{
+				Name:               os.Getenv("MQ_NATIVE_HA_INSTANCE_2_NAME"),
+				ReplicationAddress: os.Getenv("MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS"),
+			},
+		},
+		tlsEnabled:    os.Getenv("MQ_NATIVE_HA_TLS") == "true",
+		cipherSpec:    os.Getenv("MQ_NATIVE_HA_CIPHERSPEC"),
+		keyRepository: os.Getenv("MQ_NATIVE_HA_KEY_REPOSITORY"),
+	}
+
+	return cfg, nil
+}
+
+type haConfig struct {
+	Name      string
+	Instances [3]haInstance
+
+	tlsEnabled       bool
+	cipherSpec       string
+	certificateLabel string
+	keyRepository    string
+	fipsAvailable    bool
+}
+
+func (h haConfig) CertificateLabel() string {
+	if !h.tlsEnabled {
+		return ""
+	}
+	return h.certificateLabel
+}
+
+func (h haConfig) CipherSpec() string {
+	if !h.tlsEnabled {
+		return ""
+	}
+	return h.cipherSpec
+}
+
+func (h haConfig) SSLFipsRequired() string {
+	if !h.tlsEnabled {
+		return ""
+	}
+	if h.fipsAvailable {
+		return "Yes"
+	}
+	return "No"
+}
+
+func (h *haConfig) updateTLS() error {
+	if !h.tlsEnabled {
+		return nil
+	}
+
+	keyLabel, _, _, err := tls.ConfigureHATLSKeystore()
+	if err != nil {
+		return err
+	}
+	h.certificateLabel = keyLabel
+
+	h.fipsAvailable = fips.IsFIPSEnabled()
+
 	return nil
+}
+
+func (h haConfig) generate(templatePath string, outputPath string, log *logger.Logger) error {
+	return mqtemplate.ProcessTemplateFile(templatePath, outputPath, h, log)
+}
+
+func (h haConfig) KeyRepository() string {
+	if h.keyRepository != "" {
+		return h.keyRepository
+	}
+	return "/run/runmqserver/ha/tls/key"
+}
+
+type haInstance struct {
+	Name               string
+	ReplicationAddress string
 }

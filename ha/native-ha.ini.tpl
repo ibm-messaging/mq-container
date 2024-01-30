@@ -10,12 +10,8 @@ NativeHALocalInstance:
   SSLFipsRequired={{ .SSLFipsRequired }}
   {{- end }}
   {{- end }}
+{{- range $idx, $instance := .Instances}}
 NativeHAInstance:
-  Name={{ .NativeHAInstance0_Name }}
-  ReplicationAddress={{ .NativeHAInstance0_ReplicationAddress }}
-NativeHAInstance:
-  Name={{ .NativeHAInstance1_Name }}
-  ReplicationAddress={{ .NativeHAInstance1_ReplicationAddress }}
-NativeHAInstance:
-  Name={{ .NativeHAInstance2_Name }}
-  ReplicationAddress={{ .NativeHAInstance2_ReplicationAddress }}
+  Name={{ $instance.Name }}
+  ReplicationAddress={{ $instance.ReplicationAddress }}
+{{- end}}
