@@ -1,3 +1,5 @@
+package containerengine
+
 /*
 © Copyright IBM Corporation 2017, 2024
 
@@ -13,7 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package containerengine
 
 import (
 	"context"
@@ -60,6 +61,16 @@ type ContainerInterface interface {
 type ContainerClient struct {
 	ContainerTool string
 	Version       string
+	logger        commandLogger
+	logOptions    logOptions
+}
+
+type commandLogger interface {
+	Logf(format string, args ...any)
+}
+
+type logOptions struct {
+	logCommands bool
 }
 
 // objects
@@ -191,15 +202,19 @@ type PortBinding struct {
 
 // NewContainerClient returns a new container client
 // Defaults to using podman
-func NewContainerClient() ContainerClient {
+func NewContainerClient(options ...ContainterClientOption) ContainerClient {
 	tool, set := os.LookupEnv("COMMAND")
 	if !set {
 		tool = "podman"
 	}
-	return ContainerClient{
+	client := ContainerClient{
 		ContainerTool: tool,
 		Version:       GetContainerToolVersion(tool),
 	}
+	for _, option := range options {
+		option(&client)
+	}
+	return client
 }
 
 // GetContainerToolVersion returns the version of the container tool being used
@@ -242,7 +257,7 @@ func (cli ContainerClient) ImageInspectWithFormat(format string, ID string) (str
 	if format != "" {
 		args = append(args, []string{argFormat, format}...)
 	}
-	output, err := exec.Command(cli.ContainerTool, args...).Output()
+	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
 		return "", err
 	}
@@ -258,7 +273,7 @@ func (cli ContainerClient) ContainerInspectWithFormat(format string, ID string) 
 	if format != "" {
 		args = append(args, []string{argFormat, format}...)
 	}
-	output, err := exec.Command(cli.ContainerTool, args...).Output()
+	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
 		return "", err
 	}
@@ -272,7 +287,7 @@ func (cli ContainerClient) GetContainerPort(ID string, hostPort int) (string, er
 		ID,
 		strconv.Itoa(hostPort),
 	}
-	output, err := exec.Command(cli.ContainerTool, args...).Output()
+	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
 		return "", err
 	}
@@ -301,7 +316,7 @@ func (cli ContainerClient) CopyFromContainer(container, srcPath string) ([]byte,
 		container + ":" + srcPath,
 		tmpDir + "/.",
 	}
-	_, err = exec.Command(cli.ContainerTool, args...).CombinedOutput()
+	_, err = cli.logCommand(cli.ContainerTool, args...).CombinedOutput()
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +340,7 @@ func (cli ContainerClient) ContainerInspect(containerID string) (ContainerDetail
 		inspect,
 		containerID,
 	}
-	output, err := exec.Command(cli.ContainerTool, args...).Output()
+	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
 		return ContainerDetails{}, err
 	}
@@ -343,7 +358,7 @@ func (cli ContainerClient) ContainerStop(container string, timeout *time.Duratio
 		stopContainer,
 		container,
 	}
-	_, err := exec.Command(cli.ContainerTool, args...).Output()
+	_, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	return err
 }
 
@@ -355,7 +370,7 @@ func (cli ContainerClient) ContainerKill(container string, signal string) error 
 	if signal != "" {
 		args = append(args, []string{argSignal, signal}...)
 	}
-	_, err := exec.Command(cli.ContainerTool, args...).Output()
+	_, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	return err
 }
 
@@ -370,7 +385,7 @@ func (cli ContainerClient) ContainerRemove(container string, options ContainerRe
 	if options.RemoveVolumes {
 		args = append(args, argVolumes)
 	}
-	_, err := exec.Command(cli.ContainerTool, args...).Output()
+	_, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
 		//Silently error as the exit code 125 is present on sucessful deletion
 		if strings.Contains(err.Error(), "125") {
@@ -391,7 +406,7 @@ func (cli ContainerClient) ExecContainer(ID string, user string, cmd []string) (
 	args = append(args, ID)
 	args = append(args, cmd...)
 	ctx := context.Background()
-	output, err := exec.CommandContext(ctx, cli.ContainerTool, args...).CombinedOutput()
+	output, err := cli.logCommandContext(ctx, cli.ContainerTool, args...).CombinedOutput()
 	if err != nil {
 		if err.(*exec.ExitError) != nil {
 			return err.(*exec.ExitError).ExitCode(), string(output)
@@ -407,7 +422,7 @@ func (cli ContainerClient) ContainerStart(container string, options ContainerSta
 		startContainer,
 		container,
 	}
-	_, err := exec.Command(cli.ContainerTool, args...).Output()
+	_, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	return err
 }
 
@@ -428,7 +443,7 @@ func (cli ContainerClient) ContainerWait(ctx context.Context, container string, 
 	resultC := make(chan int64)
 	errC := make(chan error, 1)
 
-	output, err := exec.CommandContext(ctx, cli.ContainerTool, args...).Output()
+	output, err := cli.logCommandContext(ctx, cli.ContainerTool, args...).Output()
 	if err != nil {
 		errC <- err
 		return resultC, errC
@@ -452,7 +467,7 @@ func (cli ContainerClient) GetContainerLogs(ctx context.Context, container strin
 		getLogs,
 		container,
 	}
-	output, err := exec.Command(cli.ContainerTool, args...).CombinedOutput()
+	output, err := cli.logCommand(cli.ContainerTool, args...).CombinedOutput()
 	if err != nil {
 		return "", err
 	}
@@ -464,7 +479,7 @@ func (cli ContainerClient) NetworkCreate(name string, options NetworkCreateOptio
 		objNetwork,
 		create,
 	}
-	netID, err := exec.Command(cli.ContainerTool, args...).CombinedOutput()
+	netID, err := cli.logCommand(cli.ContainerTool, args...).CombinedOutput()
 	if err != nil {
 		return "", err
 	}
@@ -478,7 +493,7 @@ func (cli ContainerClient) NetworkRemove(network string) error {
 		objNetwork,
 		remove,
 	}
-	_, err := exec.Command(cli.ContainerTool, args...).CombinedOutput()
+	_, err := cli.logCommand(cli.ContainerTool, args...).CombinedOutput()
 	return err
 }
 
@@ -491,7 +506,7 @@ func (cli ContainerClient) VolumeCreate(options VolumeCreateOptions) (string, er
 	if options.Driver != "" {
 		args = append(args, []string{argDriver, options.Driver}...)
 	}
-	output, err := exec.Command(cli.ContainerTool, args...).Output()
+	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
 		return "", err
 	}
@@ -508,7 +523,7 @@ func (cli ContainerClient) VolumeRemove(volumeID string, force bool) error {
 	if force {
 		args = append(args, argForce)
 	}
-	_, err := exec.Command(cli.ContainerTool, args...).Output()
+	_, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	return err
 }
 
@@ -531,7 +546,7 @@ func (cli ContainerClient) ImageBuild(context io.Reader, tag string, dockerfilen
 		dfn := strings.ReplaceAll(dockerfilename, "Dockerfile", "")
 		args = append(args, dfn)
 	}
-	output, err := exec.Command(cli.ContainerTool, args...).Output()
+	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
 		return "", err
 	}
@@ -548,7 +563,7 @@ func (cli ContainerClient) ImageRemove(image string, options ImageRemoveOptions)
 	if options.Force {
 		args = append(args, argForce)
 	}
-	_, err := exec.Command(cli.ContainerTool, args...).Output()
+	_, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
 		return false, err
 	}
@@ -564,12 +579,26 @@ func (cli ContainerClient) ContainerCreate(config *ContainerConfig, hostConfig *
 	args = getHostConfigArgs(args, hostConfig)
 	args = getNetworkConfigArgs(args, networkingConfig)
 	args = getContainerConfigArgs(args, config, cli.ContainerTool)
-	output, err := exec.Command(cli.ContainerTool, args...).Output()
+	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	lines := strings.Split(strings.ReplaceAll(string(output), "\r\n", "\n"), "\n")
 	if err != nil {
-		return lines[0], err
+		return strings.Join(lines, "\n"), err
 	}
 	return lines[0], nil
+}
+
+func (cli ContainerClient) logCommandContext(ctx context.Context, name string, arg ...string) *exec.Cmd {
+	if cli.logger != nil && cli.logOptions.logCommands {
+		cli.logger.Logf("Running command: %s %s", name, strings.Join(arg, " "))
+	}
+	return exec.CommandContext(ctx, name, arg...)
+}
+
+func (cli ContainerClient) logCommand(name string, arg ...string) *exec.Cmd {
+	if cli.logger != nil && cli.logOptions.logCommands {
+		cli.logger.Logf("Running command: %s %s", name, strings.Join(arg, " "))
+	}
+	return exec.Command(name, arg...)
 }
 
 // getContainerConfigArgs converts a ContainerConfig into a set of cli arguments
