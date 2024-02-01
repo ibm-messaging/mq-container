@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/copy"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
@@ -95,6 +96,7 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 		}
 		return "", err
 	}
+
 	const prefix string = "/etc/mqm/web"
 	err = filepath.Walk(prefix, func(from string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -125,10 +127,21 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 					return err
 				}
 			}
-			err := copy.CopyFile(from, to)
-			if err != nil {
-				log.Error(err)
-				return err
+
+			// Use a symlink for file 'mqwebuser.xml'
+			if strings.HasSuffix(from, "/mqwebuser.xml") {
+				err = os.Symlink(from, to)
+				if err != nil {
+					log.Error(err)
+					return err
+				}
+
+			} else {
+				err := copy.CopyFile(from, to)
+				if err != nil {
+					log.Error(err)
+					return err
+				}
 			}
 		}
 		return nil
