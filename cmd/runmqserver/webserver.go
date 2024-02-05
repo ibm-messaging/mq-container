@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2023
+© Copyright IBM Corporation 2018, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 				}
 			}
 
-			// Use a symlink for file 'mqwebuser.xml'
+			// Use a symlink for file 'mqwebuser.xml', so that if it contains a secret, it doesn't get persisted to a volume
 			if strings.HasSuffix(from, "/mqwebuser.xml") {
 				err = os.Symlink(from, to)
 				if err != nil {
