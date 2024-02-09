@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2023
+© Copyright IBM Corporation 2017, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ibm-messaging/mq-container/test/container/pathutils"
 )
 
 type ContainerInterface interface {
@@ -305,13 +307,13 @@ func (cli ContainerClient) CopyFromContainer(container, srcPath string) ([]byte,
 	}
 	//Get file name
 	fname := filepath.Base(srcPath)
-	data, err := os.ReadFile(filepath.Join(tmpDir, fname))
+	data, err := os.ReadFile(pathutils.CleanPath(tmpDir, fname))
 	if err != nil {
 		return nil, err
 	}
 
 	//Remove the file
-	err = os.Remove(filepath.Join(tmpDir, fname))
+	err = os.Remove(pathutils.CleanPath(tmpDir, fname))
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2023
+© Copyright IBM Corporation 2018, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import (
 	"time"
 
 	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
+	"github.com/ibm-messaging/mq-container/test/container/pathutils"
 )
 
 const defaultAdminPassword string = "passw0rd"
@@ -82,15 +83,15 @@ func waitForWebReady(t *testing.T, cli ce.ContainerInterface, ID string, tlsConf
 
 // tlsDir returns the host directory where the test certificate(s) are located
 func tlsDir(t *testing.T, unixPath bool) string {
-	return filepath.Join(getCwd(t, unixPath), "../tls")
+	return pathutils.CleanPath(filepath.Dir(getCwd(t, unixPath)), "../tls")
 }
 
 func tlsDirWithCA(t *testing.T, unixPath bool) string {
-	return filepath.Join(getCwd(t, unixPath), "../tlscacert")
+	return pathutils.CleanPath(filepath.Dir(getCwd(t, unixPath)), "../tlscacert")
 }
 
 func tlsDirInvalid(t *testing.T, unixPath bool) string {
-	return filepath.Join(getCwd(t, unixPath), "../tlsinvalidcert")
+	return pathutils.CleanPath(filepath.Dir(getCwd(t, unixPath)), "../tlsinvalidcert")
 }
 
 // runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID
