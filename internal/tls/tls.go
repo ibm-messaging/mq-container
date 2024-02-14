@@ -24,7 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"crypto/rand"
 	"crypto/sha512"
 	"crypto/x509"
 	"encoding/pem"
@@ -231,7 +230,7 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 			}
 
 			// Create a new PKCS#12 Keystore - containing private key, public certificate & optional CA certificate
-			file, err := pkcs.Encode(rand.Reader, privateKey, publicCertificate, caCertificate, tlsStore.Keystore.Password)
+			file, err := pkcs.Modern.Encode(privateKey, publicCertificate, caCertificate, tlsStore.Keystore.Password)
 			if err != nil {
 				return "", fmt.Errorf("Failed to encode PKCS#12 Keystore %s: %v", keySet.Name()+".p12", err)
 			}
