@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2020
+© Copyright IBM Corporation 2018, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ func (ks *KeyStore) Import(inputFile, password string) error {
 
 // CreateSelfSignedCertificate creates a self-signed certificate in the keystore
 func (ks *KeyStore) CreateSelfSignedCertificate(label, dn, hostname string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-create", "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn, "-san_dnsname", hostname, "-size 2048 -sig_alg sha256 -eku serverAuth")
+	out, _, err := command.Run(ks.command, "-cert", "-create", "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn, "-san_dnsname", hostname, "-size 2048 -sig_alg sha512 -eku serverAuth")
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -create\": %v %s", ks.command, err, out)
 	}
