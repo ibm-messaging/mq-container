@@ -38,7 +38,10 @@ func createDirStructure() error {
 	out, rc, err := command.Run("/opt/mqm/bin/crtmqdir", "-f", "-a")
 	if err != nil {
 		if rc == 10 {
-			log.Printf("Warning creating directory structure: %v\n", string(out))
+			// Ignore warnings about 'mqwebuser.xml' being a symlink
+			if !(strings.Join(strings.Fields(string(out)), " ") == "The filesystem object '/mnt/mqm/data/web/installations/Installation1/servers/mqweb/mqwebuser.xml' is a symbolic link.") {
+				log.Printf("Warning creating directory structure: %v\n", string(out))
+			}
 		} else {
 			log.Printf("Error creating directory structure: %v\n", string(out))
 			return err
