@@ -2,7 +2,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2023
+© Copyright IBM Corporation 2018, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/ibm-messaging/mq-container/test/docker/pathutils"
 )
 
 const defaultAdminPassword string = "passw0rd"
@@ -78,7 +79,7 @@ func waitForWebReady(t *testing.T, cli *client.Client, ID string, tlsConfig *tls
 
 // tlsDir returns the host directory where the test certificate(s) are located
 func tlsDir(t *testing.T, unixPath bool) string {
-	return filepath.Join(getCwd(t, unixPath), "../tls")
+	return pathutils.CleanPath(filepath.Dir(getCwd(t, unixPath)), "tls")
 }
 
 // runJMSTests runs a container with a JMS client, which connects to the queue manager container with the specified ID

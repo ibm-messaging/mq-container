@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021
+© Copyright IBM Corporation 2021,2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/ibm-messaging/mq-container/test/docker/pathutils"
 )
 
 const defaultHAPort = 9414
@@ -66,7 +67,7 @@ func getNativeHASecureHostConfig(t *testing.T) container.HostConfig {
 	return container.HostConfig{
 		Binds: []string{
 			coverageBind(t),
-			filepath.Join(getCwd(t, true), "../tls") + ":/etc/mqm/ha/pki/keys/ha",
+			pathutils.CleanPath(filepath.Dir(getCwd(t, true)), "tls") + ":/etc/mqm/ha/pki/keys/ha",
 		},
 	}
 }
