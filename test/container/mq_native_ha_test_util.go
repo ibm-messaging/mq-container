@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021, 2023
+© Copyright IBM Corporation 2021, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import (
 	"time"
 
 	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
+	"github.com/ibm-messaging/mq-container/test/container/pathutils"
 )
 
 const defaultHAPort = 9414
@@ -59,7 +60,7 @@ func getNativeHASecureHostConfig(t *testing.T) ce.ContainerHostConfig {
 	return ce.ContainerHostConfig{
 		Binds: []string{
 			coverageBind(t),
-			filepath.Join(getCwd(t, true), "../tls") + ":/etc/mqm/ha/pki/keys/ha",
+			pathutils.CleanPath(filepath.Dir(getCwd(t, true)), "tls") + ":/etc/mqm/ha/pki/keys/ha",
 		},
 	}
 }

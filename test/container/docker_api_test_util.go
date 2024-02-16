@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2023
+© Copyright IBM Corporation 2017, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import (
 	"time"
 
 	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
+	"github.com/ibm-messaging/mq-container/test/container/pathutils"
 )
 
 func imageName() string {
@@ -129,7 +130,7 @@ func coverage() bool {
 
 // coverageDir returns the host directory to use for code coverage data
 func coverageDir(t *testing.T, unixStylePath bool) string {
-	return filepath.Join(getCwd(t, unixStylePath), "coverage")
+	return pathutils.CleanPath(getCwd(t, unixStylePath), "coverage")
 }
 
 // coverageBind returns a string to use to add a bind-mounted directory for code coverage data
@@ -213,7 +214,7 @@ func cleanContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 	t.Log("Container stopped")
 
 	// If a code coverage file has been generated, then rename it to match the test name
-	os.Rename(filepath.Join(coverageDir(t, true), "container.cov"), filepath.Join(coverageDir(t, true), t.Name()+".cov"))
+	os.Rename(pathutils.CleanPath(coverageDir(t, true), "container.cov"), pathutils.CleanPath(coverageDir(t, true), t.Name()+".cov"))
 	// Log the container output for any container we're about to delete
 	t.Logf("Console log from container %v:\n%v", ID, inspectTextLogs(t, cli, ID))
 
@@ -497,7 +498,7 @@ func getExitCodeFilename(t *testing.T) string {
 }
 
 func getCoverageExitCode(t *testing.T, orig int64) int64 {
-	f := filepath.Join(coverageDir(t, true), getExitCodeFilename(t))
+	f := pathutils.CleanPath(coverageDir(t, true), getExitCodeFilename(t))
 	_, err := os.Stat(f)
 	if err != nil {
 		t.Log(err)
@@ -689,7 +690,7 @@ func createImage(t *testing.T, cli ce.ContainerInterface, files []struct{ Name, 
 	//Write files to temp directory
 	for _, file := range files {
 		//Add tag to file name to allow parallel testing
-		f, err := os.Create(filepath.Join(tmpDir, file.Name))
+		f, err := os.Create(pathutils.CleanPath(tmpDir, file.Name))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -701,7 +702,7 @@ func createImage(t *testing.T, cli ce.ContainerInterface, files []struct{ Name, 
 			t.Fatal(err)
 		}
 	}
-	_, err = cli.ImageBuild(r, tag, filepath.Join(tmpDir, files[0].Name))
+	_, err = cli.ImageBuild(r, tag, pathutils.CleanPath(tmpDir, files[0].Name))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -866,5 +867,5 @@ func waitForMessageCountInLog(t *testing.T, cli ce.ContainerInterface, id string
 
 // Returns fully qualified path
 func tlsDirDN(t *testing.T, unixPath bool, certPath string) string {
-	return filepath.Join(getCwd(t, unixPath), certPath)
+	return pathutils.CleanPath(filepath.Dir(getCwd(t, unixPath)), certPath)
 }
