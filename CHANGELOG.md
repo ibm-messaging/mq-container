@@ -3,6 +3,7 @@
 ## 9.3.5.0 (2024-02)
 
 * Updated to MQ version 9.3.5.0
+* Fixed a security issue, where unencrypted credentials in mqwebuser.xml would be copied to /var/mqm.  A symbolic link is now used instead.
 
 ## 9.3.4.0 (2023-12)
 
