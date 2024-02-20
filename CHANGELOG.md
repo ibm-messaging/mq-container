@@ -3,7 +3,13 @@
 ## 9.3.5.0 (2024-02)
 
 * Updated to MQ version 9.3.5.0
+
+### Security Fixes
 * Fixed a security issue, where unencrypted credentials in mqwebuser.xml would be copied to /var/mqm.  A symbolic link is now used instead.
+* golang.org/x/crypto library has been upgraded to remediate CVE-2023-48795 vulnerability.
+* More secure sha512 algorithm will be used instead of sha256 to create self signed Certificate in the Web keystore.
+* The MQ container generates a PKCS#12 key store for use with the MQ web server.This keystore is generated using a legacy SHA-1 encryption,container code has been updated to use Pkcs12.Modern.Encode function which uses SHA-2 encryption.
+* Vulnerability has been reported on PathTraversal method usages which now have been fixed.
 
 ## 9.3.4.0 (2023-12)
 
