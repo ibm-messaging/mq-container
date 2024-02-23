@@ -25,7 +25,7 @@ services:
 
 env:
   global:
-    - MAIN_BRANCH=private-master
+    - MAIN_BRANCH=v9.3.5
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
 
@@ -40,7 +40,7 @@ jobs:
     - script: bash -e travis-build-scripts/trigger-release-checks.sh
   include:
     - stage: basic-build
-      if: branch != private-master AND tag IS blank
+      if: branch != v9.3.5 AND tag IS blank
       name: "Basic AMD64 build"
       os: linux
       env:
@@ -50,12 +50,12 @@ jobs:
     # CD Build
 
     - stage: global-tag
-      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
+      if: branch = v9.3.5 AND type != pull_request OR tag =~ ^release-candidate*
       name: "Generate Global Tag"
       os: linux
       script: bash -e travis-build-scripts/global-tag.sh
     - stage: build
-      if: branch = private-master OR tag =~ ^release-candidate*
+      if: branch = v9.3.5 OR tag =~ ^release-candidate*
       name: "Multi-Arch AMD64 build"
       os: linux
       env:
@@ -66,7 +66,7 @@ jobs:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
     - stage: build
-      if: branch = private-master OR tag =~ ^release-candidate*
+      if: branch = v9.3.5 OR tag =~ ^release-candidate*
       name: "Multi-Arch S390X build"
       os: linux
       arch: s390x
@@ -80,7 +80,7 @@ jobs:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
     - stage: build
-      if: branch = private-master OR tag =~ ^release-candidate*
+      if: branch = v9.3.5 OR tag =~ ^release-candidate*
       name: "Multi-Arch PPC64LE build"
       os: linux
       arch: ppc64le
@@ -94,13 +94,13 @@ jobs:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
     - stage: push-manifest
-      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
+      if: branch = v9.3.5 AND type != pull_request OR tag =~ ^release-candidate*
       name: "Push Manifest-list to registry"
       env:
         - PUSH_MANIFEST_ONLY=true
       script: bash -e travis-build-scripts/run.sh
     - stage: trigger-release-checks
-      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
+      if: branch = v9.3.5 AND type != pull_request OR tag =~ ^release-candidate*
       name: "Trigger release-checks build"
       script: bash -e travis-build-scripts/trigger-release-checks.sh
 
