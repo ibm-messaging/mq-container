@@ -26,6 +26,7 @@ TICK="\xE2\x9C\x94"
 CROSS="\xE2\x9C\x97"
 GREENTICK=${GREEN}${TICK}${END}
 REDCROSS=${RED}${CROSS}${END}
+
 printf "${GREENRIGHTARROW} Attempting to trigger new release-checks build\n"
 
 repo_name=$(echo "${TRAVIS_REPO_SLUG}" | cut -d'/' -f2-)
@@ -39,3 +40,4 @@ if [ "$request_response" != "202" ]; then
 else
     printf "${GREENTICK} Successfully created new request\n"
 fi
+

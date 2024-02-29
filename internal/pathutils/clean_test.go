@@ -1,5 +1,7 @@
 /*
-© Copyright IBM Corporation 2023
+
+© Copyright IBM Corporation 2024
+
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,7 +27,7 @@ func TestClean(t *testing.T) {
 
 	tests := []struct {
 		uncleaned string
-		filepath      string
+		filepath  string
 		cleaned   string
 	}{
 		{"/a/rooted/path", "some.file", "/a/rooted/path/some.file"},
