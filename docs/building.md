@@ -22,10 +22,10 @@ From MQ 9.2.X, the MQ container adds support for MQ Long Term Support (LTS) **pr
 
 ### MQ Continuous Delivery (CD)
 
-The procedure below is for building the 9.3.5 release, on `amd64`, `ppc64le` and `s390x` architectures.
+The procedure below is for building the 9.4.0 release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/). Identify the correct 'Continuous Delivery release' eImage part number for your architecture from the 9.3.5 tab at https://www.ibm.com/support/pages/downloading-ibm-mq-935-continuous-delivery
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/). Identify the correct 'Continuous Delivery release' eImage part number for your architecture from the 9.4.0 tab at https://www.ibm.com/support/pages/downloading-ibm-mq-94-cd
 3. Ensure the `tar.gz` file is in the `downloads` directory
 4. Run `make build-advancedserver`
 

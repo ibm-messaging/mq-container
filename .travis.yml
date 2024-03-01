@@ -44,7 +44,7 @@ jobs:
       name: "Basic AMD64 build"
       os: linux
       env:
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_3_5_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_0_ARCHIVE_REPOSITORY_DEV_AMD64
       script: bash -e travis-build-scripts/run.sh
 
     # CD Build
@@ -60,8 +60,8 @@ jobs:
       os: linux
       env:
         - BUILD_ALL=true
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9_3_5_ARCHIVE_REPOSITORY_AMD64
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_3_5_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_0_ARCHIVE_REPOSITORY_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_0_ARCHIVE_REPOSITORY_DEV_AMD64
       script:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
@@ -74,8 +74,8 @@ jobs:
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9_3_5_ARCHIVE_REPOSITORY_S390X
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_3_5_ARCHIVE_REPOSITORY_DEV_S390X
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_0_ARCHIVE_REPOSITORY_S390X
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_0_ARCHIVE_REPOSITORY_DEV_S390X
       script:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
@@ -88,8 +88,8 @@ jobs:
       env:
         - BUILD_ALL=true
         - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9_3_5_ARCHIVE_REPOSITORY_PPC64LE
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_3_5_ARCHIVE_REPOSITORY_DEV_PPC64LE
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_0_ARCHIVE_REPOSITORY_PPC64LE
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_0_ARCHIVE_REPOSITORY_DEV_PPC64LE
       script:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
