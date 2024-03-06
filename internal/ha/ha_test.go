@@ -1,3 +1,19 @@
+/*
+© Copyright IBM Corporation 2024
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package ha
 
 import (
@@ -67,12 +83,65 @@ func TestConfigFromEnv(t *testing.T) {
 					{"tls-config-instance1", "tls-config-instance1(9145)"},
 					{"tls-config-instance2", "tls-config-instance2(9145)"},
 				},
-				tlsEnabled:    true,
-				cipherSpec:    "a-cipher-spec",
+				haTLSEnabled:  true,
+				CipherSpec:    "a-cipher-spec",
 				keyRepository: "/path/to/repository",
 
-				certificateLabel: "cert-label-here", // From override
+				CertificateLabel: "cert-label-here", // From override
 				fipsAvailable:    false,             // From override
+			},
+		},
+
+		{
+			TestName: "Group TLS (live plain) config",
+			env: map[string]string{
+				"HOSTNAME":                                    "group-live-plain-config",
+				"MQ_NATIVE_HA_INSTANCE_0_NAME":                "group-live-plain-config0",
+				"MQ_NATIVE_HA_INSTANCE_1_NAME":                "group-live-plain-config1",
+				"MQ_NATIVE_HA_INSTANCE_2_NAME":                "group-live-plain-config2",
+				"MQ_NATIVE_HA_INSTANCE_0_REPLICATION_ADDRESS": "group-live-plain-config0(9145)",
+				"MQ_NATIVE_HA_INSTANCE_1_REPLICATION_ADDRESS": "group-live-plain-config1(9145)",
+				"MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS": "group-live-plain-config2(9145)",
+				"MQ_NATIVE_HA_CIPHERSPEC":                     "NULL",
+				"MQ_NATIVE_HA_KEY_REPOSITORY":                 "/path/to/repository",
+
+				"MQ_NATIVE_HA_GROUP_RECOVERY_ENABLED":    "true",
+				"MQ_NATIVE_HA_GROUP_LOCAL_NAME":          "alpha",
+				"MQ_NATIVE_HA_GROUP_RECOVERY_NAME":       "beta",
+				"MQ_NATIVE_HA_GROUP_CIPHERSPEC":          "ANY_TLS",
+				"MQ_NATIVE_HA_GROUP_ROLE":                "Live",
+				"MQ_NATIVE_HA_GROUP_LOCAL_ADDRESS":       "(4445)",
+				"MQ_NATIVE_HA_GROUP_REPLICATION_ADDRESS": "beta-address(4445)",
+			},
+			overrides: testOverrides{
+				groupCertificateLabel: asRef("recovery-cert-label-here"),
+				fips:                  asRef(false),
+			},
+			expected: haConfig{
+				Name: "group-live-plain-config",
+				Instances: [3]haInstance{
+					{"group-live-plain-config0", "group-live-plain-config0(9145)"},
+					{"group-live-plain-config1", "group-live-plain-config1(9145)"},
+					{"group-live-plain-config2", "group-live-plain-config2(9145)"},
+				},
+				Group: haGroupConfig{
+					Local: haLocalGroupConfig{
+						Name:    "alpha",
+						Role:    "Live",
+						Address: "(4445)",
+					},
+					Recovery: haRecoveryGroupConfig{
+						Name:    "beta",
+						Enabled: true,
+						Address: "beta-address(4445)",
+					},
+					CertificateLabel: "recovery-cert-label-here", // From override
+					CipherSpec:       "ANY_TLS",
+				},
+				CipherSpec:    "NULL",
+				keyRepository: "/path/to/repository",
+
+				fipsAvailable: false, // From override
 			},
 		},
 	}
@@ -94,7 +163,7 @@ func TestConfigFromEnv(t *testing.T) {
 				os.Setenv(key, value)
 			}
 
-			testLogger, logBuffer, err := newTestLogger(t, test.TestName)
+			testLogger, logBuffer, err := newTestLogger(test.TestName)
 			if err != nil {
 				t.Fatalf("Failed to create test logger: %s", err.Error())
 			}
@@ -130,8 +199,8 @@ func TestTemplatingFromConfig(t *testing.T) {
 		{
 			TestName: "Base TLS config (no FIPS)",
 			config: haConfig{
-				tlsEnabled:       true,
-				certificateLabel: "baseTLS",
+				haTLSEnabled:     true,
+				CertificateLabel: "baseTLS",
 				fipsAvailable:    false,
 			},
 			expectedResultName: "tls-basic.ini",
@@ -139,8 +208,8 @@ func TestTemplatingFromConfig(t *testing.T) {
 		{
 			TestName: "Base TLS config (with FIPS)",
 			config: haConfig{
-				tlsEnabled:       true,
-				certificateLabel: "baseTLS",
+				haTLSEnabled:     true,
+				CertificateLabel: "baseTLS",
 				fipsAvailable:    true,
 			},
 			expectedResultName: "tls-basic-fips.ini",
@@ -148,9 +217,9 @@ func TestTemplatingFromConfig(t *testing.T) {
 		{
 			TestName: "Full TLS config (no-fips)",
 			config: haConfig{
-				tlsEnabled:       true,
-				certificateLabel: "baseTLS",
-				cipherSpec:       "some-cipher",
+				haTLSEnabled:     true,
+				CertificateLabel: "baseTLS",
+				CipherSpec:       "some-cipher",
 				keyRepository:    "/a/non/existant/path",
 				fipsAvailable:    false,
 			},
@@ -159,13 +228,69 @@ func TestTemplatingFromConfig(t *testing.T) {
 		{
 			TestName: "TLS config but not enabled",
 			config: haConfig{
-				tlsEnabled:       false,
-				certificateLabel: "baseTLS",
-				cipherSpec:       "some-cipher",
+				haTLSEnabled:     false,
+				CertificateLabel: "baseTLS",
+				CipherSpec:       "some-cipher",
 				keyRepository:    "/a/non/existant/path",
 				fipsAvailable:    false,
 			},
 			expectedResultName: "minimal-config.ini",
+		},
+		{
+			TestName: "Minimal live config",
+			config: haConfig{
+				Group: haGroupConfig{
+					Local: haLocalGroupConfig{
+						Name: "alpha",
+					},
+					Recovery: haRecoveryGroupConfig{
+						Name:    "beta",
+						Enabled: true,
+						Address: "beta-address(4445)",
+					},
+					CertificateLabel: "recoveryTLS",
+				},
+			},
+			expectedResultName: "group-live-minimal.ini",
+		},
+		{
+			TestName: "Minimal recovery config",
+			config: haConfig{
+				Group: haGroupConfig{
+					Local: haLocalGroupConfig{
+						Name: "beta",
+						Role: "Recovery",
+					},
+					Recovery: haRecoveryGroupConfig{
+						Name:    "alpha",
+						Enabled: true,
+						Address: "alpha-address(4445)",
+					},
+					CertificateLabel: "recoveryTLS",
+				},
+			},
+			expectedResultName: "group-recovery-minimal.ini",
+		},
+		{
+			TestName: "Group TLS (live plain) config",
+			config: haConfig{
+				Group: haGroupConfig{
+					Local: haLocalGroupConfig{
+						Name:    "alpha",
+						Role:    "Live",
+						Address: "(4445)",
+					},
+					Recovery: haRecoveryGroupConfig{
+						Name:    "beta",
+						Enabled: true,
+						Address: "beta-address(4445)",
+					},
+					CertificateLabel: "recoveryTLS",
+					CipherSpec:       "ANY_TLS",
+				},
+				CipherSpec: "NULL",
+			},
+			expectedResultName: "group-live-plain-ha.ini",
 		},
 	}
 
@@ -173,7 +298,9 @@ func TestTemplatingFromConfig(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.TestName, func(t *testing.T) {
-			testLogger, logBuffer, err := newTestLogger(t, test.TestName)
+			t.Logf(`Runing templating test "%s"`, test.TestName)
+			t.Logf(`Expected to match template "%s"`, test.expectedResultName)
+			testLogger, logBuffer, err := newTestLogger(test.TestName)
 			if err != nil {
 				t.Fatalf("Failed to create test logger: %s", err.Error())
 			}
@@ -258,25 +385,29 @@ func assertIniMatch(t *testing.T, actual string, expectedResultName string) {
 			expLine = expectedLines[i]
 		}
 		if actLine != expLine {
-			t.Fatalf("Template does not match\n\nExpected:\n\t%s\n\nActual:\n\t%s\n\nFirst difference at line %d:\n\tExpected: %s\n\tActual  : %s", strings.Join(expectedLines, "\n\t"), strings.Join(actualLines, "\n\t"), i+1, expLine, actLine)
+			t.Fatalf("Template does not match\n\nFirst difference at line %d:\n\tExpected: %s\n\tActual  : %s\n\nExpected:\n\t%s\n\nActual:\n\t%s", i+1, expLine, actLine, strings.Join(expectedLines, "\n\t"), strings.Join(actualLines, "\n\t"))
 		}
 	}
 }
 
-func newTestLogger(t *testing.T, name string) (*logger.Logger, *bytes.Buffer, error) {
+func newTestLogger(name string) (*logger.Logger, *bytes.Buffer, error) {
 	buffer := new(bytes.Buffer)
 	l, err := logger.NewLogger(buffer, true, false, name)
 	return l, buffer, err
 }
 
 type testOverrides struct {
-	certificateLabel *string
-	fips             *bool
+	certificateLabel      *string
+	groupCertificateLabel *string
+	fips                  *bool
 }
 
 func (t testOverrides) apply(cfg *haConfig) {
 	if t.certificateLabel != nil {
-		cfg.certificateLabel = *t.certificateLabel
+		cfg.CertificateLabel = *t.certificateLabel
+	}
+	if t.groupCertificateLabel != nil {
+		cfg.Group.CertificateLabel = *t.groupCertificateLabel
 	}
 	if t.fips != nil {
 		cfg.fipsAvailable = *t.fips

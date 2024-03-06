@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2015, 2023
+# © Copyright IBM Corporation 2015, 2024
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ ENV CGO_CFLAGS="-I/opt/mqm/inc/" \
 COPY go.mod go.sum ./
 COPY cmd/ ./cmd
 COPY internal/ ./internal
+COPY ha/ ./ha
 COPY pkg/ ./pkg
 COPY vendor/ ./vendor
 RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\" -X \"main.ImageTag=$IMAGE_TAG\"" ./cmd/runmqserver/ \
@@ -137,8 +138,8 @@ RUN chmod ug+x /usr/local/bin/runmqserver \
   && chmod 0660 /run/termination-log \
   && chmod -R g+w /etc/mqm/web \
   && chmod 0660 /etc/mqm/web/installations/Installation1/servers/mqweb/mqwebuser.xml
-# Always use port 1414 for MQ & 9157 for the metrics
-EXPOSE 1414 9157 9443
+# Always use port 1414 for MQ, 9157 for the metrics, and 9415 for Native HA recovery
+EXPOSE 1414 9157 9415 9443
 ENV MQ_OVERRIDE_DATA_PATH=/mnt/mqm/data MQ_OVERRIDE_INSTALLATION_NAME=Installation1 MQ_USER_NAME="mqm" PATH="${PATH}:/opt/mqm/bin"
 ENV MQ_GRACE_PERIOD=30
 ENV LANG=en_US.UTF-8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1

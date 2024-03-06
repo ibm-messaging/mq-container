@@ -39,7 +39,6 @@ func loadConfigAndGenerate(templatePath string, outputPath string, fipsAvailable
 	if err != nil {
 		return err
 	}
-
 	err = cfg.updateTLS()
 	if err != nil {
 		return err
@@ -65,9 +64,26 @@ func loadConfigFromEnv(log *logger.Logger) (*haConfig, error) {
 				ReplicationAddress: os.Getenv("MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS"),
 			},
 		},
-		tlsEnabled:    os.Getenv("MQ_NATIVE_HA_TLS") == "true",
-		cipherSpec:    os.Getenv("MQ_NATIVE_HA_CIPHERSPEC"),
+		Group: haGroupConfig{
+			Local: haLocalGroupConfig{
+				Address: os.Getenv("MQ_NATIVE_HA_GROUP_LOCAL_ADDRESS"),
+				Name:    os.Getenv("MQ_NATIVE_HA_GROUP_LOCAL_NAME"),
+				Role:    os.Getenv("MQ_NATIVE_HA_GROUP_ROLE"),
+			},
+			Recovery: haRecoveryGroupConfig{
+				Address: os.Getenv("MQ_NATIVE_HA_GROUP_REPLICATION_ADDRESS"),
+				Name:    os.Getenv("MQ_NATIVE_HA_GROUP_RECOVERY_NAME"),
+				Enabled: os.Getenv("MQ_NATIVE_HA_GROUP_RECOVERY_ENABLED") != "false",
+			},
+			CipherSpec: os.Getenv("MQ_NATIVE_HA_GROUP_CIPHERSPEC"),
+		},
+		haTLSEnabled:  os.Getenv("MQ_NATIVE_HA_TLS") == "true",
+		CipherSpec:    os.Getenv("MQ_NATIVE_HA_CIPHERSPEC"),
 		keyRepository: os.Getenv("MQ_NATIVE_HA_KEY_REPOSITORY"),
+	}
+
+	if cfg.Group.Recovery.Name == "" {
+		cfg.Group.Recovery.Enabled = false
 	}
 
 	return cfg, nil
@@ -76,48 +92,61 @@ func loadConfigFromEnv(log *logger.Logger) (*haConfig, error) {
 type haConfig struct {
 	Name      string
 	Instances [3]haInstance
+	Group     haGroupConfig
 
-	tlsEnabled       bool
-	cipherSpec       string
-	certificateLabel string
+	haTLSEnabled     bool
+	CipherSpec       string
+	CertificateLabel string
 	keyRepository    string
 	fipsAvailable    bool
 }
 
-func (h haConfig) CertificateLabel() string {
-	if !h.tlsEnabled {
-		return ""
+func (h haConfig) ShouldConfigureTLS() bool {
+	if h.haTLSEnabled {
+		return true
 	}
-	return h.certificateLabel
-}
-
-func (h haConfig) CipherSpec() string {
-	if !h.tlsEnabled {
-		return ""
+	if h.Group.Local.Name != "" {
+		return true
 	}
-	return h.cipherSpec
+	return false
 }
 
 func (h haConfig) SSLFipsRequired() string {
-	if !h.tlsEnabled {
+	if !h.haTLSEnabled {
 		return ""
 	}
-	if h.fipsAvailable {
-		return "Yes"
-	}
-	return "No"
+	return yesNo(h.fipsAvailable).String()
 }
 
 func (h *haConfig) updateTLS() error {
-	if !h.tlsEnabled {
+	if !h.ShouldConfigureTLS() {
 		return nil
 	}
 
-	keyLabel, _, _, err := tls.ConfigureHATLSKeystore()
-	if err != nil {
-		return err
+	var err error
+	var keyStore, trustStore tls.KeyStoreData
+
+	if h.haTLSEnabled {
+		var keyLabel string
+		keyLabel, keyStore, trustStore, err = tls.ConfigureHATLSKeystore()
+		if err != nil {
+			return err
+		}
+		h.CertificateLabel = keyLabel
 	}
-	h.certificateLabel = keyLabel
+
+	if h.Group.Local.Name != "" {
+		var groupKeyLabel string
+		if h.haTLSEnabled {
+			groupKeyLabel, err = tls.ConfigureHAReplicationGroupTLS(keyStore, trustStore)
+		} else {
+			groupKeyLabel, err = tls.CreateHAReplicationGroupTLS()
+		}
+		if err != nil {
+			return err
+		}
+		h.Group.CertificateLabel = groupKeyLabel
+	}
 
 	h.fipsAvailable = fips.IsFIPSEnabled()
 
@@ -135,7 +164,34 @@ func (h haConfig) KeyRepository() string {
 	return "/run/runmqserver/ha/tls/key"
 }
 
+type haGroupConfig struct {
+	Local            haLocalGroupConfig
+	Recovery         haRecoveryGroupConfig
+	CipherSpec       string
+	CertificateLabel string
+}
+
+type haLocalGroupConfig struct {
+	Name    string
+	Role    string
+	Address string
+}
+type haRecoveryGroupConfig struct {
+	Name    string
+	Enabled yesNo
+	Address string
+}
+
 type haInstance struct {
 	Name               string
 	ReplicationAddress string
+}
+
+type yesNo bool
+
+func (yn yesNo) String() string {
+	if yn {
+		return "Yes"
+	}
+	return "No"
 }
