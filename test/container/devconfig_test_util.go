@@ -125,10 +125,10 @@ func runJMSTests(t *testing.T, cli ce.ContainerInterface, ID string, tls bool, u
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDir(t, false) + ":/var/tls",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{
 		Networks: []string{"host"},
 	}

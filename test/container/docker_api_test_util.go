@@ -138,6 +138,14 @@ func coverageBind(t *testing.T) string {
 	return coverageDir(t, false) + ":/var/coverage"
 }
 
+func addCoverageBindIfAvailable(t *testing.T, cfg *ce.ContainerHostConfig) {
+	info, err := os.Stat(coverageDir(t, false))
+	if err != nil || !info.IsDir() {
+		return
+	}
+	cfg.Binds = append(cfg.Binds, coverageBind(t))
+}
+
 // getTempDir get the path of the tmp directory, in UNIX or OS-specific style
 func getTempDir(t *testing.T, unixStylePath bool) string {
 	if isWSL(t) {

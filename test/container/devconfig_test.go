@@ -90,10 +90,10 @@ func TestDevSecure(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	// Assign a random port for the web server on the host
 	// TODO: Don't do this for all tests
 	var binding ce.PortBinding
@@ -247,10 +247,10 @@ func TestSSLKEYRWithSuppliedKeyAndCert(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
@@ -303,10 +303,10 @@ func TestSSLKEYRWithCACert(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDirWithCA(t, false) + ":/etc/mqm/pki/keys/QM1CA",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	// Assign a random port for the web server on the host
 	var binding ce.PortBinding
 	ports := []int{9443}
@@ -377,10 +377,10 @@ func TestSSLFIPSNO(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
@@ -428,10 +428,10 @@ func TestSSLFIPSYES(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	var binding ce.PortBinding
 	ports := []int{1414}
 	for _, p := range ports {
@@ -505,11 +505,11 @@ func TestDevSecureFIPSTrueWeb(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 			tlsDir(t, false) + ":/etc/mqm/pki/trust/default",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	// Assign a random port for the web server on the host
 	// TODO: Don't do this for all tests
 	var binding ce.PortBinding
@@ -577,11 +577,11 @@ func TestDevSecureFalseFIPSWeb(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 			tlsDir(t, false) + ":/etc/mqm/pki/trust/default",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	// Assign a random port for the web server on the host
 	var binding ce.PortBinding
 	ports := []int{9443}
@@ -642,11 +642,8 @@ func TestSSLFIPSTrueNoCerts(t *testing.T) {
 		},
 		Image: imageName(),
 	}
-	hostConfig := ce.ContainerHostConfig{
-		Binds: []string{
-			coverageBind(t),
-		},
-	}
+	hostConfig := ce.ContainerHostConfig{}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
@@ -691,10 +688,10 @@ func TestSSLFIPSInvalidValue(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
@@ -740,10 +737,10 @@ func TestSSLFIPSBadCerts(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDirInvalid(t, false) + ":/etc/mqm/pki/keys/default",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
@@ -879,13 +876,13 @@ func TestRORFSDevNoAppPassword(t *testing.T) {
 
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			ephRun + ":/run",
 			ephTmp + ":/tmp",
 			ephData + ":/mnt/mqm",
 		},
 		ReadOnlyRootfs: true, //Enable read only root filesystem
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	// Assign a random port for the web server on the host
 	var binding ce.PortBinding
 	ports := []int{9443}
