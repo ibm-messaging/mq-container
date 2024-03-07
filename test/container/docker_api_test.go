@@ -171,10 +171,10 @@ func withVolume(t *testing.T, metric bool) {
 
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			vol + ":/mnt/mqm",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
@@ -303,10 +303,10 @@ func TestVolumeRequiresRoot(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			vol + ":/mnt/mqm:nocopy",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{}
 
 	// Run an "init container" as root, with the "-i" option, to initialize the volume
@@ -422,10 +422,10 @@ func TestVolumeUnmount(t *testing.T) {
 			"SYS_ADMIN",
 		},
 		Binds: []string{
-			coverageBind(t),
 			vol + ":/mnt/mqm",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ctrID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
@@ -862,10 +862,10 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			vol + ":/mnt/mqm",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ctr1ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
@@ -1787,10 +1787,10 @@ func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOu
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDirDN(t, false, certPath) + ":/etc/mqm/pki/keys/QM1",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ctrID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
@@ -1862,11 +1862,9 @@ func TestReadOnlyRootFilesystem(t *testing.T) {
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=QM1"},
 	}
 	hostConfig := ce.ContainerHostConfig{
-		Binds: []string{
-			coverageBind(t),
-		},
 		ReadOnlyRootfs: true,
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ctrID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
@@ -1917,7 +1915,6 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 	defer removeVolume(t, cli, ephTmp)
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			ephRun + ":/run",
 			ephTmp + ":/tmp",
 			ephData + ":/mnt/mqm",
@@ -1926,6 +1923,7 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 		},
 		ReadOnlyRootfs: true,
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 
 	// Assign a random port for the web server on the host
 	var binding ce.PortBinding
@@ -2049,10 +2047,10 @@ func TestMissingCertError(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			tlsDirDN(t, false, "../tlsnocert") + ":/etc/mqm/pki/keys/QM1",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
 
 	networkingConfig := ce.ContainerNetworkSettings{}
 	ctrID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())

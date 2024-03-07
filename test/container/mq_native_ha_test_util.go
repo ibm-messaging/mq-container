@@ -57,12 +57,13 @@ func getNativeHAContainerConfig(containerName string, replicaNames [3]string, ha
 }
 
 func getNativeHASecureHostConfig(t *testing.T) ce.ContainerHostConfig {
-	return ce.ContainerHostConfig{
+	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			coverageBind(t),
 			pathutils.CleanPath(filepath.Dir(getCwd(t, true)), "../tls") + ":/etc/mqm/ha/pki/keys/ha",
 		},
 	}
+	addCoverageBindIfAvailable(t, &hostConfig)
+	return hostConfig
 }
 
 func getNativeHANetworkConfig(networkID string) ce.ContainerNetworkSettings {
