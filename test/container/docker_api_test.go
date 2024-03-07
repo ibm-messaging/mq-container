@@ -34,7 +34,7 @@ import (
 func TestLicenseNotSet(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	containerConfig := ce.ContainerConfig{}
 	id := runContainer(t, cli, &containerConfig)
@@ -51,7 +51,7 @@ func TestLicenseNotSet(t *testing.T) {
 func TestLicenseView(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=view"},
@@ -83,7 +83,7 @@ func TestGoldenPathNoMetrics(t *testing.T) {
 
 // Actual test function for TestGoldenPathNoMetrics & TestGoldenPathWithMetrics
 func goldenPath(t *testing.T, metrics bool) {
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
@@ -114,7 +114,7 @@ func goldenPath(t *testing.T, metrics bool) {
 
 func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName string) {
 	search := "QMNAME(" + expectedName + ")"
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env:      []string{"LICENSE=accept"},
 		Hostname: hostName,
@@ -158,7 +158,7 @@ func TestWithVolumeNoMetrics(t *testing.T) {
 
 // Actual test function for TestWithVolumeNoMetrics & TestWithVolumeAndMetrics
 func withVolume(t *testing.T, metric bool) {
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol)
 	containerConfig := ce.ContainerConfig{
@@ -199,7 +199,7 @@ func withVolume(t *testing.T, metric bool) {
 
 // TestWithSplitVolumesLogsData starts a queue manager with separate log/data mounts
 func TestWithSplitVolumesLogsData(t *testing.T) {
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
 	defer removeVolume(t, cli, qmsharedlogs)
@@ -219,7 +219,7 @@ func TestWithSplitVolumesLogsData(t *testing.T) {
 
 // TestWithSplitVolumesLogsOnly starts a queue manager with a separate log mount
 func TestWithSplitVolumesLogsOnly(t *testing.T) {
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
 	defer removeVolume(t, cli, qmsharedlogs)
@@ -237,7 +237,7 @@ func TestWithSplitVolumesLogsOnly(t *testing.T) {
 
 // TestWithSplitVolumesDataOnly starts a queue manager with a separate data mount
 func TestWithSplitVolumesDataOnly(t *testing.T) {
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	qmshareddata := createVolume(t, cli, "qmshareddata")
 	defer removeVolume(t, cli, qmshareddata)
@@ -258,7 +258,7 @@ func TestWithSplitVolumesDataOnly(t *testing.T) {
 func TestNoVolumeWithRestart(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
@@ -275,7 +275,7 @@ func TestNoVolumeWithRestart(t *testing.T) {
 // where `runmqserver -i` is run to initialize the storage.  Then the
 // container can be run as normal.
 func TestVolumeRequiresRoot(t *testing.T) {
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	// ":nocopy" requires podman version 4.2
 	if cli.ContainerTool == "podman" && cli.Version < "4.2.0" {
@@ -346,7 +346,7 @@ func TestVolumeRequiresRoot(t *testing.T) {
 func TestCreateQueueManagerFail(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	var files = []struct {
 		Name, Body string
 	}{
@@ -376,7 +376,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 func TestStartQueueManagerFail(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	var files = []struct {
 		Name, Body string
 	}{
@@ -409,7 +409,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 func TestVolumeUnmount(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	vol := createVolume(t, cli, t.Name())
 	defer removeVolume(t, cli, vol)
 	containerConfig := ce.ContainerConfig{
@@ -455,7 +455,7 @@ func TestVolumeUnmount(t *testing.T) {
 func TestZombies(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env:          []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=true"},
 		ExposedPorts: []string{"1414/tcp"},
@@ -486,7 +486,7 @@ func TestZombies(t *testing.T) {
 func TestMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	var files = []struct {
 		Name, Body string
 	}{
@@ -530,7 +530,7 @@ func TestMQSC(t *testing.T) {
 func TestLargeMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	const numQueues = 1000
 	var buf bytes.Buffer
 	for i := 1; i <= numQueues; i++ {
@@ -579,7 +579,7 @@ func TestLargeMQSC(t *testing.T) {
 func TestRedactValidMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	var buf bytes.Buffer
 	passwords := "hippoman4567"
 	sslcryp := fmt.Sprintf("GSK_PKCS11=/usr/lib/pkcs11/PKCS11_API.so;token-label;%s;SYMMETRIC_CIPHER_ON;", passwords)
@@ -654,7 +654,7 @@ func TestRedactValidMQSC(t *testing.T) {
 func TestRedactInvalidMQSC(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	var buf bytes.Buffer
 	passwords := "hippoman4567"
 	sslcryp := fmt.Sprintf("GSK_PKCS11=/usr/lib/pkcs11/PKCS11_API.so;token-label;%s;SYMMETRIC_CIPHER_ON;", passwords)
@@ -724,7 +724,7 @@ func TestRedactInvalidMQSC(t *testing.T) {
 // tries to start a container based on that image, and checks that container terminates
 func TestInvalidMQSC(t *testing.T) {
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	var files = []struct {
 		Name, Body string
 	}{
@@ -755,7 +755,7 @@ func TestInvalidMQSC(t *testing.T) {
 
 func TestSimpleMQIniMerge(t *testing.T) {
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	var files = []struct {
 		Name, Body string
 	}{
@@ -790,7 +790,7 @@ func TestSimpleMQIniMerge(t *testing.T) {
 }
 func TestMultipleIniMerge(t *testing.T) {
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	var files = []struct {
 		Name, Body string
 	}{
@@ -836,7 +836,7 @@ func TestMultipleIniMerge(t *testing.T) {
 }
 
 func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	var filesFirstContainer = []struct {
 		Name, Body string
@@ -931,7 +931,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 func TestReadiness(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	const numQueues = 3
 	var buf bytes.Buffer
 	for i := 1; i <= numQueues; i++ {
@@ -991,7 +991,7 @@ func TestErrorLogRotation(t *testing.T) {
 	t.Skipf("Skipping %v until test defect fixed", t.Name())
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	logsize := 65536
 
@@ -1076,7 +1076,7 @@ func TestJSONLogFormatNoMetrics(t *testing.T) {
 
 // Actual test function for TestJSONLogFormatWithMetrics & TestJSONLogFormatNoMetrics
 func jsonLogFormat(t *testing.T, metric bool) {
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
@@ -1111,7 +1111,7 @@ func jsonLogFormat(t *testing.T, metric bool) {
 func TestMQJSONDisabled(t *testing.T) {
 	t.SkipNow()
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
@@ -1136,7 +1136,7 @@ func TestCorrectLicense(t *testing.T) {
 		t.Fatal("Required test environment variable 'EXPECTED_LICENSE' was not set.")
 	}
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept"},
@@ -1159,7 +1159,7 @@ func TestCorrectLicense(t *testing.T) {
 func TestVersioning(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept"},
@@ -1277,7 +1277,7 @@ func TestVersioning(t *testing.T) {
 func TestTraceStrmqm(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
@@ -1299,7 +1299,7 @@ func TestTraceStrmqm(t *testing.T) {
 // privileges enabled or disabled.  Otherwise the same as the golden path tests.
 func utilTestHealthCheck(t *testing.T, nonewpriv bool) {
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
@@ -1337,7 +1337,7 @@ func TestHealthCheckWithNewPrivileges(t *testing.T) {
 // privileges enabled or disabled.  Otherwise the same as the golden path tests.
 func utilTestStartedCheck(t *testing.T, nonewpriv bool) {
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
@@ -1375,7 +1375,7 @@ func TestStartedCheckWithNewPrivileges(t *testing.T) {
 // Check that when the container is stopped that the command endmqm has option -tp and x
 func TestEndMQMOpts(t *testing.T) {
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_GRACE_PERIOD=27"},
 	}
@@ -1395,7 +1395,7 @@ func TestEndMQMOpts(t *testing.T) {
 // Check that the number of logfilepages matches.
 func TestCustomLogFilePages(t *testing.T) {
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{"LICENSE=accept", "MQ_QMGR_LOG_FILE_PAGES=8192", "MQ_QMGR_NAME=qmlfp"},
 	}
@@ -1412,7 +1412,7 @@ func TestCustomLogFilePages(t *testing.T) {
 func TestLoggingConsoleSource(t *testing.T) {
 
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
@@ -1451,7 +1451,7 @@ func TestLoggingConsoleSource(t *testing.T) {
 func TestOldBehaviorWebConsole(t *testing.T) {
 
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
@@ -1492,7 +1492,7 @@ func TestLoggingConsoleWithContRestart(t *testing.T) {
 
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
@@ -1544,7 +1544,7 @@ func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
@@ -1601,7 +1601,7 @@ func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 func TestLoggingConsoleSetToWeb(t *testing.T) {
 
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
@@ -1642,7 +1642,7 @@ func TestLoggingConsoleSetToWeb(t *testing.T) {
 // json and check that log is in json format
 func TestLoggingConsoleSetToQmgr(t *testing.T) {
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
@@ -1681,7 +1681,7 @@ func TestLoggingConsoleSetToQmgr(t *testing.T) {
 func TestWebLogsHeaderRotation(t *testing.T) {
 
 	t.Parallel()
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
 			"LICENSE=accept",
@@ -1775,7 +1775,7 @@ func scanForText(output string, prefix string, findText string) (int, bool) {
 func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOutPut string, waitLong bool) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
@@ -1856,7 +1856,7 @@ func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOu
 func TestReadOnlyRootFilesystem(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	containerConfig := ce.ContainerConfig{
 		Image: imageName(),
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=QM1"},
@@ -1891,7 +1891,7 @@ func TestReadOnlyRootFilesystem(t *testing.T) {
 func TestRORFSVerifySymLinks(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	const tlsPassPhrase string = "passw0rd"
 	qm := "QM1"
@@ -2038,7 +2038,7 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 func TestMissingCertError(t *testing.T) {
 	t.Parallel()
 
-	cli := ce.NewContainerClient()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	containerConfig := ce.ContainerConfig{
 		Env: []string{

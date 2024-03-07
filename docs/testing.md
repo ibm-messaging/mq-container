@@ -33,6 +33,12 @@ You can pass parameters to `go test` with an environment variable.  For example,
 TEST_OPTS_DOCKER="-run TestGoldenPath" make test-advancedserver
 ```
 
+You can enable additional tracing of container engine commands by setting `TEST_LOG_CONTAINER_COMMANDS` to `true`:
+
+```
+TEST_LOG_CONTAINER_COMMANDS="true" make test-advancedserver
+```
+
 You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `ibm-mqadvanced-server:9.2.0.0-amd64`:
 
 ```
