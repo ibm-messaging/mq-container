@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2023
+© Copyright IBM Corporation 2018, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -82,6 +82,9 @@ func Status(ctx context.Context, name string) (QMStatus, error) {
 	if strings.Contains(string(out), "(REPLICA)") {
 		return StatusStandbyQM, nil
 	}
+	if strings.Contains(string(out), "(RECOVERY GROUP LEADER)") {
+		return StatusRecoveryQM, nil
+	}
 	return StatusUnknown, nil
 }
 
@@ -92,6 +95,7 @@ const (
 	StatusActiveQM
 	StatusStandbyQM
 	StatusReplicaQM
+	StatusRecoveryQM
 )
 
 // ActiveQM returns true if the queue manager is running in active mode
@@ -102,3 +106,6 @@ func (s QMStatus) StandbyQM() bool { return s == StatusStandbyQM }
 
 // ReplicaQM returns true if the queue manager is running in replica mode
 func (s QMStatus) ReplicaQM() bool { return s == StatusReplicaQM }
+
+// ReplicaQM returns true if the queue manager is running in recovery mode
+func (s QMStatus) RecoveryQM() bool { return s == StatusRecoveryQM }

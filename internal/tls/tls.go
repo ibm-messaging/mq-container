@@ -54,8 +54,14 @@ const keyDirDefault = "/etc/mqm/pki/keys"
 // keyDirHA is the location of the HA keys to import
 const keyDirHA = "/etc/mqm/ha/pki/keys"
 
+// keyDirGroupHA is the location of the GroupHA keys to import
+const keyDirGroupHA = "/etc/mqm/groupha/pki/keys"
+
 // trustDirDefault is the location of the trust certificates to import
 const trustDirDefault = "/etc/mqm/pki/trust"
+
+// trustDirGroupDefault is the location of the GroupHA trust certificates to import
+const trustDirGroupHA = "/etc/mqm/groupha/pki/trust"
 
 type KeyStoreData struct {
 	Keystore          *keystore.KeyStore
@@ -78,7 +84,7 @@ type TLSStore struct {
 func configureTLSKeystores(keystoreDir, keyDir, trustDir string, p12TruststoreRequired bool, nativeTLSHA bool) (string, KeyStoreData, KeyStoreData, error) {
 	var keyLabel string
 	// Create the CMS Keystore & PKCS#12 Truststore (if required)
-	tlsStore, err := generateAllKeystores(keystoreDir, p12TruststoreRequired, nativeTLSHA)
+	tlsStore, err := generateAllKeystores(keystoreDir, keyDir, p12TruststoreRequired, nativeTLSHA)
 	if err != nil {
 		return "", tlsStore.Keystore, tlsStore.Truststore, err
 	}
@@ -109,6 +115,38 @@ func ConfigureDefaultTLSKeystores() (string, KeyStoreData, KeyStoreData, error) 
 func ConfigureHATLSKeystore() (string, KeyStoreData, KeyStoreData, error) {
 	// *.crt files mounted to the HA TLS dir keyDirHA will be processed as trusted in the CMS keystore
 	return configureTLSKeystores(keystoreDirHA, keyDirHA, keyDirHA, false, true)
+}
+
+// ConfigureHAReplicationGroupTLS adds any group TLS keys and trusted certs into the HA CMS Keystore
+func ConfigureHAReplicationGroupTLS(keyStore KeyStoreData, trustStore KeyStoreData) (string, error) {
+	tlsStore := TLSStore{keyStore, trustStore}
+	groupKeyLabel, err := processKeys(&tlsStore, keystoreDirHA, keyDirGroupHA)
+	if err != nil {
+		return "", err
+	}
+	err = processTrustCertificates(&tlsStore, keyDirGroupHA)
+	if err != nil {
+		return "", err
+	}
+	err = processTrustCertificates(&tlsStore, trustDirGroupHA)
+	if err != nil {
+		return "", err
+	}
+	return groupKeyLabel, err
+}
+
+// CreateHAReplicationGroupTLS creates a new HA truststore then adds any group TLS keys and trusted certs into the HA CMS Keystore
+func CreateHAReplicationGroupTLS() (string, error) {
+	groupKeyLabel, keyStore, trustStore, err := configureTLSKeystores(keystoreDirHA, keyDirGroupHA, keyDirGroupHA, false, true)
+	if err != nil {
+		return "", err
+	}
+	tlsStore := TLSStore{keyStore, trustStore}
+	err = processTrustCertificates(&tlsStore, trustDirGroupHA)
+	if err != nil {
+		return "", err
+	}
+	return groupKeyLabel, err
 }
 
 // ConfigureTLS configures TLS for the queue manager
@@ -167,7 +205,7 @@ func configureTLSDev(log *logger.Logger) error {
 }
 
 // generateAllKeystores creates the CMS Keystore & PKCS#12 Truststore (if required)
-func generateAllKeystores(keystoreDir string, p12TruststoreRequired bool, nativeTLSHA bool) (TLSStore, error) {
+func generateAllKeystores(keystoreDir string, keysDir string, p12TruststoreRequired bool, nativeTLSHA bool) (TLSStore, error) {
 
 	var cmsKeystore, p12Truststore KeyStoreData
 
@@ -183,12 +221,8 @@ func generateAllKeystores(keystoreDir string, p12TruststoreRequired bool, native
 		return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create Keystore directory: %v", err)
 	}
 
-	// Search the default keys directory for any keys/certs.
-	keysDirectory := keyDirDefault
-	// Change to default native HA TLS directory if we are configuring nativeHA
-	if nativeTLSHA {
-		keysDirectory = keyDirHA
-	}
+	keysDirectory := keysDir
+
 	// Create the CMS Keystore if we have been provided keys and certificates
 	if haveKeysAndCerts(keysDirectory) || haveKeysAndCerts(trustDirDefault) {
 		cmsKeystore.Keystore = keystore.NewCMSKeyStore(pathutils.CleanPath(keystoreDir, cmsKeystoreName), cmsKeystore.Password)

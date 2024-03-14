@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2023
+© Copyright IBM Corporation 2017, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,15 +50,16 @@ func doMain() int {
 	}
 	switch status {
 	case ready.StatusActiveQM:
-		conn, err := net.Dial("tcp", "127.0.0.1:1414")
+		portOpen, err := checkPort("127.0.0.1:1414")
 		if err != nil {
 			fmt.Println(err)
+		}
+		if !portOpen {
 			return 1
 		}
-		err = conn.Close()
-		if err != nil {
-			fmt.Println(err)
-		}
+		return 0
+	case ready.StatusRecoveryQM:
+		fmt.Printf("Detected queue manager running as recovery leader")
 		return 0
 	case ready.StatusStandbyQM:
 		fmt.Printf("Detected queue manager running in standby mode")
@@ -73,4 +74,15 @@ func doMain() int {
 
 func main() {
 	os.Exit(doMain())
+}
+
+func checkPort(address string) (portOpen bool, err error) {
+	var conn net.Conn
+	conn, err = net.Dial("tcp", address)
+	if err != nil {
+		return
+	}
+	portOpen = true
+	err = conn.Close()
+	return
 }

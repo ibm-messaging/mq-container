@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2022
+© Copyright IBM Corporation 2017, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,10 +43,19 @@ func queueManagerHealthy(ctx context.Context) (bool, error) {
 		fmt.Println(err)
 		return false, err
 	}
-	if !strings.Contains(string(out), "(RUNNING)") && !strings.Contains(string(out), "(RUNNING AS STANDBY)") && !strings.Contains(string(out), "(STARTING)") && !strings.Contains(string(out), "(REPLICA)") {
-		return false, nil
+	readyStrings := []string{
+		"(RUNNING)",
+		"(RUNNING AS STANDBY)",
+		"(RECOVERY GROUP LEADER)",
+		"(STARTING)",
+		"(REPLICA)",
 	}
-	return true, nil
+	for _, checkString := range readyStrings {
+		if strings.Contains(string(out), checkString) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func doMain() int {
