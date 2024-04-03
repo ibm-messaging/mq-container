@@ -27,7 +27,7 @@ env:
   global:
     - MAIN_BRANCH=v9.3.0.x
     - TAGCACHE_FILE=tagcache
-    - RELEASE=r2
+    - RELEASE=r1
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 

@@ -1,5 +1,12 @@
 # Change log
 
+## 9.3.0.17-LTS (2024-04)
+
+* Updated to MQ version 9.3.0.17
+
+### Security Fixes
+*  Depandabot alert on operator and container has been fixed.
+
 ## 9.3.0.16-LTS (2024-02)
 
 * Updated to MQ version 9.3.0.16
