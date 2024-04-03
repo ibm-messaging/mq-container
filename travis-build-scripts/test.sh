@@ -15,30 +15,35 @@
 # limitations under the License.
 
 set -e
+#Adding SKIP_UNIT_TEST parameter which can be set in the environment to skip running the unit tests
 
-if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
-  if [ "$LTS" != true ] ; then
-    echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
-    make test-devserver
-    echo -en 'travis_fold:end:test-devserver\\r'
-  fi
-  if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
+if [ ! "$SKIP_UNIT_TEST" ] ; then
+  if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
+    if [ "$LTS" != true ] ; then
+      echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
+      make test-devserver
+      echo -en 'travis_fold:end:test-devserver\\r'
+    fi
+    if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
       if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" || "$ARCH" = "ppc64le" ]] ; then
           echo 'Testing Production image...' && echo -en 'travis_fold:start:test-advancedserver\\r'
           make test-advancedserver
           echo -en 'travis_fold:end:test-advancedserver\\r'
       fi
+    fi
+  else
+    if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
+      echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
+      make test-devserver
+      echo -en 'travis_fold:end:test-devserver\\r'
+    else
+      echo 'Testing Production image...' && echo -en 'travis_fold:start:test-advancedserver\\r'
+      make test-advancedserver
+      echo -en 'travis_fold:end:test-advancedserver\\r'
+    fi
   fi
 else
-  if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
-    echo 'Testing Developer image...' && echo -en 'travis_fold:start:test-devserver\\r'
-    make test-devserver
-    echo -en 'travis_fold:end:test-devserver\\r'
-  else
-    echo 'Testing Production image...' && echo -en 'travis_fold:start:test-advancedserver\\r'
-    make test-advancedserver
-    echo -en 'travis_fold:end:test-advancedserver\\r'
-  fi
+  echo "Skipping unit tests as SKIP_UNIT_TEST is set"
 fi
 echo 'Running gosec scan...' && echo -en 'travis_fold:start:gosec-scan\\r'
 if [ "$ARCH" = "amd64" ] ; then
