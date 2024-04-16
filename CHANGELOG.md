@@ -1,5 +1,12 @@
 # Change log
 
+## 9.3.5.1-r1 (2024-04)
+
+* Updated to MQ version 9.3.5.1
+
+### Security Fixes
+* google.golang.org/protobuf library has been upgraded to remediate a reported vulnerability.
+
 ## 9.3.5.0 (2024-02)
 
 * Updated to MQ version 9.3.5.0
