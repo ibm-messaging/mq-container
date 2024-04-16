@@ -5,7 +5,7 @@
 * Updated to MQ version 9.3.0.17
 
 ### Security Fixes
-*  Depandabot alert on operator and container has been fixed.
+* google.golang.org/protobuf library has been upgraded to remediate a reported vulnerability.
 
 ## 9.3.0.16-LTS (2024-02)
 
