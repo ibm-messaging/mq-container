@@ -535,7 +535,7 @@ func TestDevSecureFIPSTrueWeb(t *testing.T) {
 	waitForWebReady(t, cli, ID, createTLSConfig(t, cert, tlsPassPhrase))
 
 	// Create a TLS Config with a cipher to use when connecting over HTTPS
-	var secureTLSConfig *tls.Config = createTLSConfigWithCipher(t, cert, tlsPassPhrase, []uint16{tls.TLS_RSA_WITH_AES_256_GCM_SHA384})
+	var secureTLSConfig *tls.Config = createTLSConfigWithCipher(t, cert, tlsPassPhrase, []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256})
 	// Put a message to queue
 	t.Run("REST messaging", func(t *testing.T) {
 		testRESTMessaging(t, cli, ID, secureTLSConfig, qm, "app", appPassword, "")
