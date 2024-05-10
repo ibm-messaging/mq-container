@@ -43,7 +43,7 @@ func createDirStructure() error {
 				log.Printf("Warning creating directory structure: %v\n", string(out))
 			}
 		} else {
-			log.Printf("Error creating directory structure: %v\n", string(out))
+			log.Printf("Error creating directory structure: the 'crtmqdir' command returned with code: %v. Reason: %v\n", rc, string(out))
 			return err
 		}
 	}
@@ -93,7 +93,7 @@ func createQueueManager(name string, devMode bool) (bool, error) {
 		args := getCreateQueueManagerArgs(mounts, name, devMode)
 		out, rc, err := command.Run("crtmqm", args...)
 		if err != nil {
-			log.Printf("Error %v creating queue manager: %v", rc, string(out))
+			log.Printf("Error creating queue manager: the 'crtmqm' command returned with code: %v. Reason: %v", rc, string(out))
 			return false, err
 		}
 	} else {
@@ -101,7 +101,8 @@ func createQueueManager(name string, devMode bool) (bool, error) {
 		args := getCreateStandbyQueueManagerArgs(name)
 		out, rc, err := command.Run("addmqinf", args...)
 		if err != nil {
-			log.Printf("Error %v creating standby queue manager: %v", rc, string(out))
+			log.Printf("Error creating standby queue manager: the 'addmqinf' command returned with code: %v. Reason: %v",
+				rc, string(out))
 			return false, err
 		}
 		log.Println("Created standby queue manager")
@@ -136,7 +137,8 @@ func updateCommandLevel() error {
 		log.Printf("Setting CMDLEVEL to %v", level)
 		out, rc, err := command.Run("strmqm", "-e", "CMDLEVEL="+level)
 		if err != nil {
-			log.Printf("Error %v setting CMDLEVEL: %v", rc, string(out))
+			log.Printf("Error setting CMDLEVEL for queue manager: the 'strmqm' command returned with code: %v. Reason: %v",
+				rc, string(out))
 			return err
 		}
 	}
@@ -156,7 +158,7 @@ func startQueueManager(name string) error {
 			log.Printf("Started replica queue manager")
 			return nil
 		}
-		log.Printf("Error %v starting queue manager: %v", rc, string(out))
+		log.Printf("Error starting queue manager: the 'strmqm' command returned with code: %v. Reason: %v", rc, string(out))
 		return err
 	}
 	log.Println("Started queue manager")
@@ -168,7 +170,9 @@ func stopQueueManager(name string) error {
 	qmGracePeriod := os.Getenv("MQ_GRACE_PERIOD")
 	status, err := ready.Status(context.Background(), name)
 	if err != nil {
-		log.Printf("Error getting status for queue manager %v: %v", name, err.Error())
+		log.Printf("Error getting status for queue manager %v. The 'dspmq' command returned reason: %v",
+			name, err.Error())
+
 		return err
 	}
 	isStandby := status.StandbyQM()
@@ -182,7 +186,7 @@ func stopQueueManager(name string) error {
 	}
 	out, rc, err := command.Run("endmqm", args...)
 	if err != nil {
-		log.Printf("Error %v stopping queue manager: %v", rc, string(out))
+		log.Printf("Error stopping queue manager: the 'endmqm' command returned with code: %v.  Reason: %v", rc, string(out))
 		return err
 	}
 	if isStandby {
@@ -197,7 +201,7 @@ func startMQTrace() error {
 	log.Println("Starting MQ trace")
 	out, rc, err := command.Run("strmqtrc")
 	if err != nil {
-		log.Printf("Error %v starting trace: %v", rc, string(out))
+		log.Printf("Error starting MQ trace: the 'strmqtrc' command returned with code: %v.  Reason: %v", rc, string(out))
 		return err
 	}
 	log.Println("Started MQ trace")
@@ -208,7 +212,7 @@ func endMQTrace() error {
 	log.Println("Ending MQ Trace")
 	out, rc, err := command.Run("endmqtrc")
 	if err != nil {
-		log.Printf("Error %v ending trace: %v", rc, string(out))
+		log.Printf("Error ending MQ trace: the 'endmqtrc' command returned with code: %v.  Reason: %v", rc, string(out))
 		return err
 	}
 	log.Println("Ended MQ trace")
@@ -226,7 +230,8 @@ func formatMQSCOutput(out string) string {
 func isStandbyQueueManager(name string) (bool, error) {
 	out, rc, err := command.Run("dspmq", "-n", "-m", name)
 	if err != nil {
-		log.Printf("Error %v getting status for queue manager %v: %v", rc, name, string(out))
+		log.Printf("Error while getting status for queue manager %v: the 'dspmq' command returned with code: %v.  Reason: %v",
+			name, rc, string(out))
 		return false, err
 	}
 	if strings.Contains(string(out), "(RUNNING AS STANDBY)") {
