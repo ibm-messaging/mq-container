@@ -46,11 +46,11 @@ if ($UBUNTU); then
   apt-get install -y --no-install-recommends ${EXTRA_DEBS}
 fi
 
-if ($RPM); then
-  EXTRA_RPMS="bash bc ca-certificates file findutils gawk glibc-common grep ncurses-compat-libs passwd procps-ng sed shadow-utils tar util-linux which"
+if ($RPM); then	
+  EXTRA_RPMS="bash bc ca-certificates file findutils gawk glibc-common grep ncurses-libs passwd procps-ng sed shadow-utils tar util-linux which"
   # Install additional packages required by MQ, this install process and the runtime scripts
   $YUM && yum -y install --setopt install_weak_deps=false ${EXTRA_RPMS}
-  $MICRODNF && microdnf --disableplugin=subscription-manager install ${EXTRA_RPMS}
+  $MICRODNF && microdnf --disableplugin=subscription-manager -y install ${EXTRA_RPMS}
 fi
 
 # Apply any bug fixes not included in base Ubuntu or MQ image.
