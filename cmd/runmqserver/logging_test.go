@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020, 2023
+© Copyright IBM Corporation 2020, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,22 +62,28 @@ var mqLogSourcesTests = []struct {
 	exptValid   bool
 	exptQmgrSrc bool
 	exptWebSrc  bool
+	exptMqscSrc bool
 }{
-	{1, "qmgr,web", true, true, true},
-	{2, "qmgr", true, true, false},
-	{3, "web,qmgr", true, true, true},
-	{4, "web", true, false, true},
-	{5, " ", true, true, true},
-	{6, "QMGR,WEB", true, true, true},
-	{7, "qmgr,     ", true, true, false},
-	{8, "qmgr   ,    web", true, true, true},
-	{9, "qmgr,dummy", false, true, false},
-	{10, "fake,dummy", false, false, false},
-	{11, "qmgr,fake,dummy", false, true, false},
-	{12, "fake,dummy,web", false, false, true},
-	{13, "true", false, false, false},
-	{14, "false", false, false, false},
-	{15, "", true, true, true},
+	{1, "qmgr,web", true, true, true, false},
+	{2, "qmgr", true, true, false, false},
+	{3, "web,qmgr", true, true, true, false},
+	{4, "web", true, false, true, false},
+	{5, " ", true, true, true, false},
+	{6, "QMGR,WEB", true, true, true, false},
+	{7, "qmgr,     ", true, true, false, false},
+	{8, "qmgr   ,    web", true, true, true, false},
+	{9, "qmgr,dummy", false, true, false, false},
+	{10, "fake,dummy", false, false, false, false},
+	{11, "qmgr,fake,dummy", false, true, false, false},
+	{12, "fake,dummy,web", false, false, true, false},
+	{13, "true", false, false, false, false},
+	{14, "false", false, false, false, false},
+	{15, "", true, true, true, false},
+	{16, "mqsc", true, false, false, true},
+	{17, "MQSC", true, false, false, true},
+	{18, "qmgr,mqsc", true, true, false, true},
+	{19, "web,mqsc", true, false, true, true},
+	{20, "qmgr,web,mqsc", true, true, true, true},
 }
 
 func TestLoggingConsoleSourceInputs(t *testing.T) {
@@ -97,6 +103,10 @@ func TestLoggingConsoleSourceInputs(t *testing.T) {
 		isLogSrcWeb := checkLogSourceForMirroring("web")
 		if isLogSrcWeb != mqlogsrctest.exptWebSrc {
 			t.Errorf("Expected return value from checkLogSourceForMirroring() is %v for MQ_LOGGING_CONSOLE_SOURCE='%v', got %v\n", mqlogsrctest.exptWebSrc, mqlogsrctest.logsrc, isLogSrcWeb)
+		}
+		isLogSrcMqsc := checkLogSourceForMirroring("mqsc")
+		if isLogSrcMqsc != mqlogsrctest.exptMqscSrc {
+			t.Errorf("Expected return value from checkLogSourceForMirroring() is %v for MQ_LOGGING_CONSOLE_SOURCE='%v', got %v\n", mqlogsrctest.exptMqscSrc, mqlogsrctest.logsrc, isLogSrcMqsc)
 		}
 	}
 }

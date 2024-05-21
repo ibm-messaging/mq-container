@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2023
+© Copyright IBM Corporation 2017, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1595,6 +1595,131 @@ func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 		t.Errorf("mesageID AMQ7230I is not present in MQ LOG!!!!")
 	}
 
+}
+
+// TestLoggingConsoleSetToMqsc MQ_LOGGING_CONSOLE_SOURCE set to mqsc
+func TestLoggingConsoleSetToMqsc(t *testing.T) {
+
+	t.Parallel()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_LOGGING_CONSOLE_SOURCE=mqsc",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=true",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "MQSC commands read")
+	if errJson != nil {
+		t.Errorf("%v", errJson)
+	} else { // Continue only if there is no error returned
+
+		// Make sure messages from other sources are not printed
+		if strings.Contains(jsonLogs, "AMQ6206I") || strings.Contains(jsonLogs, "CWWKF0011I") {
+			t.Errorf("Logging source is set to mqsc, Qmgr message or web message  \"%v\" should not come!!!", jsonLogs)
+		}
+
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+// TestLoggingConsoleSetToMqscJson tests MQ_LOGGING_CONSOLE_SOURCE set to mqsc and format json.
+// This is required as the json format for mqsc logs is constructed via the container code and not dumped from actual logs
+func TestLoggingConsoleSetToMqscJson(t *testing.T) {
+
+	t.Parallel()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_LOGGING_CONSOLE_SOURCE=mqsc",
+			"MQ_LOGGING_CONSOLE_FORMAT=json",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "MQSC commands read")
+
+	if errJson != nil {
+		t.Errorf("%v", errJson)
+	} else { // Continue only if there is no error returned
+
+		if strings.Contains(jsonLogs, "AMQ6206I") {
+			t.Errorf("Logging source is set to mqsc, Qmgr message  \"%v\" should not come!!!", jsonLogs)
+		} else {
+			//Check if the console logs are in correct json format
+			isValidJSON := checkLogForValidJSON(jsonLogs)
+			if !isValidJSON {
+				t.Fatalf("All log lines are not in a valid JSON format.  Logs: %v ", jsonLogs)
+			}
+		}
+	}
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+// TestMqscErrorLogLevel creates a new image with an MQSC file in and a duplicate mqsc command.
+// Later checks if the json file has reported loglevel value as ERROR as expected
+func TestMqscErrorLogLevel(t *testing.T) {
+	t.Parallel()
+
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+	var files = []struct {
+		Name, Body string
+	}{
+		{"Dockerfile", fmt.Sprintf(`
+		  FROM %v
+		  USER root
+		  RUN rm -f /etc/mqm/*.mqsc
+		  ADD test.mqsc /etc/mqm/
+		  RUN chmod 0660 /etc/mqm/test.mqsc
+		  USER 1001`, imageName())},
+		{"test.mqsc", "DEFINE QLOCAL(test)\nDEFINE QLOCAL(test)"},
+	}
+	tag := createImage(t, cli, files)
+	defer deleteImage(t, cli, tag)
+
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_LOGGING_CONSOLE_SOURCE=mqsc",
+			"MQ_LOGGING_CONSOLE_FORMAT=json",
+		},
+		Image: tag,
+	}
+
+	id := runContainer(t, cli, &containerConfig)
+	waitForReady(t, cli, id)
+	defer cleanContainer(t, cli, id)
+
+	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "MQSC commands read")
+
+	if errJson != nil {
+		t.Errorf("%v", errJson)
+	} else { // Continue only if there is no error returned
+
+		//Check if the console logs are in correct json format
+		isValidJSON := checkLogForValidJSON(jsonLogs)
+		if !isValidJSON {
+			t.Fatalf("All log lines are not in a valid JSON format. Logs: %v ", jsonLogs)
+		} else {
+			if !strings.Contains(jsonLogs, "\"type\":\"mqsc_log\",\"loglevel\":\"ERROR\"") {
+				t.Errorf("The autocfgmqsc.LOG did not return expected ERROR loglevel. Logs: %v", jsonLogs)
+			}
+		}
+	}
 }
 
 // TestLoggingConsoleSetToWeb tests MQ_LOGGING_CONSOLE_SOURCE set to web

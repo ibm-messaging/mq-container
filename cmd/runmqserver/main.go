@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2023
+© Copyright IBM Corporation 2017, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -249,7 +249,7 @@ func doMain() error {
 
 	//Validate MQ_LOG_CONSOLE_SOURCE variable
 	if !isLogConsoleSourceValid() {
-		log.Println("One or more invalid value is provided for MQ_LOGGING_CONSOLE_SOURCE. Allowed values are 'qmgr' & 'web' in csv format")
+		log.Println("One or more invalid value is provided for MQ_LOGGING_CONSOLE_SOURCE. Allowed values are 'qmgr','web' and 'mqsc' in csv format")
 	}
 
 	var wg sync.WaitGroup
@@ -367,6 +367,15 @@ func doMain() error {
 	if err != nil {
 		logTermination(err)
 		return err
+	}
+
+	//If the queue manager has started successfully, reflect mqsc logs when enabled
+	if checkLogSourceForMirroring("mqsc") {
+		_, err = mirrorMQSCLogs(ctx, &wg, name, mf)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	if enableTraceStrmqm == "true" || enableTraceStrmqm == "1" {

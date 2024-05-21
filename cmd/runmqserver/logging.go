@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2023
+© Copyright IBM Corporation 2017, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,9 +22,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
@@ -191,6 +193,18 @@ func mirrorSystemErrorLogs(ctx context.Context, wg *sync.WaitGroup, mf mirrorFun
 	return mirrorLog(ctx, wg, "/var/mqm/errors/AMQERR01.json", false, mf, false)
 }
 
+// mirrorMQSCLogs starts a goroutine to mirror the contents of the auto-config mqsc logs
+func mirrorMQSCLogs(ctx context.Context, wg *sync.WaitGroup, name string, mf mirrorFunc) (chan error, error) {
+	qm, err := mqini.GetQueueManager(name)
+	if err != nil {
+		log.Debug(err)
+		return nil, err
+	}
+
+	f := filepath.Join(mqini.GetErrorLogDirectory(qm), "autocfgmqsc.LOG")
+	return mirrorLog(ctx, wg, f, true, mf, false)
+}
+
 // mirrorQueueManagerErrorLogs starts a goroutine to mirror the contents of the MQ queue manager error logs
 func mirrorQueueManagerErrorLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool, mf mirrorFunc) (chan error, error) {
 	// Always use the JSON log as the source
@@ -249,9 +263,13 @@ func configureLogger(name string) (mirrorFunc, error) {
 					fmt.Println(msg)
 				}
 			} else {
-				// The log being mirrored isn't JSON, so wrap it in a simple JSON message
-				// MQ error logs are usually JSON, but this is useful for Liberty logs - usually expect WLP_LOGGING_MESSAGE_FORMAT=JSON to be set when mirroring Liberty logs.
-				fmt.Printf("{\"message\":\"%s\"}\n", msg)
+				// The log being mirrored isn't JSON. This can happen only in case of 'mqsc' logs
+				// Also if the logging source is from autocfgmqsc.LOG, then we have to construct the json string as per below logic
+				if checkLogSourceForMirroring("mqsc") && canMQSCLogBeMirroredToConsole(msg) {
+					logLevel := determineMQSCLogLevel(strings.TrimSpace(msg))
+					fmt.Printf("{\"ibm_datetime\":\"%s\",\"type\":\"mqsc_log\",\"loglevel\":\"%s\",\"message\":\"%s\"}\n",
+						getTimeStamp(), logLevel, strings.TrimSpace(msg))
+				}
 			}
 			return true
 		}, nil
@@ -279,9 +297,10 @@ func configureLogger(name string) (mirrorFunc, error) {
 					fmt.Print(formatBasic(obj))
 				}
 			} else {
-				// The log being mirrored isn't JSON, so just print it.
-				// MQ error logs are usually JSON, but this is useful for Liberty logs - usually expect WLP_LOGGING_MESSAGE_FORMAT=JSON to be set when mirroring Liberty logs.
-				fmt.Println(msg)
+				// The log being mirrored isn't JSON, so just print it. This can happen only in case of mqsc logs
+				if checkLogSourceForMirroring("mqsc") && canMQSCLogBeMirroredToConsole(msg) {
+					log.Printf(strings.TrimSpace(msg))
+				}
 			}
 			return true
 		}, nil
@@ -383,7 +402,7 @@ func isLogConsoleSourceValid() bool {
 	for _, src := range logConsoleSource {
 		switch strings.TrimSpace(src) {
 		//If it is a permitted value, it is valid. Keep it as true, but dont return it. We may encounter something junk soon
-		case "qmgr", "web", "":
+		case "qmgr", "web", "mqsc", "":
 			retValue = true
 		//If invalid entry arrives in-between/anywhere, just return false, there is no turning back
 		default:
@@ -398,7 +417,7 @@ func isLogConsoleSourceValid() bool {
 func checkLogSourceForMirroring(source string) bool {
 	logsrcs := getMQLogConsoleSource()
 
-	//Nothing set, this is when we mirror all
+	//Nothing set, this is when we mirror both qmgr & web
 	if logsrcs == "" {
 		if source == "qmgr" || source == "web" {
 			return true
@@ -427,7 +446,40 @@ func checkLogSourceForMirroring(source string) bool {
 				}
 				return true
 			}
+		case "mqsc":
+			//If value of input parameter is mqsc and it exists in environment variable, mirror mqsc logs
+			if source == "mqsc" {
+				return true
+			}
 		}
 	}
 	return false
+}
+
+// canMQSCLogBeMirroredToConsole does the following check. The autocfgmqsc.log may contain comments, empty or unformatted lines. These will be ignored
+func canMQSCLogBeMirroredToConsole(message string) bool {
+	if len(message) > 0 && !strings.HasPrefix(strings.TrimSpace(message), ": *") && !(strings.TrimSpace(message) == ":") {
+		return true
+	}
+	return false
+}
+
+// getTimeStamp fetches current time stamp
+func getTimeStamp() string {
+	const timestampFormat string = "2008-01-02T15:04:05.000Z07:00"
+	t := time.Now()
+	return t.Format(timestampFormat)
+}
+
+// determineMQSCLogLevel finds out log level based on if the message contains 'AMQxxxxE:' string or not.
+func determineMQSCLogLevel(message string) string {
+	//Match the below pattern
+	re := regexp.MustCompile(`AMQ[0-9]+E:`)
+	result := re.FindStringSubmatch(message)
+
+	if len(result) > 0 {
+		return "ERROR"
+	} else {
+		return "INFO"
+	}
 }
