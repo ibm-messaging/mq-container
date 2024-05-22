@@ -20,14 +20,17 @@ package ready
 import (
 	"context"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 )
 
-const fileName string = "/run/runmqserver/ready"
+const readyFile string = "/run/runmqserver/ready"
+const readyToSyncFile string = "/run/runmqserver/ready-to-sync"
 
-func fileExists() (bool, error) {
+func fileExists(fileName string) (bool, error) {
 	_, err := os.Stat(fileName)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -40,7 +43,21 @@ func fileExists() (bool, error) {
 
 // Clear ensures that any readiness state is cleared
 func Clear() error {
-	exist, err := fileExists()
+	err := clearFile(readyFile)
+	if err != nil {
+		return err
+	}
+	err = clearFile(readyToSyncFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// clearFile removes the specified file if it exists
+func clearFile(fileName string) error {
+	exist, err := fileExists(fileName)
 	if err != nil {
 		return err
 	}
@@ -54,17 +71,55 @@ func Clear() error {
 // manager has finished its configuration step
 func Set() error {
 	// #nosec G306 - this gives permissions to owner/s group only.
-	return os.WriteFile(fileName, []byte("1"), 0770)
+	return os.WriteFile(readyFile, []byte("1"), 0770)
 }
 
 // Check checks whether or not the queue manager has finished its
 // configuration steps
 func Check() (bool, error) {
-	exists, err := fileExists()
+	exists, err := fileExists(readyFile)
 	if err != nil {
 		return false, err
 	}
 	return exists, nil
+}
+
+// SetReadyToSync is used to indicate that a Native-HA queue manager instance is ready-to-sync
+func SetReadyToSync() error {
+
+	exists, err := fileExists(readyToSyncFile)
+	if err != nil {
+		return err
+	} else if exists {
+		return nil
+	}
+
+	readyToSyncStartTime := strconv.FormatInt(time.Now().Unix(), 10)
+	// #nosec G306 - required permissions
+	return os.WriteFile(readyToSyncFile, []byte(readyToSyncStartTime), 0660)
+}
+
+// GetReadyToSyncStartTime returns the start-time a Native-HA queue manager instance was ready-to-sync
+func GetReadyToSyncStartTime() (bool, time.Time, error) {
+
+	exists, err := fileExists(readyToSyncFile)
+	if err != nil {
+		return exists, time.Time{}, err
+	}
+
+	if exists {
+		buf, err := os.ReadFile(readyToSyncFile)
+		if err != nil {
+			return true, time.Time{}, err
+		}
+		readyToSyncStartTime, err := strconv.ParseInt(string(buf), 10, 64)
+		if err != nil {
+			return true, time.Time{}, err
+		}
+		return true, time.Unix(readyToSyncStartTime, 0), nil
+	}
+
+	return false, time.Time{}, nil
 }
 
 // Status returns an enum representing the current running status of the queue manager
