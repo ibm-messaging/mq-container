@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021, 2023
+© Copyright IBM Corporation 2021, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,16 +22,15 @@ limitations under the License.
 #include <string.h>
 #include <cmqec.h>
 #include "log.h"
-#include "htpass.h"
+#include "simpleauth.h"
 
 // Declare the internal functions that implement the interface
 MQZ_INIT_AUTHORITY MQStart;
-static MQZ_AUTHENTICATE_USER mqhtpass_authenticate_user;
-static MQZ_FREE_USER mqhtpass_free_user;
-static MQZ_TERM_AUTHORITY mqhtpass_terminate;
+static MQZ_AUTHENTICATE_USER mqsimpleauth_authenticate_user;
+static MQZ_FREE_USER mqsimpleauth_free_user;
+static MQZ_TERM_AUTHORITY mqsimpleauth_terminate;
 
-#define LOG_FILE "/var/mqm/errors/mqhtpass.json"
-#define HTPASSWD_FILE "/run/mq.htpasswd"
+#define LOG_FILE "/var/mqm/errors/simpleauth.json"
 #define NAME "MQ Advanced for Developers custom authentication service"
 
 /**
@@ -78,13 +77,8 @@ void MQENTRY MQStart(
   {
     log_infof("Initializing %s", NAME);
   }
-  log_debugf("MQStart options=%s qmgr=%.*s", ((Options == MQZIO_SECONDARY) ? "Secondary" : "Primary"), trimmed_len(QMgrName, MQ_Q_MGR_NAME_LENGTH), QMgrName);
 
-  if (!htpass_valid_file(HTPASSWD_FILE))
-  {
-    CC = MQCC_FAILED;
-    Reason = MQRC_INITIALIZATION_FAILED;
-  }
+  log_debugf("MQStart options=%s qmgr=%.*s", ((Options == MQZIO_SECONDARY) ? "Secondary" : "Primary"), trimmed_len(QMgrName, MQ_Q_MGR_NAME_LENGTH), QMgrName);
 
   // Initialize the functions to use for each entry point
   if (CC == MQCC_OK)
@@ -93,15 +87,15 @@ void MQENTRY MQStart(
   }
   if (CC == MQCC_OK)
   {
-    hc->MQZEP_Call(hc, MQZID_TERM_AUTHORITY, (PMQFUNC)mqhtpass_terminate, &CC, &Reason);
+    hc->MQZEP_Call(hc, MQZID_TERM_AUTHORITY, (PMQFUNC)mqsimpleauth_terminate, &CC, &Reason);
   }
   if (CC == MQCC_OK)
   {
-    hc->MQZEP_Call(hc, MQZID_AUTHENTICATE_USER, (PMQFUNC)mqhtpass_authenticate_user, &CC, &Reason);
+    hc->MQZEP_Call(hc, MQZID_AUTHENTICATE_USER, (PMQFUNC)mqsimpleauth_authenticate_user, &CC, &Reason);
   }
   if (CC == MQCC_OK)
   {
-    hc->MQZEP_Call(hc, MQZID_FREE_USER, (PMQFUNC)mqhtpass_free_user, &CC, &Reason);
+    hc->MQZEP_Call(hc, MQZID_FREE_USER, (PMQFUNC)mqsimpleauth_free_user, &CC, &Reason);
   }
   *Version = MQZAS_VERSION_6;
   *pCompCode = CC;
@@ -114,7 +108,7 @@ void MQENTRY MQStart(
  * This is the usual case.
  * See https://www.ibm.com/support/knowledgecenter/SSFKSJ_latest/com.ibm.mq.ref.dev.doc/q095610_.html
  */
-static void MQENTRY mqhtpass_authenticate_user_csp(
+static void MQENTRY mqsimpleauth_authenticate_user_csp(
     PMQCHAR pQMgrName,
     PMQCSP pSecurityParms,
     PMQZAC pApplicationContext,
@@ -154,9 +148,9 @@ static void MQENTRY mqhtpass_authenticate_user_csp(
   strncpy(csp_pass, pSecurityParms->CSPPasswordPtr, pSecurityParms->CSPPasswordLength);
   csp_pass[pSecurityParms->CSPPasswordLength] = 0;
   log_debugf("%s with CSP user set. user=%s", __func__, csp_user);
-  int auth_result = htpass_authenticate_user(HTPASSWD_FILE, csp_user, csp_pass);
+  int auth_result = simpleauth_authenticate_user(csp_user, csp_pass);
 
-  if (auth_result == HTPASS_VALID)
+  if (auth_result == SIMPLEAUTH_VALID)
   {
     // An OK completion code means MQ will accept this user is authenticated
     *pCompCode = MQCC_OK;
@@ -166,8 +160,8 @@ static void MQENTRY mqhtpass_authenticate_user_csp(
     memcpy(pIdentityContext->UserIdentifier, csp_user, sizeof(pIdentityContext->UserIdentifier));
     log_debugf("Authenticated user=%s", pIdentityContext->UserIdentifier);
   }
-  // If the htpasswd file does not have an entry for this user
-  else if (auth_result == HTPASS_INVALID_USER)
+  // If the simpleauth file does not have an entry for this user
+  else if (auth_result == SIMPLEAUTH_INVALID_USER)
   {
     *pCompCode = MQCC_WARNING;
     *pReason = MQRC_NONE;
@@ -185,8 +179,8 @@ static void MQENTRY mqhtpass_authenticate_user_csp(
         *pCompCode,
         *pReason);
   }
-  // If the htpasswd file has an entry for this user, but the password supplied is incorrect
-  else if (auth_result == HTPASS_INVALID_PASSWORD)
+  // If the simpleauth file has an entry for this user, but the password supplied is incorrect
+  else if (auth_result == SIMPLEAUTH_INVALID_PASSWORD)
   {
     *pCompCode = MQCC_WARNING;
     *pReason = MQRC_NOT_AUTHORIZED;
@@ -219,7 +213,7 @@ static void MQENTRY mqhtpass_authenticate_user_csp(
  * Called during the connection of any application.
  * For more information on the parameters, see https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_latest/com.ibm.mq.ref.dev.doc/q110090_.html
  */
-static void MQENTRY mqhtpass_authenticate_user(
+static void MQENTRY mqsimpleauth_authenticate_user(
     PMQCHAR pQMgrName,
     PMQCSP pSecurityParms,
     PMQZAC pApplicationContext,
@@ -241,7 +235,7 @@ static void MQENTRY mqhtpass_authenticate_user(
 
   if ((pSecurityParms->AuthenticationType) == MQCSP_AUTH_USER_ID_AND_PWD)
   {
-    mqhtpass_authenticate_user_csp(pQMgrName, pSecurityParms, pApplicationContext, pIdentityContext, pCorrelationPtr, pComponentData, pContinuation, pCompCode, pReason);
+    mqsimpleauth_authenticate_user_csp(pQMgrName, pSecurityParms, pApplicationContext, pIdentityContext, pCorrelationPtr, pComponentData, pContinuation, pCompCode, pReason);
   }
   else
   {
@@ -267,7 +261,7 @@ static void MQENTRY mqhtpass_authenticate_user(
     }
     else
     {
-      bool valid_user = htpass_valid_user(HTPASSWD_FILE, spuser);
+      bool valid_user = simpleauth_valid_user(spuser);
       if (valid_user)
       {
         // An OK completion code means MQ will accept this user is authenticated
@@ -302,7 +296,7 @@ static void MQENTRY mqhtpass_authenticate_user(
 /**
  * Called during MQDISC, as the inverse of the call to authenticate.
  */
-static void MQENTRY mqhtpass_free_user(
+static void MQENTRY mqsimpleauth_free_user(
     PMQCHAR pQMgrName,
     PMQZFP pFreeParms,
     PMQBYTE pComponentData,
@@ -311,7 +305,7 @@ static void MQENTRY mqhtpass_free_user(
     PMQLONG pCompCode,
     PMQLONG pReason)
 {
-  log_debugf("mqhtpass_freeuser()");
+  log_debugf("mqsimpleauth_freeuser()");
   *pCompCode = MQCC_WARNING;
   *pReason = MQRC_NONE;
   *pContinuation = MQZCI_CONTINUE;
@@ -320,7 +314,7 @@ static void MQENTRY mqhtpass_free_user(
 /**
  * Called when the authorization service is terminated.
  */
-static void MQENTRY mqhtpass_terminate(
+static void MQENTRY mqsimpleauth_terminate(
     MQHCONFIG hc,
     MQLONG Options,
     PMQCHAR pQMgrName,

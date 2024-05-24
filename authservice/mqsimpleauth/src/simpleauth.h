@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021
+© Copyright IBM Corporation 2021, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,36 +14,45 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _HTPASS_H
-#define _HTPASS_H
+#ifndef _SIMPLEAUTH_H
+#define _SIMPLEAUTH_H
 
-#define HTPASS_VALID 0
-#define HTPASS_INVALID_USER 1
-#define HTPASS_INVALID_PASSWORD 2
-
-/**
- * Validate an HTPasswd file for use with IBM MQ.
- * 
- * @param filename the HTPasswd file
- */
-_Bool htpass_valid_file(char *filename);
+#define SIMPLEAUTH_VALID 0
+#define SIMPLEAUTH_INVALID_USER 1
+#define SIMPLEAUTH_INVALID_PASSWORD 2
+#define MQ_APP_SECRET_FILE "/run/secrets/mqAppPassword"
+#define MQ_ADMIN_SECRET_FILE "/run/secrets/mqAdminPassword"
+#define APP_USER_NAME "app"
+#define ADMIN_USER_NAME "admin"
 
 /**
  * Authenticate a user, based on the supplied file name.
- * 
- * @param filename the HTPasswd file
+ *
  * @param user the user name to authenticate
  * @param password the password of the user
- * @return HTPASS_VALID, HTPASS_INVALID_USER or HTPASS_INVALID_PASSWORD
+ * @return SIMPLEAUTH_VALID, SIMPLEAUTH_INVALID_USER or SIMPLEAUTH_INVALID_PASSWORD
  */
-int htpass_authenticate_user(char *filename, char *user, char *password);
+int simpleauth_authenticate_user(char *user, char *password);
 
 /**
  * Validate that a user exists in the password file.
- * 
- * @param filename the HTPasswd file
+ *
  * @param user the user name to validate
  */
-_Bool htpass_valid_user(char *filename, char *user);
+bool simpleauth_valid_user(char *user);
+
+/**
+ * Get the secret of the UserId.
+ *
+ * @param user the user name to validate
+ */
+char *getSecretForUser(char *user);
+
+/**
+ * Get the secret of the UserId.
+ *
+ * @param secret path for the secret file
+*/
+char *readSecret(char* secret);
 
 #endif

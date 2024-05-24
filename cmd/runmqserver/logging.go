@@ -217,9 +217,9 @@ func mirrorQueueManagerErrorLogs(ctx context.Context, wg *sync.WaitGroup, name s
 	return mirrorLog(ctx, wg, f, fromStart, mf, true)
 }
 
-// mirrorHTPasswdLogs starts a goroutine to mirror the contents of the MQ HTPasswd authorization service's log
-func mirrorHTPasswdLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool, mf mirrorFunc) (chan error, error) {
-	return mirrorLog(ctx, wg, "/var/mqm/errors/mqhtpass.json", false, mf, true)
+// mirrorMQSimpleAuthLogs starts a goroutine to mirror the contents of the MQ SimpleAuth authorization service's log
+func mirrorMQSimpleAuthLogs(ctx context.Context, wg *sync.WaitGroup, name string, fromStart bool, mf mirrorFunc) (chan error, error) {
+	return mirrorLog(ctx, wg, "/var/mqm/errors/simpleauth.json", false, mf, true)
 }
 
 // mirrorWebServerLogs starts a goroutine to mirror the contents of the Liberty web server messages.log

@@ -68,7 +68,7 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 	}
 
 	// Configure TLS for the Web Console
-	err = tls.ConfigureWebTLS(keyLabel, log)
+	err = tls.ConfigureWebTLS(keyLabel, log, p12Truststore.Password)
 	if err != nil {
 		return "", err
 	}

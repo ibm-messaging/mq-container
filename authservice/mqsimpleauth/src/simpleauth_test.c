@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021
+© Copyright IBM Corporation 2021, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include "log.h"
-#include "htpass.h"
-
+#include "simpleauth.h"
+#include <stdlib.h>
+#include <string.h>
 // Headers for multi-threaded tests
 #include <pthread.h>
 
@@ -37,90 +38,99 @@ void test_fail(const char *test_name)
 }
 
 // ----------------------------------------------------------------------------
-// Simple tests for file validation
+// Simple test to read secret
 // ----------------------------------------------------------------------------
 
-void test_htpass_valid_file_ok()
+void test_read_secret_ok()
 {
   test_start();
-  int ok = htpass_valid_file("./src/htpass_test.htpasswd");
-  if (!ok)
+  char *pwd = readSecret("./src/mqAdminPassword");
+  char *password = "fred:$2y$05$3Fp9";
+  if (0 == strncmp(pwd, password, strlen(password)))
+    test_pass();
+  else
     test_fail(__func__);
-  test_pass();
-}
-
-void test_htpass_valid_file_too_long()
-{
-  test_start();
-  int ok = htpass_valid_file("./src/htpass_test_invalid.htpasswd");
-  if (ok)
-    test_fail(__func__);
-  test_pass();
 }
 
 // ----------------------------------------------------------------------------
 // Simple tests for authentication
 // ----------------------------------------------------------------------------
 
-void test_htpass_authenticate_user_fred_valid()
+void test_simpleauth_valid_user_app_valid()
 {
   test_start();
-  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "passw0rd");
+  bool validUser = simpleauth_valid_user(APP_USER_NAME);
+  printf("%s: app - %d\n", __func__, validUser);
+
+  if (!validUser)
+    test_fail(__func__);
+  test_pass();
+}
+
+void test_simpleauth_valid_user_admin_valid()
+{
+  test_start();
+  bool validUser = simpleauth_valid_user(ADMIN_USER_NAME);
+  printf("%s: admin - %d\n", __func__, validUser);
+  if (!validUser)
+    test_fail(__func__);
+  test_pass();
+}
+
+void test_simpleauth_valid_user_george_invalid()
+{
+  test_start();
+  bool validUser = simpleauth_valid_user("george");
+  printf("%s: george - %d\n", __func__, validUser);
+  if (validUser)
+    test_fail(__func__);
+  test_pass();
+}
+
+void test_simpleauth_authenticate_user_fred_unknown()
+{
+  test_start();
+  setenv("MQ_APP_PASSWORD", "passw0rd", 1);
+  int rc = simpleauth_authenticate_user("fred", "passw0rd");
   printf("%s: fred - %d\n", __func__, rc);
-  if (rc != HTPASS_VALID)
+  if (rc != SIMPLEAUTH_INVALID_USER)
     test_fail(__func__);
   test_pass();
 }
 
-void test_htpass_authenticate_user_fred_invalid1()
+void test_simpleauth_authenticate_user_app_ok()
 {
   test_start();
-  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "passw0rd ");
-  printf("%s: fred - %d\n", __func__, rc);
-  if (rc != HTPASS_INVALID_PASSWORD)
+  setenv("MQ_APP_PASSWORD", "passw0rd", 1);
+  int rc = simpleauth_authenticate_user("app", "passw0rd");
+  printf("%s: app - %d\n", __func__, rc);
+  if (rc != SIMPLEAUTH_VALID)
     test_fail(__func__);
   test_pass();
 }
 
-void test_htpass_authenticate_user_fred_invalid2()
+void test_simpleauth_authenticate_user_admin_ok()
 {
   test_start();
-  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "");
-  printf("%s: fred - %d\n", __func__, rc);
-  if (rc != HTPASS_INVALID_PASSWORD)
+  setenv("MQ_ADMIN_PASSWORD", "passw0rd", 1);
+  int rc = simpleauth_authenticate_user("admin", "passw0rd");
+  printf("%s: admin - %d\n", __func__, rc);
+  if (rc != SIMPLEAUTH_VALID)
     test_fail(__func__);
   test_pass();
 }
 
-void test_htpass_authenticate_user_fred_invalid3()
+void test_simpleauth_authenticate_user_admin_invalidpassword()
 {
   test_start();
-  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "clearlywrong");
-  printf("%s: fred - %d\n", __func__, rc);
-  if (rc != HTPASS_INVALID_PASSWORD)
+  setenv("MQ_ADMIN_PASSWORD", "password", 1);
+  int rc = simpleauth_authenticate_user("admin", "passw0rd");
+  printf("%s: admin - %d\n", __func__, rc);
+  if (rc != SIMPLEAUTH_INVALID_PASSWORD)
     test_fail(__func__);
   test_pass();
 }
 
-void test_htpass_authenticate_user_barney_valid()
-{
-  test_start();
-  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "barney", "s3cret");
-  printf("%s: barney - %d\n", __func__, rc);
-  if (rc != HTPASS_VALID)
-    test_fail(__func__);
-  test_pass();
-}
-
-void test_htpass_authenticate_user_unknown()
-{
-  test_start();
-  int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "george", "s3cret");
-  printf("%s: barney - %d\n", __func__, rc);
-  if (rc != HTPASS_INVALID_USER)
-    test_fail(__func__);
-  test_pass();
-}
 
 // ----------------------------------------------------------------------------
 // Multi-threaded test
@@ -133,15 +143,17 @@ void test_htpass_authenticate_user_unknown()
 #define MAX_JSON_ERRORS 10
 
 // Authenticate multiple users, multiple times
-void *authenticate_many_times(void *p)
+ void *authenticate_many_times(void *p)
 {
+  setenv("MQ_ADMIN_PASSWORD", "passw0rd", 1);
+  setenv("MQ_APP_PASSWORD", "passw0rd", 1);
   for (int i = 0; i < NUM_TESTS_PER_THREAD; i++)
   {
-    int rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "barney", "s3cret");
-    if (rc != HTPASS_VALID)
+    int rc = simpleauth_authenticate_user("admin", "passw0rd");
+    if (rc != SIMPLEAUTH_VALID)
       test_fail(__func__);
-    rc = htpass_authenticate_user("./src/htpass_test.htpasswd", "fred", "passw0rd");
-    if (rc != HTPASS_VALID)
+    rc = simpleauth_authenticate_user("app", "passw0rd");
+    if (rc != SIMPLEAUTH_VALID)
       test_fail(__func__);
   }
   pthread_exit(NULL);
@@ -175,7 +187,7 @@ void check_log_file_valid(char *filename)
 }
 
 // Test authenticate_user with multiple threads, each doing many authentications
-void test_htpass_authenticate_user_multithreaded(char *logfile)
+void test_simpleauth_authenticate_user_multithreaded(char *logfile)
 {
   pthread_t threads[NUM_THREADS];
   int rc;
@@ -207,17 +219,19 @@ int main()
 {
   // Turn on debugging for the tests
   setenv("DEBUG", "true", true);
-  log_init("htpass_test.log");
-  test_htpass_valid_file_ok();
-  test_htpass_valid_file_too_long();
-  test_htpass_authenticate_user_fred_valid();
-  test_htpass_authenticate_user_fred_invalid1();
-  test_htpass_authenticate_user_fred_invalid2();
-  test_htpass_authenticate_user_fred_invalid3();
-  test_htpass_authenticate_user_barney_valid();
-  test_htpass_authenticate_user_unknown();
+  log_init("simpleauth_test.log");
+  
+  test_read_secret_ok();
+  test_simpleauth_valid_user_app_valid();
+  test_simpleauth_valid_user_admin_valid();
+  test_simpleauth_valid_user_george_invalid();
+  test_simpleauth_authenticate_user_fred_unknown();
+  test_simpleauth_authenticate_user_app_ok();
+  test_simpleauth_authenticate_user_admin_ok();
+  test_simpleauth_authenticate_user_admin_invalidpassword();
+ 
   log_close();
 
   // Call multi-threaded test last, because it re-initializes the log to use a file
-  test_htpass_authenticate_user_multithreaded("htpass_test_multithreaded.log");
+  test_simpleauth_authenticate_user_multithreaded("simpleauth_test_multithreaded.log");
 }

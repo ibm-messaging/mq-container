@@ -22,6 +22,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/keystore"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/pathutils"
+	"github.com/ibm-messaging/mq-container/internal/securityutility"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
@@ -29,7 +30,7 @@ import (
 const webKeystoreDefault = "default.p12"
 
 // ConfigureWebTLS configures TLS for the web server
-func ConfigureWebTLS(keyLabel string, log *logger.Logger) error {
+func ConfigureWebTLS(keyLabel string, log *logger.Logger, password string) error {
 
 	// Return immediately if we have no certificate to use as identity
 	if keyLabel == "" && os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") == "" {
@@ -38,10 +39,16 @@ func ConfigureWebTLS(keyLabel string, log *logger.Logger) error {
 
 	tlsConfigLink := "/run/tls.xml"
 	tlsConfigTemplate := "/etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml.tpl"
-
-	err := mqtemplate.ProcessTemplateFile(tlsConfigTemplate, tlsConfigLink, map[string]string{}, log)
+	encryptedPassword, err := securityutility.EncodeSecrets(password)
 	if err != nil {
-		return err
+		log.Printf("Password encoding for Web Keystore failed with error %v", err)
+		// We couldn't encode the passwords so using an empty string as password
+		encryptedPassword = ""
+	}
+	// Password successfully encoded using securityUtility use the encoded password the template
+	templateErr := mqtemplate.ProcessTemplateFile(tlsConfigTemplate, tlsConfigLink, map[string]string{"password": encryptedPassword}, log)
+	if templateErr != nil {
+		return templateErr
 	}
 
 	return nil
@@ -66,26 +73,26 @@ func ConfigureWebKeystore(p12Truststore KeyStoreData, keyLabel string) (string, 
 		newWebKeystore := keystore.NewPKCS12KeyStore(webKeystoreFile, p12Truststore.Password)
 		err := newWebKeystore.Create()
 		if err != nil {
-			return "", fmt.Errorf("Failed to create Web Keystore %s: %v", webKeystoreFile, err)
+			return "", fmt.Errorf("failed to create Web Keystore %s: %v", webKeystoreFile, err)
 		}
 
 		// Generate a new self-signed certificate in the Web Keystore
 		err = newWebKeystore.CreateSelfSignedCertificate("default", fmt.Sprintf("CN=%s", genHostName), genHostName)
 		if err != nil {
-			return "", fmt.Errorf("Failed to generate certificate in Web Keystore %s with DN of 'CN=%s': %v", webKeystoreFile, genHostName, err)
+			return "", fmt.Errorf("failed to generate certificate in Web Keystore %s with DN of 'CN=%s': %v", webKeystoreFile, genHostName, err)
 		}
 	} else {
 		// Check Web Keystore already exists
 		_, err := os.Stat(webKeystoreFile)
 		if err != nil {
-			return "", fmt.Errorf("Failed to find existing Web Keystore %s: %v", webKeystoreFile, err)
+			return "", fmt.Errorf("failed to find existing Web Keystore %s: %v", webKeystoreFile, err)
 		}
 	}
 
 	// Check Web Truststore already exists
 	_, err := os.Stat(p12Truststore.Keystore.Filename)
 	if err != nil {
-		return "", fmt.Errorf("Failed to find existing Web Truststore %s: %v", p12Truststore.Keystore.Filename, err)
+		return "", fmt.Errorf("failed to find existing Web Truststore %s: %v", p12Truststore.Keystore.Filename, err)
 	}
 
 	return webKeystore, nil

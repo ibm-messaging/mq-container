@@ -259,7 +259,7 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string) (string,
 
 			// Ensure the label of the set of keys does not match the name of the PKCS#12 Truststore
 			if keySet.Name() == p12TruststoreName[0:len(p12TruststoreName)-len(filepath.Ext(p12TruststoreName))] {
-				return "", fmt.Errorf("Key label cannot be set to the Truststore name: %v", keySet.Name())
+				return "", fmt.Errorf("key label cannot be set to the Truststore name: %v", keySet.Name())
 			}
 
 			// Process private key (*.key)

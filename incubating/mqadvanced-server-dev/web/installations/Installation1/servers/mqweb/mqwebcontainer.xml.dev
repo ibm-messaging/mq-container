@@ -22,8 +22,8 @@
         </application-bnd>
     </enterpriseApplication>
     <basicRegistry id="basic" realm="defaultRealm">
-        <user name="admin" password="${env.MQ_ADMIN_PASSWORD}"/>
-        <user name="app" password="${env.MQ_APP_PASSWORD}"/>
+        <user name="admin" password="${env.MQ_ADMIN_PASSWORD_SECURE}"/>
+        <user name="app" password="${env.MQ_APP_PASSWORD_SECURE}"/>
         <group name="MQWebUI">
             <member name="admin"/>
         </group>

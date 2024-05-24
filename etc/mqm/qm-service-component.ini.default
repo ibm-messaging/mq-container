@@ -1,7 +1,7 @@
 ServiceComponent:
     Service=AuthorizationService
     Name=Dev.HtpAuth.Service
-    Module=/opt/mqm/lib64/mqhtpass.so
+    Module=/opt/mqm/lib64/mqsimpleauth.so
     ComponentDataSize=0
 ServiceComponent:
    Service=AuthorizationService

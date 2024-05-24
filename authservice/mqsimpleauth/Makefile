@@ -16,7 +16,6 @@
 # - gcc
 # - ldd
 # - MQ SDK (mqm_r library, plus header files)
-# - Apache Portable Runtime (apr-1 and aprutil-1 libraries, plus header files)
 
 SRC_DIR = src
 BUILD_DIR = ./build
@@ -30,10 +29,9 @@ CFLAGS.s390x := -m64
 CFLAGS.arm64 :=
 CFLAGS += -std=gnu11 -fPIC -Wall ${CFLAGS.${ARCH}}
 
-LIB_APR = -L/usr/lib64 -lapr-1 -laprutil-1
 LIB_MQ = -L/opt/mqm/lib64 -lmqm_r
 
-all: $(BUILD_DIR)/mqhtpass.so $(BUILD_DIR)/htpass_test $(BUILD_DIR)/log_test
+all: $(BUILD_DIR)/mqsimpleauth.so $(BUILD_DIR)/simpleauth_test $(BUILD_DIR)/log_test
 
 $(BUILD_DIR)/log.o : $(SRC_DIR)/log.c $(SRC_DIR)/log.h
 	mkdir -p ${dir $@}
@@ -42,21 +40,20 @@ $(BUILD_DIR)/log.o : $(SRC_DIR)/log.c $(SRC_DIR)/log.h
 $(BUILD_DIR)/log_test : $(BUILD_DIR)/log.o
 	mkdir -p ${dir $@}
 	gcc $(CFLAGS) $(SRC_DIR)/log_test.c $^ -o $@
-# Run Logging tests, and print log if they fail	
+# Run Logging tests, and print log if they fail
 	$@ || (cat log_test*.log && exit 1)
 
-$(BUILD_DIR)/htpass.o : $(SRC_DIR)/htpass.c $(SRC_DIR)/htpass.h
+$(BUILD_DIR)/simpleauth.o : $(SRC_DIR)/simpleauth.c $(SRC_DIR)/simpleauth.h
 	mkdir -p ${dir $@}
-	gcc $(CFLAGS) -c $(SRC_DIR)/htpass.c -I /usr/include/apr-1 -o $@
+	gcc $(CFLAGS) -c $(SRC_DIR)/simpleauth.c -o $@
 
-$(BUILD_DIR)/htpass_test : $(BUILD_DIR)/htpass.o $(BUILD_DIR)/log.o
+$(BUILD_DIR)/simpleauth_test : $(BUILD_DIR)/simpleauth.o $(BUILD_DIR)/log.o
 	mkdir -p ${dir $@}
-	gcc $(CFLAGS) $(LIB_APR) -lpthread $(SRC_DIR)/htpass_test.c $^ -o $@
-# Run HTPasswd tests, and print log if they fail	
-	$@ || (cat htpass_test*.log && exit 1)
+	gcc $(CFLAGS) -lpthread $(SRC_DIR)/simpleauth_test.c $^ -o $@
+# Run SimpleAuth tests, and print log if they fail
+	$@ || (cat simpleauth_test*.log && exit 1)
 
-$(BUILD_DIR)/mqhtpass.so : $(BUILD_DIR)/log.o $(BUILD_DIR)/htpass.o
+$(BUILD_DIR)/mqsimpleauth.so : $(BUILD_DIR)/log.o $(BUILD_DIR)/simpleauth.o
 	mkdir -p ${dir $@}
-	# NOTE: rpath for libapr will be different on Ubuntu
-	gcc $(CFLAGS) -I/opt/mqm/inc -D_REENTRANT $(LIB_APR) $(LIB_MQ) -Wl,-rpath,/opt/mqm/lib64 -Wl,-rpath,/usr/lib64 -shared $(SRC_DIR)/mqhtpass.c $^ -o $@
+	gcc $(CFLAGS) -I/opt/mqm/inc -D_REENTRANT $(LIB_MQ) -Wl,-rpath,/opt/mqm/lib64 -Wl,-rpath,/usr/lib64 -shared $(SRC_DIR)/mqsimpleauth.c $^ -o $@
 	ldd $@

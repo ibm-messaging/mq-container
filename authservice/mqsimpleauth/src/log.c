@@ -134,7 +134,7 @@ void log_printf(const char *source_file, int source_line, const char *level, con
     if (strncmp(level, "DEBUG", 5) == 0)
     {
       // Add a prefix on any debug messages
-      cur += snprintf(cur, end-cur, "mqhtpass: ");
+      cur += snprintf(cur, end-cur, "mqsimpleauth: ");
     }
 
     // Print log message, using varargs

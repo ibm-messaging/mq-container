@@ -304,7 +304,7 @@ func updateQMini(qmname string) error {
 
 	val, set := os.LookupEnv("MQ_CONNAUTH_USE_HTP")
 	if !set {
-		//htpasswd mode not enabled.
+		//simpleauth mode not enabled.
 		return nil
 	}
 	bval, err := strconv.ParseBool(strings.ToLower(val))
@@ -312,7 +312,7 @@ func updateQMini(qmname string) error {
 		return err
 	}
 	if bval == false {
-		//htpasswd mode not enabled.
+		//simpleauth mode not enabled.
 		return nil
 	}
 

@@ -793,7 +793,7 @@ func TestDevNoDefCreds(t *testing.T) {
 	stopContainer(t, cli, id)
 }
 
-// MQ_CONNAUTH_USE_HTP is set to false. There should be no 'mqhtpasswd:' entries in pod log
+// MQ_CONNAUTH_USE_HTP is set to false. There should be no 'mqsimpleauth:' entries in pod log
 // eventhough MQ_ADMIN_PASSWORD is also specified.
 func TestDevNoDefCredsLogMessageConnAuthFalse(t *testing.T) {
 	t.Parallel()
@@ -801,21 +801,21 @@ func TestDevNoDefCredsLogMessageConnAuthFalse(t *testing.T) {
 }
 
 // MQ_CONNAUTH_USE_HTP is true with neither Admin nor App password specified,
-// so there should be no 'mqhtpasswd:' entries in the pod log
+// so there should be no 'mqsimpleauth:' entries in the pod log
 func TestDevNoDefCredsLogMessageConnAuthTrue(t *testing.T) {
 	t.Parallel()
 	testDevNoDefaultCredsUtil(t, []string{"MQ_CONNAUTH_USE_HTP=true"}, false)
 }
 
 // MQ_CONNAUTH_USE_HTP is true with App password specified,
-// there should be at least one 'mqhtpasswd:' entry in the pod log
+// there should be at least one 'mqsimpleauth:' entry in the pod log
 func TestDevNoDefCredsLogMessageConnAuthTrueWithPwd(t *testing.T) {
 	t.Parallel()
 	testDevNoDefaultCredsUtil(t, []string{"MQ_CONNAUTH_USE_HTP=true", "MQ_APP_PASSWORD=passw0rd"}, true)
 }
 
-// Utility function for testing mqhtpasswd
-func testDevNoDefaultCredsUtil(t *testing.T, mqhtpassEnvs []string, htpwdInLog bool) {
+// Utility function for testing mqsimpleauth
+func testDevNoDefaultCredsUtil(t *testing.T, mqsimpleauthEnvs []string, htpwdInLog bool) {
 	cli := ce.NewContainerClient()
 	qm := "QM1"
 	containerConfig := ce.ContainerConfig{
@@ -826,7 +826,7 @@ func testDevNoDefaultCredsUtil(t *testing.T, mqhtpassEnvs []string, htpwdInLog b
 		},
 	}
 
-	containerConfig.Env = append(containerConfig.Env, mqhtpassEnvs...)
+	containerConfig.Env = append(containerConfig.Env, mqsimpleauthEnvs...)
 
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{1414})
 	defer cleanContainer(t, cli, id)
@@ -835,12 +835,12 @@ func testDevNoDefaultCredsUtil(t *testing.T, mqhtpassEnvs []string, htpwdInLog b
 
 	logs := inspectLogs(t, cli, id)
 	if htpwdInLog {
-		if !strings.Contains(logs, "mqhtpass:") {
-			t.Errorf("Exepcted mqhtpass keyword in pod logs but did not find any.")
+		if !strings.Contains(logs, "mqsimpleauth:") {
+			t.Errorf("Exepcted mqsimpleauth keyword in pod logs but did not find any.")
 		}
 	} else {
-		if strings.Contains(logs, "mqhtpass:") {
-			t.Errorf("Didn't exepct mqhtpass keyword in pod logs but found at least one.")
+		if strings.Contains(logs, "mqsimpleauth:") {
+			t.Errorf("Didn't exepct mqsimpleauth keyword in pod logs but found at least one.")
 		}
 	}
 }

@@ -24,6 +24,6 @@ Use an administrative tool or your application to connect to queue manager using
 
 #### Troubleshooting
 
-A log file named `mqhtpass.log` is generated under `/var/mqm/errors` directory path of the container.  This file will contain all the failed connection authentication requests.  Additional information is logged to this file if the environment variable `DEBUG` is set to `true`.
+A log file named `mqsimpleauth.log` is generated under `/var/mqm/errors` directory path of the container.  This file will contain all the failed connection authentication requests.  Additional information is logged to this file if the environment variable `DEBUG` is set to `true`.
 
 **Please note**: This log file will be wiped when the queue manager is next started.

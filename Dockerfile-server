@@ -156,10 +156,9 @@ ENTRYPOINT ["runmqserver"]
 # Use the Go toolset image, which already includes gcc and the MQ SDK
 FROM builder as cbuilder
 USER 0
-# Install the Apache Portable Runtime code (used for htpasswd hash checking)
-RUN yum --assumeyes --disableplugin=subscription-manager install apr-devel apr-util-openssl apr-util-devel
+# Install the Apache Portable Runtime code (used for simpleauth hash checking)
 COPY authservice/ /opt/app-root/src/authservice/
-WORKDIR /opt/app-root/src/authservice/mqhtpass
+WORKDIR /opt/app-root/src/authservice/mqsimpleauth
 RUN make all
 
 ###############################################################################
@@ -181,12 +180,8 @@ LABEL summary="IBM MQ Advanced for Developers Server" \
   base-image=$BASE_IMAGE \
   base-image-release=$BASE_TAG
 USER 0
-COPY --from=cbuilder /opt/app-root/src/authservice/mqhtpass/build/mqhtpass.so /opt/mqm/lib64/
+COPY --from=cbuilder /opt/app-root/src/authservice/mqsimpleauth/build/mqsimpleauth.so /opt/mqm/lib64/
 COPY etc/mqm/qm-service-component.ini.default /etc/mqm/
-COPY incubating/mqadvanced-server-dev/install-extra-packages.sh /usr/local/bin/
-RUN chmod u+x /usr/local/bin/install-extra-packages.sh \
-  && sleep 1 \
-  && install-extra-packages.sh
 COPY --from=builder $GO_WORKDIR/runmqdevserver /usr/local/bin/
 # Copy template files
 COPY incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
