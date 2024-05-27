@@ -3,6 +3,7 @@
 ## 9.4.0.0 (2024-06)
 
 * Updated to MQ version 9.4.0.0
+* Added new optional value "mqsc" for the environment variable MQ_LOGGING_CONSOLE_SOURCE. This will reflect the contents of autocfgmqsc.LOG. 
 
 ## 9.3.5.0 (2024-02)
 
