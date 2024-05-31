@@ -10,12 +10,30 @@ The MQ Developer Defaults supports some customization options, these are all con
 * **MQ_ADMIN_PASSWORD** - Specify the password of the `admin` user. Must be at least 8 characters long.
 * **MQ_APP_PASSWORD** - Specify the password of the `app` user. If set, this will cause the `DEV.APP.SVRCONN` channel to become secured and only allow connections that supply a valid userid and password. Must be at least 8 characters long.
 
+From IBM MQ v9.4.0.0, environment variables MQ_ADMIN_PASSWORD and MQ_APP_PASSWORD are deprecated. Secrets must be used to set the passwords for `admin` and `app` user.
+
+## Using Secrets to set passwords for app & admin users
+
+Secrets must be used to set the passwords for `admin` and `app` user. For setting password for user `admin`, `mqAdminPassword` secret must be created and for user `app`, `mqAppPassword` secret must be created.
+
+### Example usage with podman:
+
+`printf "passw0rd" | podman secret create mqAppPassword` - Creates a podman secret with secretname as “mqAppPassword”
+`podman run --secret mqAppPassword,type=mount,mode=0777 --env LICENSE=accept --env MQ_QMGR_NAME=QM1 --publish 1414:1414 --publish 9443:9443 --detach --name QM1 icr.io/ibm-messaging/mq:latest`
+
+### Example usage with docker:
+
+Docker secrets are only available via Docker Swarm services, hence to create a secret using docker, Docker Swarm must be used.
+`printf "passw0rd" | docker secret create mqAppPassword–` - Creates a secret
+`docker service create --secret mqAppPassword --env LICENSE=accept --env MQ_QMGR_NAME=QM8 --publish 1414:1414 --publish 9443:9443 --detach --name QM8 icr.io/ibm-messaging/mq`
+
+
 ## Details of the default configuration
 
 The following users are created:
 
-* User **admin** for administration.  No password by default. Password must be set using **MQ_ADMIN_PASSWORD**  environment variable.
-* User **app** for messaging (in a group called `mqclient`).  No password by default. Password must be set using **MQ_APP_PASSWORD**  environment variable.
+* User **admin** for administration. This user is created only if the password is set. Secrets must be used to set the password.
+* User **app** for messaging (in a group called `mqclient`). This user is created only if the password is set. Secrets must be used to set the password.
 
 Users in `mqclient` group have been given access connect to all queues and topics starting with `DEV.**` and have `put`, `get`, `pub`, `sub`, `browse` and `inq` permissions.
 

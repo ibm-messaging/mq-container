@@ -3,7 +3,9 @@
 ## 9.4.0.0 (2024-06)
 
 * Updated to MQ version 9.4.0.0
-* Added new optional value "mqsc" for the environment variable MQ_LOGGING_CONSOLE_SOURCE. This will reflect the contents of autocfgmqsc.LOG. 
+* Added new optional value "mqsc" for the environment variable MQ_LOGGING_CONSOLE_SOURCE. This will reflect the contents of autocfgmqsc.LOG.
+* Environment variables **MQ_ADMIN_PASSWORD** and **MQ_APP_PASSWORD** are deprecated for the MQ Advanced for Developers image. Secrets should be used to set the passwords for **app** and **admin** users.
+* MQ Advanced for Developers image will no longer use mq.htpasswd file for the MQ Authorization Service. Secrets will be used to authorize the **app** and **admin** users.
 
 ## 9.3.5.0 (2024-02)
 

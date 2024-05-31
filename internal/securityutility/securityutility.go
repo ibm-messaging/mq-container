@@ -33,7 +33,6 @@ func EncodeSecrets(secret string) (string, error) {
 	if err != nil && os.IsNotExist(err) {
 		return "", err
 	}
-
 	if len(secret) > 256 {
 		return "", fmt.Errorf("length of password is greater than the maximum length of 256 characters, length of password is %d", len(secret))
 	}
