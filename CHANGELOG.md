@@ -3,9 +3,13 @@
 ## 9.4.0.0 (2024-06)
 
 * Updated to MQ version 9.4.0.0
+* Based on [Red Hat Universal Base Image 9.4-949.1716471857](https://catalog.redhat.com/software/containers/ubi9/ubi-minimal/615bd9b4075b022acc111bf5?image=664f4c2d9cbb931e839f138b&architecture=amd64).
+   * **Note** UBI 9 has pending FIPS 140-3 certification.  UBI 9 is not supported on the POWER 8 architecture.
 * Added new optional value "mqsc" for the environment variable MQ_LOGGING_CONSOLE_SOURCE. This will reflect the contents of autocfgmqsc.LOG.
 * Environment variables **MQ_ADMIN_PASSWORD** and **MQ_APP_PASSWORD** are deprecated for the MQ Advanced for Developers image. Secrets should be used to set the passwords for **app** and **admin** users.
 * MQ Advanced for Developers image will no longer use mq.htpasswd file for the MQ Authorization Service. Secrets will be used to authorize the **app** and **admin** users.
+* `chkmqstarted` command updated for Native-HA deployments to additionally check if the queue manager instance is in-sync with one or more replicas.
+* New Model Queue `DEV.APP.MODEL.QUEUE` defined for MQ Advanced for Developers image with `BROWSE, DISPLAY, GET, INQUIRE, PUT` Authority for user `app`.
 
 ## 9.3.5.0 (2024-02)
 
