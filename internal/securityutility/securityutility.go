@@ -41,6 +41,7 @@ func EncodeSecrets(secret string) (string, error) {
 	// #nosec G204
 	cmd := exec.Command("/bin/sh", "-c", "source setmqenv -s;/opt/mqm/web/bin/server; /opt/mqm/web/bin/securityUtility encode --encoding=aes "+secret)
 	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "JAVA_HOME=/opt/mqm/java/jre64/jre")
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
