@@ -38,8 +38,6 @@ github.com/prometheus/procfs/internal/util
 github.com/syndtr/gocapability/capability
 # golang.org/x/crypto v0.17.0
 ## explicit; go 1.18
-golang.org/x/crypto/bcrypt
-golang.org/x/crypto/blowfish
 golang.org/x/crypto/pbkdf2
 # golang.org/x/sys v0.15.0
 ## explicit; go 1.18

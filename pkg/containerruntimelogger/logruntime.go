@@ -36,8 +36,6 @@ func LogContainerDetails(log *logger.Logger) error {
 	if err == nil {
 		log.Printf("Linux kernel version: %v", kv)
 	}
-	cr := containerruntime.DetectContainerRuntime()
-	log.Printf("Container runtime: %v", cr)
 
 	bi, err := containerruntime.GetBaseImage()
 	if err == nil {
