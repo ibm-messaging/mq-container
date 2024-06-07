@@ -4,7 +4,6 @@
     "configMode": "LOCAL",
     "baseBranches": [
       "private-master",
-      "v9.3.0.x",
       "v9.4.0"
     ]
   },
