@@ -40,7 +40,7 @@ MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 The procedure below is for building the 9.3.0 release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
-2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/). Identify the correct 'Long Term Support Release for Containers' eImage part number for your architecture from the 9.3.0 LTS tab at https://www.ibm.com/support/pages/downloading-ibm-mq-930
+2. Download MQ from [IBM Passport Advantage](https://www.ibm.com/software/passportadvantage/). Identify the correct 'Long Term Support Release for Containers' eImage part number for your architecture from the 9.3.0 LTS tab at https://www.ibm.com/support/pages/downloading-ibm-mq-93
 3. Ensure the `tar.gz` file is in the `downloads` directory
 4. Run `make build-advancedserver`
 
