@@ -18,14 +18,23 @@ Secrets must be used to set the passwords for `admin` and `app` user. For settin
 
 ### Example usage with podman:
 
-`printf "passw0rd" | podman secret create mqAppPassword` - Creates a podman secret with secretname as “mqAppPassword”
-`podman run --secret mqAppPassword,type=mount,mode=0777 --env LICENSE=accept --env MQ_QMGR_NAME=QM1 --publish 1414:1414 --publish 9443:9443 --detach --name QM1 icr.io/ibm-messaging/mq:latest`
+Creates a podman secret with secret name as “mqAppPassword”:
+
+- `printf "passw0rd" | podman secret create mqAppPassword -` 
+
+Run container referencing mounted secret:
+- `podman run --secret mqAppPassword,type=mount,mode=0777 --env LICENSE=accept --env MQ_QMGR_NAME=QM1 --publish 1414:1414 --publish 9443:9443 --detach --name QM1 icr.io/ibm-messaging/mq:latest`
 
 ### Example usage with docker:
 
 Docker secrets are only available via Docker Swarm services, hence to create a secret using docker, Docker Swarm must be used.
-`printf "passw0rd" | docker secret create mqAppPassword–` - Creates a secret
-`docker service create --secret mqAppPassword --env LICENSE=accept --env MQ_QMGR_NAME=QM8 --publish 1414:1414 --publish 9443:9443 --detach --name QM8 icr.io/ibm-messaging/mq`
+
+Creates a docker secret with secret name as “mqAppPassword”:
+
+- `printf "passw0rd" | docker secret create mqAppPassword –`
+
+Run container referencing mounted secret:
+- `docker service create --secret mqAppPassword --env LICENSE=accept --env MQ_QMGR_NAME=QM8 --publish 1414:1414 --publish 9443:9443 --detach --name QM8 icr.io/ibm-messaging/mq`
 
 
 ## Details of the default configuration
