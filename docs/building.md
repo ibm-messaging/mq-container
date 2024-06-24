@@ -18,7 +18,7 @@ To build an IBM MQ image, navigate to the appropriate section:
 
 ## Building a production image
 
-### MQ SC2 (formerly LTS) and Continuous Delivery (CD)
+### MQ LTS and Continuous Delivery (CD)
 
 The procedure below is for building the 9.4.0 release, on `amd64`, `ppc64le` and `s390x` architectures.
 
