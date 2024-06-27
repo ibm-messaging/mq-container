@@ -33,7 +33,7 @@ If you have an MQ archive file with a different file name, you can specify a par
 MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 ```
 
-### MQ SC2 (formerly LTS)
+### MQ LTS
 
 The procedure below is for building the 9.4.0 release, on `amd64`, `ppc64le` and `s390x` architectures.
 
