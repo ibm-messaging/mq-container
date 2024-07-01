@@ -31,9 +31,9 @@ int simpleauth_authenticate_user(char *user, char *password)
   if (simpleauth_valid_user(user))
   {
     char *pwd = getSecretForUser(user);
-    if(pwd != NULL)
-    {
-      int pwdCheck = strncmp(pwd, password, strlen(password));
+    if (pwd != NULL)
+    {     
+      int pwdCheck = strcmp(pwd, password);
       if (pwdCheck == 0)
       {
         log_debugf("Correct password supplied. user=%s", user);
@@ -44,7 +44,7 @@ int simpleauth_authenticate_user(char *user, char *password)
         log_debugf("Incorrect password supplied. user=%s", user);
         result = SIMPLEAUTH_INVALID_PASSWORD;
       }
-      pwd = NULL;
+      free(pwd);
     }
     else
     {
@@ -80,12 +80,17 @@ char *getSecretForUser(char *user)
     }
     else
     {
-      char* pwdFromEnv = getenv("MQ_APP_PASSWORD");
-      if (pwdFromEnv != NULL)
+      char* envValue = getenv("MQ_APP_PASSWORD");
+      if (envValue != NULL)
       {
         log_infof("Environment variable MQ_APP_PASSWORD is deprecated, use secrets to set the passwords");
+        char* pwdFromEnv = strdup(envValue);
+        return pwdFromEnv;
       }
-      return pwdFromEnv;
+      else
+      {
+        return NULL;
+      }
     }
   } else if (0 == strcmp(user, ADMIN_USER_NAME))
   {
@@ -96,12 +101,18 @@ char *getSecretForUser(char *user)
       }
       else
       {
-        char* pwdFromEnv =  getenv("MQ_ADMIN_PASSWORD");
-        if (pwdFromEnv != NULL)
+        char* envValue =  getenv("MQ_ADMIN_PASSWORD");
+        if (envValue != NULL)
         {
           log_infof("Environment variable MQ_ADMIN_PASSWORD is deprecated, use secrets to set the passwords");
+          // Get the value of environment variable and store it as a copy to free up the memory
+          char* pwdFromEnv = strdup(envValue);
+          return pwdFromEnv;
         }
-        return pwdFromEnv;
+        else 
+        {
+          return NULL;
+        }
       }
   }
   else
@@ -117,7 +128,10 @@ char *readSecret(char* secret)
   if (fp)
   {
     char *pwd = malloc(line_size);
-    fgets(pwd, line_size, fp);
+    char *result = fgets(pwd, line_size, fp);
+    if (result == NULL)
+      return NULL;
+
     fclose(fp);
     return pwd;
   }

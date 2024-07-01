@@ -45,8 +45,8 @@ void test_read_secret_ok()
 {
   test_start();
   char *pwd = readSecret("./src/mqAdminPassword");
-  char *password = "fred:$2y$05$3Fp9";
-  if (0 == strncmp(pwd, password, strlen(password)))
+  char *password = "passw0rd";
+  if (0 == strcmp(pwd, password))
     test_pass();
   else
     test_fail(__func__);
@@ -120,11 +120,65 @@ void test_simpleauth_authenticate_user_admin_ok()
   test_pass();
 }
 
+void test_simpleauth_authenticate_user_app_invalidpwd()
+{
+  test_start();
+  char *password[] = {"passw0r", "pass", "passw0rd1", "NULL", "","password123"};
+  setenv("MQ_APP_PASSWORD", "passw0rd", 1);
+  
+  for(int i=0; i< (sizeof(password)/sizeof(password[0])); ++i)
+  {
+    int rc = simpleauth_authenticate_user("app", password[i]);
+    printf("%s: Validating app user with password set to %s and rc is %d\n", __func__,password[i], rc);
+    if (rc != SIMPLEAUTH_INVALID_PASSWORD)
+       test_fail(__func__);   
+  }
+  test_pass();  
+}
+
+void test_simpleauth_authenticate_user_admin_invalidpwd()
+{
+  test_start();
+  char *password[] = {"passw0r", "pass", "passw0rd1", "NULL", "","password123"};
+  setenv("MQ_ADMIN_PASSWORD", "passw0rd", 1);
+  
+  for(int i=0; i< (sizeof(password)/sizeof(password[0])); ++i)
+  {
+    int rc = simpleauth_authenticate_user("admin", password[i]);
+    printf("%s: validating admin user with password set to %s and rc is %d\n", __func__,password[i], rc);
+    if (rc != SIMPLEAUTH_INVALID_PASSWORD)
+       test_fail(__func__);   
+  }
+  test_pass();  
+}
+
+void test_simpleauth_authenticate_user_admin_with_null_pwd()
+{
+  test_start();
+  setenv("MQ_ADMIN_PASSWORD", "", 1);
+  int rc = simpleauth_authenticate_user("admin", "passw0rd");
+  printf("%s: admin - %d\n", __func__, rc);
+  if (rc == SIMPLEAUTH_VALID)
+    test_fail(__func__);
+  test_pass();
+}
+
 void test_simpleauth_authenticate_user_admin_invalidpassword()
 {
   test_start();
   setenv("MQ_ADMIN_PASSWORD", "password", 1);
   int rc = simpleauth_authenticate_user("admin", "passw0rd");
+  printf("%s: admin - %d\n", __func__, rc);
+  if (rc != SIMPLEAUTH_INVALID_PASSWORD)
+    test_fail(__func__);
+  test_pass();
+}
+
+void test_simpleauth_authenticate_user_admin_invalishortdpassword()
+{
+  test_start();
+  setenv("MQ_ADMIN_PASSWORD", "password", 1);
+  int rc = simpleauth_authenticate_user("admin", "pass");
   printf("%s: admin - %d\n", __func__, rc);
   if (rc != SIMPLEAUTH_INVALID_PASSWORD)
     test_fail(__func__);
@@ -220,15 +274,18 @@ int main()
   // Turn on debugging for the tests
   setenv("DEBUG", "true", true);
   log_init("simpleauth_test.log");
-  
   test_read_secret_ok();
+  test_simpleauth_authenticate_user_admin_invalidpwd();
+  test_simpleauth_authenticate_user_app_invalidpwd();
   test_simpleauth_valid_user_app_valid();
   test_simpleauth_valid_user_admin_valid();
   test_simpleauth_valid_user_george_invalid();
   test_simpleauth_authenticate_user_fred_unknown();
   test_simpleauth_authenticate_user_app_ok();
+  test_simpleauth_authenticate_user_admin_with_null_pwd();
   test_simpleauth_authenticate_user_admin_ok();
   test_simpleauth_authenticate_user_admin_invalidpassword();
+  test_simpleauth_authenticate_user_admin_invalishortdpassword();
  
   log_close();
 
