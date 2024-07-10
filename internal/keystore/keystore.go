@@ -245,16 +245,13 @@ func (ks *KeyStore) IsFIPSEnabled() bool {
 	return ks.fipsEnabled
 }
 
-// Returns -fips option if FIPS is enabled otherwise empty string. Return value is used
-// when running runmqakm/runmqckm commands.
+// getFipsEnabledFlag returns the appropriate flag for runmqakm/runmqckm commands
+// to enable or disable FIPS.
 func (ks *KeyStore) getFipsEnabledFlag() string {
-	var fipsEnabled string
-
 	if ks.fipsEnabled {
-		fipsEnabled = "-fips"
+		return "-fips"
 	} else {
-		fipsEnabled = ""
+		// In the GSKit command line, FIPS mode is enabled by default, so explicitly disable it
+		return "-fips false"
 	}
-
-	return fipsEnabled
 }
