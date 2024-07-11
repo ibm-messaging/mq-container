@@ -3,6 +3,7 @@
 ## 9.4.1.0 (2024-10)
 
 * Updated to MQ version 9.4.1.0
+* Fix to diable FIPS mode for `runmqakm` key store generation, when FIPS is not enabled
 
 ## 9.4.0.0 (2024-06)
 
