@@ -19,6 +19,7 @@ limitations under the License.
 #include <stdlib.h>
 #include "log.h"
 #include "simpleauth.h"
+#include "simpleauth_test.h"
 #include <stdlib.h>
 #include <string.h>
 // Headers for multi-threaded tests
@@ -44,12 +45,15 @@ void test_fail(const char *test_name)
 void test_read_secret_ok()
 {
   test_start();
-  char *pwd = readSecret("./src/mqAdminPassword");
+  char *pwd = read_secret("./src/mqAdminPassword");
   char *password = "fred:$2y$05$3Fp9";
-  if (0 == strncmp(pwd, password, strlen(password)))
-    test_pass();
-  else
+  if (0 != strcmp(pwd, password))
+  {
+    printf("%s: pwd: '%s'; password: '%s'\n", __func__, pwd, password);
     test_fail(__func__);
+  }
+
+  test_pass();
 }
 
 // ----------------------------------------------------------------------------
@@ -90,8 +94,8 @@ void test_simpleauth_valid_user_george_invalid()
 void test_simpleauth_authenticate_user_fred_unknown()
 {
   test_start();
-  setenv("MQ_APP_PASSWORD", "passw0rd", 1);
-  int rc = simpleauth_authenticate_user("fred", "passw0rd");
+  test_set_app_password_env("passw0rd-fred-env");
+  int rc = simpleauth_authenticate_user("fred", "passw0rd-fred-env");
   printf("%s: fred - %d\n", __func__, rc);
   if (rc != SIMPLEAUTH_INVALID_USER)
     test_fail(__func__);
@@ -101,8 +105,8 @@ void test_simpleauth_authenticate_user_fred_unknown()
 void test_simpleauth_authenticate_user_app_ok()
 {
   test_start();
-  setenv("MQ_APP_PASSWORD", "passw0rd", 1);
-  int rc = simpleauth_authenticate_user("app", "passw0rd");
+  test_set_app_password_env("passw0rd-app-env");
+  int rc = simpleauth_authenticate_user("app", "passw0rd-app-env");
   printf("%s: app - %d\n", __func__, rc);
   if (rc != SIMPLEAUTH_VALID)
     test_fail(__func__);
@@ -112,25 +116,146 @@ void test_simpleauth_authenticate_user_app_ok()
 void test_simpleauth_authenticate_user_admin_ok()
 {
   test_start();
-  setenv("MQ_ADMIN_PASSWORD", "passw0rd", 1);
-  int rc = simpleauth_authenticate_user("admin", "passw0rd");
+  test_set_admin_password_env("passw0rd-admin-env");
+  int rc = simpleauth_authenticate_user("admin", "passw0rd-admin-env");
   printf("%s: admin - %d\n", __func__, rc);
   if (rc != SIMPLEAUTH_VALID)
     test_fail(__func__);
   test_pass();
 }
 
-void test_simpleauth_authenticate_user_admin_invalidpassword()
+void test_simpleauth_authenticate_user_admin_invalidpasswords()
 {
   test_start();
-  setenv("MQ_ADMIN_PASSWORD", "password", 1);
-  int rc = simpleauth_authenticate_user("admin", "passw0rd");
+  test_set_admin_password_env("password-admin-env");
+  const char *bad_passwords[] = {
+      "",
+      "passw0rd-admin-env",
+      "Password-admin-env",
+      "pass",
+      "password",
+      "password-app",
+      "password-app-env",
+      "password-admin-env-123"};
+  size_t bad_pass_len = sizeof(bad_passwords) / sizeof(bad_passwords[0]);
+
+  for (int i = 0; i < bad_pass_len; i++)
+  {
+    int rc = simpleauth_authenticate_user("admin", bad_passwords[i]);
+    printf("%s: admin/%s - %d\n", __func__, bad_passwords[i], rc);
+    if (rc != SIMPLEAUTH_INVALID_PASSWORD)
+      test_fail(__func__);
+    test_pass();
+  }
+}
+
+void test_simpleauth_authenticate_user_admin_secret_file_valid()
+{
+  test_start();
+  test_set_admin_password_file("password-admin-file");
+  int rc = simpleauth_authenticate_user("admin", "password-admin-file");
   printf("%s: admin - %d\n", __func__, rc);
-  if (rc != SIMPLEAUTH_INVALID_PASSWORD)
+  if (rc != SIMPLEAUTH_VALID)
     test_fail(__func__);
   test_pass();
 }
 
+void test_simpleauth_authenticate_user_admin_secret_file_long()
+{
+  test_start();
+
+  const int test_password_length = MAX_PASSWORD_LENGTH + 7;
+  char test_password[test_password_length];
+  char truncated_password[MAX_PASSWORD_LENGTH + 1];
+  for (int i = 0; i < test_password_length; i++)
+  {
+    test_password[i] = '0' + ((i + 1) % 10);
+    if (i < MAX_PASSWORD_LENGTH)
+    {
+      truncated_password[i] = test_password[i];
+    }
+  }
+  test_password[test_password_length] = 0;
+  truncated_password[MAX_PASSWORD_LENGTH] = 0;
+  test_set_admin_password_file(test_password);
+
+  int rc = simpleauth_authenticate_user("admin", test_password);
+  if (rc != SIMPLEAUTH_INVALID_PASSWORD)
+  {
+    printf("%s: admin/'%s' - %d\n", __func__, test_password, rc);
+    test_fail(__func__);
+  }
+
+  rc = simpleauth_authenticate_user("admin", truncated_password);
+  if (rc != SIMPLEAUTH_VALID)
+  {
+    printf("%s: admin/'%s' - %d\n", __func__, truncated_password, rc);
+    test_fail(__func__);
+  }
+
+  test_pass();
+}
+
+void test_simpleauth_authenticate_user_admin_secret_file_invalid()
+{
+  test_start();
+
+  test_set_admin_password_file("password-admin-file");
+  const char *bad_passwords[] = {
+      "",
+      "passw0rd-admin-file",
+      "Password-admin-file",
+      "pass",
+      "password",
+      "password-app-file",
+      "password-admin-file-123"};
+  size_t bad_pass_len = sizeof(bad_passwords) / sizeof(bad_passwords[0]);
+
+  for (int i = 0; i < bad_pass_len; i++)
+  {
+    int rc = simpleauth_authenticate_user("admin", bad_passwords[i]);
+    printf("%s: admin/%s - %d\n", __func__, bad_passwords[i], rc);
+    if (rc != SIMPLEAUTH_INVALID_PASSWORD)
+      test_fail(__func__);
+    test_pass();
+  }
+}
+
+void test_simpleauth_authenticate_user_app_secret_file_valid()
+{
+  test_start();
+  test_set_app_password_file("password-app-file");
+  int rc = simpleauth_authenticate_user("app", "password-app-file");
+  printf("%s: admin - %d\n", __func__, rc);
+  if (rc != SIMPLEAUTH_VALID)
+    test_fail(__func__);
+  test_pass();
+}
+
+void test_simpleauth_authenticate_user_app_secret_file_invalid()
+{
+  test_start();
+
+  test_set_app_password_file("password-app-file");
+  const char *bad_passwords[] = {
+      "",
+      "passw0rd-app-file",
+      "Password-app-file",
+      "pass",
+      "password",
+      "password-admin-file",
+      "password-app-file-123"};
+  size_t bad_pass_len = sizeof(bad_passwords) / sizeof(bad_passwords[0]);
+
+  for (int i = 0; i < bad_pass_len; i++)
+  {
+    int rc = simpleauth_authenticate_user("app", bad_passwords[i]);
+    printf("%s: app/%s - %d\n", __func__, bad_passwords[i], rc);
+    if (rc != SIMPLEAUTH_INVALID_PASSWORD)
+      test_fail(__func__);
+    test_pass();
+  }
+}
 
 // ----------------------------------------------------------------------------
 // Multi-threaded test
@@ -143,10 +268,10 @@ void test_simpleauth_authenticate_user_admin_invalidpassword()
 #define MAX_JSON_ERRORS 10
 
 // Authenticate multiple users, multiple times
- void *authenticate_many_times(void *p)
+void *authenticate_many_times(void *p)
 {
-  setenv("MQ_ADMIN_PASSWORD", "passw0rd", 1);
-  setenv("MQ_APP_PASSWORD", "passw0rd", 1);
+  test_set_admin_password_env("passw0rd");
+  test_set_app_password_env("passw0rd");
   for (int i = 0; i < NUM_TESTS_PER_THREAD; i++)
   {
     int rc = simpleauth_authenticate_user("admin", "passw0rd");
@@ -214,13 +339,58 @@ void test_simpleauth_authenticate_user_multithreaded(char *logfile)
 }
 
 // ----------------------------------------------------------------------------
+// Test utility functions
+// ----------------------------------------------------------------------------
+int write_secret(const char *const secretFile, const char *const value)
+{
+  FILE *fp = fopen(secretFile, "w");
+  if (fp)
+  {
+    int rc;
+    rc = fprintf(fp, "%s\n", value);
+    fclose(fp);
+    return rc;
+  }
+  else
+  {
+    return 1;
+  }
+}
+
+void test_set_admin_password_env(const char *const password)
+{
+  setenv("MQ_ADMIN_PASSWORD", password, 1);
+  _mq_admin_secret_file = MQ_ADMIN_SECRET_FILE_DEFAULT;
+}
+
+void test_set_app_password_env(const char *const password)
+{
+  setenv("MQ_APP_PASSWORD", password, 1);
+  _mq_app_secret_file = MQ_APP_SECRET_FILE_DEFAULT;
+}
+
+void test_set_admin_password_file(const char *const password)
+{
+  write_secret(MQ_ADMIN_SECRET_FILE_TEST, password);
+  _mq_admin_secret_file = MQ_ADMIN_SECRET_FILE_TEST;
+  unsetenv("MQ_ADMIN_PASSWORD");
+}
+
+void test_set_app_password_file(const char *const password)
+{
+  write_secret(MQ_APP_SECRET_FILE_TEST, password);
+  _mq_app_secret_file = MQ_APP_SECRET_FILE_TEST;
+  unsetenv("MQ_APP_PASSWORD");
+}
+
+// ----------------------------------------------------------------------------
 
 int main()
 {
   // Turn on debugging for the tests
   setenv("DEBUG", "true", true);
   log_init("simpleauth_test.log");
-  
+
   test_read_secret_ok();
   test_simpleauth_valid_user_app_valid();
   test_simpleauth_valid_user_admin_valid();
@@ -228,8 +398,13 @@ int main()
   test_simpleauth_authenticate_user_fred_unknown();
   test_simpleauth_authenticate_user_app_ok();
   test_simpleauth_authenticate_user_admin_ok();
-  test_simpleauth_authenticate_user_admin_invalidpassword();
- 
+  test_simpleauth_authenticate_user_admin_invalidpasswords();
+  test_simpleauth_authenticate_user_admin_secret_file_valid();
+  test_simpleauth_authenticate_user_admin_secret_file_long();
+  test_simpleauth_authenticate_user_admin_secret_file_invalid();
+  test_simpleauth_authenticate_user_app_secret_file_valid();
+  test_simpleauth_authenticate_user_app_secret_file_invalid();
+
   log_close();
 
   // Call multi-threaded test last, because it re-initializes the log to use a file
