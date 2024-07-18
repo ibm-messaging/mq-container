@@ -20,10 +20,14 @@ limitations under the License.
 #define SIMPLEAUTH_VALID 0
 #define SIMPLEAUTH_INVALID_USER 1
 #define SIMPLEAUTH_INVALID_PASSWORD 2
-#define MQ_APP_SECRET_FILE "/run/secrets/mqAppPassword"
-#define MQ_ADMIN_SECRET_FILE "/run/secrets/mqAdminPassword"
+#define MQ_APP_SECRET_FILE_DEFAULT "/run/secrets/mqAppPassword"
+#define MQ_ADMIN_SECRET_FILE_DEFAULT "/run/secrets/mqAdminPassword"
 #define APP_USER_NAME "app"
 #define ADMIN_USER_NAME "admin"
+#define MAX_PASSWORD_LENGTH 256
+
+extern const char *_mq_app_secret_file;
+extern const char *_mq_admin_secret_file;
 
 /**
  * Authenticate a user, based on the supplied file name.
@@ -32,27 +36,27 @@ limitations under the License.
  * @param password the password of the user
  * @return SIMPLEAUTH_VALID, SIMPLEAUTH_INVALID_USER or SIMPLEAUTH_INVALID_PASSWORD
  */
-int simpleauth_authenticate_user(char *user, char *password);
+int simpleauth_authenticate_user(const char *const user, const char *const password);
 
 /**
  * Validate that a user exists in the password file.
  *
  * @param user the user name to validate
  */
-bool simpleauth_valid_user(char *user);
+bool simpleauth_valid_user(const char *const user);
 
 /**
  * Get the secret of the UserId.
  *
  * @param user the user name to validate
  */
-char *getSecretForUser(char *user);
+char *get_secret_for_user(const char *const user);
 
 /**
  * Get the secret of the UserId.
  *
  * @param secret path for the secret file
 */
-char *readSecret(char* secret);
+char *read_secret(const char *const secret);
 
 #endif

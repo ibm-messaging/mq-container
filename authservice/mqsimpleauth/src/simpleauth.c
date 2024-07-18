@@ -23,18 +23,20 @@ limitations under the License.
 #include "simpleauth.h"
 #include <linux/limits.h>
 
+const char *_mq_app_secret_file = MQ_APP_SECRET_FILE_DEFAULT;
+const char *_mq_admin_secret_file = MQ_ADMIN_SECRET_FILE_DEFAULT;
+
 // Check if the user is valid
-int simpleauth_authenticate_user(char *user, char *password)
+int simpleauth_authenticate_user(const char *const user, const char *const password)
 {
   int result = -1;
 
   if (simpleauth_valid_user(user))
   {
-    char *pwd = getSecretForUser(user);
+    char *pwd = get_secret_for_user(user);
     if (pwd != NULL)
     {     
-      int pwdCheck = strcmp(pwd, password);
-      if (pwdCheck == 0)
+      if (strcmp(pwd, password) == 0)
       {
         log_debugf("Correct password supplied. user=%s", user);
         result = SIMPLEAUTH_VALID;
@@ -44,10 +46,12 @@ int simpleauth_authenticate_user(char *user, char *password)
         log_debugf("Incorrect password supplied. user=%s", user);
         result = SIMPLEAUTH_INVALID_PASSWORD;
       }
+      memset(pwd, 0, strlen(pwd));
       free(pwd);
     }
     else
     {
+      log_debugf("Failed to get secret for user '%s'", user);
       result = SIMPLEAUTH_INVALID_PASSWORD;
     }
   }
@@ -59,61 +63,58 @@ int simpleauth_authenticate_user(char *user, char *password)
   return result;
 }
 
-bool simpleauth_valid_user(char *user)
+bool simpleauth_valid_user(const char *const user)
 {
   bool valid = false;
-  if ((strcmp(user, APP_USER_NAME)==0 || strcmp(user, ADMIN_USER_NAME)==0))
+  if ((strcmp(user, APP_USER_NAME) == 0 || strcmp(user, ADMIN_USER_NAME) == 0))
   {
     valid = true;
   }
   return valid;
 }
 
-char *getSecretForUser(char *user)
+/**
+ * get_secret_for_user will return a char* containing the credential for the given user
+ * the credential is read from the filesystem if the relevant file exists and an environment
+ * variable if not
+ *
+ * The caller is responsible for clearing then freeing memory
+ */
+char *get_secret_for_user(const char *const user)
 {
   if (0 == strcmp(user, APP_USER_NAME))
   {
-    char *secret = readSecret(MQ_APP_SECRET_FILE);
+    char *secret = read_secret(_mq_app_secret_file);
     if (secret != NULL)
     {
       return secret;
     }
     else
     {
-      char* envValue = getenv("MQ_APP_PASSWORD");
-      if (envValue != NULL)
+      const char *pwdFromEnv = getenv("MQ_APP_PASSWORD");
+      if (pwdFromEnv != NULL)
       {
         log_infof("Environment variable MQ_APP_PASSWORD is deprecated, use secrets to set the passwords");
-        char* pwdFromEnv = strdup(envValue);
-        return pwdFromEnv;
       }
-      else
-      {
-        return NULL;
-      }
+      return strdup(pwdFromEnv);
     }
-  } else if (0 == strcmp(user, ADMIN_USER_NAME))
+  } 
+  else if (0 == strcmp(user, ADMIN_USER_NAME))
   {
-      char *secret = readSecret(MQ_ADMIN_SECRET_FILE);
+      char *secret = read_secret(_mq_admin_secret_file);
       if (secret != NULL)
       {
         return secret;
       }
       else
       {
-        char* envValue =  getenv("MQ_ADMIN_PASSWORD");
-        if (envValue != NULL)
+        const char *pwdFromEnv = getenv("MQ_ADMIN_PASSWORD");
+        if (pwdFromEnv != NULL)
         {
           log_infof("Environment variable MQ_ADMIN_PASSWORD is deprecated, use secrets to set the passwords");
-          // Get the value of environment variable and store it as a copy to free up the memory
-          char* pwdFromEnv = strdup(envValue);
-          return pwdFromEnv;
         }
-        else 
-        {
-          return NULL;
-        }
-      }
+        return strdup(pwdFromEnv);
+     }
   }
   else
   {
@@ -121,19 +122,29 @@ char *getSecretForUser(char *user)
   }
 }
 
-char *readSecret(char* secret)
+/**
+ * read_secret will return a char* containing the credential read from the filesystem for the given user
+ *
+ * The caller is responsible for clearing then freeing memory
+ */
+char *read_secret(const char *const secret)
 {
   FILE *fp = fopen(secret, "r");
-  const size_t line_size = 1024;
   if (fp)
   {
+    const int line_size = MAX_PASSWORD_LENGTH + 1;
     char *pwd = malloc(line_size);
-    char *result = fgets(pwd, line_size, fp);
-    if (result == NULL)
-      return NULL;
-
+    char *result;
+    result = fgets(pwd, line_size, fp);
     fclose(fp);
-    return pwd;
+    if (result == NULL)
+    {
+      memset(pwd, 0, line_size);
+      free(pwd);
+      return NULL;
+    }
+    result[strcspn(result, "\r\n")] = 0;
+    return result;
   }
   else
   {
