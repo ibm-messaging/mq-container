@@ -442,7 +442,7 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 			if err != nil {
 				return nil, nil, fmt.Errorf("Failed to read public certificate %s: %v", keystorePath, err)
 			}
-			block, _ := pem.Decode(file)
+			block, file := pem.Decode(file)
 			if block == nil {
 				return nil, nil, fmt.Errorf("Failed to decode public certificate %s: pem.Decode returned nil", keystorePath)
 			}
@@ -455,6 +455,41 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 			err = addToKnownCertificates(block, cmsKeystore, false)
 			if err != nil {
 				return nil, nil, fmt.Errorf("Failed to add to known certificates for CMS Keystore")
+			}
+
+			// Add to known certificates for the CMS Keystore
+			err = addToKnownCertificates(block, cmsKeystore, false)
+			if err != nil {
+				return nil, nil, fmt.Errorf("Failed to add to known certificates for CMS Keystore")
+			}
+
+			// Pick up any other intermediate certificates
+			for string(file) != "" {
+				var block *pem.Block
+				block, file = pem.Decode(file)
+				if block == nil {
+					break
+				}
+
+				// Add to known certificates for the CMS Keystore
+				err = addToKnownCertificates(block, cmsKeystore, false)
+				if err != nil {
+					return nil, nil, fmt.Errorf("Failed to add to known certificates for CMS Keystore")
+				}
+
+				if p12Truststore.Keystore != nil {
+					// Add to known certificates for the PKCS#12 Truststore
+					err = addToKnownCertificates(block, p12Truststore, true)
+					if err != nil {
+						return nil, nil, fmt.Errorf("Failed to add to known certificates for PKCS#12 Truststore")
+					}
+				}
+
+				certificate, err := x509.ParseCertificate(block.Bytes)
+				if err != nil {
+					return nil, nil, fmt.Errorf("Failed to parse CA certificate %s: %v", keystorePath, err)
+				}
+				caCertificate = append(caCertificate, certificate)
 			}
 
 		} else if strings.HasSuffix(key.Name(), ".crt") {
