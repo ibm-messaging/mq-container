@@ -48,7 +48,7 @@ The following queues and topics are created:
 Two channels are created, one for administration, the other for normal messaging:
 
 * DEV.ADMIN.SVRCONN - configured to only allow the `admin` user to connect into it.  A user and password must be supplied.
-* DEV.APP.SVRCONN - does not allow administrative users to connect.  Password is optional unless you choose a password for app users.
+* DEV.APP.SVRCONN - does not allow administrative users to connect.  `app` users can connect using the password set via MQ_APP_PASSWORD environmental variable.
 
 ## Web Console
 
