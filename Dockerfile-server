@@ -45,6 +45,7 @@ RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"
   && go build ./cmd/chkmqhealthy/ \
   && go build ./cmd/chkmqstarted/ \
   && go build ./cmd/runmqdevserver/ \
+  && chmod ug+x ./chkmq* ./runmq* \
   && go test -v ./cmd/runmqdevserver/... \
   && go test -v ./cmd/runmqserver/ \
   && go test -v ./cmd/chkmqready/ \
@@ -108,32 +109,28 @@ LABEL summary="IBM MQ Advanced Server" \
   io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
   base-image=$BASE_IMAGE \
   base-image-release=$BASE_TAG
-COPY --from=mq-redux /opt/mqm-redux/ /opt/mqm/
-COPY setup-image.sh /usr/local/bin/
-COPY install-mq-server-prereqs.sh /usr/local/bin/
+COPY --chown=1001:root --from=mq-redux /opt/mqm-redux/ /opt/mqm/
+COPY --chown=1001:root setup-image.sh /usr/local/bin/
+COPY --chown=1001:root install-mq-server-prereqs.sh /usr/local/bin/
 RUN env \
   && chmod u+x /usr/local/bin/install-*.sh \
   && chmod u+x /usr/local/bin/setup-image.sh \
   && install-mq-server-prereqs.sh \
   && setup-image.sh \
-  && /opt/mqm/bin/security/amqpamcf \
-  && chown -R 1001:root /opt/mqm/*
-COPY --from=builder $GO_WORKDIR/runmqserver /usr/local/bin/
-COPY --from=builder $GO_WORKDIR/chkmq* /usr/local/bin/
+  && /opt/mqm/bin/security/amqpamcf
+COPY --chown=1001:root --from=builder $GO_WORKDIR/runmqserver /usr/local/bin/
+COPY --chown=1001:root --from=builder $GO_WORKDIR/chkmq* /usr/local/bin/
 COPY ha/native-ha.ini.tpl /etc/mqm/native-ha.ini.tpl
 # Copy web XML files
-COPY web /etc/mqm/web
-COPY etc/mqm/*.tpl /etc/mqm/
+COPY --chown=1001:root web /etc/mqm/web
+COPY --chown=1001:root etc/mqm/*.tpl /etc/mqm/
 RUN ln -s /run/mqwebcontainer.xml /etc/mqm/web/installations/Installation1/servers/mqweb/mqwebcontainer.xml \
   && ln -s /run/tls.xml /etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml \
   && ln -s /run/jvm.options /etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults/jvm.options \
   && ln -s /run/15-tls.mqsc /etc/mqm/15-tls.mqsc \
-  && ln -s /run/native-ha.ini /etc/mqm/native-ha.ini
-RUN chmod ug+x /usr/local/bin/runmqserver \
-  && chown 1001:root /usr/local/bin/*mq* \
-  && chmod ug+x /usr/local/bin/chkmq* \
-  && chown -R 1001:root /etc/mqm/* \
-  && touch /run/termination-log \
+  && ln -s /run/native-ha.ini /etc/mqm/native-ha.ini \
+  && chown -R 1001:root /etc/mqm/*
+RUN touch /run/termination-log \
   && chown 1001:root /run/termination-log \
   && chmod 0660 /run/termination-log \
   && chmod -R g+w /etc/mqm/web \
@@ -181,18 +178,18 @@ LABEL summary="IBM MQ Advanced for Developers Server" \
   base-image-release=$BASE_TAG
 USER 0
 COPY --from=cbuilder /opt/app-root/src/authservice/mqsimpleauth/build/mqsimpleauth.so /opt/mqm/lib64/
-COPY etc/mqm/qm-service-component.ini.default /etc/mqm/
-COPY --from=builder $GO_WORKDIR/runmqdevserver /usr/local/bin/
+COPY --chown=1001:root etc/mqm/qm-service-component.ini.default /etc/mqm/
+COPY --chown=1001:root --from=builder $GO_WORKDIR/runmqdevserver /usr/local/bin/
 # Copy template files
-COPY incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
+COPY --chown=1001:root incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
 # Copy web XML files for default developer configuration
-COPY incubating/mqadvanced-server-dev/web /etc/mqm/web
+COPY --chown=1001:root incubating/mqadvanced-server-dev/web /etc/mqm/web
 RUN ln -s /run/10-dev.mqsc /etc/mqm/10-dev.mqsc \
-  && ln -s /run/20-dev-tls.mqsc /etc/mqm/20-dev-tls.mqsc
-RUN chown -R 1001:root /etc/mqm/* \
-  && chmod -R g+w /etc/mqm/web \
-  && chmod +x /usr/local/bin/runmq* \
-  && ln -s /run/qm-service-component.ini /etc/mqm/qm-service-component.ini
+  && ln -s /run/20-dev-tls.mqsc /etc/mqm/20-dev-tls.mqsc \
+  && chown --no-dereference 1001:root /etc/mqm/*.mqsc
+RUN chmod -R g+w /etc/mqm/web \
+  && ln -s /run/qm-service-component.ini /etc/mqm/qm-service-component.ini \
+  && chown --no-dereference 1001:root /etc/mqm/qm-service-component.ini
 
 ENV MQ_DEV=true \
   MQ_ENABLE_EMBEDDED_WEB_SERVER=1 \
