@@ -120,7 +120,7 @@ func TestDevSecure(t *testing.T) {
 	t.Run("JMS", func(t *testing.T) {
 		// OpenJDK is used for running tests, hence pass "false" for 7th parameter.
 		// Cipher name specified is compliant with non-IBM JRE naming.
-		runJMSTests(t, cli, ID, true, "app", appPassword, "false", "TLS_RSA_WITH_AES_256_CBC_SHA256")
+		runJMSTests(t, cli, ID, true, "app", appPassword, "false", "*TLS12ORHIGHER")
 	})
 	t.Run("REST admin", func(t *testing.T) {
 		testRESTAdmin(t, cli, ID, insecureTLSConfig, "")
@@ -473,7 +473,7 @@ func TestSSLFIPSYES(t *testing.T) {
 
 	t.Run("JMS", func(t *testing.T) {
 		// Run the JMS tests, with no password specified
-		runJMSTests(t, cli, ID, true, "app", appPassword, "false", "TLS_RSA_WITH_AES_256_CBC_SHA256")
+		runJMSTests(t, cli, ID, true, "app", appPassword, "false", "*TLS12ORHIGHER")
 	})
 
 	// Stop the container cleanly
