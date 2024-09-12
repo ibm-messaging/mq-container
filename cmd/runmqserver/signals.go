@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2023
+© Copyright IBM Corporation 2017, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52,12 +52,21 @@ func signalHandler(qmgr string, startupCtx context.Context) chan int {
 
 	// Start handling signals
 	go func() {
+		shutdownCtx, shutdownComplete := context.WithCancel(context.Background())
+		defer func() {
+			shutdownComplete()
+		}()
+		stopTriggered := false
 		for {
 			select {
 			case sig := <-stopSignals:
+				if stopTriggered {
+					continue
+				}
 				log.Printf("Signal received: %v", sig)
-				signal.Stop(reapSignals)
 				signal.Stop(stopSignals)
+				stopTriggered = true
+
 				// If a stop signal is received during the startup process continue processing control signals until the main thread marks startup as complete
 				// Don't close the control channel until the main thread has been allowed to finish spawning processes and marks startup as complete
 				// Continue to process job control signals to avoid a deadlock
@@ -73,8 +82,15 @@ func signalHandler(qmgr string, startupCtx context.Context) chan int {
 					}
 				}
 				metrics.StopMetricsGathering(log)
-				// #nosec G104
-				stopQueueManager(qmgr)
+
+				// Shutdown queue manager in separate goroutine to allow reaping to continue in parallel
+				go func() {
+					_ = stopQueueManager(qmgr)
+					shutdownComplete()
+				}()
+			case <-shutdownCtx.Done():
+				signal.Stop(reapSignals)
+
 				// One final reap
 				// This occurs after all startup processes have been spawned
 				reapZombies()
