@@ -1,5 +1,9 @@
 # Change log
 
+## 9.4.0.5-r1 (2024-09)
+
+* Updated to MQ version 9.4.0.5
+
 ## 9.4.0.0-r3 (2024-07)
 
 * Fix to diable FIPS mode for `runmqakm` key store generation, when FIPS is not enabled
