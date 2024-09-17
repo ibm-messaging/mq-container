@@ -3,6 +3,7 @@
 ## 9.4.0.5-r1 (2024-09)
 
 * Updated to MQ version 9.4.0.5
+* Changed build Dockerfile to reduce file duplication across image layers
 
 ## 9.4.0.0-r3 (2024-07)
 
