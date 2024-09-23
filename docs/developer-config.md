@@ -2,39 +2,41 @@
 
 If you build this image with MQ Advanced for Developers, then an optional set of configuration can be applied automatically.  This configures your Queue Manager with a set of default objects that you can use to quickly get started developing with IBM MQ. If you do not want the default objects to be created you can set the `MQ_DEV` environment variable to `false`.
 
-## Environment variables
-
-The MQ Developer Defaults supports some customization options, these are all controlled using environment variables:
-
-* **MQ_DEV** - Set this to `false` to stop the default objects being created.
-* **MQ_ADMIN_PASSWORD** - Specify the password of the `admin` user. Must be at least 8 characters long.
-* **MQ_APP_PASSWORD** - Specify the password of the `app` user. If set, this will cause the `DEV.APP.SVRCONN` channel to become secured and only allow connections that supply a valid userid and password. Must be at least 8 characters long.
-
-From IBM MQ v9.4.0.0, environment variables MQ_ADMIN_PASSWORD and MQ_APP_PASSWORD are deprecated. Secrets must be used to set the passwords for `admin` and `app` user.
-
 ## Using Secrets to set passwords for app & admin users
 
 Secrets must be used to set the passwords for `admin` and `app` user. For setting password for user `admin`, `mqAdminPassword` secret must be created and for user `app`, `mqAppPassword` secret must be created.
 
 ### Example usage with podman:
 
-Creates a podman secret with secret name as “mqAppPassword”:
+Create podman secrets with secret names as “mqAdminPassword” & "mqAppPassword":
 
+- `printf "passw0rd" | podman secret create mqAdminPassword -` 
 - `printf "passw0rd" | podman secret create mqAppPassword -` 
 
-Run container referencing mounted secret:
-- `podman run --secret mqAppPassword,type=mount,mode=0777 --env LICENSE=accept --env MQ_QMGR_NAME=QM1 --publish 1414:1414 --publish 9443:9443 --detach --name QM1 icr.io/ibm-messaging/mq:latest`
+Run container referencing mounted secrets:
+- `podman run --secret mqAdminPassword,type=mount,mode=0777 --secret mqAppPassword,type=mount,mode=0777 --env LICENSE=accept --env MQ_QMGR_NAME=QM1 --publish 1414:1414 --publish 9443:9443 --detach --name QM1 icr.io/ibm-messaging/mq:latest`
 
 ### Example usage with docker:
 
 Docker secrets are only available via Docker Swarm services, hence to create a secret using docker, Docker Swarm must be used.
 
-Creates a docker secret with secret name as “mqAppPassword”:
+Create docker secrets with secret names as “mqAdminPassword” & "mqAppPassword":
 
+- `printf "passw0rd" | docker secret create mqAdminPassword –`
 - `printf "passw0rd" | docker secret create mqAppPassword –`
 
 Run container referencing mounted secret:
-- `docker service create --secret mqAppPassword --env LICENSE=accept --env MQ_QMGR_NAME=QM8 --publish 1414:1414 --publish 9443:9443 --detach --name QM8 icr.io/ibm-messaging/mq`
+- `docker service create --secret mqAdminPassword --secret mqAppPassword --env LICENSE=accept --env MQ_QMGR_NAME=QM8 --publish 1414:1414 --publish 9443:9443 --detach --name QM8 icr.io/ibm-messaging/mq`
+
+## Environment variables
+
+From IBM MQ v9.4.0.0, environment variables `MQ_ADMIN_PASSWORD` and `MQ_APP_PASSWORD` are deprecated. Secrets as detailed in the previous section must be used to set the passwords for `admin` and `app` user.
+
+The MQ Developer Defaults supports some customization options, these are all controlled using environment variables:
+
+* **MQ_DEV** - Set this to `false` to stop the default objects being created.
+* **MQ_ADMIN_PASSWORD** - Specify the password of the `admin` user. Must be at least 8 characters long.
+* **MQ_APP_PASSWORD** - Specify the password of the `app` user. If set, this will cause the `DEV.APP.SVRCONN` channel to become secured and only allow connections that supply a valid userid and password. Must be at least 8 characters long.
 
 
 ## Details of the default configuration
@@ -56,8 +58,8 @@ The following queues and topics are created:
 
 Two channels are created, one for administration, the other for normal messaging:
 
-* DEV.ADMIN.SVRCONN - configured to only allow the `admin` user to connect into it.  A user and password must be supplied.
-* DEV.APP.SVRCONN - does not allow administrative users to connect.  Password is optional unless you choose a password for app users.
+* DEV.ADMIN.SVRCONN - configured to only allow the admin user to connect into it.  The `admin` user can be used with the password configured via secret.
+* DEV.APP.SVRCONN - does not allow administrative users to connect.  Only the `app` user can connect. The password would be as configured by the secret.  
 
 ## Web Console
 
@@ -65,9 +67,9 @@ By default the MQ Advanced for Developers image will start the IBM MQ Web Consol
 
 When you navigate to this page you may be presented with a security exception warning. This happens because, by default, the web console creates a self-signed certificate to use for the HTTPS operations. This certificate is not trusted by your browser and has an incorrect distinguished name.
 
-If you choose to accept the security warning, you will be presented with the login menu for the IBM MQ Web Console. The default login for the console is:
+If you choose to accept the security warning, you will be presented with the login menu for the IBM MQ Web Console. The login for the console is:
 
 * **User:** admin
-* **Password:** No password by default. The password for the admin user must be specified using the `MQ_ADMIN_PASSWORD` environment variable.
+* **Password:** The password for the `admin` user must be specified using a secret, as described above.
 
 If you do not wish the web console to run, you can disable it by setting the environment variable `MQ_ENABLE_EMBEDDED_WEB_SERVER` to `false`.
