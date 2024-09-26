@@ -7,6 +7,7 @@
 * Fix APAR IT46430
 * Changed build Dockerfile to reduce file duplication across image layers
 * Changed shutdown flow to continue reaping orphan processes during queue manager shutdown
+* Allow Native HA configuration to be externally provided rather than generated from template
 
 ## 9.4.0.0 (2024-06)
 

@@ -41,7 +41,6 @@ func TestConfigFromEnv(t *testing.T) {
 		{
 			TestName: "Minimal config",
 			env: map[string]string{
-				"HOSTNAME":                                    "minimal-config",
 				"MQ_NATIVE_HA_INSTANCE_0_NAME":                "minimal-config-instance0",
 				"MQ_NATIVE_HA_INSTANCE_1_NAME":                "minimal-config-instance1",
 				"MQ_NATIVE_HA_INSTANCE_2_NAME":                "minimal-config-instance2",
@@ -50,7 +49,6 @@ func TestConfigFromEnv(t *testing.T) {
 				"MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS": "minimal-config-instance2(9145)",
 			},
 			expected: haConfig{
-				Name: "minimal-config",
 				Instances: [3]haInstance{
 					{"minimal-config-instance0", "minimal-config-instance0(9145)"},
 					{"minimal-config-instance1", "minimal-config-instance1(9145)"},
@@ -61,7 +59,6 @@ func TestConfigFromEnv(t *testing.T) {
 		{
 			TestName: "Full TLS config",
 			env: map[string]string{
-				"HOSTNAME":                                    "tls-config",
 				"MQ_NATIVE_HA_INSTANCE_0_NAME":                "tls-config-instance0",
 				"MQ_NATIVE_HA_INSTANCE_1_NAME":                "tls-config-instance1",
 				"MQ_NATIVE_HA_INSTANCE_2_NAME":                "tls-config-instance2",
@@ -77,7 +74,6 @@ func TestConfigFromEnv(t *testing.T) {
 				fips:             asRef(false),
 			},
 			expected: haConfig{
-				Name: "tls-config",
 				Instances: [3]haInstance{
 					{"tls-config-instance0", "tls-config-instance0(9145)"},
 					{"tls-config-instance1", "tls-config-instance1(9145)"},
@@ -95,7 +91,6 @@ func TestConfigFromEnv(t *testing.T) {
 		{
 			TestName: "Group TLS (live plain) config",
 			env: map[string]string{
-				"HOSTNAME":                                    "group-live-plain-config",
 				"MQ_NATIVE_HA_INSTANCE_0_NAME":                "group-live-plain-config0",
 				"MQ_NATIVE_HA_INSTANCE_1_NAME":                "group-live-plain-config1",
 				"MQ_NATIVE_HA_INSTANCE_2_NAME":                "group-live-plain-config2",
@@ -118,7 +113,6 @@ func TestConfigFromEnv(t *testing.T) {
 				fips:                  asRef(false),
 			},
 			expected: haConfig{
-				Name: "group-live-plain-config",
 				Instances: [3]haInstance{
 					{"group-live-plain-config0", "group-live-plain-config0(9145)"},
 					{"group-live-plain-config1", "group-live-plain-config1(9145)"},
@@ -168,6 +162,10 @@ func TestConfigFromEnv(t *testing.T) {
 				t.Fatalf("Failed to create test logger: %s", err.Error())
 			}
 
+			if !envConfigPresent() {
+				t.Fatalf("Check for Native HA config by environment variable unexpectedly reported false")
+			}
+
 			// Load config from env
 			cfg, err := loadConfigFromEnv(testLogger)
 			t.Log(logBuffer.String())
@@ -180,6 +178,62 @@ func TestConfigFromEnv(t *testing.T) {
 			// Validate
 			if *cfg != test.expected {
 				t.Fatalf("Configuration does not match expected:\n\tExpected: %#v\n\tActual: %#v\n", test.expected, *cfg)
+			}
+		})
+	}
+}
+
+func TestCheckEnv(t *testing.T) {
+	tests := []struct {
+		name   string
+		env    map[string]string
+		expect bool
+	}{
+		{
+			name:   "empty env",
+			expect: false,
+		},
+		{
+			name: "Native HA with external config",
+			env: map[string]string{
+				"HOSTNAME":     "external-config",
+				"MQ_NATIVE_HA": "true",
+			},
+			expect: false,
+		},
+		{
+			name: "Native HA with env config",
+			env: map[string]string{
+				"MQ_NATIVE_HA":                                "true",
+				"MQ_NATIVE_HA_INSTANCE_0_NAME":                "minimal-config-instance0",
+				"MQ_NATIVE_HA_INSTANCE_1_NAME":                "minimal-config-instance1",
+				"MQ_NATIVE_HA_INSTANCE_2_NAME":                "minimal-config-instance2",
+				"MQ_NATIVE_HA_INSTANCE_0_REPLICATION_ADDRESS": "minimal-config-instance0(9145)",
+				"MQ_NATIVE_HA_INSTANCE_1_REPLICATION_ADDRESS": "minimal-config-instance1(9145)",
+				"MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS": "minimal-config-instance2(9145)",
+			},
+			expect: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Set environment for test
+			savedEnv := make([]string, len(os.Environ()))
+			copy(savedEnv, os.Environ())
+			defer func() {
+				os.Clearenv()
+				for _, env := range savedEnv {
+					parts := strings.SplitN(env, "=", 2)
+					os.Setenv(parts[0], parts[1])
+				}
+			}()
+			for key, value := range test.env {
+				os.Setenv(key, value)
+			}
+
+			actual := envConfigPresent()
+			if actual != test.expect {
+				t.Fatalf("Incorrect result from environment variable check (actual: %v != expected: %v)", actual, test.expect)
 			}
 		})
 	}
@@ -332,7 +386,6 @@ func TestTemplatingFromConfig(t *testing.T) {
 
 func applyTestDefaults(testConfig haConfig) haConfig {
 	baseName := "test-config"
-	setIfBlank(&testConfig.Name, baseName)
 	for i := 0; i < 3; i++ {
 		instName := fmt.Sprintf("%s-instance%d", baseName, i)
 		replAddress := fmt.Sprintf("%s(9145)", instName)

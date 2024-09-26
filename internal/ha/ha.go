@@ -28,6 +28,10 @@ import (
 
 // ConfigureNativeHA configures native high availability
 func ConfigureNativeHA(log *logger.Logger) error {
+	if !envConfigPresent() {
+		return nil
+	}
+	log.Println("Configuring Native HA using values provided in environment variables")
 	fileLink := "/run/native-ha.ini"
 	templateFile := "/etc/mqm/native-ha.ini.tpl"
 	fipsAvailable := fips.IsFIPSEnabled()
@@ -47,9 +51,28 @@ func loadConfigAndGenerate(templatePath string, outputPath string, fipsAvailable
 	return cfg.generate(templatePath, outputPath, log)
 }
 
+func envConfigPresent() bool {
+	checkVars := []string{
+		"MQ_NATIVE_HA_INSTANCE_0_NAME",
+		"MQ_NATIVE_HA_INSTANCE_0_REPLICATION_ADDRESS",
+		"MQ_NATIVE_HA_INSTANCE_1_NAME",
+		"MQ_NATIVE_HA_INSTANCE_1_REPLICATION_ADDRESS",
+		"MQ_NATIVE_HA_INSTANCE_2_NAME",
+		"MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS",
+		"MQ_NATIVE_HA_TLS",
+		"MQ_NATIVE_HA_CIPHERSPEC",
+		"MQ_NATIVE_HA_KEY_REPOSITORY",
+	}
+	for _, checkVar := range checkVars {
+		if os.Getenv(checkVar) != "" {
+			return true
+		}
+	}
+	return false
+}
+
 func loadConfigFromEnv(log *logger.Logger) (*haConfig, error) {
 	cfg := &haConfig{
-		Name: os.Getenv("HOSTNAME"),
 		Instances: [3]haInstance{
 			{
 				Name:               os.Getenv("MQ_NATIVE_HA_INSTANCE_0_NAME"),
@@ -90,7 +113,6 @@ func loadConfigFromEnv(log *logger.Logger) (*haConfig, error) {
 }
 
 type haConfig struct {
-	Name      string
 	Instances [3]haInstance
 	Group     haGroupConfig
 

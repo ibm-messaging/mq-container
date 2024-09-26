@@ -1,5 +1,4 @@
 NativeHALocalInstance:
-  Name={{ .Name }}
   {{ if .ShouldConfigureTLS }}
   {{ if .CertificateLabel }}
   CertificateLabel={{ .CertificateLabel }}
