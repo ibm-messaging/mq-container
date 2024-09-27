@@ -224,7 +224,7 @@ func TestNativeHASecureCipherSpecFIPS(t *testing.T) {
 		nhaPort := basePort + i
 		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, defaultHAPort)
 		// MQ_NATIVE_HA_CIPHERSPEC is set a FIPS compliant cipherspec.
-		containerConfig.Env = append(containerConfig.Env, "MQ_NATIVE_HA_TLS=true", "MQ_NATIVE_HA_CIPHERSPEC=TLS_RSA_WITH_AES_128_GCM_SHA256", "MQ_ENABLE_FIPS=true")
+		containerConfig.Env = append(containerConfig.Env, "MQ_NATIVE_HA_TLS=true", "MQ_NATIVE_HA_CIPHERSPEC=ANY_TLS12_OR_HIGHER", "MQ_ENABLE_FIPS=true")
 		hostConfig := getNativeHASecureHostConfig(t)
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")

@@ -193,7 +193,7 @@ func processJunitLogLine(outputLine string) bool {
 }
 
 // createTLSConfig creates a tls.Config which trusts the specified certificate
-func createTLSConfig(t *testing.T, certFile, password string) *tls.Config {
+func createTLSConfig(t *testing.T, certFile, password string, tlsConfigOptions ...tlsConfigOption) *tls.Config {
 	// Get the SystemCertPool, continue with an empty pool on error
 	certs, err := x509.SystemCertPool()
 	if err != nil {
@@ -210,10 +210,15 @@ func createTLSConfig(t *testing.T, certFile, password string) *tls.Config {
 		t.Fatal("No certs appended")
 	}
 	// Trust the augmented cert pool in our client
-	return &tls.Config{
+	config := &tls.Config{
 		InsecureSkipVerify: false,
 		RootCAs:            certs,
 	}
+	// Apply any additional config options
+	for _, applyOpt := range tlsConfigOptions {
+		applyOpt(config)
+	}
+	return config
 }
 
 func testRESTAdmin(t *testing.T, cli ce.ContainerInterface, ID string, tlsConfig *tls.Config, errorExpected string) {
@@ -330,27 +335,11 @@ func testRESTMessaging(t *testing.T, cli ce.ContainerInterface, ID string, tlsCo
 	}
 }
 
-// createTLSConfig creates a tls.Config which trusts the specified certificate
-func createTLSConfigWithCipher(t *testing.T, certFile, password string, ciphers []uint16) *tls.Config {
-	// Get the SystemCertPool, continue with an empty pool on error
-	certs, err := x509.SystemCertPool()
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Read in the cert file
-	cert, err := os.ReadFile(certFile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Append our cert to the system pool
-	ok := certs.AppendCertsFromPEM(cert)
-	if !ok {
-		t.Fatal("No certs appended")
-	}
-	// Trust the augmented cert pool in our client
-	return &tls.Config{
-		InsecureSkipVerify: false,
-		RootCAs:            certs,
-		CipherSuites:       ciphers,
+type tlsConfigOption func(*tls.Config)
+
+// withMinTLSVersion is a functional option to set the minimum version for TLS
+func withMinTLSVersion(version uint16) tlsConfigOption {
+	return func(cfg *tls.Config) {
+		cfg.MinVersion = version
 	}
 }

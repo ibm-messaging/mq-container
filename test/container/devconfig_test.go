@@ -120,7 +120,7 @@ func TestDevSecure(t *testing.T) {
 	t.Run("JMS", func(t *testing.T) {
 		// OpenJDK is used for running tests, hence pass "false" for 7th parameter.
 		// Cipher name specified is compliant with non-IBM JRE naming.
-		runJMSTests(t, cli, ID, true, "app", appPassword, "false", "TLS_RSA_WITH_AES_256_CBC_SHA256")
+		runJMSTests(t, cli, ID, true, "app", appPassword, "false", "*TLS12ORHIGHER")
 	})
 	t.Run("REST admin", func(t *testing.T) {
 		testRESTAdmin(t, cli, ID, insecureTLSConfig, "")
@@ -473,7 +473,7 @@ func TestSSLFIPSYES(t *testing.T) {
 
 	t.Run("JMS", func(t *testing.T) {
 		// Run the JMS tests, with no password specified
-		runJMSTests(t, cli, ID, true, "app", appPassword, "false", "TLS_RSA_WITH_AES_256_CBC_SHA256")
+		runJMSTests(t, cli, ID, true, "app", appPassword, "false", "*TLS12ORHIGHER")
 	})
 
 	// Stop the container cleanly
@@ -535,14 +535,14 @@ func TestDevSecureFIPSTrueWeb(t *testing.T) {
 	waitForWebReady(t, cli, ID, createTLSConfig(t, cert, tlsPassPhrase))
 
 	// Create a TLS Config with a cipher to use when connecting over HTTPS
-	var secureTLSConfig *tls.Config = createTLSConfigWithCipher(t, cert, tlsPassPhrase, []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256})
+	var secureTLSConfig *tls.Config = createTLSConfig(t, cert, tlsPassPhrase, withMinTLSVersion(tls.VersionTLS12))
 	// Put a message to queue
 	t.Run("REST messaging", func(t *testing.T) {
 		testRESTMessaging(t, cli, ID, secureTLSConfig, qm, "app", appPassword, "")
 	})
 
 	// Create a TLS Config with a non-FIPS cipher to use when connecting over HTTPS
-	var secureNonFIPSCipherConfig *tls.Config = createTLSConfigWithCipher(t, cert, tlsPassPhrase, []uint16{tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA})
+	var secureNonFIPSCipherConfig *tls.Config = createTLSConfig(t, cert, tlsPassPhrase, withMinTLSVersion(tls.VersionTLS12))
 	// Put a message to queue - the attempt to put message will fail with a EOF return message.
 	t.Run("REST messaging", func(t *testing.T) {
 		testRESTMessaging(t, cli, ID, secureNonFIPSCipherConfig, qm, "app", appPassword, "EOF")
@@ -615,7 +615,7 @@ func TestDevSecureFalseFIPSWeb(t *testing.T) {
 	}
 
 	// Just do a HTTPS GET as well to query installation details.
-	var secureTLSConfig *tls.Config = createTLSConfigWithCipher(t, cert, tlsPassPhrase, []uint16{tls.TLS_RSA_WITH_AES_256_GCM_SHA384})
+	var secureTLSConfig *tls.Config = createTLSConfig(t, cert, tlsPassPhrase, withMinTLSVersion(tls.VersionTLS12))
 	t.Run("REST admin", func(t *testing.T) {
 		testRESTAdmin(t, cli, ID, secureTLSConfig, "")
 	})
