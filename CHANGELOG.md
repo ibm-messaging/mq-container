@@ -1,5 +1,9 @@
 # Change log
 
+## 9.3.0.25-LTS (2024-10)
+
+* Updated to MQ version 9.3.0.25
+
 ## 9.3.0.21-LTS (2024-09)
 
 * Updated to MQ version 9.3.0.21
