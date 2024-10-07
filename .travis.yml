@@ -18,7 +18,7 @@ sudo: required
 language: go
 
 go:
-  - "1.21.11"
+  - "1.21.13"
 
 services:
   - docker
