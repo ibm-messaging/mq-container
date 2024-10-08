@@ -9,6 +9,7 @@
 * Changed shutdown flow to continue reaping orphan processes during queue manager shutdown
 * Allow Native HA configuration to be externally provided rather than generated from template
 * Default CCSID is now 1208 (UTF-8) instead of 819 (ISO 8859-1); default `LANG` environment variable is `C.utf8`, which matches the underlying UBI.  This is because Red Hat UBI has introduced a dependency on an additional language pack, which changes the default behavior.
+* Clarified new minimum versions of Docker and Podman; new version required due to the move to UBI 9
 
 ## 9.4.0.0 (2024-06)
 

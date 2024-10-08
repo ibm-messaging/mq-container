@@ -4,10 +4,8 @@
 
 You need to have the following tools installed:
 
-* [Docker](https://www.docker.com/) 17.06.1 or later, or [Podman](https://podman.io) 1.0 or later (Podman 4.1 on macOS).
+* [Docker](https://www.docker.com/) 20.10 or later, or [Podman](https://podman.io) 4.4 or later.
 * [GNU make](https://www.gnu.org/software/make/)
-
-If you are working in the Windows Subsystem for Linux, follow [this guide by Microsoft to set up Docker](https://blogs.msdn.microsoft.com/commandline/2017/12/08/cross-post-wsl-interoperability-with-docker/) first.
 
 ## Building Images
 

@@ -571,9 +571,9 @@ PODMAN_VERSION=$(shell podman version --format "{{ .Version }}")
 command-version:
 # If we're using Docker, then check it's recent enough to support multi-stage builds
 ifneq (,$(findstring docker,$(COMMAND)))
-	@test "$(word 1,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker client 17.05 or greater is required" && exit 1)
-	@test "$(word 1,$(subst ., ,$(COMMAND_SERVER_VERSION)))" -ge "17" || ("$(word 1,$(subst ., ,$(COMMAND_SERVER_VERSION)))" -eq "17" && "$(word 2,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "05") || (echo "Error: Docker server 17.05 or greater is required" && exit 1)
+	@test "$(word 1,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "20" || ("$(word 1,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -eq "20" && "$(word 2,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "10") || (echo "Error: Docker client 20.10 or greater is required" && exit 1)
+	@test "$(word 1,$(subst ., ,$(COMMAND_SERVER_VERSION)))" -ge "20" || ("$(word 1,$(subst ., ,$(COMMAND_SERVER_VERSION)))" -eq "20" && "$(word 2,$(subst ., ,$(COMMAND_CLIENT_VERSION)))" -ge "10") || (echo "Error: Docker server 20.10 or greater is required" && exit 1)
 endif
 ifneq (,$(findstring podman,$(COMMAND)))
-	@test "$(word 1,$(subst ., ,$(PODMAN_VERSION)))" -ge "1" || (echo "Error: Podman version 1.0 or greater is required" && exit 1)
+	@test "$(word 1,$(subst ., ,$(PODMAN_VERSION)))" -ge "4" || (echo "Error: Podman version 4.4 or greater is required" && exit 1)
 endif
