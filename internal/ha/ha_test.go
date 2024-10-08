@@ -41,6 +41,7 @@ func TestConfigFromEnv(t *testing.T) {
 		{
 			TestName: "Minimal config",
 			env: map[string]string{
+				"HOSTNAME":                                    "minimal-config",
 				"MQ_NATIVE_HA_INSTANCE_0_NAME":                "minimal-config-instance0",
 				"MQ_NATIVE_HA_INSTANCE_1_NAME":                "minimal-config-instance1",
 				"MQ_NATIVE_HA_INSTANCE_2_NAME":                "minimal-config-instance2",
@@ -49,6 +50,7 @@ func TestConfigFromEnv(t *testing.T) {
 				"MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS": "minimal-config-instance2(9145)",
 			},
 			expected: haConfig{
+				Name: "minimal-config",
 				Instances: [3]haInstance{
 					{"minimal-config-instance0", "minimal-config-instance0(9145)"},
 					{"minimal-config-instance1", "minimal-config-instance1(9145)"},
@@ -59,6 +61,7 @@ func TestConfigFromEnv(t *testing.T) {
 		{
 			TestName: "Full TLS config",
 			env: map[string]string{
+				"HOSTNAME":                                    "tls-config",
 				"MQ_NATIVE_HA_INSTANCE_0_NAME":                "tls-config-instance0",
 				"MQ_NATIVE_HA_INSTANCE_1_NAME":                "tls-config-instance1",
 				"MQ_NATIVE_HA_INSTANCE_2_NAME":                "tls-config-instance2",
@@ -74,6 +77,7 @@ func TestConfigFromEnv(t *testing.T) {
 				fips:             asRef(false),
 			},
 			expected: haConfig{
+				Name: "tls-config",
 				Instances: [3]haInstance{
 					{"tls-config-instance0", "tls-config-instance0(9145)"},
 					{"tls-config-instance1", "tls-config-instance1(9145)"},
@@ -91,6 +95,7 @@ func TestConfigFromEnv(t *testing.T) {
 		{
 			TestName: "Group TLS (live plain) config",
 			env: map[string]string{
+				"HOSTNAME":                                    "group-live-plain-config",
 				"MQ_NATIVE_HA_INSTANCE_0_NAME":                "group-live-plain-config0",
 				"MQ_NATIVE_HA_INSTANCE_1_NAME":                "group-live-plain-config1",
 				"MQ_NATIVE_HA_INSTANCE_2_NAME":                "group-live-plain-config2",
@@ -113,6 +118,7 @@ func TestConfigFromEnv(t *testing.T) {
 				fips:                  asRef(false),
 			},
 			expected: haConfig{
+				Name: "group-live-plain-config",
 				Instances: [3]haInstance{
 					{"group-live-plain-config0", "group-live-plain-config0(9145)"},
 					{"group-live-plain-config1", "group-live-plain-config1(9145)"},
@@ -386,6 +392,7 @@ func TestTemplatingFromConfig(t *testing.T) {
 
 func applyTestDefaults(testConfig haConfig) haConfig {
 	baseName := "test-config"
+	setIfBlank(&testConfig.Name, baseName)
 	for i := 0; i < 3; i++ {
 		instName := fmt.Sprintf("%s-instance%d", baseName, i)
 		replAddress := fmt.Sprintf("%s(9145)", instName)

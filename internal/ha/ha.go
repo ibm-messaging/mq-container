@@ -73,6 +73,7 @@ func envConfigPresent() bool {
 
 func loadConfigFromEnv(log *logger.Logger) (*haConfig, error) {
 	cfg := &haConfig{
+		Name: os.Getenv("HOSTNAME"),
 		Instances: [3]haInstance{
 			{
 				Name:               os.Getenv("MQ_NATIVE_HA_INSTANCE_0_NAME"),
@@ -113,6 +114,7 @@ func loadConfigFromEnv(log *logger.Logger) (*haConfig, error) {
 }
 
 type haConfig struct {
+	Name      string
 	Instances [3]haInstance
 	Group     haGroupConfig
 
