@@ -17,7 +17,7 @@ ARG BASE_TAG=8.10-1086
 ARG BUILDER_IMAGE=registry.access.redhat.com/ubi8/go-toolset
 ARG BUILDER_TAG=1.21.13-1.1727869850
 ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
-ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.3.0.25-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
+ARG MQ_URL="https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/9.3.0.21-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
