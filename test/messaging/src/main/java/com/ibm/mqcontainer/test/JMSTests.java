@@ -82,10 +82,10 @@ class JMSTests {
             boolean ibmjre = System.getenv("IBMJRE").equals("true");
             if (ibmjre){
                 System.setProperty("com.ibm.mq.cfg.useIBMCipherMappings", "true");
-                factory.setSSLCipherSuite("SSL_RSA_WITH_AES_128_CBC_SHA256");
+                factory.setSSLCipherSuite("*TLS12ORHIGHER");
             } else {
                  System.setProperty("com.ibm.mq.cfg.useIBMCipherMappings", "false");
-                 factory.setSSLCipherSuite("TLS_RSA_WITH_AES_128_CBC_SHA256");
+                 factory.setSSLCipherSuite("*TLS12ORHIGHER");
             }
         }
         return factory;
