@@ -7,7 +7,9 @@
 * Fix APAR IT46430
 * Changed build Dockerfile to reduce file duplication across image layers
 * Changed shutdown flow to continue reaping orphan processes during queue manager shutdown
-* Allow Native HA configuration to be externally provided rather than generated from template
+* Allow Native HA configuration to be externally provided rather than generated from template.
+  * Deprecate use of environment variable configuration of Native HA (except `MQ_NATIVE_HA=true` which is still required).
+  * Clarify behaviour of now deprecated environment variable configuration in IBM documentation
 * Clarified new minimum versions of Docker and Podman; new version required due to the move to UBI 9
 
 ## 9.4.0.0 (2024-06)

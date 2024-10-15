@@ -21,6 +21,7 @@ import (
 	"embed"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"testing"
 
@@ -31,7 +32,6 @@ import (
 var testFixtures embed.FS
 
 func TestConfigFromEnv(t *testing.T) {
-
 	tests := []struct {
 		TestName  string
 		env       map[string]string
@@ -140,6 +140,7 @@ func TestConfigFromEnv(t *testing.T) {
 				},
 				CipherSpec:    "NULL",
 				keyRepository: "/path/to/repository",
+				haTLSEnabled:  true,
 
 				fipsAvailable: false, // From override
 			},
@@ -246,15 +247,39 @@ func TestCheckEnv(t *testing.T) {
 }
 
 func TestTemplatingFromConfig(t *testing.T) {
+	// Helper function to turn pairs of strings into a map
+	templateListToMap := func(paths ...string) map[string]string {
+		templates := map[string]string{}
+		for i := 0; i+1 < len(paths); i += 2 {
+			input := path.Join("../../ha/", paths[i])
+			output := paths[i+1]
+			templates[input] = output
+		}
+		return templates
+	}
 	tests := []struct {
-		TestName           string
-		config             haConfig
-		expectedResultName string
+		TestName  string
+		config    haConfig
+		templates map[string]string
 	}{
 		{
-			TestName:           "MinimalConfig",
-			config:             haConfig{},
-			expectedResultName: "minimal-config.ini",
+			TestName: "MinimalConfig (no-FIPS)",
+			config: haConfig{
+				fipsAvailable: false,
+			},
+			templates: templateListToMap(
+				"10-native-ha-instance.ini.tpl", "instance/no-fips.ini",
+				"10-native-ha.ini.tpl", "envcfg/minimal-config.ini",
+			),
+		}, {
+			TestName: "MinimalConfig (FIPS)",
+			config: haConfig{
+				fipsAvailable: true,
+			},
+			templates: templateListToMap(
+				"10-native-ha-instance.ini.tpl", "instance/fips.ini",
+				"10-native-ha.ini.tpl", "envcfg/minimal-config.ini",
+			),
 		},
 		{
 			TestName: "Base TLS config (no FIPS)",
@@ -263,7 +288,9 @@ func TestTemplatingFromConfig(t *testing.T) {
 				CertificateLabel: "baseTLS",
 				fipsAvailable:    false,
 			},
-			expectedResultName: "tls-basic.ini",
+			templates: templateListToMap(
+				"10-native-ha.ini.tpl", "envcfg/minimal-config.ini",
+			),
 		},
 		{
 			TestName: "Base TLS config (with FIPS)",
@@ -272,29 +299,24 @@ func TestTemplatingFromConfig(t *testing.T) {
 				CertificateLabel: "baseTLS",
 				fipsAvailable:    true,
 			},
-			expectedResultName: "tls-basic-fips.ini",
+			templates: templateListToMap(
+				"10-native-ha-keystore.ini.tpl", "keystore/ha-only.ini",
+				"10-native-ha.ini.tpl", "envcfg/minimal-config.ini",
+			),
 		},
 		{
 			TestName: "Full TLS config (no-fips)",
 			config: haConfig{
-				haTLSEnabled:     true,
-				CertificateLabel: "baseTLS",
-				CipherSpec:       "some-cipher",
-				keyRepository:    "/a/non/existant/path",
-				fipsAvailable:    false,
+				haTLSEnabled:  true,
+				CipherSpec:    "some-cipher",
+				keyRepository: "/an/overridden/keystore",
+				fipsAvailable: false,
 			},
-			expectedResultName: "tls-full.ini",
-		},
-		{
-			TestName: "TLS config but not enabled",
-			config: haConfig{
-				haTLSEnabled:     false,
-				CertificateLabel: "baseTLS",
-				CipherSpec:       "some-cipher",
-				keyRepository:    "/a/non/existant/path",
-				fipsAvailable:    false,
-			},
-			expectedResultName: "minimal-config.ini",
+			templates: templateListToMap(
+				"10-native-ha-instance.ini.tpl", "instance/no-fips.ini",
+				"10-native-ha-keystore.ini.tpl", "keystore/overridden-path.ini",
+				"10-native-ha.ini.tpl", "envcfg/tls-full.ini",
+			),
 		},
 		{
 			TestName: "Minimal live config",
@@ -302,6 +324,7 @@ func TestTemplatingFromConfig(t *testing.T) {
 				Group: haGroupConfig{
 					Local: haLocalGroupConfig{
 						Name: "alpha",
+						Role: "Live",
 					},
 					Recovery: haRecoveryGroupConfig{
 						Name:    "beta",
@@ -311,7 +334,11 @@ func TestTemplatingFromConfig(t *testing.T) {
 					CertificateLabel: "recoveryTLS",
 				},
 			},
-			expectedResultName: "group-live-minimal.ini",
+			templates: templateListToMap(
+				"10-native-ha-instance.ini.tpl", "instance/no-fips.ini",
+				"10-native-ha-keystore.ini.tpl", "keystore/group-only.ini",
+				"10-native-ha.ini.tpl", "envcfg/group-live-minimal.ini",
+			),
 		},
 		{
 			TestName: "Minimal recovery config",
@@ -329,7 +356,11 @@ func TestTemplatingFromConfig(t *testing.T) {
 					CertificateLabel: "recoveryTLS",
 				},
 			},
-			expectedResultName: "group-recovery-minimal.ini",
+			templates: templateListToMap(
+				"10-native-ha-instance.ini.tpl", "instance/no-fips.ini",
+				"10-native-ha-keystore.ini.tpl", "keystore/group-only.ini",
+				"10-native-ha.ini.tpl", "envcfg/group-recovery-minimal.ini",
+			),
 		},
 		{
 			TestName: "Group TLS (live plain) config",
@@ -350,42 +381,74 @@ func TestTemplatingFromConfig(t *testing.T) {
 				},
 				CipherSpec: "NULL",
 			},
-			expectedResultName: "group-live-plain-ha.ini",
+			templates: templateListToMap(
+				"10-native-ha-instance.ini.tpl", "instance/no-fips.ini",
+				"10-native-ha-keystore.ini.tpl", "keystore/group-only.ini",
+				"10-native-ha.ini.tpl", "envcfg/group-live-plain-ha.ini",
+			),
+		},
+		{
+			TestName: "Separate HA and Group TLS config",
+			config: haConfig{
+				Group: haGroupConfig{
+					Local: haLocalGroupConfig{
+						Name:    "alpha",
+						Role:    "Live",
+						Address: "(4445)",
+					},
+					Recovery: haRecoveryGroupConfig{
+						Name:    "beta",
+						Enabled: true,
+						Address: "beta-address(4445)",
+					},
+					CertificateLabel: "recoveryTLS",
+					CipherSpec:       "ANY_TLS",
+				},
+				CertificateLabel: "baseTLS",
+				CipherSpec:       "NULL",
+			},
+			templates: templateListToMap(
+				"10-native-ha-instance.ini.tpl", "instance/no-fips.ini",
+				"10-native-ha-keystore.ini.tpl", "keystore/ha-group.ini",
+				"10-native-ha.ini.tpl", "envcfg/group-live-plain-ha.ini",
+			),
 		},
 	}
 
-	templateFile := "../../ha/native-ha.ini.tpl"
-
 	for _, test := range tests {
 		t.Run(test.TestName, func(t *testing.T) {
-			t.Logf(`Runing templating test "%s"`, test.TestName)
-			t.Logf(`Expected to match template "%s"`, test.expectedResultName)
-			testLogger, logBuffer, err := newTestLogger(test.TestName)
-			if err != nil {
-				t.Fatalf("Failed to create test logger: %s", err.Error())
-			}
+			for templateFile, expectedFile := range test.templates {
+				t.Run(templateFile, func(t *testing.T) {
+					t.Logf(`Runing templating test "%s"`, test.TestName)
+					t.Logf(`Expected to match template "%s"`, expectedFile)
+					testLogger, logBuffer, err := newTestLogger(test.TestName)
+					if err != nil {
+						t.Fatalf("Failed to create test logger: %s", err.Error())
+					}
 
-			// Load test config
-			cfg := applyTestDefaults(test.config)
+					// Load test config
+					cfg := applyTestDefaults(test.config)
 
-			// Generate template
-			tempOutputPath, err := os.CreateTemp("", "")
-			if err != nil {
-				t.Fatalf("Failed to create temporary output file: %s", err.Error())
-			}
-			defer func() { _ = os.Remove(tempOutputPath.Name()) }()
-			err = cfg.generate(templateFile, tempOutputPath.Name(), testLogger)
-			t.Log(logBuffer.String())
-			if err != nil {
-				t.Fatalf("Processing template to config failed: %s", err.Error())
-			}
-			actual, err := os.ReadFile(tempOutputPath.Name())
-			if err != nil {
-				t.Fatalf("Failed to read '%s': %s", test.TestName, err.Error())
-			}
+					// Generate template
+					tempOutputPath, err := os.CreateTemp("", "")
+					if err != nil {
+						t.Fatalf("Failed to create temporary output file: %s", err.Error())
+					}
+					defer func() { _ = os.Remove(tempOutputPath.Name()) }()
+					err = cfg.generate(templateFile, tempOutputPath.Name(), testLogger)
+					t.Log(logBuffer.String())
+					if err != nil {
+						t.Fatalf("Processing template to config failed: %s", err.Error())
+					}
+					actual, err := os.ReadFile(tempOutputPath.Name())
+					if err != nil {
+						t.Fatalf("Failed to read '%s': %s", test.TestName, err.Error())
+					}
 
-			// Validate
-			assertIniMatch(t, string(actual), test.expectedResultName)
+					// Validate
+					assertIniMatch(t, string(actual), expectedFile)
+				})
+			}
 		})
 	}
 }
@@ -465,9 +528,11 @@ type testOverrides struct {
 func (t testOverrides) apply(cfg *haConfig) {
 	if t.certificateLabel != nil {
 		cfg.CertificateLabel = *t.certificateLabel
+		cfg.haTLSEnabled = true
 	}
 	if t.groupCertificateLabel != nil {
 		cfg.Group.CertificateLabel = *t.groupCertificateLabel
+		cfg.haTLSEnabled = true
 	}
 	if t.fips != nil {
 		cfg.fipsAvailable = *t.fips

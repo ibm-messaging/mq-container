@@ -18,6 +18,7 @@ limitations under the License.
 package ha
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/ibm-messaging/mq-container/internal/fips"
@@ -28,27 +29,45 @@ import (
 
 // ConfigureNativeHA configures native high availability
 func ConfigureNativeHA(log *logger.Logger) error {
-	if !envConfigPresent() {
+	if os.Getenv("MQ_NATIVE_HA") != "true" {
 		return nil
 	}
-	log.Println("Configuring Native HA using values provided in environment variables")
-	fileLink := "/run/native-ha.ini"
-	templateFile := "/etc/mqm/native-ha.ini.tpl"
 	fipsAvailable := fips.IsFIPSEnabled()
-	return loadConfigAndGenerate(templateFile, fileLink, fipsAvailable, log)
+
+	haCertLabel, haGroupCertLabel, _, _, err := tls.ConfigureHATLSKeystore()
+	if err != nil {
+		return fmt.Errorf("error loading tls keys: %w", err)
+	}
+
+	configFiles := map[string]string{
+		"/run/10-native-ha-instance.ini": "/etc/mqm/10-native-ha-instance.ini.tpl",
+	}
+	if haCertLabel != "" || haGroupCertLabel != "" {
+		configFiles["/run/10-native-ha-keystore.ini"] = "/etc/mqm/10-native-ha-keystore.ini.tpl"
+	}
+	if envConfigPresent() {
+		log.Println("Configuring Native HA using values provided in environment variables")
+		configFiles["/run/10-native-ha.ini"] = "/etc/mqm/10-native-ha.ini.tpl"
+	}
+	return loadConfigAndGenerate(configFiles, fipsAvailable, haCertLabel, haGroupCertLabel, log)
 }
 
-func loadConfigAndGenerate(templatePath string, outputPath string, fipsAvailable bool, log *logger.Logger) error {
+func loadConfigAndGenerate(templateConfigs map[string]string, fipsAvailable bool, haCertLabel, haGroupCertLabel string, log *logger.Logger) error {
 	cfg, err := loadConfigFromEnv(log)
 	if err != nil {
 		return err
 	}
-	err = cfg.updateTLS()
+	err = cfg.updateTLS(fipsAvailable, haCertLabel, haGroupCertLabel)
 	if err != nil {
 		return err
 	}
-
-	return cfg.generate(templatePath, outputPath, log)
+	for outputPath, templateFile := range templateConfigs {
+		err := cfg.generate(templateFile, outputPath, log)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func envConfigPresent() bool {
@@ -61,7 +80,6 @@ func envConfigPresent() bool {
 		"MQ_NATIVE_HA_INSTANCE_2_REPLICATION_ADDRESS",
 		"MQ_NATIVE_HA_TLS",
 		"MQ_NATIVE_HA_CIPHERSPEC",
-		"MQ_NATIVE_HA_KEY_REPOSITORY",
 	}
 	for _, checkVar := range checkVars {
 		if os.Getenv(checkVar) != "" {
@@ -101,7 +119,6 @@ func loadConfigFromEnv(log *logger.Logger) (*haConfig, error) {
 			},
 			CipherSpec: os.Getenv("MQ_NATIVE_HA_GROUP_CIPHERSPEC"),
 		},
-		haTLSEnabled:  os.Getenv("MQ_NATIVE_HA_TLS") == "true",
 		CipherSpec:    os.Getenv("MQ_NATIVE_HA_CIPHERSPEC"),
 		keyRepository: os.Getenv("MQ_NATIVE_HA_KEY_REPOSITORY"),
 	}
@@ -136,43 +153,20 @@ func (h haConfig) ShouldConfigureTLS() bool {
 }
 
 func (h haConfig) SSLFipsRequired() string {
-	if !h.haTLSEnabled {
-		return ""
-	}
 	return yesNo(h.fipsAvailable).String()
 }
 
-func (h *haConfig) updateTLS() error {
-	if !h.ShouldConfigureTLS() {
-		return nil
+func (h *haConfig) updateTLS(fipsAvailable bool, haCertLabel, haGroupCertLabel string) error {
+	if haCertLabel != "" {
+		h.CertificateLabel = haCertLabel
+		h.haTLSEnabled = true
+	}
+	if haGroupCertLabel != "" {
+		h.Group.CertificateLabel = haGroupCertLabel
+		h.haTLSEnabled = true
 	}
 
-	var err error
-	var keyStore, trustStore tls.KeyStoreData
-
-	if h.haTLSEnabled {
-		var keyLabel string
-		keyLabel, keyStore, trustStore, err = tls.ConfigureHATLSKeystore()
-		if err != nil {
-			return err
-		}
-		h.CertificateLabel = keyLabel
-	}
-
-	if h.Group.Local.Name != "" {
-		var groupKeyLabel string
-		if h.haTLSEnabled {
-			groupKeyLabel, err = tls.ConfigureHAReplicationGroupTLS(keyStore, trustStore)
-		} else {
-			groupKeyLabel, err = tls.CreateHAReplicationGroupTLS()
-		}
-		if err != nil {
-			return err
-		}
-		h.Group.CertificateLabel = groupKeyLabel
-	}
-
-	h.fipsAvailable = fips.IsFIPSEnabled()
+	h.fipsAvailable = fipsAvailable
 
 	return nil
 }

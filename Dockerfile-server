@@ -120,7 +120,7 @@ RUN env \
   && /opt/mqm/bin/security/amqpamcf
 COPY --chown=1001:root --from=builder $GO_WORKDIR/runmqserver /usr/local/bin/
 COPY --chown=1001:root --from=builder $GO_WORKDIR/chkmq* /usr/local/bin/
-COPY ha/native-ha.ini.tpl /etc/mqm/native-ha.ini.tpl
+COPY --chown=1001:root ha/*.ini.tpl /etc/mqm/
 # Copy web XML files
 COPY --chown=1001:root web /etc/mqm/web
 COPY --chown=1001:root etc/mqm/*.tpl /etc/mqm/
@@ -128,7 +128,9 @@ RUN ln -s /run/mqwebcontainer.xml /etc/mqm/web/installations/Installation1/serve
   && ln -s /run/tls.xml /etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml \
   && ln -s /run/jvm.options /etc/mqm/web/installations/Installation1/servers/mqweb/configDropins/defaults/jvm.options \
   && ln -s /run/15-tls.mqsc /etc/mqm/15-tls.mqsc \
-  && ln -s /run/native-ha.ini /etc/mqm/native-ha.ini \
+  && ln -s /run/10-native-ha.ini /etc/mqm/10-native-ha.ini \
+  && ln -s /run/10-native-ha-instance.ini /etc/mqm/10-native-ha-instance.ini \
+  && ln -s /run/10-native-ha-keystore.ini /etc/mqm/10-native-ha-keystore.ini \
   && chown -R 1001:root /etc/mqm/*
 RUN touch /run/termination-log \
   && chown 1001:root /run/termination-log \

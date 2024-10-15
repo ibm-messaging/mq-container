@@ -22,6 +22,7 @@ import (
 	"errors"
 	"flag"
 	"os"
+	"path"
 	"sync"
 
 	"github.com/ibm-messaging/mq-container/internal/copy"
@@ -164,12 +165,19 @@ func doMain() error {
 		return err
 	}
 
-	// Initialise native-ha.ini file on ephemeral volume
-	// #nosec G306 - its a read by owner/s group, and pose no harm.
-	err = os.WriteFile("/run/native-ha.ini", []byte(""), 0660)
-	if err != nil {
-		logTermination(err)
-		return err
+	// Initialise native-ha ini files file on ephemeral volume
+	nativeHAINIs := []string{
+		"10-native-ha.ini",
+		"10-native-ha-instance.ini",
+		"10-native-ha-keystore.ini",
+	}
+	for _, iniFile := range nativeHAINIs {
+		// #nosec G306 - its a read by owner/s group, and pose no harm.
+		err = os.WriteFile(path.Join("/run", iniFile), []byte(""), 0660)
+		if err != nil {
+			logTermination(err)
+			return err
+		}
 	}
 
 	// Copy default mqwebcontainer.xml file to ephemeral volume

@@ -81,72 +81,73 @@ type TLSStore struct {
 	Truststore KeyStoreData
 }
 
-func configureTLSKeystores(keystoreDir, keyDir, trustDir string, p12TruststoreRequired bool, nativeTLSHA bool) (string, KeyStoreData, KeyStoreData, error) {
+func configureTLSKeystores(keystoreDir string, keyDirs, trustDirs []string, p12TruststoreRequired bool, nativeTLSHA bool) ([]string, KeyStoreData, KeyStoreData, error) {
 	var keyLabel string
+
+	cmsKeystoreRequired := false
+	allDirs := append([]string{}, keyDirs...)
+	allDirs = append(allDirs, trustDirs...)
+	for _, dir := range allDirs {
+		if haveKeysAndCerts(dir) {
+			cmsKeystoreRequired = true
+			break
+		}
+	}
 	// Create the CMS Keystore & PKCS#12 Truststore (if required)
-	tlsStore, err := generateAllKeystores(keystoreDir, keyDir, p12TruststoreRequired, nativeTLSHA)
+	tlsStore, err := generateAllKeystores(keystoreDir, cmsKeystoreRequired, p12TruststoreRequired, nativeTLSHA)
 	if err != nil {
-		return "", tlsStore.Keystore, tlsStore.Truststore, err
+		return nil, tlsStore.Keystore, tlsStore.Truststore, err
 	}
 
+	keyLabels := make([]string, len(keyDirs))
 	if tlsStore.Keystore.Keystore != nil {
-		// Process all keys - add them to the CMS KeyStore
-		keyLabel, err = processKeys(&tlsStore, keystoreDir, keyDir)
-		if err != nil {
-			return "", tlsStore.Keystore, tlsStore.Truststore, err
+		for idx, keyDir := range keyDirs {
+			// Process all keys - add them to the CMS KeyStore
+			keyLabel, err = processKeys(&tlsStore, keystoreDir, keyDir)
+			if err != nil {
+				return nil, tlsStore.Keystore, tlsStore.Truststore, err
+			}
+			keyLabels[idx] = keyLabel
 		}
 	}
 
-	// Process all trust certificates - add them to the CMS KeyStore & PKCS#12 Truststore (if required)
-	err = processTrustCertificates(&tlsStore, trustDir)
-	if err != nil {
-		return "", tlsStore.Keystore, tlsStore.Truststore, err
+	for _, trustDir := range trustDirs {
+		// Process all trust certificates - add them to the CMS KeyStore & PKCS#12 Truststore (if required)
+		err = processTrustCertificates(&tlsStore, trustDir)
+		if err != nil {
+			return nil, tlsStore.Keystore, tlsStore.Truststore, err
+		}
 	}
 
-	return keyLabel, tlsStore.Keystore, tlsStore.Truststore, err
+	return keyLabels, tlsStore.Keystore, tlsStore.Truststore, err
 }
 
 // ConfigureDefaultTLSKeystores configures the CMS Keystore & PKCS#12 Truststore
 func ConfigureDefaultTLSKeystores() (string, KeyStoreData, KeyStoreData, error) {
-	return configureTLSKeystores(keystoreDirDefault, keyDirDefault, trustDirDefault, true, false)
+	certLabels, keyStore, trustStore, err := configureTLSKeystores(keystoreDirDefault, []string{keyDirDefault}, []string{trustDirDefault}, true, false)
+	if err != nil {
+		return "", keyStore, trustStore, err
+	}
+	certLabel := ""
+	if len(certLabels) > 0 {
+		certLabel = certLabels[0]
+	}
+	return certLabel, keyStore, trustStore, err
 }
 
 // ConfigureHATLSKeystore configures the CMS Keystore & PKCS#12 Truststore
-func ConfigureHATLSKeystore() (string, KeyStoreData, KeyStoreData, error) {
+func ConfigureHATLSKeystore() (string, string, KeyStoreData, KeyStoreData, error) {
 	// *.crt files mounted to the HA TLS dir keyDirHA will be processed as trusted in the CMS keystore
-	return configureTLSKeystores(keystoreDirHA, keyDirHA, keyDirHA, false, true)
-}
+	keyDirs := []string{keyDirHA, keyDirGroupHA}
+	haCertLabels, haKeystore, haTruststore, err := configureTLSKeystores(keystoreDirHA, keyDirs, keyDirs, false, true)
+	if err != nil {
+		return "", "", haKeystore, haTruststore, err
+	}
+	if len(haCertLabels) != len(keyDirs) {
+		return "", "", haKeystore, haTruststore, fmt.Errorf("incorrect number of certificate labels returned (expected %d, got %d)", len(keyDirs), len(haCertLabels))
+	}
 
-// ConfigureHAReplicationGroupTLS adds any group TLS keys and trusted certs into the HA CMS Keystore
-func ConfigureHAReplicationGroupTLS(keyStore KeyStoreData, trustStore KeyStoreData) (string, error) {
-	tlsStore := TLSStore{keyStore, trustStore}
-	groupKeyLabel, err := processKeys(&tlsStore, keystoreDirHA, keyDirGroupHA)
-	if err != nil {
-		return "", err
-	}
-	err = processTrustCertificates(&tlsStore, keyDirGroupHA)
-	if err != nil {
-		return "", err
-	}
-	err = processTrustCertificates(&tlsStore, trustDirGroupHA)
-	if err != nil {
-		return "", err
-	}
-	return groupKeyLabel, err
-}
-
-// CreateHAReplicationGroupTLS creates a new HA truststore then adds any group TLS keys and trusted certs into the HA CMS Keystore
-func CreateHAReplicationGroupTLS() (string, error) {
-	groupKeyLabel, keyStore, trustStore, err := configureTLSKeystores(keystoreDirHA, keyDirGroupHA, keyDirGroupHA, false, true)
-	if err != nil {
-		return "", err
-	}
-	tlsStore := TLSStore{keyStore, trustStore}
-	err = processTrustCertificates(&tlsStore, trustDirGroupHA)
-	if err != nil {
-		return "", err
-	}
-	return groupKeyLabel, err
+	return haCertLabels[0], haCertLabels[1], haKeystore, haTruststore, err
 }
 
 // ConfigureTLS configures TLS for the queue manager
@@ -205,7 +206,7 @@ func configureTLSDev(log *logger.Logger) error {
 }
 
 // generateAllKeystores creates the CMS Keystore & PKCS#12 Truststore (if required)
-func generateAllKeystores(keystoreDir string, keysDir string, p12TruststoreRequired bool, nativeTLSHA bool) (TLSStore, error) {
+func generateAllKeystores(keystoreDir string, createCMSKeystore bool, p12TruststoreRequired bool, nativeTLSHA bool) (TLSStore, error) {
 
 	var cmsKeystore, p12Truststore KeyStoreData
 
@@ -221,10 +222,8 @@ func generateAllKeystores(keystoreDir string, keysDir string, p12TruststoreRequi
 		return TLSStore{cmsKeystore, p12Truststore}, fmt.Errorf("Failed to create Keystore directory: %v", err)
 	}
 
-	keysDirectory := keysDir
-
 	// Create the CMS Keystore if we have been provided keys and certificates
-	if haveKeysAndCerts(keysDirectory) || haveKeysAndCerts(trustDirDefault) {
+	if createCMSKeystore {
 		cmsKeystore.Keystore = keystore.NewCMSKeyStore(pathutils.CleanPath(keystoreDir, cmsKeystoreName), cmsKeystore.Password)
 		err = cmsKeystore.Keystore.Create()
 		if err != nil {

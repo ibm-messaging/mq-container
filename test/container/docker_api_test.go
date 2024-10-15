@@ -2094,8 +2094,16 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 			symLinkName: "-> /run/15-tls.mqsc",
 		},
 		{
-			origin:      "/etc/mqm/native-ha.ini",
-			symLinkName: "-> /run/native-ha.ini",
+			origin:      "/etc/mqm/10-native-ha.ini",
+			symLinkName: "-> /run/10-native-ha.ini",
+		},
+		{
+			origin:      "/etc/mqm/10-native-ha-keystore.ini",
+			symLinkName: "-> /run/10-native-ha-keystore.ini",
+		},
+		{
+			origin:      "/etc/mqm/10-native-ha-instance.ini",
+			symLinkName: "-> /run/10-native-ha-instance.ini",
 		},
 		{
 			origin:      "/run/runmqserver",
