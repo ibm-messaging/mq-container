@@ -43,4 +43,5 @@ elif [ "$FILE_FOUND" -eq 404 ]; then
    exit 1
 else
     echo "Unexpected error when downloading MQ driver from $BASE_MQ_LOCATION"
+    exit 1
 fi
