@@ -266,7 +266,7 @@ else
 ifneq "$(MQ_ARCHIVE_REPOSITORY_DEV)" "$(EMPTY)"
 	curl --fail --user $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" --output downloads/$(MQ_ARCHIVE_DEV)
 else
-	curl --fail --location https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/$(MQ_ARCHIVE_DEV) --output downloads/$(MQ_ARCHIVE_DEV)
+	./download-basemq.sh -r $(MQ_ARCHIVE_DEV) -v $(MQ_VERSION_VRM)
 endif
 endif
 
