@@ -156,6 +156,7 @@ jobs:
       name: "Push Manifest-list to registry"
       env:
         - PUSH_MANIFEST_ONLY=true
+        - BUILD_MANIFEST=true
       script: bash -e travis-build-scripts/run.sh
     - stage: build-manifest-ifix
       if: branch =~ ^ifix-
