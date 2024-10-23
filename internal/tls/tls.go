@@ -139,7 +139,8 @@ func ConfigureDefaultTLSKeystores() (string, KeyStoreData, KeyStoreData, error) 
 func ConfigureHATLSKeystore() (string, string, KeyStoreData, KeyStoreData, error) {
 	// *.crt files mounted to the HA TLS dir keyDirHA will be processed as trusted in the CMS keystore
 	keyDirs := []string{keyDirHA, keyDirGroupHA}
-	haCertLabels, haKeystore, haTruststore, err := configureTLSKeystores(keystoreDirHA, keyDirs, keyDirs, false, true)
+	trustDirs := []string{trustDirGroupHA}
+	haCertLabels, haKeystore, haTruststore, err := configureTLSKeystores(keystoreDirHA, keyDirs, trustDirs, false, true)
 	if err != nil {
 		return "", "", haKeystore, haTruststore, err
 	}
