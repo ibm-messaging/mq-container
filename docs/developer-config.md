@@ -18,7 +18,7 @@ Run container referencing mounted secrets:
 
 ### Example usage with docker:
 
-Docker secrets are only available via Docker Swarm services, hence to create a secret using docker, Docker Swarm must be used.
+Secrets in docker are available using Docker Swarm services or Docker Compose. The following example creates a secret using Docker Swarm.
 
 Create docker secrets with secret names as “mqAdminPassword” & "mqAppPassword":
 
