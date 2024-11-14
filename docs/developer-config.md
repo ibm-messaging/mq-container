@@ -14,7 +14,7 @@ Create podman secrets with secret names as “mqAdminPassword” & "mqAppPasswor
 - `printf "passw0rd" | podman secret create mqAppPassword -` 
 
 Run container referencing mounted secrets:
-- `podman run --secret mqAdminPassword,type=mount,mode=0777 --secret mqAppPassword,type=mount,mode=0777 --env LICENSE=accept --env MQ_QMGR_NAME=QM1 --publish 1414:1414 --publish 9443:9443 --detach --name QM1 icr.io/ibm-messaging/mq:latest`
+- `podman run --secret mqAdminPassword --secret mqAppPassword --env LICENSE=accept --env MQ_QMGR_NAME=QM1 --publish 1414:1414 --publish 9443:9443 --detach --name QM1 icr.io/ibm-messaging/mq:latest`
 
 ### Example usage with docker:
 
