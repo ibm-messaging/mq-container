@@ -187,7 +187,7 @@ ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" = "false" ] && [ 
 endif
 
 ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" = "false" ] && echo "$(TRAVIS_BRANCH)" | grep -q '^ifix-' && echo true), true)
-	MQ_MANIFEST_TAG_SUFFIX=.$(TIMESTAMPFLAT).$(GIT_COMMIT)
+	MQ_MANIFEST_TAG_SUFFIX=-$(APAR_NUMBER)-$(FIX_NUMBER).$(TIMESTAMPFLAT).$(GIT_COMMIT)
 endif
 
 # Make sure we don't use VOLUME_MOUNT_OPTIONS for Podman on macOS
