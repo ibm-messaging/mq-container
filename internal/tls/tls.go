@@ -457,12 +457,6 @@ func processCertificates(keyDir string, keySetName, keyPrefix string, keys []os.
 				return nil, nil, fmt.Errorf("Failed to add to known certificates for CMS Keystore")
 			}
 
-			// Add to known certificates for the CMS Keystore
-			err = addToKnownCertificates(block, cmsKeystore, false)
-			if err != nil {
-				return nil, nil, fmt.Errorf("Failed to add to known certificates for CMS Keystore")
-			}
-
 			// Pick up any other intermediate certificates
 			for string(file) != "" {
 				var block *pem.Block
