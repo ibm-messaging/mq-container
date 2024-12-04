@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2024
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,9 +53,12 @@ func generateMetricNamesMap() map[string]metricLookup {
 		"DISK/Log/Log - bytes in use":                                             metricLookup{"log_in_use_bytes", true},
 		"DISK/Log/Log file system - bytes max":                                    metricLookup{"log_file_system_max_bytes", true},
 		"DISK/Log/Log file system - bytes in use":                                 metricLookup{"log_file_system_in_use_bytes", true},
+		"DISK/Log/Log file system - free space":                                   metricLookup{"log_file_system_free_space_percentage", true},
 		"DISK/Log/Log - bytes occupied by reusable extents":                       metricLookup{"log_occupied_by_reusable_extents_bytes", true},
 		"DISK/Log/Log - bytes occupied by extents waiting to be archived":         metricLookup{"log_occupied_by_extents_waiting_to_be_archived_bytes", true},
 		"DISK/Log/Log - bytes required for media recovery":                        metricLookup{"log_required_for_media_recovery_bytes", true},
+		"DISK/Log/Log - disk written log sequence number":                         metricLookup{"log_sequence_number_disk_total", true},
+		"DISK/Log/Log - quorum log sequence number":                               metricLookup{"log_sequence_number_quorum_total", true},
 		"STATMQI/SUBSCRIBE/Create durable subscription count":                     metricLookup{"durable_subscription_create_total", true},
 		"STATMQI/SUBSCRIBE/Alter durable subscription count":                      metricLookup{"durable_subscription_alter_total", true},
 		"STATMQI/SUBSCRIBE/Resume durable subscription count":                     metricLookup{"durable_subscription_resume_total", true},
