@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM fedora:32
+ARG DOCKER_IMAGE_REGISTRY=registry.fedoraproject.org
+FROM $DOCKER_IMAGE_REGISTRY/fedora:32
 RUN yum install skopeo -y -qq
 ENTRYPOINT [ "skopeo" ]
