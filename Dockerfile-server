@@ -13,11 +13,11 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=registry.access.redhat.com/ubi9/ubi-minimal
-ARG BASE_TAG=9.5-1731604394
+ARG BASE_TAG=9.5-1733767867
 ARG BUILDER_IMAGE=registry.access.redhat.com/ubi9/go-toolset
-ARG BUILDER_TAG=1.22.5-1731639025
+ARG BUILDER_TAG=1.22.7-1733160835
 ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
-ARG MQ_ARCHIVE="downloads/9.4.0.6-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
+ARG MQ_ARCHIVE="downloads/9.4.0.7-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
 
 ###############################################################################
 # Build stage to build Go code
