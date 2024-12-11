@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM fedora:32
+FROM registry.fedoraproject.org/fedora:32
 RUN yum install skopeo -y -qq
 ENTRYPOINT [ "skopeo" ]
