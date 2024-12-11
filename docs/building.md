@@ -52,6 +52,10 @@ Run `make build-devserver`, which will download the latest version of MQ Advance
 
 You can use the environment variable `MQ_ARCHIVE_DEV` to specify an alternative local file to install from (which must be in the `downloads` directory).
 
+## Applying an iFix
+
+If you intend to apply an iFix provided by IBM MQ Support team, more information about this process is available at [iFix for IBM MQ Software](/docs/ifix.md)
+
 ## Installed components
 
 This image includes the core MQ server, Java, language packs, GSKit, and web server.  This is configured in the `mq-redux` build stage in `Dockerfile-server`.
