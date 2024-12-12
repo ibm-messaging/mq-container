@@ -19,6 +19,10 @@ set -e
 if [ "$(uname -m)" = "x86_64" ] ; then export ARCH="amd64" ; else export ARCH=$(uname -m) ; fi
 
 if [ "$PUSH_MANIFEST_ONLY" = true ] ; then
+  if [ "$BASE_MQ_LOCKED" = true ] ; then
+    printf '\nNot pushing manifest to Artifactory because the stream is locked.\n'
+    exit 0
+  fi
   echo 'Retrieving remote tagcache' && echo -en 'travis_fold:start:retrieve-tag-cache\\r'
   ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --get
   echo -en 'travis_fold:end:retrieve-tag-cache\\r'
@@ -40,6 +44,10 @@ echo -en 'travis_fold:end:docker-downgrade\\r'
 ## Push images
 if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
   if [ "$BUILD_ALL" = true ] ; then
+    if [ "$BASE_MQ_LOCKED" = true ] ; then
+      printf '\nNot pushing or writing images to Artifactory because the stream is locked.\n'
+      exit 0
+    fi
     ./travis-build-scripts/push.sh developer
     ./travis-build-scripts/push.sh production
   fi
