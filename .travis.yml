@@ -15,7 +15,6 @@
 dist: bionic
 group: beta
 sudo: required
-language: go
 
 go:
   - "1.22.7"
@@ -29,6 +28,7 @@ env:
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
     - BASE_MQ_LOCKED=false
+    - GO_VERSION="1.22.7"
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
@@ -174,8 +174,15 @@ jobs:
 
 
 before_install:
+  - make go-install
+  - curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/urfave/gimme/main/gimme
+  - chmod +x ~/bin/gimme
+  - gimme version
+  - eval "$(gimme "$GO_VERSION")"
+  - go env
   - make install-build-deps
   - make install-credential-helper
+
 
 install:
   - echo nothing
