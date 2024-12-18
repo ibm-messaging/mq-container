@@ -15,7 +15,6 @@
 dist: bionic
 group: beta
 sudo: required
-language: go
 
 go:
   - "1.22.7"
@@ -29,6 +28,7 @@ env:
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
     - BASE_MQ_LOCKED=false
+    - GO_VERSION="1.22.7"
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
@@ -104,7 +104,7 @@ jobs:
       if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
       name: "Trigger release-checks build"
       script: bash -e travis-build-scripts/trigger-release-checks.sh
-    
+
     # ifix build started
     - stage: Check-upload-ifix-driver
       if: branch =~ ^ifix-
@@ -169,11 +169,12 @@ jobs:
       if: branch =~ ^ifix-
       name: "Sync build manifest with stage branch"
       os: linux
-      script: 
+      script:
       - bash -e travis-build-scripts/manifest-sync.sh
-    
+
 
 before_install:
+  - make go-install
   - make install-build-deps
   - make install-credential-helper
 
