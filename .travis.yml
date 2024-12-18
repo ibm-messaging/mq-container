@@ -175,8 +175,14 @@ jobs:
 
 before_install:
   - make go-install
+  - curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/urfave/gimme/main/gimme
+  - chmod +x ~/bin/gimme
+  - gimme version
+  - eval "$(gimme "$GO_VERSION")"
+  - go env
   - make install-build-deps
   - make install-credential-helper
+
 
 install:
   - echo nothing
