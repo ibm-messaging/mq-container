@@ -285,7 +285,7 @@ cache-mq-tag:
 
 # Vendor Go dependencies for the Container tests
 test/container/vendor:
-	cd test/container && go mod vendor
+	cd test/container && /usr/local/go/bin/go mod vendor
 
 # Shortcut to just run the unit tests
 .PHONY: test-unit
@@ -300,7 +300,7 @@ endef
 test-advancedserver: test/container/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(call inspect-image,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG))
-	cd test/container && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) $(TEST_OPTS_CONTAINER)
+	cd test/container && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) /usr/local/go/bin/go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) $(TEST_OPTS_CONTAINER)
 
 .PHONY: build-devjmstest
 build-devjmstest:
@@ -311,7 +311,7 @@ build-devjmstest:
 test-devserver: test/container/vendor
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(call inspect-image,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG))
-	cd test/container && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=false DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) -tags mqdev $(TEST_OPTS_CONTAINER)
+	cd test/container && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=false DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) /usr/local/go/bin/go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) -tags mqdev $(TEST_OPTS_CONTAINER)
 
 .PHONY: coverage
 coverage:
@@ -510,6 +510,10 @@ clean:
 	rm -rf ./coverage
 	rm -rf ./build
 	rm -rf ./deps
+
+.PHONY: go-install
+go-install:
+	GO_VERSION=$(GO_VERSION) ARCH=$(ARCH) ./travis-build-scripts/go-install.sh
 
 .PHONY: install-build-deps
 install-build-deps:
