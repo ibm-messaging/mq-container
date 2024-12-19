@@ -13,7 +13,7 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=registry.access.redhat.com/ubi9/ubi-minimal
-ARG BASE_TAG=9.5-1733767867
+ARG BASE_TAG=9.5-1734497536
 ARG BUILDER_IMAGE=registry.access.redhat.com/ubi9/go-toolset
 ARG BUILDER_TAG=1.22.7-1733160835
 ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
@@ -144,7 +144,7 @@ ENV MQ_GRACE_PERIOD=30
 ENV LANG=C AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1
 ENV MQ_LOGGING_CONSOLE_EXCLUDE_ID=AMQ5041I,AMQ5052I,AMQ5051I,AMQ5037I,AMQ5975I
 ENV WLP_LOGGING_MESSAGE_FORMAT=json
-# IFIX: This is the point where commands for ifixes of IBM MQ need to be added if applied via the Dockerfile  
+# IFIX: This is the point where commands for ifixes of IBM MQ need to be added if applied via the Dockerfile
 # We can run as any UID
 USER 1001
 ENV MQ_CONNAUTH_USE_HTP=false
