@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dist: bionic
-group: beta
+dist: focal
+group: vpc
 sudo: required
 
 go:
@@ -46,7 +46,9 @@ jobs:
       os: linux
       env:
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_2_ARCHIVE_REPOSITORY_DEV_AMD64
-      script: bash -e travis-build-scripts/run.sh
+      script:
+        - bash travis-build-scripts/travis-log-keepalive.sh &
+        - bash -e travis-build-scripts/run.sh
 
     # CD Build
 
@@ -175,10 +177,9 @@ jobs:
 
 before_install:
   - make go-install
-  - curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/urfave/gimme/main/gimme
-  - chmod +x ~/bin/gimme
-  - gimme version
-  - eval "$(gimme "$GO_VERSION")"
+  - export PATH=/usr/local/go/bin:$PATH
+  - export GOROOT=/usr/local/go
+  - export GOPATH=$HOME/gopath
   - go env
   - make install-build-deps
   - make install-credential-helper
