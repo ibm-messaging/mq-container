@@ -27,7 +27,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
-func startWebServer(webKeystore, webkeystorePW, webTruststoreRef string) error {
+func startWebServer(webKeystore, webTruststoreRef string) error {
 	_, err := os.Stat("/opt/mqm/bin/strmqweb")
 	if err != nil && os.IsNotExist(err) {
 		log.Debug("Skipping web server, because it's not installed")
@@ -43,7 +43,6 @@ func startWebServer(webKeystore, webkeystorePW, webTruststoreRef string) error {
 	// TLS enabled
 	if webKeystore != "" {
 		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTORE="+webKeystore)
-		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTOREPW="+webkeystorePW)
 		cmd.Env = append(cmd.Env, "AMQ_WEBTRUSTSTOREREF="+webTruststoreRef)
 	}
 	out, err := cmd.CombinedOutput()
