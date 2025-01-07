@@ -158,10 +158,11 @@ func metricsContainerConfig() *ce.ContainerConfig {
 
 func metricNames() []string {
 
-	// NB: There are currently a total of 93 metrics, but the following 3 do not generate values (based on the queue manager configuration)
+	// NB: There are currently a total of 96 metrics, but the following 4 do not generate values (based on the queue manager configuration)
 	// - log_occupied_by_reusable_extents_bytes
 	// - log_occupied_by_extents_waiting_to_be_archived_bytes
 	// - log_required_for_media_recovery_bytes
+	// - log_sequence_number_quorum_total (Only produced by NativeHA Queue Managers)
 
 	names := []string{
 		"cpu_load_one_minute_average_percentage",
@@ -191,6 +192,8 @@ func metricNames() []string {
 		"log_in_use_bytes",
 		"log_file_system_max_bytes",
 		"log_file_system_in_use_bytes",
+		"log_file_system_free_space_percentage",
+		"log_sequence_number_disk_total",
 		"durable_subscription_create_total",
 		"durable_subscription_alter_total",
 		"durable_subscription_resume_total",

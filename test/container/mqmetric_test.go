@@ -53,7 +53,6 @@ func TestGoldenPathMetric(t *testing.T) {
 }
 
 func TestMetricNames(t *testing.T) {
-	t.Skipf("Skipping %v until base code merged and test can then be updated", t.Name())
 	t.Parallel()
 
 	cli := ce.NewContainerClient()
