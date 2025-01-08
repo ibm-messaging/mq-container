@@ -21,7 +21,10 @@ set -ex
 
 sudo curl -Lo /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.1/dep-linux-$ARCH
 sudo chmod +x /usr/local/bin/dep
-sudo apt-get update || :
+if [ "$ARCH" = "amd64" ]; then
+sudo rm /etc/apt/sources.list.d/rabbitmq.list
+fi
+sudo apt update || :
 sudo apt-get install -y jq
 
 go install golang.org/x/lint/golint@latest
