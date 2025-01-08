@@ -55,6 +55,7 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
     echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
     get_archive_level MQ_ARCHIVE_REPOSITORY_DEV
     make build-devserver
+    make push-devserver
     echo -en 'travis_fold:end:build-devserver\\r'
   fi
   if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
@@ -62,6 +63,7 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
           echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
           get_archive_level MQ_ARCHIVE_REPOSITORY
           make build-advancedserver
+          make push-advancedserver
           echo -en 'travis_fold:end:build-advancedserver\\r'
       fi
   fi
@@ -74,11 +76,13 @@ else
     echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
     get_archive_level MQ_ARCHIVE_REPOSITORY_DEV
     make build-devserver
+    make push-devserver
     echo -en 'travis_fold:end:build-devserver\\r'
   else
     echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
     get_archive_level MQ_ARCHIVE_REPOSITORY
     make build-advancedserver
+    make push-advancedserver
     echo -en 'travis_fold:end:build-advancedserver\\r'
   fi
 fi

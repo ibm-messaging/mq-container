@@ -27,9 +27,6 @@ if [ "$PUSH_MANIFEST_ONLY" = true ] ; then
   ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --get
   echo -en 'travis_fold:end:retrieve-tag-cache\\r'
   make push-manifest
-  if [ -z "$BUILD_MANIFEST" ] || [ "$BUILD_MANIFEST" = false ]; then
-    ./travis-build-scripts/cleanup-cache.sh
-  fi
   exit 0
 fi
 if [ "$BUILD_MANIFEST" = true ] ; then
@@ -38,13 +35,13 @@ if [ "$BUILD_MANIFEST" = true ] ; then
   echo 'Preparing build manifest'
   make build-manifest
   make commit-build-manifest
-  ./travis-build-scripts/cleanup-cache.sh
   exit 0
 fi
 
 echo 'Downgrading Docker (if necessary)...' && echo -en 'travis_fold:start:docker-downgrade\\r'
 eval "$DOCKER_DOWNGRADE"
 echo -en 'travis_fold:end:docker-downgrade\\r'
+
 
 ## Build images
 ./travis-build-scripts/build.sh
@@ -59,14 +56,14 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
       printf '\nNot pushing or writing images to Artifactory because the stream is locked.\n'
       exit 0
     fi
-    ./travis-build-scripts/push.sh developer
-    ./travis-build-scripts/push.sh production
+    ./travis-build-scripts/promote.sh developer
+    ./travis-build-scripts/promote.sh production
   fi
 else
   if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
-    ./travis-build-scripts/push.sh developer
+    ./travis-build-scripts/promote.sh developer
   else
-    ./travis-build-scripts/push.sh production
+    ./travis-build-scripts/promote.sh production
   fi
 fi
 
