@@ -24,11 +24,10 @@ services:
 
 env:
   global:
-    - MAIN_BRANCH=sdp-debug-push-issue
+    - MAIN_BRANCH=private-master
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
     - BASE_MQ_LOCKED=false
-    - GO_VERSION="1.22.9"
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
@@ -41,7 +40,7 @@ jobs:
     - script: bash -e travis-build-scripts/trigger-release-checks.sh
   include:
     - stage: basic-build
-      if: branch = private-master AND tag IS blank AND branch !~ /^ifix-/
+      if: branch != private-master AND tag IS blank AND branch !~ /^ifix-/
       name: "Basic AMD64 build"
       os: linux
       env:
@@ -53,12 +52,12 @@ jobs:
     # CD Build
 
     - stage: global-tag
-      if: (branch != private-master OR branch =~ ^ifix-*) AND type != pull_request OR tag =~ ^release-candidate*
+      if: (branch = private-master OR branch =~ ^ifix-*) AND type != pull_request OR tag =~ ^release-candidate*
       name: "Generate Global Tag"
       os: linux
       script: bash -e travis-build-scripts/global-tag.sh
     - stage: build
-      if: branch != private-master OR tag =~ ^release-candidate*
+      if: branch = private-master OR tag =~ ^release-candidate*
       name: "Multi-Arch AMD64 build"
       os: linux
       env:
@@ -69,7 +68,7 @@ jobs:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
     - stage: build
-      if: branch != private-master OR tag =~ ^release-candidate*
+      if: branch = private-master OR tag =~ ^release-candidate*
       name: "Multi-Arch S390X build"
       os: linux
       arch: s390x
@@ -83,7 +82,7 @@ jobs:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
     - stage: build
-      if: branch != private-master OR tag =~ ^release-candidate*
+      if: branch = private-master OR tag =~ ^release-candidate*
       name: "Multi-Arch PPC64LE build"
       os: linux
       arch: ppc64le
@@ -97,7 +96,7 @@ jobs:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
     - stage: push-manifest
-      if: branch != private-master AND type != pull_request OR tag =~ ^release-candidate*
+      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
       name: "Push Manifest-list to registry"
       env:
         - PUSH_MANIFEST_ONLY=true

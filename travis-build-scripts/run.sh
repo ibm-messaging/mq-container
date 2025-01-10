@@ -42,7 +42,6 @@ echo 'Downgrading Docker (if necessary)...' && echo -en 'travis_fold:start:docke
 eval "$DOCKER_DOWNGRADE"
 echo -en 'travis_fold:end:docker-downgrade\\r'
 
-
 ## Build images
 ./travis-build-scripts/build.sh
 
@@ -61,9 +60,9 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
   fi
 else
   if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
-    ./travis-build-scripts/promote.sh developer
+    ./travis-build-scripts/push.sh developer
   else
-    ./travis-build-scripts/promote.sh production
+    ./travis-build-scripts/push.sh production
   fi
 fi
 
