@@ -28,7 +28,6 @@ env:
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
     - BASE_MQ_LOCKED=false
-    - GO_VERSION="1.22.9"
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 

@@ -62,6 +62,10 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
           echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
           get_archive_level MQ_ARCHIVE_REPOSITORY
           make build-advancedserver
+          if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+            make push-advancedserver
+            make push-devserver
+          fi
           echo -en 'travis_fold:end:build-advancedserver\\r'
       fi
   fi
