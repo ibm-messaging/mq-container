@@ -106,11 +106,6 @@ jobs:
       name: "Trigger release-checks build"
       script: bash -e travis-build-scripts/trigger-release-checks.sh
 
-    - stage: Clean up build artifacts
-      name: "Clean up build artifacts"
-      os: linux
-      script: bash -e travis-build-scripts/cleanup-cache.sh
-
     # ifix build started
     - stage: Check-upload-ifix-driver
       if: branch =~ ^ifix-

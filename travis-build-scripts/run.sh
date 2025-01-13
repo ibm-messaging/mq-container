@@ -27,6 +27,9 @@ if [ "$PUSH_MANIFEST_ONLY" = true ] ; then
   ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --get
   echo -en 'travis_fold:end:retrieve-tag-cache\\r'
   make push-manifest
+  if [ -z "$BUILD_MANIFEST" ] || [ "$BUILD_MANIFEST" = false ]; then
+    ./travis-build-scripts/cleanup-cache.sh
+  fi
   exit 0
 fi
 if [ "$BUILD_MANIFEST" = true ] ; then
@@ -35,6 +38,7 @@ if [ "$BUILD_MANIFEST" = true ] ; then
   echo 'Preparing build manifest'
   make build-manifest
   make commit-build-manifest
+  ./travis-build-scripts/cleanup-cache.sh
   exit 0
 fi
 
