@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2023
+© Copyright IBM Corporation 2018, 2025
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ func postInit(name, keyLabel string, p12Truststore tls.KeyStoreData) error {
 		// Start the web server, in the background (if installed)
 		// WARNING: No error handling or health checking available for the web server
 		go func() {
-			err = startWebServer(webKeystore, p12Truststore.Password, webTruststoreRef)
+			err = startWebServer(webKeystore, webTruststoreRef)
 			if err != nil {
 				log.Printf("Error starting web server: %v", err)
 			}
