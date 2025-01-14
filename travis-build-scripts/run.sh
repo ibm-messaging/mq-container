@@ -59,8 +59,8 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
       printf '\nNot pushing or writing images to Artifactory because the stream is locked.\n'
       exit 0
     fi
-    ./travis-build-scripts/push.sh developer
-    ./travis-build-scripts/push.sh production
+    ./travis-build-scripts/promote.sh developer
+    ./travis-build-scripts/promote.sh production
   fi
 else
   if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
