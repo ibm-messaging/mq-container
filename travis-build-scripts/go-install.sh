@@ -19,9 +19,10 @@
 
 set -ex
 
-sudo rm -rf /usr/local/go;
+GO_VERSION="1.22.9"
+sudo rm -rf /usr/local/go
 DOWNLOAD_URL="https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz"
 curl -fLo go.tar.gz "${DOWNLOAD_URL}"
 sudo tar -C /usr/local -xzf go.tar.gz
-export PATH=$PATH:/usr/local/go/bin
+export PATH=/usr/local/go/bin:$PATH
 go version
