@@ -456,6 +456,7 @@ else
 endif
 
 .PHONY: push-devserver
+push-devserver:
 ifndef BUILD_INTERNAL_LEVEL
 	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to cache repository $(MQ_BUILD_REGISTRY_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
