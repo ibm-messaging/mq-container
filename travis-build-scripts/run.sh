@@ -59,8 +59,12 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
       printf '\nNot pushing or writing images to Artifactory because the stream is locked.\n'
       exit 0
     fi
-    ./travis-build-scripts/promote.sh developer
-    ./travis-build-scripts/promote.sh production
+    if [ "$ARCH" = "amd64" ] ; then
+      echo "reset credential helper ..."
+      ./travis-build-scripts/reset-credential-pass.sh
+    fi
+    ./travis-build-scripts/push.sh developer
+    ./travis-build-scripts/push.sh production
   fi
 else
   if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
