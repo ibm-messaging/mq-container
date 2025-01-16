@@ -15,5 +15,5 @@
 # limitations under the License.
 
 echo 'Cleaning up remote cache' && echo -en 'travis_fold:start:cleanup\\r'
-./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} --delete-namespace
+./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} --delete
 echo -en 'travis_fold:end:cleanup\\r'

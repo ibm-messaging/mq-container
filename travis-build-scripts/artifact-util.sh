@@ -128,7 +128,7 @@ if [ "$DELETE_NAMESPACE" != "true" ]; then
     fi
 fi
 
-REMOTE_PATH="https://${CACHE_PATH}/$TRAVIS_BUILD_ID/"
+REMOTE_PATH="https://${CACHE_PATH}/$TRAVIS_BUILD_ID"
 
 if [ "$CHECK" == "true" ]; then
     printf "${GREENRIGHTARROW} Checking to see if file ${FILE_NAME} exists in repository ${REMOTE_PATH}\n"
