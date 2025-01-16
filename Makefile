@@ -71,8 +71,6 @@ MQ_DELIVERY_REGISTRY_CREDENTIAL ?=
 LTS ?= false
 # VOLUME_MOUNT_OPTIONS is used when bind-mounting files from the "downloads" directory into the container.  By default, SELinux labels are automatically re-written, but this doesn't work on some filesystems with extended attributes (xattrs).  You can turn off the label re-writing by setting this variable to be blank.
 VOLUME_MOUNT_OPTIONS ?= :Z
-# Cache path for pushing images
-MQ_BUILD_REGISTRY_PATH = $(MQ_BUILD_REGISTRY_HOSTNAME)/$(MQ_BUILD_REGISTRY_NAMESPACE)/$(TRAVIS_BUILD_ID)
 
 ###############################################################################
 # Other variables
@@ -443,51 +441,23 @@ pull-mq-archive-dev:
 
 .PHONY: push-advancedserver
 push-advancedserver:
-ifndef BUILD_INTERNAL_LEVEL
-	$(info $(SPACER)$(shell printf $(TITLE)"Push production image to cache repository $(MQ_BUILD_REGISTRY_PATH)"$(END)))
-	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
-	$(COMMAND) tag $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG) $(MQ_BUILD_REGISTRY_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
-	$(COMMAND) push $(MQ_BUILD_REGISTRY_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
-else
-	$(info $(SPACER)$(shell printf $(TITLE)"Push production image to base mq team repository $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
+	@if [ $(MQ_DELIVERY_REGISTRY_NAMESPACE) = "master-fake" ]; then\
+		echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
+	fi
+	$(info $(SPACER)$(shell printf $(TITLE)"Push production image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
 	$(COMMAND) tag $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
 	$(COMMAND) push $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
-endif
 
 .PHONY: push-devserver
 push-devserver:
-ifndef BUILD_INTERNAL_LEVEL
-	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to cache repository $(MQ_BUILD_REGISTRY_PATH)"$(END)))
-	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
-	$(COMMAND) tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG) $(MQ_BUILD_REGISTRY_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
-	$(COMMAND) push $(MQ_BUILD_REGISTRY_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
-else
-	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to base mq team repository $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
+	@if [ $(MQ_DELIVERY_REGISTRY_NAMESPACE) = "master-fake" ]; then\
+		echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
+	fi
+	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
 	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
 	$(COMMAND) tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
 	$(COMMAND) push $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
-endif
-
-.PHONY: promote-devserver
-promote-devserver: build-skopeo-container
-	@if [ $(MQ_DELIVERY_REGISTRY_NAMESPACE) = "master-fake" ]; then\
-		echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
-	fi
-	$(eval MQ_IMAGE_DEVSERVER_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_DELIVERY_REGISTRY_USER):$(MQ_DELIVERY_REGISTRY_CREDENTIAL) docker://$(MQ_BUILD_REGISTRY_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME) | jq -r .Digest))
-	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEV_FULL_RELEASE_NAME) has a digest of $(MQ_IMAGE_DEVSERVER_DIGEST)**"$(END)))
-	@printf $(TITLE)"\nCopying $(MQ_IMAGE_DEV_FULL_RELEASE_NAME) image with digest $(MQ_IMAGE_DEVSERVER_DIGEST) to \"$(MQ_DELIVERY_REGISTRY_HOSTNAME)\"\n"$(END)
-	docker run skopeo:latest copy --src-creds $(MQ_DELIVERY_REGISTRY_USER):$(MQ_DELIVERY_REGISTRY_CREDENTIAL) --dest-creds $(MQ_DELIVERY_REGISTRY_USER):$(MQ_DELIVERY_REGISTRY_CREDENTIAL) docker://$(MQ_BUILD_REGISTRY_PATH)/$(MQ_IMAGE_DEVSERVER)@$(MQ_IMAGE_DEVSERVER_DIGEST) docker://$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
-
-.PHONY: promote-advancedserver
-promote-advancedserver: build-skopeo-container
-	@if [ $(MQ_DELIVERY_REGISTRY_NAMESPACE) = "master-fake" ]; then\
-		echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
-	fi
-	$(eval MQ_IMAGE_ADVANCEDSERVER_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_DELIVERY_REGISTRY_USER):$(MQ_DELIVERY_REGISTRY_CREDENTIAL) docker://$(MQ_BUILD_REGISTRY_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME) | jq -r .Digest))
-	$(info $(shell printf "** Determined the built $(MQ_IMAGE_FULL_RELEASE_NAME) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_DIGEST)**"$(END)))
-	@printf $(TITLE)"\nCopying $(MQ_IMAGE_FULL_RELEASE_NAME) image with digest $(MQ_IMAGE_ADVANCEDSERVER_DIGEST) to \"$(MQ_DELIVERY_REGISTRY_HOSTNAME)\"\n"$(END)
-	docker run skopeo:latest copy --src-creds $(MQ_DELIVERY_REGISTRY_USER):$(MQ_DELIVERY_REGISTRY_CREDENTIAL) --dest-creds $(MQ_DELIVERY_REGISTRY_USER):$(MQ_DELIVERY_REGISTRY_CREDENTIAL) docker://$(MQ_BUILD_REGISTRY_PATH)/$(MQ_IMAGE_ADVANCEDSERVER)@$(MQ_IMAGE_ADVANCEDSERVER_DIGEST) docker://$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
 
 .PHONY: pull-advancedserver
 pull-advancedserver:
