@@ -362,7 +362,6 @@ test-advancedserver-cover: test/container/vendor coverage
 
 # Command to build the image
 # Args: imageName, imageTag, dockerfile, extraArgs, dockerfileTarget
-# If the ARCH variable has been changed from the default value (arch_go variable), then the `--platform` parameter is added
 # Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
 define build-mq
 	rm -f .dockerignore && echo ".git\ndownloads\n!downloads/$4" > .dockerignore
@@ -381,7 +380,7 @@ define build-mq
 	  --label vcs-ref=$(IMAGE_REVISION) \
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
-	  $(if $(findstring $(arch_go),$(ARCH)),,--platform=linux/$(ARCH)) \
+	  --platform=linux/$(ARCH) \
 	  $(EXTRA_LABELS) \
 	  --target $5 \
 	  .
