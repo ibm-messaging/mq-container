@@ -16,9 +16,6 @@ dist: focal
 group: vpc
 sudo: required
 
-go:
-  - "1.22.9"
-
 services:
   - docker
 
