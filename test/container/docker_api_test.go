@@ -1486,6 +1486,53 @@ func TestOldBehaviorWebConsole(t *testing.T) {
 	stopContainer(t, cli, id)
 }
 
+// TestRestartingWebConsole starts a qmgr with default settings. It then stops the webconsole and starts it with the strmqweb command and checks it successfully restarts
+func TestRestartingWebConsole(t *testing.T) {
+
+	t.Parallel()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=true",
+		},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	waitForWebConsoleReady(t, cli, id)
+
+	//exec into the container and stop the web console
+	rc, out := execContainer(t, cli, id, "", []string{"endmqweb"})
+	if rc != 0 {
+		t.Fatalf("Expected endmqweb to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+
+	//exec into the container and check the status of the web console
+	rc, out = execContainer(t, cli, id, "", []string{"dspmqweb"})
+	if rc == 0 {
+		t.Fatalf("Expected webserver to not running and dspmqweb to return rc=1, got %v. Output was: %s", rc, out)
+	}
+
+	//exec into the container and start the web console
+	rc, out = execContainer(t, cli, id, "", []string{"strmqweb"})
+	if rc != 0 {
+		t.Fatalf("Expected strmqweb to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+
+	//exec into the container and check the status of the web console
+	rc, out = execContainer(t, cli, id, "", []string{"dspmqweb"})
+	if rc != 0 {
+		t.Fatalf("Expected webserver to be running and dspmqweb to return rc=0, got %v. Output was: %s", rc, out)
+	}
+
+	t.Log(out)
+
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
 // TestLoggingConsoleWithContRestart restarts the container and checks
 // that setting of env variable persists
 func TestLoggingConsoleWithContRestart(t *testing.T) {

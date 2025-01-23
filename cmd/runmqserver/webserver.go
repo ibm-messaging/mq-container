@@ -27,7 +27,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/tls"
 )
 
-func startWebServer(webKeystore, webTruststoreRef string) error {
+func startWebServer() error {
 	_, err := os.Stat("/opt/mqm/bin/strmqweb")
 	if err != nil && os.IsNotExist(err) {
 		log.Debug("Skipping web server, because it's not installed")
@@ -40,11 +40,6 @@ func startWebServer(webKeystore, webTruststoreRef string) error {
 	// Pass all the environment to MQ Web Server JVM
 	cmd.Env = os.Environ()
 
-	// TLS enabled
-	if webKeystore != "" {
-		cmd.Env = append(cmd.Env, "AMQ_WEBKEYSTORE="+webKeystore)
-		cmd.Env = append(cmd.Env, "AMQ_WEBTRUSTSTOREREF="+webTruststoreRef)
-	}
 	out, err := cmd.CombinedOutput()
 	rc := cmd.ProcessState.ExitCode()
 	if err != nil {
@@ -55,45 +50,44 @@ func startWebServer(webKeystore, webTruststoreRef string) error {
 	return nil
 }
 
-func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string, error) {
+func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) error {
 
 	webKeystore := ""
-
 	// Copy server.xml file to ensure that we have the latest expected contents - this file is only populated on QM creation
 	err := copy.CopyFile("/opt/mqm/samp/web/server.xml", "/var/mqm/web/installations/Installation1/servers/mqweb/server.xml")
 	if err != nil {
 		log.Error(err)
-		return "", err
-	}
-
-	// Configure TLS for the Web Console
-	err = tls.ConfigureWebTLS(keyLabel, log, p12Truststore.Password)
-	if err != nil {
-		return "", err
+		return err
 	}
 
 	// Configure the Web Keystore
 	if keyLabel != "" || os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") != "" {
 		webKeystore, err = tls.ConfigureWebKeystore(p12Truststore, keyLabel)
 		if err != nil {
-			return "", err
+			return err
 		}
+	}
+
+	// Configure TLS for the Web Console
+	err = tls.ConfigureWebTLS(keyLabel, webKeystore, p12Truststore, log)
+	if err != nil {
+		return err
 	}
 
 	_, err = os.Stat("/opt/mqm/bin/strmqweb")
 	if err != nil {
 		if os.IsNotExist(err) {
-			return "", nil
+			return nil
 		}
-		return "", err
+		return err
 	}
 	const webConfigDir string = "/etc/mqm/web"
 	_, err = os.Stat(webConfigDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return "", nil
+			return nil
 		}
-		return "", err
+		return err
 	}
 
 	const prefix string = "/etc/mqm/web"
@@ -146,7 +140,7 @@ func configureWebServer(keyLabel string, p12Truststore tls.KeyStoreData) (string
 		return nil
 	})
 
-	return webKeystore, err
+	return err
 }
 
 // Configure FIPS mode for MQ Web Server

@@ -30,23 +30,29 @@ import (
 const webKeystoreDefault = "default.p12"
 
 // ConfigureWebTLS configures TLS for the web server
-func ConfigureWebTLS(keyLabel string, log *logger.Logger, password string) error {
+func ConfigureWebTLS(keyLabel, webKeystore string, p12Truststore KeyStoreData, log *logger.Logger) error {
 
 	// Return immediately if we have no certificate to use as identity
 	if keyLabel == "" && os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") == "" {
 		return nil
 	}
 
+	// If trust-store is empty, set reference to point to the keystore
+	webTruststoreRef := "MQWebTrustStore"
+	if len(p12Truststore.TrustedCerts) == 0 {
+		webTruststoreRef = "MQWebKeyStore"
+	}
+
 	tlsConfigLink := "/run/tls.xml"
 	tlsConfigTemplate := "/etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml.tpl"
-	encryptedPassword, err := securityutility.EncodeSecrets(password)
+	encryptedPassword, err := securityutility.EncodeSecrets(p12Truststore.Password)
 	if err != nil {
 		log.Printf("Password encoding for Web Keystore failed with error %v", err)
 		// We couldn't encode the passwords so using an empty string as password
 		encryptedPassword = ""
 	}
 	// Password successfully encoded using securityUtility use the encoded password the template
-	templateErr := mqtemplate.ProcessTemplateFile(tlsConfigTemplate, tlsConfigLink, map[string]string{"password": encryptedPassword}, log)
+	templateErr := mqtemplate.ProcessTemplateFile(tlsConfigTemplate, tlsConfigLink, map[string]string{"password": encryptedPassword, "webKeystore": webKeystore, "webTruststoreRef": webTruststoreRef}, log)
 	if templateErr != nil {
 		return templateErr
 	}

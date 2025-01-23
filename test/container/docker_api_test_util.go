@@ -593,6 +593,29 @@ func waitForReady(t *testing.T, cli ce.ContainerInterface, ID string) {
 	}
 }
 
+func waitForWebConsoleReady(t *testing.T, cli ce.ContainerInterface, ID string) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
+	defer cancel()
+
+	for {
+		select {
+		case <-time.After(1 * time.Second):
+			rc, _ := execContainer(t, cli, ID, "", []string{"dspmqweb"})
+
+			t.Logf("value of rc = %v", rc)
+			if rc == 0 {
+				t.Log("MQ Web console is ready")
+				return
+			}
+		case <-ctx.Done():
+			rc, out := execContainer(t, cli, ID, "", []string{"dspmqweb"})
+			t.Logf("value of rc = %v, output: %v", rc, out)
+			t.Fatal("Timed out waiting for container webconsole to become ready")
+		}
+	}
+}
+
 func createNetwork(t *testing.T, cli ce.ContainerInterface) string {
 	name := "test"
 	t.Logf("Creating network: %v", name)
