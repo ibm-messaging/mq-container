@@ -47,6 +47,11 @@ The `runmqdevserver` command is added to the MQ Advanced for Developers image on
 4. Metrics are initialised using Prometheus names mapped from their element descriptions
 5. The metrics are then registered with the Prometheus registry as Prometheus Gauges
 6. Publications are processed on a periodic basis to retrieve the metric data
-7. An HTTP server is setup to listen for requests from Prometheus on `/metrics` port `9157`
+7. A web server is setup to listen for requests from Prometheus on `/metrics` port `9157`.
+    - From 9.4.2.0 onwards, if TLS keys are provided in `/etc/mqm/metrics/pki/keys`, an HTTPS server will be started on this port. Files in this directory should be PEM encoded certificates:
+        - `tls.crt` server public certificate
+        - `tls.key` server private key
+        - `ca.crt` CA public certificate (optional)
+    - If no TLS keys are provided (or earlier versions of MQ are used), an HTTP server will be started
 8. Prometheus requests are handled by updating the Prometheus Gauges with the latest metric data
 9. These updated Prometheus Gauges are then collected by the Prometheus registry
