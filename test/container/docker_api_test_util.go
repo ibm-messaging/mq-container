@@ -288,7 +288,7 @@ func runContainerWithHostConfig(t *testing.T, cli ce.ContainerInterface, contain
 	}
 	networkingConfig := ce.ContainerNetworkSettings{}
 	t.Logf("Running container (%s)", containerConfig.Image)
-	ID, err := cli.ContainerCreate(containerConfig, hostConfig, &networkingConfig, t.Name())
+	ID, err := cli.ContainerCreate(containerConfig, hostConfig, &networkingConfig, sanitizeContainerName(t.Name()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -322,28 +322,40 @@ func runContainerWithAllConfig(t *testing.T, cli ce.ContainerInterface, containe
 	return ID
 }
 
-// runContainerWithPorts creates and starts a container, exposing the specified ports on the host.
-// If no image is specified in the container config, then the image name is retrieved from the TEST_IMAGE
-// environment variable.
-func runContainerWithPorts(t *testing.T, cli ce.ContainerInterface, containerConfig *ce.ContainerConfig, ports []int) string {
+// runContainer creates and starts a container.
+// The ContainerHostConfig can be modified via the options parameter
+// If no image is specified in the container config, then the image
+// name is retrieved from the TEST_IMAGE environment variable.
+func runContainer(t *testing.T, cli ce.ContainerInterface, containerConfig *ce.ContainerConfig, options ...hostContainerConfigOption) string {
 	hostConfig := getDefaultHostConfig(t, cli)
-	var binding ce.PortBinding
-	for _, p := range ports {
-		port := fmt.Sprintf("%v/tcp", p)
-		binding = ce.PortBinding{
-			ContainerPort: port,
-			HostIP:        "0.0.0.0",
-		}
-		hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
+	for _, option := range options {
+		option(hostConfig)
 	}
 	return runContainerWithHostConfig(t, cli, containerConfig, hostConfig)
 }
 
-// runContainer creates and starts a container.  If no image is specified in
-// the container config, then the image name is retrieved from the TEST_IMAGE
-// environment variable.
-func runContainer(t *testing.T, cli ce.ContainerInterface, containerConfig *ce.ContainerConfig) string {
-	return runContainerWithPorts(t, cli, containerConfig, nil)
+type hostContainerConfigOption func(*ce.ContainerHostConfig)
+
+// withBindMounts modifies a ContainerHostConfig to add the specified bindMounts.
+func withBindMounts(bindMounts ...string) hostContainerConfigOption {
+	return func(hostConfig *ce.ContainerHostConfig) {
+		hostConfig.Binds = append(hostConfig.Binds, bindMounts...)
+	}
+}
+
+// withPorts modifies a ContainerHostConfig to expose the specified ports on the host.
+func withPorts(ports ...int) hostContainerConfigOption {
+	return func(hostConfig *ce.ContainerHostConfig) {
+		var binding ce.PortBinding
+		for _, p := range ports {
+			port := fmt.Sprintf("%v/tcp", p)
+			binding = ce.PortBinding{
+				ContainerPort: port,
+				HostIP:        "0.0.0.0",
+			}
+			hostConfig.PortBindings = append(hostConfig.PortBindings, binding)
+		}
+	}
 }
 
 // runContainerOneShot runs a container with a custom entrypoint, as the root
@@ -357,7 +369,7 @@ func runContainerOneShot(t *testing.T, cli ce.ContainerInterface, command ...str
 	hostConfig := ce.ContainerHostConfig{}
 	networkingConfig := ce.ContainerNetworkSettings{}
 	t.Logf("Running one shot container (%s): %v", containerConfig.Image, command)
-	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name()+"OneShot")
+	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, sanitizeContainerName(t.Name()+"OneShot"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -402,6 +414,18 @@ func runContainerOneShotWithVolume(t *testing.T, cli ce.ContainerInterface, bind
 	out := inspectLogs(t, cli, ID)
 	t.Logf("One shot container finished with rc=%v, output=%v", rc, out)
 	return rc, out
+}
+
+func sanitizeContainerName(containerName string) string {
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case '/', '(', ')':
+			return -1
+		default:
+			return r
+		}
+
+	}, containerName)
 }
 
 func startMultiVolumeQueueManager(t *testing.T, cli ce.ContainerInterface, dataVol bool, qmsharedlogs string, qmshareddata string, env []string, qmRun string, qmTmp string, readOnlyRootFs bool) (error, string, string) {

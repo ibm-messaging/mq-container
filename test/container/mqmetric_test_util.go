@@ -17,6 +17,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"net/http"
@@ -38,19 +40,32 @@ const defaultMetricPort = 9157
 const defaultMQNamespace = "ibmmq"
 const defaultMetricQMName = "qm1"
 
-func getMetrics(t *testing.T, port string) []mqmetric {
-	returned := []mqmetric{}
-	urlToUse := fmt.Sprintf("http://localhost:%s%s", port, defaultMetricURL)
-	resp, err := http.Get(urlToUse)
+// getMetrics returns the gathered metrics from the QueueManager metrics server
+// If rootCAs provided, uses HTTPS to communicate with the metrics server. If nil, assume HTTP metrics server
+func getMetrics(t *testing.T, port string, rootCAs *x509.CertPool) []mqmetric {
+	isHTTPS := rootCAs != nil
+	scheme := "http"
+	if isHTTPS {
+		scheme = "https"
+	}
+	urlToUse := fmt.Sprintf("%s://localhost:%s%s", scheme, port, defaultMetricURL)
+
+	req, _ := http.NewRequest(http.MethodGet, urlToUse, nil)
+
+	client := &http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: rootCAs}},
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("Error from HTTP GET for metrics: %v", err)
-		return returned
+		return nil
 	}
 	defer resp.Body.Close()
 	metricsRaw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("Error reading metrics data: %v", err)
-		return returned
+		return nil
 	}
 	return convertRawMetricToMap(t, string(metricsRaw))
 }
@@ -131,11 +146,23 @@ func convertMetricLineToMetric(input string) (string, string, map[string]string,
 	return key, value, labelMap, nil
 }
 
-func waitForMetricReady(t *testing.T, port string) {
+// waitForMetricReady waits for the QueueManager metrics server to be running
+// If rootCAs provided, uses HTTPS to communicate with the metrics server. If nil, assume HTTP metrics server
+func waitForMetricReady(t *testing.T, port string, rootCAs *x509.CertPool) {
+	isHTTPS := rootCAs != nil
 	timeout := 12 // 12 * 5 = 1 minute
+	scheme := "http"
+	if isHTTPS {
+		scheme = "https"
+	}
+	urlToUse := fmt.Sprintf("%s://localhost:%s%s", scheme, port, defaultMetricURL)
+	req, _ := http.NewRequest(http.MethodGet, urlToUse, nil)
+
+	client := &http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: rootCAs}},
+	}
 	for i := 0; i < timeout; i++ {
-		urlToUse := fmt.Sprintf("http://localhost:%s", port)
-		resp, err := http.Get(urlToUse)
+		resp, err := client.Do(req)
 		if err == nil {
 			resp.Body.Close()
 			return

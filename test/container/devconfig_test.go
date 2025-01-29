@@ -45,7 +45,7 @@ func TestDevGoldenPath(t *testing.T) {
 			"MQ_ADMIN_PASSWORD=" + defaultAdminPassword,
 		},
 	}
-	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443, 1414})
+	id := runContainer(t, cli, &containerConfig, withPorts(9443, 1414))
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	waitForWebReady(t, cli, id, insecureTLSConfig)
@@ -145,7 +145,7 @@ func TestDevWebDisabled(t *testing.T) {
 			"MQ_APP_PASSWORD=" + defaultAppPasswordOS,
 		},
 	}
-	id := runContainerWithPorts(t, cli, &containerConfig, []int{1414})
+	id := runContainer(t, cli, &containerConfig, withPorts(1414))
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	t.Run("Web", func(t *testing.T) {
@@ -175,7 +175,7 @@ func TestDevConfigDisabled(t *testing.T) {
 			"MQ_DEV=false",
 		},
 	}
-	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
+	id := runContainer(t, cli, &containerConfig, withPorts(9443))
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	rc, _ := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'display qlocal(DEV*)' | runmqsc"})
@@ -199,7 +199,7 @@ func TestSSLKEYRBlank(t *testing.T) {
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER=false",
 		},
 	}
-	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
+	id := runContainer(t, cli, &containerConfig, withPorts(9443))
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 
@@ -783,7 +783,7 @@ func TestDevNoDefCreds(t *testing.T) {
 			"MQ_ADMIN_PASSWORD=" + defaultAdminPassword,
 		},
 	}
-	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443, 1414})
+	id := runContainer(t, cli, &containerConfig, withPorts(9443, 1414))
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	waitForWebReady(t, cli, id, insecureTLSConfig)
@@ -828,7 +828,7 @@ func testDevNoDefaultCredsUtil(t *testing.T, mqsimpleauthEnvs []string, htpwdInL
 
 	containerConfig.Env = append(containerConfig.Env, mqsimpleauthEnvs...)
 
-	id := runContainerWithPorts(t, cli, &containerConfig, []int{1414})
+	id := runContainer(t, cli, &containerConfig, withPorts(1414))
 	defer cleanContainer(t, cli, id)
 	waitForReady(t, cli, id)
 	defer stopContainer(t, cli, id)
