@@ -40,7 +40,7 @@ docker run \
 The Docker image always uses `/mnt/mqm` for MQ data, which is correctly linked for you under `/var/mqm` at runtime.  This is to handle problems with file permissions on some platforms.
 
 ## Running with the default configuration and Prometheus metrics enabled
-You can run a queue manager with [Prometheus](https://prometheus.io) metrics enabled.  The following command will generate Prometheus metrics for your queue manager on `/metrics` port `9157`:
+You can run a queue manager with [Prometheus](https://prometheus.io) metrics enabled.  The following command will generate Prometheus metrics for your queue manager on `/metrics` port `9157` via **HTTP**:
 
 ```sh
 docker run \
@@ -53,6 +53,23 @@ docker run \
   --detach \
   icr.io/ibm-messaging/mq
 ```
+
+To configure a queue manager to serve metrics via **HTTPS**, TLS keys must be provided in `/etc/mqm/metrics/pki/keys`.  These files must be PEM encoded certificates named `tls.key` (server public certificate) and `tls.crt` (server private key), you may optionally provide a `ca.crt` file (CA public certificate). If no TLS keys are provided, an HTTP server will be used.  The following command will generate Prometheus metrics for your queue manager on `/metrics` port `9157` via **HTTPS**:
+
+
+```sh
+docker run \
+  --env LICENSE=accept \
+  --env MQ_QMGR_NAME=QM1 \
+  --env MQ_ENABLE_METRICS=true \
+  -v "<TLS_DIR>:/etc/mqm/metrics/pki/keys" \
+  --publish 1414:1414 \
+  --publish 9443:9443 \
+  --publish 9157:9157 \
+  --detach \
+  icr.io/ibm-messaging/mq
+```
+**Note:** <TLS_DIR> should be replaced with a directory in which you have the required TLS files.
 
 ## Customizing the queue manager configuration
 

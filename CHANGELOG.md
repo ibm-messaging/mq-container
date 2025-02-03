@@ -3,6 +3,7 @@
 ## 9.4.2.0 (2025-02)
 
 * Updated to MQ version 9.4.2.0
+* Queue Manager metrics can be served via HTTPS by populating `/etc/mqm/metrics/pki/keys` with TLS keys.
 
 ## 9.4.1.0 (2024-10)
 
