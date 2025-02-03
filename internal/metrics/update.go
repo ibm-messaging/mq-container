@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2025
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/ibm-messaging/mq-container/pkg/logger"
-	"github.com/ibm-messaging/mq-golang/ibmmq"
-	"github.com/ibm-messaging/mq-golang/mqmetric"
+	"github.com/ibm-messaging/mq-golang/v5/ibmmq"
+	"github.com/ibm-messaging/mq-golang/v5/mqmetric"
 )
 
 const (
@@ -114,15 +114,15 @@ func doConnect(qmName string) error {
 	connConfig.ClientMode = false
 	connConfig.UserId = ""
 	connConfig.Password = ""
+	connConfig.UsePublications = true
 
 	// Connect to the queue manager - open the command and dynamic reply queues
-	err := mqmetric.InitConnectionStats(qmName, "SYSTEM.DEFAULT.MODEL.QUEUE", "", &connConfig)
+	err := mqmetric.InitConnection(qmName, "SYSTEM.DEFAULT.MODEL.QUEUE", "", &connConfig)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to queue manager %s: %v", qmName, err)
 	}
-
 	// Discover available metrics for the queue manager and subscribe to them
-	err = mqmetric.DiscoverAndSubscribe("", true, "")
+	err = mqmetric.DiscoverAndSubscribe(mqmetric.DiscoverConfig{})
 	if err != nil {
 		return fmt.Errorf("Failed to discover and subscribe to metrics: %v", err)
 	}

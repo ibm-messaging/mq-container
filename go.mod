@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/fsnotify/fsnotify v1.8.0
-	github.com/ibm-messaging/mq-golang v2.0.0+incompatible
+	github.com/ibm-messaging/mq-golang/v5 v5.6.1
 	github.com/prometheus/client_golang v1.13.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635

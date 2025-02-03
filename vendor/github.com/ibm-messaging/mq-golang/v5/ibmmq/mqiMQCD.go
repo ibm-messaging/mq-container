@@ -1,7 +1,7 @@
 package ibmmq
 
 /*
-  Copyright (c) IBM Corporation 2016
+  Copyright (c) IBM Corporation 2016,2023
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -12,7 +12,8 @@ package ibmmq
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific
+  See the License for the specific language governing permissions and
+  limitations under the License.
 
    Contributors:
      Mark Taylor - Initial Contribution
@@ -47,7 +48,7 @@ type MQCD struct {
 	HeartbeatInterval    int32
 	SSLCipherSpec        string
 	SSLPeerName          string
-	SSLClientAuth        int32
+	SSLClientAuth        int32 // Not used by client, but leave field for compatibility
 	KeepAliveInterval    int32
 	SharingConversations int32
 	PropertyControl      int32
@@ -55,6 +56,8 @@ type MQCD struct {
 	ConnectionAffinity   int32
 	DefReconnect         int32
 	CertificateLabel     string
+	HdrCompList          [2]int32
+	MsgCompList          [16]int32
 }
 
 /*
@@ -82,6 +85,15 @@ func NewMQCD() *MQCD {
 	cd.ConnectionAffinity = int32(C.MQCAFTY_PREFERRED)
 	cd.DefReconnect = int32(C.MQRCN_NO)
 	cd.CertificateLabel = ""
+
+	cd.HdrCompList[0] = int32(C.MQCOMPRESS_NONE)
+	for i := 1; i < 2; i++ {
+		cd.HdrCompList[i] = int32(C.MQCOMPRESS_NOT_AVAILABLE)
+	}
+	cd.MsgCompList[0] = int32(C.MQCOMPRESS_NONE)
+	for i := 1; i < 16; i++ {
+		cd.MsgCompList[i] = int32(C.MQCOMPRESS_NOT_AVAILABLE)
+	}
 
 	return cd
 }
@@ -167,15 +179,18 @@ func copyCDtoC(mqcd *C.MQCD, gocd *MQCD) {
 		mqcd.SSLPeerNamePtr = C.MQPTR(unsafe.Pointer(C.CString(gocd.SSLPeerName)))
 		mqcd.SSLPeerNameLength = C.MQLONG(len(gocd.SSLPeerName))
 	}
-	mqcd.SSLClientAuth = C.MQLONG(gocd.SSLClientAuth)
+
+	// SSLClientAuth is not actually used by the client, so we will ignore
+	// any settings for it.
+	// mqcd.SSLClientAuth = C.MQLONG(gocd.SSLClientAuth)
 	mqcd.KeepAliveInterval = C.MQLONG(gocd.KeepAliveInterval)
 	setMQIString((*C.char)(&mqcd.LocalAddress[0]), "", C.MQ_LOCAL_ADDRESS_LENGTH)
 	mqcd.BatchHeartbeat = 0
 	for i := 0; i < 2; i++ {
-		mqcd.HdrCompList[i] = C.MQCOMPRESS_NOT_AVAILABLE
+		mqcd.HdrCompList[i] = C.MQLONG(gocd.HdrCompList[i])
 	}
 	for i := 0; i < 16; i++ {
-		mqcd.MsgCompList[i] = C.MQCOMPRESS_NOT_AVAILABLE
+		mqcd.MsgCompList[i] = C.MQLONG(gocd.MsgCompList[i])
 	}
 	mqcd.CLWLChannelRank = 0
 	mqcd.CLWLChannelPriority = 0
@@ -192,6 +207,8 @@ func copyCDtoC(mqcd *C.MQCD, gocd *MQCD) {
 	mqcd.UseDLQ = C.MQUSEDLQ_YES
 	mqcd.DefReconnect = C.MQLONG(gocd.DefReconnect)
 	setMQIString((*C.char)(&mqcd.CertificateLabel[0]), gocd.CertificateLabel, C.MQ_CERT_LABEL_LENGTH)
+
+	// mqcd.SPLProtection was introduced with version 12 of structure (V9.1.3) but not relevant for clients
 
 	return
 }

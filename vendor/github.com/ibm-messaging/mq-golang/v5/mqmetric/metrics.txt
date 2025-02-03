@@ -1,0 +1,319 @@
+Available Metrics
+=================
+
+Note that the actual name of produced metrics may vary for each different collector, but
+they are derived from these basic names and object classes. The available metrics may also
+vary by queue manager platform and version.
+
+If you are using the Prometheus collector, one way to display all of the available metrics
+including the resource publication metrics, showing the real names, is to disable
+the actual collection process within Prometheus and call the collector directly. For example,
+
+   curl <hostname>:9157/metrics | grep "^ibmmq"
+
+Alternatively, you can look directly at the database. For example, go to "http://<prometheus_server>:9090"
+and type "ibmmq_" into the expression bar. That should provide a complete list of available metrics.
+Similar approaches can be used for the other databases.
+
+Metrics published on system topics
+----------------------------------
+
+Metrics published by the queue manager under the $SYS topic tree are documented
+at https://www.ibm.com/docs/en/ibm-mq/latest?topic=trace-metrics-published-system-topics.
+
+Access to these metrics requires the "usePublications" configuration attribute to be set for the collector.
+
+The actual names of these metrics as seen in a database will vary, but they
+are usually a combination of the product name and the metric description:
+
+Class: CPU
+  Type: QMgrSummary
+    RAM total bytes - estimate for queue manager
+    System CPU time - percentage estimate for queue manager
+    User CPU time - percentage estimate for queue manager
+  Type: SystemSummary
+    CPU load - fifteen minute average
+    CPU load - one minute average
+    CPU load - five minute average
+    RAM total bytes
+    RAM free percentage
+    System CPU time percentage
+    User CPU time percentage
+
+Class: DISK
+  Type: Log
+    Log - bytes occupied by extents waiting to be archived
+    Log - bytes in use
+    Log - bytes max
+    Log file system - bytes in use
+    Log file system - bytes max
+    Log - write latency
+    Log - logical bytes written
+    Log - bytes required for media recovery
+    Log - physical bytes written
+    Log - bytes occupied by reusable extents
+    Log - current primary space in use
+    Log - workload primary space utilization
+    Log - write size
+  Type: QMgrSummary
+    Queue Manager file system - free space
+    Queue Manager file system - bytes in use
+  Type: SystemSummary
+    Appliance data - free space
+    Appliance data - bytes in use
+    System volume - free space
+    System volume - bytes in use
+    MQ FDC file count
+    MQ errors file system - free space
+    MQ errors file system - bytes in use
+    MQ trace file system - free space
+    MQ trace file system - bytes in use
+
+Class: NHAREPLICA
+  Type: REPLICATION
+    Log write average acknowledgement latency
+    Log write average acknowledgement size
+    Backlog average bytes
+    Backlog bytes
+    Catch-up log bytes sent
+    Catch-up compressed log bytes sent
+    Catch-up uncompressed log bytes sent
+    Synchronous log bytes sent
+    Synchronous compressed log bytes sent
+    Synchronous uncompressed log bytes sent
+
+Class: STATMQI
+  Type: CONNDISC
+    Failed MQCONN/MQCONNX count
+    Concurrent connections - high water mark
+    MQCONN/MQCONNX count
+    MQDISC count
+  Type: GET
+    Non-persistent message browse - byte count
+    Persistent message browse - byte count
+    Failed browse count
+    Non-persistent message browse - count
+    Persistent message browse - count
+    Interval total destructive get - byte count
+    Got non-persistent messages - byte count
+    Got persistent messages - byte count
+    Failed MQCB count
+    MQCB count
+    MQCTL count
+    Failed MQGET - count
+    Interval total destructive get- count
+    Non-persistent message destructive get - count
+    Persistent message destructive get - count
+    Expired message count
+    Purged queue count
+  Type: INQSET
+    Failed MQINQ count
+    MQINQ count
+    Failed MQSET count
+    MQSET count
+  Type: OPENCLOSE
+    Failed MQCLOSE count
+    MQCLOSE count
+    Failed MQOPEN count
+    MQOPEN count
+  Type: PUBLISH
+    Published to subscribers - byte count
+    Published to subscribers - message count
+    Interval total topic bytes put
+    Failed topic MQPUT/MQPUT1 count
+    Non-persistent - topic MQPUT/MQPUT1 count
+    Persistent - topic MQPUT/MQPUT1 count
+    Topic MQPUT/MQPUT1 interval total
+  Type: PUT
+    Interval total MQPUT/MQPUT1 byte count
+    Put non-persistent messages - byte count
+    Put persistent messages - byte count
+    Failed MQPUT1 count
+    Non-persistent message MQPUT1 count
+    Persistent message MQPUT1 count
+    Failed MQPUT count
+    Interval total MQPUT/MQPUT1 count
+    Non-persistent message MQPUT count
+    Persistent message MQPUT count
+    MQSTAT count
+  Type: SUBSCRIBE
+    Durable subscriber - high water mark
+    Durable subscriber - low water mark
+    Non-durable subscriber - high water mark
+    Non-durable subscriber - low water mark
+    Failed MQSUBRQ count
+    MQSUBRQ count
+    Alter durable subscription count
+    Create durable subscription count
+    Resume durable subscription count
+    Failed create/alter/resume subscription count
+    Create non-durable subscription count
+    Delete durable subscription count
+    Subscription delete failure count
+    Delete non-durable subscription count
+  Type: SYNCPOINT
+    Rollback count
+    Commit count
+
+Class: STATQ
+  Type: GENERAL
+    messages expired
+    Queue depth
+    queue purged count
+    average queue time
+  Type: GET
+    MQGET browse non-persistent byte count
+    MQGET browse persistent byte count
+    MQGET browse fails
+    MQGET browse fails with MQRC_NO_MSG_AVAILABLE
+    MQGET browse non-persistent message count
+    MQGET browse persistent message count
+    MQGET browse fails with MQRC_TRUNCATED_MSG_FAILED
+    MQGET byte count
+    destructive MQGET non-persistent byte count
+    destructive MQGET persistent byte count
+    destructive MQGET fails
+    MQGET count
+    destructive MQGET non-persistent message count
+    destructive MQGET persistent message count
+    destructive MQGET fails with MQRC_NO_MSG_AVAILABLE
+    rolled back MQGET count
+    destructive MQGET fails with MQRC_TRUNCATED_MSG_FAILED
+  Type: INQSET
+    MQINQ count
+    MQSET count
+  Type: OPENCLOSE
+    MQCLOSE count
+    MQOPEN count
+  Type: PUT
+    queue avoided bytes
+    queue avoided puts
+    MQPUT byte count
+    non-persistent byte count
+    persistent byte count
+    MQPUT1 non-persistent message count
+    MQPUT1 persistent message count
+    MQPUT/MQPUT1 count
+    MQPUT non-persistent message count
+    MQPUT persistent message count
+    lock contention
+    rolled back MQPUT count
+
+Other metrics and attributes
+----------------------------
+
+There are other metrics extracted or calculated by this package, or used as tags. Most of
+these values come from "DISPLAY xxSTATUS" or "DISPLAY xx" commands for the relevant object type and name.
+Each line here shows the variable in the mqmetric package source code (so you can see how it is derived)
+and the basic associated metric name.
+
+As an example, one of the metrics available in Prometheus might be "ibmmq_channel_bytes_sent" with
+the full name created by combining the product name, the class, and the individual metric.
+
+Access to these metrics requires the "useObjectStatus" (or "-ibmmq.useStatus" as command line flag) configuration
+attribute to be set for the collector.
+
+Class: amqp
+  ATTR_CHL_AMQP_CLIENT_ID         : clientid
+  ATTR_CHL_AMQP_CONNECTIONS       : connection_count
+  ATTR_CHL_AMQP_MESSAGES_RECEIVED : messages_rcvd
+  ATTR_CHL_AMQP_MESSAGES_SENT     : messages_sent
+
+Class: channel
+  ATTR_CHL_BATCHES                : batches
+  ATTR_CHL_BATCHSZ_LONG           : batchsz_long
+  ATTR_CHL_BATCHSZ_SHORT          : batchsz_short
+  ATTR_CHL_BUFFERS_RCVD           : buffers_rcvd
+  ATTR_CHL_BUFFERS_SENT           : buffers_sent
+  ATTR_CHL_BYTES_RCVD             : bytes_rcvd
+  ATTR_CHL_BYTES_SENT             : bytes_sent
+  ATTR_CHL_CONNNAME               : connname
+  ATTR_CHL_CUR_INST               : cur_inst
+  ATTR_CHL_INSTANCE_TYPE          : instance_type
+  ATTR_CHL_JOBNAME                : jobname
+  ATTR_CHL_MAX_INST               : attribute_max_inst
+  ATTR_CHL_MAX_INSTC              : attribute_max_instc
+  ATTR_CHL_MESSAGES               : messages
+  ATTR_CHL_NETTIME_LONG           : nettime_long
+  ATTR_CHL_NETTIME_SHORT          : nettime_short
+  ATTR_CHL_RQMNAME                : rqmname
+  ATTR_CHL_SINCE_MSG              : time_since_msg
+  ATTR_CHL_STATUS                 : status
+  ATTR_CHL_SUBSTATE               : substate
+  ATTR_CHL_TYPE                   : type
+  ATTR_CHL_XQTIME_LONG            : xmitq_time_long
+  ATTR_CHL_XQTIME_SHORT           : xmitq_time_short
+
+Class: cluster
+  ATTR_CLUSTER_QMTYPE             : qmtype
+  ATTR_CLUSTER_STATUS             : status
+  ATTR_CLUSTER_SUSPEND            : suspend
+
+Class: qmgr
+  ATTR_QMGR_ACTIVE_LISTENERS      : active_listeners
+  ATTR_QMGR_CHINIT_STATUS         : channel_initiator_status
+  ATTR_QMGR_CMD_SERVER_STATUS     : command_server_status
+  ATTR_QMGR_CONNECTION_COUNT      : connection_count
+  ATTR_QMGR_LOG_ARCHIVE_EXTENT    : log_extent_archive
+  ATTR_QMGR_LOG_ARCHIVE_SIZE      : log_size_archive
+  ATTR_QMGR_LOG_CURRENT_EXTENT    : log_extent_current
+  ATTR_QMGR_LOG_MEDIA_EXTENT      : log_extent_media
+  ATTR_QMGR_LOG_MEDIA_SIZE        : log_size_media
+  ATTR_QMGR_LOG_RESTART_EXTENT    : log_extent_restart
+  ATTR_QMGR_LOG_RESTART_SIZE      : log_size_restart
+  ATTR_QMGR_LOG_REUSABLE_SIZE     : log_size_reusable
+  ATTR_QMGR_MAX_ACTIVE_CHANNELS   : max_active_channels
+  ATTR_QMGR_MAX_CHANNELS          : max_channels
+  ATTR_QMGR_MAX_TCP_CHANNELS      : max_tcp_channels
+  ATTR_QMGR_STATUS                : status
+  ATTR_QMGR_UPTIME                : uptime
+
+Class: queue
+  ATTR_Q_CURFSIZE                 : qfile_current_size
+  ATTR_Q_CURMAXFSIZE              : qfile_max_size
+  ATTR_Q_DEPTH                    : depth
+  ATTR_Q_INTERVAL_GET             : mqget_count
+  ATTR_Q_INTERVAL_HI_DEPTH        : hi_depth
+  ATTR_Q_INTERVAL_PUT             : mqput_mqput1_count
+  ATTR_Q_IPPROCS                  : input_handles
+  ATTR_Q_MAX_DEPTH                : attribute_max_depth
+  ATTR_Q_MSGAGE                   : oldest_message_age
+  ATTR_Q_OPPROCS                  : output_handles
+  ATTR_Q_QTIME_LONG               : qtime_long
+  ATTR_Q_QTIME_SHORT              : qtime_short
+  ATTR_Q_SINCE_GET                : time_since_get
+  ATTR_Q_SINCE_PUT                : time_since_put
+  ATTR_Q_UNCOM                    : uncommitted_messages
+  ATTR_Q_USAGE                    : attribute_usage
+
+Class: sub
+  ATTR_SUB_ID                     : subid
+  ATTR_SUB_MESSAGES               : messsages_received
+  ATTR_SUB_SINCE_PUB_MSG          : time_since_message_published
+  ATTR_SUB_TOPIC_STRING           : topic
+  ATTR_SUB_TYPE                   : type
+
+Class: topic
+  ATTR_TOPIC_PUBLISHER_COUNT      : publisher_count
+  ATTR_TOPIC_PUB_MESSAGES         : messages_published
+  ATTR_TOPIC_SINCE_PUB_MSG        : time_since_msg_published
+  ATTR_TOPIC_SINCE_SUB_MSG        : time_since_msg_received
+  ATTR_TOPIC_STATUS_TYPE          : type
+  ATTR_TOPIC_SUB_MESSAGES         : messages_received
+  ATTR_TOPIC_SUBSCRIBER_COUNT     : subscriber_count
+
+Class: bufferpool/pageset
+  ATTR_BP_CLASS                   : pageclass
+  ATTR_BP_FREE                    : buffers_free
+  ATTR_BP_FREE_PERCENT            : buffers_free_percent
+  ATTR_BP_LOCATION                : location
+  ATTR_BP_TOTAL                   : buffers_total
+  ATTR_PS_BPID                    : bufferpool
+  ATTR_PS_EXPAND_COUNT            : expansion_count
+  ATTR_PS_NP_PAGES                : pages_nonpersistent
+  ATTR_PS_P_PAGES                 : pages_persistent
+  ATTR_PS_STATUS                  : status
+  ATTR_PS_TOTAL                   : pages_total
+  ATTR_PS_UNUSED                  : pages_unused
+
+This page was automatically generated from the source tree on 2024-10-12 08:06:38
