@@ -84,9 +84,9 @@ func testCollect(t *testing.T, isDelta bool) {
 
 	exporter := newExporter("qmName", log)
 	if isDelta {
-		exporter.counterMap[testKey1] = createCounterVec(testElement1Name, testElement1Description, false)
+		exporter.counterMap[testKey1] = createCounterVec(testElement1Name, testElement1Description, false, false)
 	} else {
-		exporter.gaugeMap[testKey1] = createGaugeVec(testElement1Name, testElement1Description, false)
+		exporter.gaugeMap[testKey1] = createGaugeVec(testElement1Name, testElement1Description, false, false)
 	}
 
 	for i := 1; i <= 3; i++ {
@@ -142,7 +142,7 @@ func testCollect(t *testing.T, isDelta bool) {
 func TestCreateCounterVec(t *testing.T) {
 
 	ch := make(chan *prometheus.Desc)
-	counterVec := createCounterVec("MetricName", "MetricDescription", false)
+	counterVec := createCounterVec("MetricName", "MetricDescription", false, false)
 	go func() {
 		counterVec.Describe(ch)
 	}()
@@ -158,7 +158,7 @@ func TestCreateCounterVec(t *testing.T) {
 func TestCreateCounterVec_ObjectLabel(t *testing.T) {
 
 	ch := make(chan *prometheus.Desc)
-	counterVec := createCounterVec("MetricName", "MetricDescription", true)
+	counterVec := createCounterVec("MetricName", "MetricDescription", true, false)
 	go func() {
 		counterVec.Describe(ch)
 	}()
@@ -171,10 +171,26 @@ func TestCreateCounterVec_ObjectLabel(t *testing.T) {
 	}
 }
 
+func TestCreateCounterVec_NHALabel(t *testing.T) {
+
+	ch := make(chan *prometheus.Desc)
+	counterVec := createCounterVec("MetricName", "MetricDescription", false, true)
+	go func() {
+		counterVec.Describe(ch)
+	}()
+	description := <-ch
+
+	expected := "Desc{fqName: \"ibmmq_nha_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [instance qmgr]}"
+	actual := description.String()
+	if actual != expected {
+		t.Errorf("Expected value=%s; actual %s", expected, actual)
+	}
+}
+
 func TestCreateGaugeVec(t *testing.T) {
 
 	ch := make(chan *prometheus.Desc)
-	gaugeVec := createGaugeVec("MetricName", "MetricDescription", false)
+	gaugeVec := createGaugeVec("MetricName", "MetricDescription", false, false)
 	go func() {
 		gaugeVec.Describe(ch)
 	}()
@@ -190,13 +206,29 @@ func TestCreateGaugeVec(t *testing.T) {
 func TestCreateGaugeVec_ObjectLabel(t *testing.T) {
 
 	ch := make(chan *prometheus.Desc)
-	gaugeVec := createGaugeVec("MetricName", "MetricDescription", true)
+	gaugeVec := createGaugeVec("MetricName", "MetricDescription", true, false)
 	go func() {
 		gaugeVec.Describe(ch)
 	}()
 	description := <-ch
 
 	expected := "Desc{fqName: \"ibmmq_object_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [object qmgr]}"
+	actual := description.String()
+	if actual != expected {
+		t.Errorf("Expected value=%s; actual %s", expected, actual)
+	}
+}
+
+func TestCreateGaugeVec_NHALabel(t *testing.T) {
+
+	ch := make(chan *prometheus.Desc)
+	gaugeVec := createGaugeVec("MetricName", "MetricDescription", false, true)
+	go func() {
+		gaugeVec.Describe(ch)
+	}()
+	description := <-ch
+
+	expected := "Desc{fqName: \"ibmmq_nha_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [instance qmgr]}"
 	actual := description.String()
 	if actual != expected {
 		t.Errorf("Expected value=%s; actual %s", expected, actual)

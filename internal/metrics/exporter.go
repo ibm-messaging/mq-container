@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2019
+© Copyright IBM Corporation 2018, 2025
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,16 +18,20 @@ limitations under the License.
 package metrics
 
 import (
+	"strings"
+
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
-	namespace    = "ibmmq"
-	qmgrPrefix   = "qmgr"
-	qmgrLabel    = "qmgr"
-	objectPrefix = "object"
-	objectLabel  = "object"
+	namespace         = "ibmmq"
+	qmgrPrefix        = "qmgr"
+	qmgrLabel         = "qmgr"
+	objectPrefix      = "object"
+	objectLabel       = "object"
+	nhaInstancePrefix = "nha"
+	nhaInstanceLabel  = "instance"
 )
 
 type exporter struct {
@@ -58,7 +62,7 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 
 		if metric.isDelta {
 			// For delta type metrics - allocate a Prometheus Counter
-			counterVec := createCounterVec(metric.name, metric.description, metric.objectType)
+			counterVec := createCounterVec(metric.name, metric.description, metric.objectType, metric.nhaType)
 			e.counterMap[key] = counterVec
 
 			// Describe metric
@@ -66,7 +70,7 @@ func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
 
 		} else {
 			// For non-delta type metrics - allocate a Prometheus Gauge
-			gaugeVec := createGaugeVec(metric.name, metric.description, metric.objectType)
+			gaugeVec := createGaugeVec(metric.name, metric.description, metric.objectType, metric.nhaType)
 			e.gaugeMap[key] = gaugeVec
 
 			// Describe metric
@@ -96,6 +100,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 
 					if label == qmgrLabelValue {
 						counter, err = counterVec.GetMetricWithLabelValues(e.qmName)
+					} else if strings.HasPrefix(label, nhaLabelValue) {
+						nhaInstance := strings.ReplaceAll(label, nhaLabelValue, "")
+						counter, err = counterVec.GetMetricWithLabelValues(nhaInstance, e.qmName)
 					} else {
 						counter, err = counterVec.GetMetricWithLabelValues(label, e.qmName)
 					}
@@ -124,6 +131,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 
 					if label == qmgrLabelValue {
 						gauge, err = gaugeVec.GetMetricWithLabelValues(e.qmName)
+					} else if strings.HasPrefix(label, nhaLabelValue) {
+						nhaInstance := strings.ReplaceAll(label, nhaLabelValue, "")
+						gauge, err = gaugeVec.GetMetricWithLabelValues(nhaInstance, e.qmName)
 					} else {
 						gauge, err = gaugeVec.GetMetricWithLabelValues(label, e.qmName)
 					}
@@ -146,9 +156,9 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 }
 
 // createCounterVec returns a Prometheus CounterVec populated with metric details
-func createCounterVec(name, description string, objectType bool) *prometheus.CounterVec {
+func createCounterVec(name, description string, objectType bool, nhaType bool) *prometheus.CounterVec {
 
-	prefix, labels := getVecDetails(objectType)
+	prefix, labels := getVecDetails(objectType, nhaType)
 
 	counterVec := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -162,9 +172,9 @@ func createCounterVec(name, description string, objectType bool) *prometheus.Cou
 }
 
 // createGaugeVec returns a Prometheus GaugeVec populated with metric details
-func createGaugeVec(name, description string, objectType bool) *prometheus.GaugeVec {
+func createGaugeVec(name, description string, objectType bool, nhaType bool) *prometheus.GaugeVec {
 
-	prefix, labels := getVecDetails(objectType)
+	prefix, labels := getVecDetails(objectType, nhaType)
 
 	gaugeVec := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -178,14 +188,14 @@ func createGaugeVec(name, description string, objectType bool) *prometheus.Gauge
 }
 
 // getVecDetails returns the required prefix and labels for a metric
-func getVecDetails(objectType bool) (prefix string, labels []string) {
-
-	prefix = qmgrPrefix
-	labels = []string{qmgrLabel}
-
-	if objectType {
-		prefix = objectPrefix
-		labels = []string{objectLabel, qmgrLabel}
+func getVecDetails(objectType bool, nhaType bool) (prefix string, labels []string) {
+	switch true {
+	case objectType:
+		return objectPrefix, []string{objectLabel, qmgrLabel}
+	case nhaType:
+		return nhaInstancePrefix, []string{nhaInstanceLabel, qmgrLabel}
+	default:
+		return qmgrPrefix, []string{qmgrLabel}
 	}
-	return prefix, labels
+
 }

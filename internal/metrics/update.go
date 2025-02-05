@@ -29,6 +29,7 @@ import (
 
 const (
 	qmgrLabelValue = mqmetric.QMgrMapKey
+	nhaLabelValue  = mqmetric.NativeHAKeyPrefix
 	requestTimeout = 10
 )
 
@@ -43,6 +44,7 @@ type metricData struct {
 	name        string
 	description string
 	objectType  bool
+	nhaType     bool
 	values      map[string]float64
 	isDelta     bool
 }
@@ -139,9 +141,9 @@ func initialiseMetrics(log *logger.Logger) (map[string]*metricData, error) {
 
 	for _, metricClass := range mqmetric.Metrics.Classes {
 		for _, metricType := range metricClass.Types {
-			if !strings.Contains(metricType.ObjectTopic, "%s") {
+			isNHA := metricClass.Name == "NHAREPLICA"
+			if isNHA || !strings.Contains(metricType.ObjectTopic, "%s") {
 				for _, metricElement := range metricType.Elements {
-
 					// Get unique metric key
 					key := makeKey(metricElement)
 
@@ -162,6 +164,7 @@ func initialiseMetrics(log *logger.Logger) (map[string]*metricData, error) {
 								name:        metricLookup.name,
 								description: metricElement.Description,
 								isDelta:     isDelta,
+								nhaType:     isNHA,
 							}
 
 							// Add metric
@@ -193,8 +196,9 @@ func initialiseMetrics(log *logger.Logger) (map[string]*metricData, error) {
 func updateMetrics(metrics map[string]*metricData) {
 
 	for _, metricClass := range mqmetric.Metrics.Classes {
+		isNHA := metricClass.Name == "NHAREPLICA"
 		for _, metricType := range metricClass.Types {
-			if !strings.Contains(metricType.ObjectTopic, "%s") {
+			if isNHA || !strings.Contains(metricType.ObjectTopic, "%s") {
 				for _, metricElement := range metricType.Elements {
 
 					// Unexpected metric elements (with no defined mapping) are handled in 'initialiseMetrics'
