@@ -14,7 +14,7 @@ package ibmmq
 * for each value; those can be found in other header files such as
 * cmqc.h.
 ****************************************************************
-* Copyright (c) IBM Corporation 1993, 2024
+* Copyright (c) IBM Corporation 1993, 2025
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -367,6 +367,7 @@ const (
 	MQCACF_NHA_GROUP_INITIAL_DATE  int32  = 3217
 	MQCACF_NHA_GROUP_INITIAL_LSN   int32  = 3218
 	MQCACF_NHA_GROUP_INITIAL_TIME  int32  = 3219
+	MQCACF_NHA_GROUP_NAME          int32  = 3228
 	MQCACF_NHA_INSTANCE_NAME       int32  = 3211
 	MQCACF_NHA_REPL_ADDRESS        int32  = 3220
 	MQCACF_NONE                    int32  = 3171

@@ -6,7 +6,7 @@ storage mechanisms including Prometheus and InfluxDB.
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2024
+  Copyright (c) IBM Corporation 2016, 2025
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -1147,7 +1147,7 @@ func ProcessPublications() error {
 					// May need to use this as part of the object key and
 					// labelling But for now we can ignore it.
 					_ = ibmmq.MQItoString("OT", int(elemList[i].Int64Value[0]))
-				case ibmmq.MQCACF_NHA_INSTANCE_NAME:
+				case ibmmq.MQCACF_NHA_INSTANCE_NAME, ibmmq.MQCACF_NHA_GROUP_NAME:
 					objName = strings.TrimSpace(elemList[i].String[0])
 					objType = OT_NHA
 				case ibmmq.MQIAMO_MONITOR_CLASS:
@@ -1159,9 +1159,13 @@ func ProcessPublications() error {
 				case ibmmq.MQIAMO_MONITOR_FLAGS:
 					_ = int(elemList[i].Int64Value[0])
 				default:
-					value = elemList[i].Int64Value[0]
-					elementidx = int(elemList[i].Parameter)
-					values[elementidx] = value
+					if len(elemList[i].Int64Value) > 0 {
+						value = elemList[i].Int64Value[0]
+						elementidx = int(elemList[i].Parameter)
+						values[elementidx] = value
+					} else {
+						logDebug("Unparsed element: %+v", elemList[i])
+					}
 				}
 			}
 
