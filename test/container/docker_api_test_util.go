@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -209,8 +210,25 @@ func cleanContainerQuiet(t *testing.T, cli ce.ContainerInterface, ID string) {
 	}
 }
 
-func cleanContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
+func cleanContainer(t *testing.T, cli ce.ContainerInterface, ID string, ignoreFDCs bool) {
 	logContainerDetails(t, cli, ID)
+
+	if !ignoreFDCs {
+		summaries, err := getQMFDCSummaries(cli, ID)
+		if err != nil {
+			t.Logf("WARN - Not checking for FDCs: failed to get FDC summaries: %v", err)
+		} else {
+			if len(summaries) > 0 {
+				t.Errorf("%d FDC(s) found in the queue manager!", len(summaries))
+				for _, summary := range summaries {
+					t.Log("\n" + summary)
+				}
+			} else {
+				t.Log("No FDCs found in the queue manager")
+			}
+		}
+	}
+
 	t.Logf("Stopping container: %v", ID)
 	timeout := 10 * time.Second
 	// Stop the container.  This allows the coverage output to be generated.
@@ -240,6 +258,68 @@ func cleanContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+// getQMFDCSummaries returns a slice of the summary blocks from each of the .FDC files in /var/mqm/errors
+func getQMFDCSummaries(cli ce.ContainerInterface, ID string) ([]string, error) {
+	summaries := []string{}
+	// Get a list of any FDC files
+	tmpDir, err := os.MkdirTemp("", "tmp-"+ID[:8]+"-*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(tmpDir)
+	err = cli.CopyFromContainerToDir(ID, "/var/mqm/errors/", tmpDir+"/")
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy errors directory from the container: %v", err)
+	}
+
+	tmpDir += "/errors/"
+	entries, err := os.ReadDir(tmpDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list errors directory: %v", err)
+	}
+
+	fdcPaths := []string{}
+	for _, entry := range entries {
+		split := strings.Split(entry.Name(), ".")
+		if split[len(split)-1] == "FDC" {
+			fdcPaths = append(fdcPaths, tmpDir+"/"+entry.Name())
+		}
+	}
+
+	var fileOpenErr error
+	for _, filePath := range fdcPaths {
+		// For each FDC file, read the file until we grab the summary block
+		file, err := os.Open(filePath)
+		if err != nil {
+			summaries = append(summaries, fmt.Sprintf("failed to get FDC summary for %s: %s", filePath, err))
+			fileOpenErr = errors.New("failed to open one or more FDC files, check logs for specific errors")
+			continue
+		}
+		defer file.Close()
+
+		fdcSummary := ""
+		summaryOpeningFound := false
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text() + "\n"
+			fdcSummary += line
+			// Check for the end of the summary block
+			if strings.Contains(line, "--+") {
+				// the pattern appears at the start and end of the summary so
+				// we need to make sure it is the second instance
+				if summaryOpeningFound {
+					break
+				} else {
+					summaryOpeningFound = true
+				}
+			}
+		}
+		summaries = append(summaries, fdcSummary)
+	}
+
+	return summaries, fileOpenErr
 }
 
 func generateRandomUID() string {
@@ -586,7 +666,7 @@ func waitForContainer(t *testing.T, cli ce.ContainerInterface, ID string, timeou
 
 // execContainer runs a command in a running container, and returns the exit code and output
 func execContainer(t *testing.T, cli ce.ContainerInterface, ID string, user string, cmd []string) (int, string) {
-	t.Logf("Running command: %v", cmd)
+	t.Logf("Container %s - Running command: %v", ID[:8], cmd)
 	exitcode, outputStr := cli.ExecContainer(ID, user, cmd)
 	return exitcode, outputStr
 }

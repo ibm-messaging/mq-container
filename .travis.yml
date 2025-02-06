@@ -72,7 +72,7 @@ jobs:
       group: vms390
       env:
         - BUILD_ALL=true
-        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - TEST_OPTS_CONTAINER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_2_ARCHIVE_REPOSITORY_S390X
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_2_ARCHIVE_REPOSITORY_DEV_S390X
       script:
@@ -86,7 +86,7 @@ jobs:
       group: power-focal
       env:
         - BUILD_ALL=true
-        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - TEST_OPTS_CONTAINER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_2_ARCHIVE_REPOSITORY_PPC64LE
         - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_2_ARCHIVE_REPOSITORY_DEV_PPC64LE
       script:
@@ -130,7 +130,7 @@ jobs:
       group: vms390
       env:
         - BUILD_ALL=true
-        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - TEST_OPTS_CONTAINER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}/IBM_MQ_ADVANCED_${MQ_VERSION}_S390X.tar.gz
         - MQ_ARCHIVE_REPOSITORY_DEV=${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}/IBM_MQ_ADVANCED_DEV_${MQ_VERSION}_S390X.tar.gz
       script:
@@ -144,7 +144,7 @@ jobs:
       group: power-focal
       env:
         - BUILD_ALL=true
-        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - TEST_OPTS_CONTAINER="-run TestGoldenPathWithMetrics"
         - MQ_ARCHIVE_REPOSITORY=${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}/IBM_MQ_ADVANCED_${MQ_VERSION}_PPCLE.tar.gz
         - MQ_ARCHIVE_REPOSITORY_DEV=${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}/IBM_MQ_ADVANCED_DEV_${MQ_VERSION}_PPCLE.tar.gz
       script:

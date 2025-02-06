@@ -52,7 +52,7 @@ func TestNativeHABasic(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr)
+		defer cleanContainer(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
@@ -96,7 +96,7 @@ func TestNativeHAFailover(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr)
+		defer cleanContainer(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
@@ -148,7 +148,7 @@ func TestNativeHASecure(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr)
+		defer cleanContainer(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
@@ -188,7 +188,7 @@ func TestNativeHASecureCipherSpec(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr)
+		defer cleanContainer(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
@@ -229,7 +229,7 @@ func TestNativeHASecureCipherSpecFIPS(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr)
+		defer cleanContainer(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
@@ -274,7 +274,7 @@ func TestNativeHASecureCipherSpecNonFIPSCipher(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr)
+		defer cleanContainer(t, cli, ctr, false)
 		// We expect container to fail in this case because the cipher is non-FIPS and we have asked for FIPS compliance
 		// by setting MQ_ENABLE_FIPS=true
 		qmReplicaIDs[i] = ctr
@@ -323,7 +323,7 @@ func TestNativeHAFailoverWithRoRFs(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr)
+		defer cleanContainer(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 

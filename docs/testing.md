@@ -30,7 +30,7 @@ MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:9.4.2.0-amd64 make test-advancedse
 You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command:
 
 ```
-TEST_OPTS_DOCKER="-run TestGoldenPath" make test-advancedserver
+TEST_OPTS_CONTAINER="-run TestGoldenPath" make test-advancedserver
 ```
 
 You can enable additional tracing of container engine commands by setting `TEST_LOG_CONTAINER_COMMANDS` to `true`:
