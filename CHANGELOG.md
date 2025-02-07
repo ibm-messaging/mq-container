@@ -4,6 +4,7 @@
 
 * Updated to MQ version 9.4.2.0
 * Queue Manager metrics can be served via HTTPS by populating `/etc/mqm/metrics/pki/keys` with TLS keys.
+* Queue Manager web console can be restarted using the 'strmqweb' command.
 
 ## 9.4.1.0 (2024-10)
 
