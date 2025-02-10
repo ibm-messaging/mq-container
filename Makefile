@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017, 2023
+# © Copyright IBM Corporation 2017, 2025
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -299,10 +299,6 @@ cache-mq-tag:
 # Test targets
 ###############################################################################
 
-# Vendor Go dependencies for the Container tests
-test/container/vendor:
-	cd test/container && /usr/local/go/bin/go mod vendor
-
 # Shortcut to just run the unit tests
 .PHONY: test-unit
 test-unit:
@@ -313,7 +309,7 @@ define inspect-image
 endef
 
 .PHONY: test-advancedserver
-test-advancedserver: test/container/vendor
+test-advancedserver:
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(call inspect-image,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG))
 	cd test/container && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) /usr/local/go/bin/go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) $(TEST_OPTS_CONTAINER)
@@ -324,7 +320,7 @@ build-devjmstest:
 	cd test/messaging && $(COMMAND) build --tag $(DEV_JMS_IMAGE) .
 
 .PHONY: test-devserver
-test-devserver: test/container/vendor
+test-devserver:
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(call inspect-image,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG))
 	cd test/container && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=false DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) /usr/local/go/bin/go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) -tags mqdev $(TEST_OPTS_CONTAINER)
@@ -334,7 +330,7 @@ coverage:
 	mkdir coverage
 
 .PHONY: test-advancedserver-cover
-test-advancedserver-cover: test/container/vendor coverage
+test-advancedserver-cover: coverage
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) with code coverage on $(shell $(COMMAND) --version)"$(END)))
 	rm -f ./coverage/unit*.cov
 	# Run unit tests with coverage, for each package under 'internal'
