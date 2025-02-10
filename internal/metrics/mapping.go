@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2024
+© Copyright IBM Corporation 2018, 2025
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,6 +59,8 @@ func generateMetricNamesMap() map[string]metricLookup {
 		"DISK/Log/Log - bytes required for media recovery":                        metricLookup{"log_required_for_media_recovery_bytes", true},
 		"DISK/Log/Log - disk written log sequence number":                         metricLookup{"log_sequence_number_disk_total", true},
 		"DISK/Log/Log - quorum log sequence number":                               metricLookup{"log_sequence_number_quorum_total", true},
+		"DISK/Log/Log - timestamp of slowest write":                               metricLookup{"log_slowest_write_timestamp_seconds", false}, // Currently disabled pending a fix for RTC defect 323483
+		"DISK/Log/Log - slowest write since restart":                              metricLookup{"log_slowest_write_since_restart_seconds", true},
 		"STATMQI/SUBSCRIBE/Create durable subscription count":                     metricLookup{"durable_subscription_create_total", true},
 		"STATMQI/SUBSCRIBE/Alter durable subscription count":                      metricLookup{"durable_subscription_alter_total", true},
 		"STATMQI/SUBSCRIBE/Resume durable subscription count":                     metricLookup{"durable_subscription_resume_total", true},

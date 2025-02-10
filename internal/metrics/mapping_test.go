@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2024
+© Copyright IBM Corporation 2018, 2025
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ func TestGenerateMetricNamesMap(t *testing.T) {
 
 	metricNamesMap := generateMetricNamesMap()
 
-	if len(metricNamesMap) != 96 {
-		t.Errorf("Expected mapping-size=%d; actual %d", 96, len(metricNamesMap))
+	if len(metricNamesMap) != 98 {
+		t.Errorf("Expected mapping-size=%d; actual %d", 98, len(metricNamesMap))
 	}
 
 	actual, ok := metricNamesMap[testKey1]
