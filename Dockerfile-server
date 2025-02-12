@@ -15,7 +15,7 @@
 ARG BASE_IMAGE=registry.access.redhat.com/ubi9/ubi-minimal
 ARG BASE_TAG=9.5-1738816775
 ARG BUILDER_IMAGE=registry.access.redhat.com/ubi9/go-toolset
-ARG BUILDER_TAG=1.22.9-1739184363
+ARG BUILDER_TAG=1.22.9-1739267472
 ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
 ARG MQ_ARCHIVE="downloads/9.4.0.10-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
 
