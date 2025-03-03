@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018, 2024
+# © Copyright IBM Corporation 2018, 2025
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ env:
     - MAIN_BRANCH=private-master
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
-    - BASE_MQ_LOCKED=true
+    - BASE_MQ_LOCKED=false
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
@@ -41,7 +41,7 @@ jobs:
       name: "Basic AMD64 build"
       os: linux
       env:
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_2_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_3_ARCHIVE_REPOSITORY_DEV_AMD64
       script:
         - bash travis-build-scripts/travis-log-keepalive.sh &
         - bash -e travis-build-scripts/run.sh
@@ -59,8 +59,8 @@ jobs:
       os: linux
       env:
         - BUILD_ALL=true
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_2_ARCHIVE_REPOSITORY_AMD64
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_2_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_3_ARCHIVE_REPOSITORY_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_3_ARCHIVE_REPOSITORY_DEV_AMD64
       script:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
@@ -73,8 +73,8 @@ jobs:
       env:
         - BUILD_ALL=true
         - TEST_OPTS_CONTAINER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_2_ARCHIVE_REPOSITORY_S390X
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_2_ARCHIVE_REPOSITORY_DEV_S390X
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_3_ARCHIVE_REPOSITORY_S390X
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_3_ARCHIVE_REPOSITORY_DEV_S390X
       script:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
@@ -87,8 +87,8 @@ jobs:
       env:
         - BUILD_ALL=true
         - TEST_OPTS_CONTAINER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_2_ARCHIVE_REPOSITORY_PPC64LE
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_2_ARCHIVE_REPOSITORY_DEV_PPC64LE
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_3_ARCHIVE_REPOSITORY_PPC64LE
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_3_ARCHIVE_REPOSITORY_DEV_PPC64LE
       script:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
