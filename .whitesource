@@ -7,9 +7,9 @@
     "configMode": "LOCAL",
     "baseBranches": [
       "private-master",
-      "v9.3.0.x",
       "v9.4.0",
-      "v9.4.1"
+      "v9.4.1",
+      "v9.4.2"
     ]
   },
   "issueSettings": {
