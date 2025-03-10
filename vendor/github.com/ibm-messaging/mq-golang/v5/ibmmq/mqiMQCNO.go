@@ -180,7 +180,9 @@ size_t getMaxCDLength() {
 
 size_t getMaxSCOLength() {
   size_t l;
-#if defined(MQSCO_VERSION_6)
+#if defined(MQSCO_VERSION_7)
+  l = MQSCO_LENGTH_7;
+#elif defined(MQSCO_VERSION_6)
   l = MQSCO_LENGTH_6;
 #else
   l = MQSCO_LENGTH_5; // The minimum supported here

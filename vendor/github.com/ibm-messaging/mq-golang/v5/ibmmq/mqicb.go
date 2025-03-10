@@ -30,6 +30,33 @@ This file deals with asynchronous delivery of MQ messages via the MQCTL/MQCB ver
 
 extern void MQCALLBACK_Go(MQHCONN, MQMD *, MQGMO *, PMQVOID, MQCBC *);
 extern void MQCALLBACK_C(MQHCONN hc,MQMD *md,MQGMO *gmo,PMQVOID buf,MQCBC *cbc);
+
+// These functions deal with stashing the hObj value across callbacks, because
+// the MQ C client will sometimes set hObj=0 for EVENTS (eg qmgr stopping) instead
+// of the registered hObj. That can lead to unexpected callback invocations.
+static void *saveHObj(PMQCBD mqcbd, MQHOBJ hObj) {
+  mqcbd->CallbackArea = malloc(sizeof(MQHOBJ));
+  // If the malloc has failed, you've got real problems. But we can
+  // silently continue safely through this bit anyway.
+  if (mqcbd->CallbackArea) {
+    memcpy(mqcbd->CallbackArea,&hObj,sizeof(MQHOBJ));
+  }
+  return mqcbd->CallbackArea;
+}
+
+static MQHOBJ getHObj(PMQCBC mqcbc) {
+  MQHOBJ ho = 0;
+  if (mqcbc->CallbackArea != NULL) {
+    memcpy(&ho,mqcbc->CallbackArea,sizeof(MQHOBJ));
+  }
+  return ho;
+}
+
+static void freeHObj(void *p) {
+  if (p) {
+    free(p);
+  }
+}
 */
 import "C"
 import (
@@ -47,6 +74,7 @@ type MQCB_FUNCTION func(*MQQueueManager, *MQObject, *MQMD, *MQGMO, []byte, *MQCB
 // be passed onwards
 type cbInfo struct {
 	hObj             *MQObject
+	stashedHObj      unsafe.Pointer
 	callbackFunction MQCB_FUNCTION
 	callbackArea     interface{}
 	connectionArea   interface{}
@@ -98,14 +126,28 @@ func MQCALLBACK_Go(hConn C.MQHCONN, mqmd *C.MQMD, mqgmo *C.MQGMO, mqBuffer C.PMQ
 		verb: "MQCALLBACK",
 	}
 
-	key := makeKey(hConn, mqcbc.Hobj)
+	// The MQ C client seems to sometimes use 0 as the hObj for EVENTs even for
+	// callbacks that should be going to something registered for a specific queue. This
+	// is different from using local bindings and is possibly a bug in the underlying MQ library.
+	// To try to work round this, the real hObj has been stashed during the REGISTER phase and if it's
+	// available via the C context structures, then we try to use that in
+	// an attempt to find the appropriate function.
+	passedHo := mqcbc.Hobj
+	savedHo := C.getHObj(mqcbc)
+	logTrace("HOs in callback are passed: %d stashed: %d", passedHo, savedHo)
+
+	if passedHo == C.MQHO_NONE && savedHo != C.MQHO_NONE {
+		passedHo = savedHo
+	}
+
+	key := makeKey(hConn, passedHo)
 	mapLock()
 	info, ok := cbMap[key]
 	mapUnlock()
 
-	// The MQ Client libraries sometimes call us with an EVENT that is
-	// not associated with a particular hObj.
-	// The way I've chosen is to find the first entry in
+	// With the stashed hObj available, we should now be able to find the
+	// correct callback routine from the map. But just in case we can't, we will
+	// have a fallback position. The way I've chosen is to find the first entry in
 	// the map associated with the hConn and call its registered function with
 	// a dummy hObj.
 	if !ok {
@@ -197,6 +239,7 @@ func (object *MQObject) CB(goOperation int32, gocbd *MQCBD, gomd *MQMD, gogmo *M
 	if f1 != nil {
 		f1(gogmo.OtelOpts, object.qMgr, object, gogmo, true)
 	}
+
 	copyCBDtoC(&mqcbd, gocbd)
 	copyMDtoC(&mqmd, gomd)
 	copyGMOtoC(&mqgmo, gogmo)
@@ -206,6 +249,13 @@ func (object *MQObject) CB(goOperation int32, gocbd *MQCBD, gomd *MQMD, gogmo *M
 	// The callback function is a C function that is a proxy for the MQCALLBACK_Go function
 	// defined here. And that in turn will call the user's callback function
 	mqcbd.CallbackFunction = (C.MQPTR)(unsafe.Pointer(C.MQCALLBACK_C))
+
+	// See earlier comments about how the hObj is not always passed back. Here's where
+	// we stash it via a malloc
+	p := C.NULL
+	if mqOperation == C.MQOP_REGISTER {
+		p = C.saveHObj(&mqcbd, object.hObj)
+	}
 
 	C.MQCB(object.qMgr.hConn, mqOperation, (C.PMQVOID)(unsafe.Pointer(&mqcbd)),
 		object.hObj,
@@ -218,6 +268,10 @@ func (object *MQObject) CB(goOperation int32, gocbd *MQCBD, gomd *MQMD, gogmo *M
 	}
 
 	if mqcc != C.MQCC_OK {
+		// Don't leak these 4 bytes when the register failed
+		if mqOperation == C.MQOP_REGISTER {
+			C.freeHObj(p)
+		}
 		traceExitErr("CB", 3, &mqreturn)
 		return &mqreturn
 	}
@@ -226,11 +280,17 @@ func (object *MQObject) CB(goOperation int32, gocbd *MQCBD, gomd *MQMD, gogmo *M
 	switch mqOperation {
 	case C.MQOP_DEREGISTER:
 		mapLock()
+		// ... and this is where the corresponding free should happen
+		info, ok := cbMap[key]
+		if ok {
+			C.freeHObj(info.stashedHObj)
+		}
 		delete(cbMap, key)
 		mapUnlock()
 	case C.MQOP_REGISTER:
 		// Stash the hObj and real function to be called
 		info := &cbInfo{hObj: object,
+			stashedHObj:      p,
 			callbackFunction: gocbd.CallbackFunction,
 			connectionArea:   nil,
 			callbackArea:     gocbd.CallbackArea,
@@ -266,6 +326,7 @@ func (object *MQQueueManager) CB(goOperation int32, gocbd *MQCBD) error {
 	// defined here. And that in turn will call the user's callback function
 	mqcbd.CallbackFunction = (C.MQPTR)(unsafe.Pointer(C.MQCALLBACK_C))
 
+	// Unlike the queue.CB() function, we don't need to stash an hObj for the qMgr-wide callbacks
 	C.MQCB(object.hConn, mqOperation, (C.PMQVOID)(unsafe.Pointer(&mqcbd)),
 		C.MQHO_NONE, nil, nil,
 		&mqcc, &mqrc)

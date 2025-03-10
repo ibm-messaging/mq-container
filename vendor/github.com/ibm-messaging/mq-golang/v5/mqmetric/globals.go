@@ -35,6 +35,7 @@ type sessionInfo struct {
 
 	platform         int32
 	commandLevel     int32
+	version          string // includes fixpack levels eg "09040001"
 	maxHandles       int32
 	resolvedQMgrName string
 

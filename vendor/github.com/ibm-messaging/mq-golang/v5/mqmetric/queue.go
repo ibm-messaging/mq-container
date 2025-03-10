@@ -6,7 +6,7 @@ storage mechanisms including Prometheus and InfluxDB.
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2018,2024
+  Copyright (c) IBM Corporation 2018,2025
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ about MQ queues
 
 import (
 	//	"fmt"
+
 	"strings"
 	"time"
 
@@ -100,7 +101,7 @@ func QueueInitAttributes() {
 	attr = ATTR_Q_IPPROCS
 	st.Attributes[attr] = newStatusAttribute(attr, "Input Handles", ibmmq.MQIA_OPEN_INPUT_COUNT)
 	attr = ATTR_Q_OPPROCS
-	st.Attributes[attr] = newStatusAttribute(attr, "Input Handles", ibmmq.MQIA_OPEN_OUTPUT_COUNT)
+	st.Attributes[attr] = newStatusAttribute(attr, "Output Handles", ibmmq.MQIA_OPEN_OUTPUT_COUNT)
 	attr = ATTR_Q_UNCOM
 	if ci.si.platform == ibmmq.MQPL_ZOS {
 		st.Attributes[attr] = newStatusAttribute(attr, "Uncommitted Messages (Yes/No)", ibmmq.MQIACF_UNCOMMITTED_MSGS)
@@ -453,8 +454,12 @@ func parseQData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 	}
 
 	now := time.Now()
-	st.Attributes[ATTR_Q_SINCE_PUT].Values[key] = newStatusValueInt64(statusTimeDiff(now, lastPutDate, lastPutTime))
-	st.Attributes[ATTR_Q_SINCE_GET].Values[key] = newStatusValueInt64(statusTimeDiff(now, lastGetDate, lastGetTime))
+	if lastPutTime != "" {
+		st.Attributes[ATTR_Q_SINCE_PUT].Values[key] = newStatusValueInt64(statusTimeDiff(now, lastPutDate, lastPutTime))
+	}
+	if lastGetTime != "" {
+		st.Attributes[ATTR_Q_SINCE_GET].Values[key] = newStatusValueInt64(statusTimeDiff(now, lastGetDate, lastGetTime))
+	}
 	if s, ok := qInfoMap[key]; ok {
 		maxDepth := s.AttrMaxDepth
 		st.Attributes[ATTR_Q_MAX_DEPTH].Values[key] = newStatusValueInt64(maxDepth)

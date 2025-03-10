@@ -241,8 +241,10 @@ func parseSubData(cfh *ibmmq.MQCFH, buf []byte) string {
 		}
 	}
 
-	now := time.Now()
-	st.Attributes[ATTR_SUB_SINCE_PUB_MSG].Values[key] = newStatusValueInt64(statusTimeDiff(now, lastDate, lastTime))
+	if lastTime != "" {
+		now := time.Now()
+		st.Attributes[ATTR_SUB_SINCE_PUB_MSG].Values[key] = newStatusValueInt64(statusTimeDiff(now, lastDate, lastTime))
+	}
 	st.Attributes[ATTR_SUB_TOPIC_STRING].Values[key] = newStatusValueString(topicString)
 	st.Attributes[ATTR_SUB_NAME].Values[key] = newStatusValueString(subName)
 

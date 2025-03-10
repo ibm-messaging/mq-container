@@ -14,7 +14,7 @@ package ibmmq
 * for each value; those can be found in other header files such as
 * cmqc.h.
 ****************************************************************
-* Copyright (c) IBM Corporation 1993, 2024
+* Copyright (c) IBM Corporation 1993, 2025
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -1467,6 +1467,8 @@ func MQItoString(class string, value int) string {
 			s = "MQCMDL_LEVEL_940"
 		case 941:
 			s = "MQCMDL_LEVEL_941"
+		case 942:
+			s = "MQCMDL_LEVEL_942"
 		default:
 			s = ""
 		}
@@ -2415,6 +2417,8 @@ func MQItoString(class string, value int) string {
 			s = "MQIAMO_MONITOR_UNIT"
 		case 2:
 			s = "MQIAMO_MONITOR_DELTA"
+		case 3:
+			s = "MQIAMO_MONITOR_LSN"
 		case 100:
 			s = "MQIAMO_MONITOR_HUNDREDTHS"
 		case 1024:
@@ -3137,6 +3141,36 @@ func MQItoString(class string, value int) string {
 			s = ""
 		}
 
+	case "NHACONNGRP":
+		switch v {
+		case 0:
+			s = "MQNHACONNGRP_NO"
+		case 1:
+			s = "MQNHACONNGRP_YES"
+		case 2:
+			s = "MQNHACONNGRP_SUSPENDED"
+		default:
+			s = ""
+		}
+
+	case "NHAGRPROLE":
+		switch v {
+		case 0:
+			s = "MQNHAGRPROLE_UNKNOWN"
+		case 1:
+			s = "MQNHAGRPROLE_NOT_CONFIGURED"
+		case 2:
+			s = "MQNHAGRPROLE_LIVE"
+		case 3:
+			s = "MQNHAGRPROLE_RECOVERY"
+		case 4:
+			s = "MQNHAGRPROLE_PENDING_LIVE"
+		case 5:
+			s = "MQNHAGRPROLE_PENDING_RECOVERY"
+		default:
+			s = ""
+		}
+
 	case "NHAINSYNC":
 		switch v {
 		case 0:
@@ -3155,6 +3189,42 @@ func MQItoString(class string, value int) string {
 			s = "MQNHAROLE_ACTIVE"
 		case 2:
 			s = "MQNHAROLE_REPLICA"
+		case 3:
+			s = "MQNHAROLE_LEADER"
+		default:
+			s = ""
+		}
+
+	case "NHASTATUS":
+		switch v {
+		case 0:
+			s = "MQNHASTATUS_UNKNOWN"
+		case 1:
+			s = "MQNHASTATUS_NORMAL"
+		case 2:
+			s = "MQNHASTATUS_CHECKING"
+		case 3:
+			s = "MQNHASTATUS_SYNCHRONIZING"
+		case 4:
+			s = "MQNHASTATUS_REBASING"
+		case 5:
+			s = "MQNHASTATUS_DISK_FULL"
+		case 6:
+			s = "MQNHASTATUS_DISCONNECTED"
+		case 7:
+			s = "MQNHASTATUS_PARTITIONED"
+		default:
+			s = ""
+		}
+
+	case "NHATYPE":
+		switch v {
+		case -1:
+			s = "MQNHATYPE_ALL"
+		case 0:
+			s = "MQNHATYPE_INSTANCE"
+		case 1:
+			s = "MQNHATYPE_GROUP"
 		default:
 			s = ""
 		}

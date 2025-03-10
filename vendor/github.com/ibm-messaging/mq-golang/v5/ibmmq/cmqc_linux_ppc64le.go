@@ -30,8 +30,8 @@ package ibmmq
 ****************************************************************
 *
 *   <BEGIN_BUILDINFO>
-*   Generated on:  10/2/24 4:42 PM
-*   Build Level:   p941-L241002
+*   Generated on:  2/14/25 9:37 AM
+*   Build Level:   p942-L250214
 *   Build Type:    Production
 *   <END_BUILDINFO>
  */
@@ -317,6 +317,7 @@ const (
 	MQCACF_DB2_NAME                int32  = 3109
 	MQCACF_DESTINATION             int32  = 3154
 	MQCACF_DESTINATION_Q_MGR       int32  = 3153
+	MQCACF_DISK_WRITTEN_LSN        int32  = 3221
 	MQCACF_DSG_NAME                int32  = 3108
 	MQCACF_DYNAMIC_Q_NAME          int32  = 3190
 	MQCACF_ENTITY_NAME             int32  = 3068
@@ -354,7 +355,7 @@ const (
 	MQCACF_LAST_PUB_TIME           int32  = 3162
 	MQCACF_LAST_PUT_DATE           int32  = 3128
 	MQCACF_LAST_PUT_TIME           int32  = 3129
-	MQCACF_LAST_USED               int32  = 3220
+	MQCACF_LAST_USED               int32  = 3231
 	MQCACF_LOCAL_Q_NAMES           int32  = 3015
 	MQCACF_LOG_PATH                int32  = 3074
 	MQCACF_LOG_START_DATE          int32  = 3214
@@ -364,12 +365,21 @@ const (
 	MQCACF_MODEL_Q_NAMES           int32  = 3016
 	MQCACF_MQCB_NAME               int32  = 3192
 	MQCACF_NAMELIST_NAMES          int32  = 3013
+	MQCACF_NHA_ACKNOWLEDGED_LSN    int32  = 3222
+	MQCACF_NHA_GROUP_ADDRESS       int32  = 3223
 	MQCACF_NHA_GROUP_INITIAL_DATE  int32  = 3217
 	MQCACF_NHA_GROUP_INITIAL_LSN   int32  = 3218
 	MQCACF_NHA_GROUP_INITIAL_TIME  int32  = 3219
+	MQCACF_NHA_GROUP_INIT_ISOTIME  int32  = 3225
+	MQCACF_NHA_GROUP_LIVE_ISOTIME  int32  = 3226
+	MQCACF_NHA_GROUP_LSN           int32  = 3227
 	MQCACF_NHA_GROUP_NAME          int32  = 3228
+	MQCACF_NHA_GROUP_RECOV_ISOTIME int32  = 3230
+	MQCACF_NHA_GROUP_RECOV_LSN     int32  = 3229
+	MQCACF_NHA_GROUP_SYNC_ISOTIME  int32  = 3224
 	MQCACF_NHA_INSTANCE_NAME       int32  = 3211
 	MQCACF_NHA_REPL_ADDRESS        int32  = 3220
+	MQCACF_NHA_SYNC_ISOTIME        int32  = 3231
 	MQCACF_NONE                    int32  = 3171
 	MQCACF_OBJECT_NAME             int32  = 3046
 	MQCACF_OBJECT_Q_MGR_NAME       int32  = 3023
@@ -1033,7 +1043,7 @@ const (
 	MQCMDI_SEC_SIGNOFF_ERROR       int32  = 17
 	MQCMDI_SEC_TIMER_ZERO          int32  = 14
 	MQCMDI_SEC_UPPERCASE           int32  = 21
-	MQCMDL_CURRENT_LEVEL           int32  = 941
+	MQCMDL_CURRENT_LEVEL           int32  = 942
 	MQCMDL_LEVEL_1                 int32  = 100
 	MQCMDL_LEVEL_101               int32  = 101
 	MQCMDL_LEVEL_110               int32  = 110
@@ -1088,6 +1098,7 @@ const (
 	MQCMDL_LEVEL_935               int32  = 935
 	MQCMDL_LEVEL_940               int32  = 940
 	MQCMDL_LEVEL_941               int32  = 941
+	MQCMDL_LEVEL_942               int32  = 942
 	MQCMD_ACCOUNTING_MQI           int32  = 167
 	MQCMD_ACCOUNTING_Q             int32  = 168
 	MQCMD_ACTIVITY_MSG             int32  = 69
@@ -1798,6 +1809,9 @@ const (
 	MQIACF_CF_STRUC_STATUS         int32  = 1130
 	MQIACF_CF_STRUC_TYPE           int32  = 1139
 	MQIACF_CHANNEL_ATTRS           int32  = 1015
+	MQIACF_CHECKPOINT_COUNT        int32  = 1468
+	MQIACF_CHECKPOINT_OPERATIONS   int32  = 1469
+	MQIACF_CHECKPOINT_SIZE         int32  = 1470
 	MQIACF_CHINIT_STATUS           int32  = 1232
 	MQIACF_CHLAUTH_ATTRS           int32  = 1355
 	MQIACF_CHLAUTH_TYPE            int32  = 1352
@@ -1867,7 +1881,7 @@ const (
 	MQIACF_INVALID_DEST_COUNT      int32  = 1371
 	MQIACF_ITEM_COUNT              int32  = 1378
 	MQIACF_KNOWN_DEST_COUNT        int32  = 1369
-	MQIACF_LAST_USED               int32  = 1466
+	MQIACF_LAST_USED               int32  = 1477
 	MQIACF_LDAP_CONNECTION_STATUS  int32  = 1409
 	MQIACF_LISTENER_ATTRS          int32  = 1222
 	MQIACF_LISTENER_STATUS_ATTRS   int32  = 1223
@@ -1901,12 +1915,19 @@ const (
 	MQIACF_MSG_TYPE                int32  = 1249
 	MQIACF_MULC_CAPTURE            int32  = 1324
 	MQIACF_NAMELIST_ATTRS          int32  = 1004
+	MQIACF_NHA_GROUP_BACKLOG       int32  = 1471
+	MQIACF_NHA_GROUP_CONNECTED     int32  = 1472
+	MQIACF_NHA_GROUP_IN_SYNC       int32  = 1473
+	MQIACF_NHA_GROUP_ROLE          int32  = 1474
+	MQIACF_NHA_GROUP_STATUS        int32  = 1475
 	MQIACF_NHA_INSTANCE_ACTV_CONNS int32  = 1457
 	MQIACF_NHA_INSTANCE_BACKLOG    int32  = 1458
 	MQIACF_NHA_INSTANCE_IN_SYNC    int32  = 1459
 	MQIACF_NHA_INSTANCE_ROLE       int32  = 1460
+	MQIACF_NHA_INSTANCE_STATUS     int32  = 1476
 	MQIACF_NHA_IN_SYNC_INSTANCES   int32  = 1461
 	MQIACF_NHA_TOTAL_INSTANCES     int32  = 1462
+	MQIACF_NHA_TYPE                int32  = 1477
 	MQIACF_NUM_PUBS                int32  = 1396
 	MQIACF_OBJECT_TYPE             int32  = 1016
 	MQIACF_OBSOLETE_MSGS           int32  = 1310
@@ -2344,6 +2365,7 @@ const (
 	MQIAMO_MONITOR_GB              int32  = 100000000
 	MQIAMO_MONITOR_HUNDREDTHS      int32  = 100
 	MQIAMO_MONITOR_KB              int32  = 1024
+	MQIAMO_MONITOR_LSN             int32  = 3
 	MQIAMO_MONITOR_MB              int32  = 1048576
 	MQIAMO_MONITOR_MICROSEC        int32  = 1000000
 	MQIAMO_MONITOR_PERCENT         int32  = 10000
@@ -2924,11 +2946,32 @@ const (
 	MQNHABACKLOG_UNKNOWN           int32  = -1
 	MQNHACONNACTV_NO               int32  = 0
 	MQNHACONNACTV_YES              int32  = 1
+	MQNHACONNGRP_NO                int32  = 0
+	MQNHACONNGRP_SUSPENDED         int32  = 2
+	MQNHACONNGRP_YES               int32  = 1
+	MQNHAGRPROLE_LIVE              int32  = 2
+	MQNHAGRPROLE_NOT_CONFIGURED    int32  = 1
+	MQNHAGRPROLE_PENDING_LIVE      int32  = 4
+	MQNHAGRPROLE_PENDING_RECOVERY  int32  = 5
+	MQNHAGRPROLE_RECOVERY          int32  = 3
+	MQNHAGRPROLE_UNKNOWN           int32  = 0
 	MQNHAINSYNC_NO                 int32  = 0
 	MQNHAINSYNC_YES                int32  = 1
 	MQNHAROLE_ACTIVE               int32  = 1
+	MQNHAROLE_LEADER               int32  = 3
 	MQNHAROLE_REPLICA              int32  = 2
 	MQNHAROLE_UNKNOWN              int32  = 0
+	MQNHASTATUS_CHECKING           int32  = 2
+	MQNHASTATUS_DISCONNECTED       int32  = 6
+	MQNHASTATUS_DISK_FULL          int32  = 5
+	MQNHASTATUS_NORMAL             int32  = 1
+	MQNHASTATUS_PARTITIONED        int32  = 7
+	MQNHASTATUS_REBASING           int32  = 4
+	MQNHASTATUS_SYNCHRONIZING      int32  = 3
+	MQNHASTATUS_UNKNOWN            int32  = 0
+	MQNHATYPE_ALL                  int32  = -1
+	MQNHATYPE_GROUP                int32  = 1
+	MQNHATYPE_INSTANCE             int32  = 0
 	MQNPMS_FAST                    int32  = 2
 	MQNPMS_NORMAL                  int32  = 1
 	MQNPM_CLASS_HIGH               int32  = 10
@@ -5044,6 +5087,7 @@ const (
 	MQ_INSTALLATION_NAME_LENGTH    int32  = 16
 	MQ_INSTALLATION_PATH_LENGTH    int32  = 256
 	MQ_IP_ADDRESS_LENGTH           int32  = 48
+	MQ_ISOTIME_LENGTH              int32  = 64
 	MQ_JAAS_CONFIG_LENGTH          int32  = 1024
 	MQ_LDAP_BASE_DN_LENGTH         int32  = 1024
 	MQ_LDAP_CLASS_LENGTH           int32  = 128
@@ -5078,6 +5122,7 @@ const (
 	MQ_MSG_TOKEN_LENGTH            int32  = 16
 	MQ_NAMELIST_DESC_LENGTH        int32  = 64
 	MQ_NAMELIST_NAME_LENGTH        int32  = 48
+	MQ_NHA_GROUP_NAME_LENGTH       int32  = 48
 	MQ_NHA_INSTANCE_NAME_LENGTH    int32  = 48
 	MQ_NHA_REPL_ADDRESS_LENGTH     int32  = 264
 	MQ_OBJECT_INSTANCE_ID_LENGTH   int32  = 24

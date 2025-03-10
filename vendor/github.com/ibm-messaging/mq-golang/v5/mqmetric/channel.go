@@ -513,8 +513,10 @@ func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 	}
 
 	now := time.Now()
-	diff := statusTimeDiff(now, lastMsgDate, lastMsgTime)
-	st.Attributes[ATTR_CHL_SINCE_MSG].Values[key] = newStatusValueInt64(diff)
+	if lastMsgTime != "" {
+		diff := statusTimeDiff(now, lastMsgDate, lastMsgTime)
+		st.Attributes[ATTR_CHL_SINCE_MSG].Values[key] = newStatusValueInt64(diff)
+	}
 
 	// Bump the number of active instances of the channel, treating it a bit like a
 	// regular config attribute.
