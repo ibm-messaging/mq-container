@@ -35,8 +35,11 @@ import (
 var (
 	getBuffer = make([]byte, 32768)
 	// if true, then use qmgr ccsid to convert resource metric publications. if false, always assume 1208
-	convertSubs = false
+	convertToAlternateCP = false
+	transNeeded          = true
 )
+
+const ALTERNATE_CCSID = 1208
 
 type ConnectionConfig struct {
 	ClientMode    bool
@@ -92,7 +95,7 @@ type MQTopicDescriptor struct {
 
 func init() {
 	if os.Getenv("IBMMQ_CONVERT_SUBS") != "" {
-		convertSubs = true
+		convertToAlternateCP = true
 	}
 }
 
@@ -208,7 +211,8 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 				ibmmq.MQIA_COMMAND_LEVEL,
 				ibmmq.MQIA_PERFORMANCE_EVENT,
 				ibmmq.MQIA_MAX_HANDLES,
-				ibmmq.MQIA_PLATFORM}
+				ibmmq.MQIA_PLATFORM,
+				ibmmq.MQCA_VERSION}
 
 			v, err = ci.si.qMgrObject.Inq(selectors)
 			if err == nil {
@@ -216,6 +220,8 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 				ci.si.platform = v[ibmmq.MQIA_PLATFORM].(int32)
 				ci.si.commandLevel = v[ibmmq.MQIA_COMMAND_LEVEL].(int32)
 				ci.si.maxHandles = v[ibmmq.MQIA_MAX_HANDLES].(int32)
+				ci.si.version = v[ibmmq.MQCA_VERSION].(string)
+
 				if ci.si.platform == ibmmq.MQPL_ZOS {
 					ci.usePublications = false
 					ci.useResetQStats = cc.UseResetQStats
@@ -385,19 +391,19 @@ func getMessageWithHObj(wait bool, hObj ibmmq.MQObject) ([]byte, error) {
 	traceEntry("getMessageWithHObj")
 	getmqmd := ibmmq.NewMQMD()
 
-	// This is called for the resource metrics and metadata only, which
-	// is always put with codepage 1208. Even if a qmgr cannot convert to
-	// that CCSID. So we explicitly ask for that instead of using the default
-	// qmgr codepage. The fact that publications are fixed to use 1208 does not
-	// appear to be documented, but it does seem to be true.
-	if !convertSubs {
-		getmqmd.CodedCharSetId = 1208
+	if convertToAlternateCP {
+		getmqmd.CodedCharSetId = ALTERNATE_CCSID
 	}
 
 	gmo := ibmmq.NewMQGMO()
-	gmo.Options = ibmmq.MQGMO_NO_SYNCPOINT
-	gmo.Options |= ibmmq.MQGMO_FAIL_IF_QUIESCING
+	gmo.Options = ibmmq.MQGMO_FAIL_IF_QUIESCING
 	gmo.Options |= ibmmq.MQGMO_CONVERT
+
+	if transNeeded {
+		gmo.Options |= ibmmq.MQGMO_SYNCPOINT
+	} else {
+		gmo.Options |= ibmmq.MQGMO_NO_SYNCPOINT
+	}
 
 	gmo.MatchOptions = ibmmq.MQMO_NONE
 
@@ -407,6 +413,26 @@ func getMessageWithHObj(wait bool, hObj ibmmq.MQObject) ([]byte, error) {
 	}
 
 	datalen, err = hObj.Get(getmqmd, gmo, getBuffer)
+
+	// If the GET failed with a conversion error, try again with the alternate CCSID
+	// Backout the first attempt so we retry the same message
+	if err != nil && err.(*ibmmq.MQReturn).MQRC == ibmmq.MQRC_NOT_CONVERTED {
+		if transNeeded {
+			hObj.GetHConn().Back()
+		}
+		convertToAlternateCP = true
+		getmqmd.CodedCharSetId = ALTERNATE_CCSID
+		datalen, err = hObj.Get(getmqmd, gmo, getBuffer)
+	}
+
+	if transNeeded {
+		hObj.GetHConn().Cmit()
+	}
+	// By the time we've been through here once successfully, we should know
+	// whether we need to continue with the transactional version
+	if err == nil {
+		transNeeded = false
+	}
 
 	traceExitErr("getMessageWithHObj", 0, err)
 

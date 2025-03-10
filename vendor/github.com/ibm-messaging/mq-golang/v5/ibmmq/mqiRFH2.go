@@ -149,7 +149,9 @@ func getHeaderRFH2(md *MQMD, buf []byte) (*MQRFH2, int, error) {
 func (hdr *MQRFH2) Get(buf []byte) []string {
 	var l int32
 	props := make([]string, 0)
-	r := bytes.NewBuffer(buf[MQRFH_STRUC_LENGTH_FIXED_2:])
+
+	r := bytes.NewBuffer(buf[MQRFH_STRUC_LENGTH_FIXED_2:hdr.StrucLength])
+	// logTrace("RFH2 Get: Input buffer length %d Variable length %d", len(buf), r.Len())
 
 	propsLen := r.Len() // binary.Read modifies the buffer length so get it at the start of the loop
 	for offset := 0; offset < propsLen; {
@@ -158,6 +160,7 @@ func (hdr *MQRFH2) Get(buf []byte) []string {
 		s := readStringFromFixedBuffer(r, l)
 		props = append(props, s)
 		offset += int(l)
+		// logTrace("RFH2 Get:  propsLen=%d stringLength=%d offset=%d ", propsLen, l, offset)
 	}
 	return props
 }

@@ -70,6 +70,12 @@ PCFParameter is a structure containing the data associated with
 various types of PCF element. Use the Type field to decide which
 of the data fields is relevant.
 */
+type PCFFilter struct {
+	Type        int32
+	Parameter   int32
+	Operator    int32
+	FilterValue interface{}
+}
 type PCFParameter struct {
 	Type           int32
 	Parameter      int32
@@ -78,6 +84,7 @@ type PCFParameter struct {
 	CodedCharSetId int32
 	ParameterCount int32
 	GroupList      []*PCFParameter
+	Filter         PCFFilter
 	strucLength    int32 // Do not need to expose these
 	stringLength   int32 // lengths
 }
@@ -425,6 +432,33 @@ func ReadPCFParameter(buf []byte) (*PCFParameter, int) {
 		binary.Read(p, endian, &pcfParm.stringLength)
 		s := hex.EncodeToString(buf[offset : pcfParm.stringLength+offset])
 		pcfParm.String = append(pcfParm.String, s)
+		p.Next(int(pcfParm.strucLength - offset))
+
+	case C.MQCFT_INTEGER_FILTER:
+		binary.Read(p, endian, &pcfParm.Filter.Parameter)
+		binary.Read(p, endian, &pcfParm.Filter.Operator)
+		binary.Read(p, endian, &i32)
+		pcfParm.Filter.FilterValue = int64(i32)
+
+	case C.MQCFT_STRING_FILTER:
+		offset := int32(C.MQCFSF_STRUC_LENGTH_FIXED)
+
+		binary.Read(p, endian, &pcfParm.Filter.Parameter)
+		binary.Read(p, endian, &pcfParm.Filter.Operator)
+		binary.Read(p, endian, &pcfParm.CodedCharSetId)
+		binary.Read(p, endian, &pcfParm.stringLength)
+		s := string(buf[offset : pcfParm.stringLength+offset])
+		s = trimToNull(s)
+		pcfParm.Filter.FilterValue = s
+		p.Next(int(pcfParm.strucLength - offset))
+
+	case C.MQCFT_BYTE_STRING_FILTER:
+		offset := int32(C.MQCFBF_STRUC_LENGTH_FIXED)
+		binary.Read(p, endian, &pcfParm.Filter.Parameter)
+		binary.Read(p, endian, &pcfParm.Filter.Operator)
+		binary.Read(p, endian, &pcfParm.stringLength)
+		s := hex.EncodeToString(buf[offset : pcfParm.stringLength+offset])
+		pcfParm.Filter.FilterValue = s
 		p.Next(int(pcfParm.strucLength - offset))
 
 	default:

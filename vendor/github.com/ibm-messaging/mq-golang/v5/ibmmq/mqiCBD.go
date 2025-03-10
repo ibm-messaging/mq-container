@@ -64,7 +64,10 @@ func copyCBDtoC(mqcbd *C.MQCBD, gocbd *MQCBD) {
 	// CallbackArea is always set to NULL here. The user's values are saved/restored elsewhere
 	mqcbd.CallbackArea = (C.MQPTR)(C.NULL)
 
-	setMQIString((*C.char)(&mqcbd.CallbackName[0]), gocbd.CallbackName, 128) // There's no MQI constant for the length
+	// This is never actually used because it's the (XOR) alternative to the CallbackFunction. Ignore
+	// anything set by the application because it would give an error. We can't hide the
+	// field now for compatibility reasons, just in case. But it should be marked as deprecated.
+	setMQIString((*C.char)(&mqcbd.CallbackName[0]), "", 128) // There's no MQI constant for the length
 
 	mqcbd.MaxMsgLength = C.MQLONG(gocbd.MaxMsgLength)
 

@@ -45,13 +45,18 @@ Class: DISK
     Log - bytes occupied by extents waiting to be archived
     Log - bytes in use
     Log - bytes max
+    Log - quorum log sequence number
+    Log file system - free space
     Log file system - bytes in use
     Log file system - bytes max
+    Log - disk written log sequence number
     Log - write latency
     Log - logical bytes written
     Log - bytes required for media recovery
     Log - physical bytes written
     Log - bytes occupied by reusable extents
+    Log - slowest write since restart
+    Log - timestamp of slowest write
     Log - current primary space in use
     Log - workload primary space utilization
     Log - write size
@@ -70,16 +75,40 @@ Class: DISK
     MQ trace file system - bytes in use
 
 Class: NHAREPLICA
+  Type: RECOVERY
+    Backlog average bytes
+    Backlog bytes
+    Compressed log bytes sent
+    Log data average compression time
+    Log bytes decompressed
+    Log data average decompression time
+    Average network round trip time
+    Rebase count
+    Recovery log sequence number
+    Log bytes sent
   Type: REPLICATION
     Log write average acknowledgement latency
+    Acknowledged log sequence number
     Log write average acknowledgement size
     Backlog average bytes
     Backlog bytes
     Catch-up log bytes sent
     Catch-up compressed log bytes sent
+    Catch-up log data average compression time
+    Catch-up log bytes decompressed
+    Catch-up log data average decompression time
     Catch-up uncompressed log bytes sent
+    MQ FDC file count
+    Log file system - free space
+    Log file system - bytes in use
+    Average network round trip time
+    Queue Manager file system - free space
+    Queue Manager file system - bytes in use
     Synchronous log bytes sent
     Synchronous compressed log bytes sent
+    Synchronous log data average compression time
+    Synchronous log bytes decompressed
+    Synchronous log data average decompression time
     Synchronous uncompressed log bytes sent
 
 Class: STATMQI
@@ -156,8 +185,23 @@ Class: STATMQI
     Commit count
 
 Class: STATQ
+  Type: EXTENDED
+    correlid mismatch long count
+    correlid mismatch short count
+    intran get skipped count
+    intran put skipped count
+    load msg dtl count
+    msg examine count
+    msg search count
+    msgid mismatch count
+    msg not found count
+    selection mismatch count
   Type: GENERAL
     messages expired
+    open browse count
+    open input count
+    open output count
+    open publish count
     Queue depth
     queue purged count
     average queue time
@@ -316,4 +360,4 @@ Class: bufferpool/pageset
   ATTR_PS_TOTAL                   : pages_total
   ATTR_PS_UNUSED                  : pages_unused
 
-This page was automatically generated from the source tree on 2024-10-12 08:06:38
+This page was automatically generated from the source tree on 2025-02-22 07:16:25

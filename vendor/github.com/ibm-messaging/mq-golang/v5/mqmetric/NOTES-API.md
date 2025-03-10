@@ -68,7 +68,8 @@ serialisation for now, so I doubt that you could process metrics from several qm
 threads. The fundamental new API in the package is `InitConnectionKey`. Once you've done that, then
 before calling other APIs in the package such as DiscoverAndSubscribe, you call `SetConnectionKey` to get the
 appropriate connection in place. Calling that function another time would let you switch to a
-different connection.
+different connection. Apart from anything else, the various `map` variables might need to be made
+thread-safe (either by locking or moving to a sync.Map type)
 
 I have thoughts on how the APIs can be extended or modified (breaking) to permit parallel collection,
 but this first phase gets the core data structures moved into better places. And it's not clear how valuable
