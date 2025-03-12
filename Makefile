@@ -156,6 +156,11 @@ else
 	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)
 endif
 
+ifeq ($(shell [ ! -z $(TRAVIS) ] && echo "$(TRAVIS_BRANCH)" | grep -q '^ifix-' && echo true), true)
+	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)/$(MQ_DELIVERY_REGISTRY_NAMESPACE_IFIX)
+	MQ_DELIVERY_REGISTRY_NAMESPACE=$(MQ_DELIVERY_REGISTRY_NAMESPACE_IFIX)
+endif
+
 # image tagging
 
 ifneq "$(RELEASE)" "$(EMPTY)"
@@ -179,6 +184,10 @@ endif
 
 ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" = "false" ] && [ "$(TRAVIS_BRANCH)" = "$(MAIN_BRANCH)" ] && echo true), true)
 	MQ_MANIFEST_TAG_SUFFIX=.$(TIMESTAMPFLAT).$(GIT_COMMIT)
+endif
+
+ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" = "false" ] && echo "$(TRAVIS_BRANCH)" | grep -q '^ifix-' && echo true), true)
+	MQ_MANIFEST_TAG_SUFFIX=-$(APAR_NUMBER)-$(FIX_NUMBER).$(TIMESTAMPFLAT).$(GIT_COMMIT)
 endif
 
 # Make sure we don't use VOLUME_MOUNT_OPTIONS for Podman on macOS
@@ -213,6 +222,12 @@ MQ_IMAGE_DEVSERVER_PPC64LE=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEVSERVE
 MQ_IMAGE_ADVANCEDSERVER_AMD64=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_AMD64_TAG)
 MQ_IMAGE_ADVANCEDSERVER_S390X=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_S390X_TAG)
 MQ_IMAGE_ADVANCEDSERVER_PPC64LE=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_PPC64LE_TAG)
+
+MQ_IMAGE_DEVSERVER_MANIFEST_IFIX=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEVSERVER):$(MQ_MANIFEST_TAG)
+MQ_IMAGE_ADVANCESERVER_MANIFEST_IFIX=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_MANIFEST_TAG)
+
+PROJECT_DIR := $(shell pwd)
+BUILD_MANIFEST_FILE := $(PROJECT_DIR)/latest-build-info/build-manifest.yaml
 
 ###############################################################################
 # Build targets
@@ -503,6 +518,28 @@ endif
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_ADVANCEDSERVER_MANIFEST)**"$(END)))
 	echo $(shell ./travis-build-scripts/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)" $(END))
 
+.PHONY: build-manifest
+build-manifest:	build-skopeo-container
+	$(eval MQ_IMAGE_DEVSERVER_AMD64_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_AMD64) | jq -r .Digest))
+	$(eval MQ_IMAGE_DEVSERVER_S390X_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_S390X) | jq -r .Digest))
+	$(eval MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_PPC64LE) | jq -r .Digest))
+	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_AMD64) has a digest of $(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)**"$(END)))
+	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_S390X) has a digest of $(MQ_IMAGE_DEVSERVER_S390X_DIGEST)**"$(END)))
+	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_PPC64LE) has a digest of $(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)**"$(END)))
+	
+	$(eval MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_AMD64) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_S390X) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) | jq -r .Digest))
+	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_AMD64) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST)**"$(END)))
+	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_S390X) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)**"$(END)))
+	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)**"$(END)))
+
+	$(eval MQ_IMAGE_DEVSERVER_MANIFEST_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_MANIFEST_IFIX) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCESERVER_MANIFEST_IFIX) | jq -r .Digest))
+	$(info $(shell printf "** Determined the built has a advanceserver digest for ifix of $(MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST)**"$(END)))
+	$(info $(shell printf "** Determined the built has a devserver digest for ifix  of $(MQ_IMAGE_DEVSERVER_MANIFEST_DIGEST)**"$(END)))
+	@./travis-build-scripts/create-build-manifest.sh -f $(BUILD_MANIFEST_FILE) -o $(MQ_MANIFEST_TAG) -t $(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)  -u ${MQ_IMAGE_DEVSERVER_S390X_DIGEST} -p ${MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST} -r ${MQ_IMAGE_DEVSERVER_MANIFEST_DIGEST} -n $(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) -a ${MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST} -m ${MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST} -s ${MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST}
+
 .PHONY: build-skopeo-container
 build-skopeo-container:
 	$(COMMAND) images | grep -q "skopeo"; if [ $$? != 0 ]; then $(COMMAND) build -t skopeo:latest ./docker-builds/skopeo/; fi
@@ -587,3 +624,18 @@ endif
 ifneq (,$(findstring podman,$(COMMAND)))
 	@test "$(word 1,$(subst ., ,$(PODMAN_VERSION)))" -ge "1" || (echo "Error: Podman version 1.0 or greater is required" && exit 1)
 endif
+
+.PHONY: commit-build-manifest
+commit-build-manifest:
+	@echo "The value of CURRENT_BRANCH is: $(TRAVIS_BRANCH)"
+	@echo "The value of BUILD_MANIFEST_FILE is: $(BUILD_MANIFEST_FILE)"
+	echo "Checking git status..."
+	git status
+	echo "Staging changes..."
+	git add $(BUILD_MANIFEST_FILE)
+	echo "Committing changes..."
+	git commit -m "[ci skip]: Commit the digests for ifix and the build-manifest back to the branch"
+	echo "Pulling latest changes from remote..."
+	git pull --rebase origin $(TRAVIS_BRANCH)
+	echo "Pushing changes to remote..."
+	git push origin HEAD:$(TRAVIS_BRANCH)

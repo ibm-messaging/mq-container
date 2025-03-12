@@ -37,7 +37,7 @@ jobs:
     - script: bash -e travis-build-scripts/trigger-release-checks.sh
   include:
     - stage: basic-build
-      if: branch != v9.4.0 AND tag IS blank
+      if: branch != v9.4.0 AND tag IS blank AND branch !~ /^ifix-/
       name: "Basic AMD64 build"
       os: linux
       env:
@@ -49,7 +49,7 @@ jobs:
     # CD Build
 
     - stage: global-tag
-      if: branch = v9.4.0 AND type != pull_request OR tag =~ ^release-candidate*
+      if: (branch = v9.4.0 OR branch =~ ^ifix-*) AND type != pull_request OR tag =~ ^release-candidate*
       name: "Generate Global Tag"
       os: linux
       script: bash -e travis-build-scripts/global-tag.sh
@@ -102,6 +102,73 @@ jobs:
       if: branch = v9.4.0 AND type != pull_request OR tag =~ ^release-candidate*
       name: "Trigger release-checks build"
       script: bash -e travis-build-scripts/trigger-release-checks.sh
+    
+    # ifix build started
+    - stage: Check-upload-ifix-driver
+      if: branch =~ ^ifix-
+      name: "Check and upload ifix driver"
+      os: linux
+      script:
+      - bash travis-build-scripts/travis-log-keepalive.sh &
+      - bash -e travis-build-scripts/ifix-base-mq-driver-uploader.sh
+    - stage: build-ifix
+      if: branch =~ ^ifix-
+      name: "Multi-Arch AMD64 build for ifix"
+      os: linux
+      env:
+        - BUILD_ALL=true
+        - MQ_ARCHIVE_REPOSITORY=${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}/IBM_MQ_ADVANCED_${MQ_VERSION}_AMD64.tar.gz
+        - MQ_ARCHIVE_REPOSITORY_DEV=${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}/IBM_MQ_ADVANCED_DEV_${MQ_VERSION}_AMD64.tar.gz
+      script:
+      - bash travis-build-scripts/travis-log-keepalive.sh &
+      - bash -e travis-build-scripts/run.sh
+    - stage: build-ifix
+      if: branch =~ ^ifix-
+      name: "Multi-Arch S390X build for fix"
+      os: linux
+      arch: s390x
+      group: vms390
+      env:
+        - BUILD_ALL=true
+        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - MQ_ARCHIVE_REPOSITORY=${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}/IBM_MQ_ADVANCED_${MQ_VERSION}_S390X.tar.gz
+        - MQ_ARCHIVE_REPOSITORY_DEV=${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}/IBM_MQ_ADVANCED_DEV_${MQ_VERSION}_S390X.tar.gz
+      script:
+      - bash travis-build-scripts/travis-log-keepalive.sh &
+      - bash -e travis-build-scripts/run.sh
+    - stage: build-ifix
+      if: branch =~ ^ifix-
+      name: "Multi-Arch PPC64LE build for ifix"
+      os: linux
+      arch: ppc64le
+      group: power-focal
+      env:
+        - BUILD_ALL=true
+        - TEST_OPTS_DOCKER="-run TestGoldenPathWithMetrics"
+        - MQ_ARCHIVE_REPOSITORY=${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}/IBM_MQ_ADVANCED_${MQ_VERSION}_PPCLE.tar.gz
+        - MQ_ARCHIVE_REPOSITORY_DEV=${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}/IBM_MQ_ADVANCED_DEV_${MQ_VERSION}_PPCLE.tar.gz
+      script:
+      - bash travis-build-scripts/travis-log-keepalive.sh &
+      - bash -e travis-build-scripts/run.sh
+    - stage: push-manifest-ifix
+      if: branch =~ ^ifix-*
+      name: "Push Manifest-list to registry"
+      env:
+        - PUSH_MANIFEST_ONLY=true
+      script: bash -e travis-build-scripts/run.sh
+    - stage: build-manifest-ifix
+      if: branch =~ ^ifix-
+      name: "Generate build manifest file"
+      env:
+        - BUILD_MANIFEST=true
+      script: bash -e travis-build-scripts/run.sh
+    - stage: Sync-build-manifest-ifix
+      if: branch =~ ^ifix-
+      name: "Sync build manifest with stage branch"
+      os: linux
+      script: 
+      - bash -e travis-build-scripts/manifest-sync.sh
+    
 
 before_install:
   - make go-install

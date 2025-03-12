@@ -40,12 +40,13 @@ get_archive_level() {
   export MQ_ARCHIVE_LEVEL
 }
 
-if [ "$TRAVIS_BRANCH" = "$MAIN_BRANCH" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+if [[ ("$TRAVIS_BRANCH" == "$MAIN_BRANCH" && "$TRAVIS_PULL_REQUEST" = "false") || "$TRAVIS_BRANCH" == ifix* ]]; then
   echo 'Retrieving global tagcache' && echo -en 'travis_fold:start:tag-cache-retrieve\\r'
   ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --check
   ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --get
   echo -en 'travis_fold:end:tag-cache-retrieve\\r'
 fi
+
 if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
   if [ "$LTS" != true ] ; then
     echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
