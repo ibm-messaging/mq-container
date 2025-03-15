@@ -1428,7 +1428,7 @@ func TestCustomPrimaryLogFiles(t *testing.T) {
 	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
-	testPrimaryLogFiles(t, cli, id, "qmlfp", "8192")
+	testPrimaryLogFiles(t, cli, id, "qmlfp", "16")
 }
 
 // TestCustomSecondaryLogFiles starts a qmgr with a custom number of LogSecondaryFiles set.
@@ -1444,7 +1444,7 @@ func TestCustomSecondaryLogFiles(t *testing.T) {
 	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
-	testSecondaryLogFiles(t, cli, id, "qmlfp", "8192")
+	testSecondaryLogFiles(t, cli, id, "qmlfp", "8")
 }
 
 // TestLoggingConsoleSource tests default behavior which is
