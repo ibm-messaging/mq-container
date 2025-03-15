@@ -974,6 +974,26 @@ func testLogFilePages(t *testing.T, cli ce.ContainerInterface, id string, qmName
 	}
 }
 
+// testPrimaryLogFiles validates that the specified number of LogPrimaryFiles is present in the qm.ini file.
+func testPrimaryLogFiles(t *testing.T, cli ce.ContainerInterface, id string, qmName string, expectedPrimaryLogFiles string) {
+	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/" + qmName + "/qm.ini")
+	_, iniContent := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
+
+	if !strings.Contains(iniContent, "LogPrimaryFiles="+expectedPrimaryLogFiles) {
+		t.Errorf("Expected qm.ini to contain LogPrimaryFiles="+expectedPrimaryLogFiles+"; got qm.ini \"%v\"", iniContent)
+	}
+}
+
+// testSecondaryLogFiles validates that the specified number of LogSecondaryFiles is present in the qm.ini file.
+func testSecondaryLogFiles(t *testing.T, cli ce.ContainerInterface, id string, qmName string, expectedSecondaryLogFiles string) {
+	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/" + qmName + "/qm.ini")
+	_, iniContent := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
+
+	if !strings.Contains(iniContent, "LogSecondaryFiles="+expectedSecondaryLogFiles) {
+		t.Errorf("Expected qm.ini to contain LogSecondaryFiles="+expectedSecondaryLogFiles+"; got qm.ini \"%v\"", iniContent)
+	}
+}
+
 // waitForMessageInLog will check for a particular message with wait
 func waitForMessageInLog(t *testing.T, cli ce.ContainerInterface, id string, expectedMessageId string) (string, error) {
 	var jsonLogs string
