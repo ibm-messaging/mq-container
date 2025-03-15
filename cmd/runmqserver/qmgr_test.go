@@ -208,7 +208,7 @@ func Test_validateSecondaryLogFileSetting(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			validate := validatePrimaryLogFileSetting(iniFileBytes, tt.args.primaryLogFilesValue)
+			validate := validateSecondaryLogFileSetting(iniFileBytes, tt.args.secondaryLogFilesValue)
 			if validate != tt.args.isValid {
 				t.Fatalf("Expected ini file validation output to be %v got %v", tt.args.isValid, validate)
 			}
