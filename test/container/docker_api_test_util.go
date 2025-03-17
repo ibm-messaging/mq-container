@@ -600,7 +600,7 @@ func startContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 func stopContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 	t.Logf("Stopping container: %v", ID)
 	timeout := 10 * time.Second
-	err := cli.ContainerStop(ID, &timeout) //Duration(20)*time.Second)
+	err := cli.ContainerStop(ID, &timeout)
 	if err != nil {
 		// Just log the error and continue
 		t.Log(err)
@@ -705,9 +705,9 @@ func waitForWebConsoleReady(t *testing.T, cli ce.ContainerInterface, ID string) 
 	for {
 		select {
 		case <-time.After(1 * time.Second):
-			rc, _ := execContainer(t, cli, ID, "", []string{"dspmqweb"})
+			rc, out := execContainer(t, cli, ID, "", []string{"dspmqweb"})
 
-			t.Logf("value of rc = %v", rc)
+			t.Logf("value of rc = %v, output: %v", rc, out)
 			if rc == 0 {
 				t.Log("MQ Web console is ready")
 				return
@@ -900,14 +900,16 @@ func countTarLines(t *testing.T, b []byte) int {
 	return total
 }
 
-// scanForExcludedEntries scans for default excluded messages
-func scanForExcludedEntries(msg string) bool {
-	if strings.Contains(msg, "AMQ5041I") || strings.Contains(msg, "AMQ5052I") ||
-		strings.Contains(msg, "AMQ5051I") || strings.Contains(msg, "AMQ5037I") ||
-		strings.Contains(msg, "AMQ5975I") {
-		return true
+// scanForExcludedEntries scans for default excluded messages. Returns the message code if found.
+// this checks for the default excluded messages MQ_LOGGING_CONSOLE_EXCLUDE_ID : https://www.ibm.com/docs/en/ibm-mq/9.4?topic=reference-mq-advanced-container-image
+func scanForExcludedEntries(msg string) string {
+	excludedEntries := []string{"AMQ5041I", "AMQ5052I", "AMQ5051I", "AMQ5037I", "AMQ5975I"}
+	for _, ee := range excludedEntries {
+		if strings.Contains(msg, ee) {
+			return ee
+		}
 	}
-	return false
+	return ""
 }
 
 // checkLogForValidJSON checks if the message is in Json format
@@ -976,36 +978,34 @@ func testLogFilePages(t *testing.T, cli ce.ContainerInterface, id string, qmName
 
 // waitForMessageInLog will check for a particular message with wait
 func waitForMessageInLog(t *testing.T, cli ce.ContainerInterface, id string, expectedMessageId string) (string, error) {
+	timeout := time.NewTimer(120 * time.Second)
 	var jsonLogs string
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
 	for {
 		select {
-		case <-time.After(1 * time.Second):
+		case <-timeout.C:
+			return "", fmt.Errorf("timeout waiting for expected message ID %q to be logged", expectedMessageId)
+		default:
 			jsonLogs = inspectLogs(t, cli, id)
 			if strings.Contains(jsonLogs, expectedMessageId) {
 				return jsonLogs, nil
 			}
-		case <-ctx.Done():
-			return "", fmt.Errorf("expected message Id %s was not logged", expectedMessageId)
 		}
 	}
 }
 
 // waitForMessageCountInLog will check for a particular message with wait and must occur exact number of times in log as specified by count
 func waitForMessageCountInLog(t *testing.T, cli ce.ContainerInterface, id string, expectedMessageId string, count int) (string, error) {
+	timeout := time.NewTimer(120 * time.Second)
 	var jsonLogs string
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
 	for {
 		select {
-		case <-time.After(1 * time.Second):
+		case <-timeout.C:
+			return "", fmt.Errorf("timeout waiting for expected message ID %q to be logged %d times", expectedMessageId, count)
+		default:
 			jsonLogs = inspectLogs(t, cli, id)
-			if strings.Contains(jsonLogs, expectedMessageId) && strings.Count(jsonLogs, expectedMessageId) == count {
+			if strings.Count(jsonLogs, expectedMessageId) == count {
 				return jsonLogs, nil
 			}
-		case <-ctx.Done():
-			return "", fmt.Errorf("expected message Id %s was not logged or it was not logged %v times", expectedMessageId, count)
 		}
 	}
 }
