@@ -46,7 +46,7 @@ func TestDevGoldenPath(t *testing.T) {
 		},
 	}
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443, 1414})
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	waitForWebReady(t, cli, id, insecureTLSConfig)
 	t.Run("JMS", func(t *testing.T) {
@@ -111,7 +111,7 @@ func TestDevSecure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
 	cert := filepath.Join(tlsDir(t, true), "server.crt")
@@ -146,7 +146,7 @@ func TestDevWebDisabled(t *testing.T) {
 		},
 	}
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{1414})
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	t.Run("Web", func(t *testing.T) {
 		_, dspmqweb := cli.ExecContainer(id, "", []string{"dspmqweb"})
@@ -176,7 +176,7 @@ func TestDevConfigDisabled(t *testing.T) {
 		},
 	}
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	rc, _ := execContainer(t, cli, id, "", []string{"bash", "-c", "echo 'display qlocal(DEV*)' | runmqsc"})
 	if rc == 0 {
@@ -200,7 +200,7 @@ func TestSSLKEYRBlank(t *testing.T) {
 		},
 	}
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443})
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	// execute runmqsc to display qmgr SSLKEYR and CERTLABL attibutes.
@@ -256,7 +256,7 @@ func TestSSLKEYRWithSuppliedKeyAndCert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
 
@@ -323,7 +323,7 @@ func TestSSLKEYRWithCACert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
 
@@ -386,7 +386,7 @@ func TestSSLFIPSNO(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
 
@@ -447,7 +447,7 @@ func TestSSLFIPSYES(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
 
@@ -527,7 +527,7 @@ func TestDevSecureFIPSTrueWeb(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
@@ -598,7 +598,7 @@ func TestDevSecureFalseFIPSWeb(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
 
@@ -649,7 +649,7 @@ func TestSSLFIPSTrueNoCerts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
 
@@ -697,7 +697,7 @@ func TestSSLFIPSInvalidValue(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
 
@@ -746,7 +746,7 @@ func TestSSLFIPSBadCerts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 	startContainer(t, cli, ID)
 
 	rc := waitForContainer(t, cli, ID, 20*time.Second)
@@ -784,7 +784,7 @@ func TestDevNoDefCreds(t *testing.T) {
 		},
 	}
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{9443, 1414})
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	waitForWebReady(t, cli, id, insecureTLSConfig)
 	// Expect a 401 Unauthorized HTTP Response
@@ -829,7 +829,7 @@ func testDevNoDefaultCredsUtil(t *testing.T, mqsimpleauthEnvs []string, htpwdInL
 	containerConfig.Env = append(containerConfig.Env, mqsimpleauthEnvs...)
 
 	id := runContainerWithPorts(t, cli, &containerConfig, []int{1414})
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	defer stopContainer(t, cli, id)
 
@@ -899,7 +899,7 @@ func TestRORFSDevNoAppPassword(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	startContainer(t, cli, id)
 
 	waitForReady(t, cli, id)

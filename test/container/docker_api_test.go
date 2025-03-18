@@ -38,7 +38,7 @@ func TestLicenseNotSet(t *testing.T) {
 
 	containerConfig := ce.ContainerConfig{}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	rc := waitForContainer(t, cli, id, 30*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
@@ -57,7 +57,7 @@ func TestLicenseView(t *testing.T) {
 		Env: []string{"LICENSE=view"},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	rc := waitForContainer(t, cli, id, 30*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
@@ -93,16 +93,14 @@ func goldenPath(t *testing.T, metrics bool) {
 	}
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
-	//By default AMQ5041I,AMQ5052I,AMQ5051I,AMQ5037I,AMQ5975I are excluded
 	jsonLogs := inspectLogs(t, cli, id)
 
-	isMessageFound := scanForExcludedEntries(jsonLogs)
-
-	if isMessageFound == true {
-		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	// Check for default excluded messages
+	if code := scanForExcludedEntries(jsonLogs); code != "" {
+		t.Errorf("Expected to exclude messageId by default; but messageId %q is present", code)
 	}
 
 	t.Run("Validate Default LogFilePages", func(t *testing.T) {
@@ -120,7 +118,7 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 		Hostname: hostName,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	_, out := execContainer(t, cli, id, "", []string{"dspmq"})
 	if !strings.Contains(out, search) {
@@ -185,14 +183,14 @@ func withVolume(t *testing.T, metric bool) {
 	waitForReady(t, cli, ID)
 
 	// Delete the first container
-	cleanContainer(t, cli, ID)
+	cleanContainer(t, cli, ID, false)
 
 	// Start a new container with the same volume
 	ID2, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID2)
+	defer cleanContainer(t, cli, ID2, false)
 	startContainer(t, cli, ID2)
 	waitForReady(t, cli, ID2)
 }
@@ -212,7 +210,7 @@ func TestWithSplitVolumesLogsData(t *testing.T) {
 	}
 
 	defer removeVolume(t, cli, qmVol)
-	defer cleanContainer(t, cli, qmID)
+	defer cleanContainer(t, cli, qmID, false)
 
 	waitForReady(t, cli, qmID)
 }
@@ -230,7 +228,7 @@ func TestWithSplitVolumesLogsOnly(t *testing.T) {
 	}
 
 	defer removeVolume(t, cli, qmVol)
-	defer cleanContainer(t, cli, qmID)
+	defer cleanContainer(t, cli, qmID, false)
 
 	waitForReady(t, cli, qmID)
 }
@@ -248,7 +246,7 @@ func TestWithSplitVolumesDataOnly(t *testing.T) {
 	}
 
 	defer removeVolume(t, cli, qmVol)
-	defer cleanContainer(t, cli, qmID)
+	defer cleanContainer(t, cli, qmID, false)
 
 	waitForReady(t, cli, qmID)
 }
@@ -263,7 +261,7 @@ func TestNoVolumeWithRestart(t *testing.T) {
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	stopContainer(t, cli, id)
 	startContainer(t, cli, id)
@@ -320,7 +318,7 @@ func TestVolumeRequiresRoot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, initCtrID)
+	defer cleanContainer(t, cli, initCtrID, false)
 	t.Logf("Init container ID=%v", initCtrID)
 	startContainer(t, cli, initCtrID)
 	rc = waitForContainer(t, cli, initCtrID, 30*time.Second)
@@ -336,7 +334,7 @@ func TestVolumeRequiresRoot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctrID)
+	defer cleanContainer(t, cli, ctrID, false)
 	t.Logf("Main container ID=%v", ctrID)
 	startContainer(t, cli, ctrID)
 	waitForReady(t, cli, ctrID)
@@ -364,7 +362,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	rc := waitForContainer(t, cli, id, 30*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
@@ -394,7 +392,7 @@ func TestStartQueueManagerFail(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	rc := waitForContainer(t, cli, id, 30*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
@@ -432,7 +430,7 @@ func TestVolumeUnmount(t *testing.T) {
 		t.Fatal(err)
 	}
 	startContainer(t, cli, ctrID)
-	defer cleanContainer(t, cli, ctrID)
+	defer cleanContainer(t, cli, ctrID, false)
 	waitForReady(t, cli, ctrID)
 	// Unmount the volume as root
 	rc, out := execContainer(t, cli, ctrID, "root", []string{"umount", "-l", "/mnt/mqm"})
@@ -461,7 +459,7 @@ func TestZombies(t *testing.T) {
 		ExposedPorts: []string{"1414/tcp"},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, true)
 	waitForReady(t, cli, id)
 	// Kill an MQ process with children.  After it is killed, its children
 	// will be adopted by PID 1, and should then be reaped when they die.
@@ -507,7 +505,7 @@ func TestMQSC(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	rc := -1
@@ -556,7 +554,7 @@ func TestLargeMQSC(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	rc := -1
@@ -633,7 +631,7 @@ func TestRedactValidMQSC(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	stopContainer(t, cli, id)
 	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
@@ -702,8 +700,8 @@ func TestRedactInvalidMQSC(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 30*time.Second)
+	defer cleanContainer(t, cli, id, false)
+	rc := waitForContainer(t, cli, id, 90*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -745,8 +743,8 @@ func TestInvalidMQSC(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
-	rc := waitForContainer(t, cli, id, 60*time.Second)
+	defer cleanContainer(t, cli, id, false)
+	rc := waitForContainer(t, cli, id, 90*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -776,7 +774,7 @@ func TestSimpleMQIniMerge(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
@@ -819,7 +817,7 @@ func TestMultipleIniMerge(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
@@ -883,7 +881,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 		t.Error("ERROR: The Files are not merged correctly")
 	}
 	// Delete the first container
-	cleanContainer(t, cli, ctr1ID)
+	cleanContainer(t, cli, ctr1ID, false)
 
 	var filesSecondContainer = []struct {
 		Name, Body string
@@ -910,7 +908,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr2ID)
+	defer cleanContainer(t, cli, ctr2ID, false)
 	startContainer(t, cli, ctr2ID)
 	waitForReady(t, cli, ctr2ID)
 
@@ -957,7 +955,7 @@ func TestReadiness(t *testing.T) {
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	queueCheckCommand := fmt.Sprintf("echo 'DISPLAY QLOCAL(test%v)' | runmqsc", numQueues)
 	_, mqsc := execContainer(t, cli, id, "", []string{"cat", "/etc/mqm/test.mqsc"})
 	t.Log(mqsc)
@@ -1014,7 +1012,7 @@ func TestErrorLogRotation(t *testing.T) {
 	}
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	dir := "/var/mqm/qmgrs/" + qmName + "/errors"
 	// Generate some content for the error logs, by trying to put messages under an unauthorized user
@@ -1088,7 +1086,7 @@ func jsonLogFormat(t *testing.T, metric bool) {
 	}
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	stopContainer(t, cli, id)
 	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
@@ -1120,7 +1118,7 @@ func TestMQJSONDisabled(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	// Stop the container (which could hang if runmqserver is still waiting for
 	// JSON logs to appear)
@@ -1142,7 +1140,7 @@ func TestCorrectLicense(t *testing.T) {
 		Env: []string{"LICENSE=accept"},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	rc, license := execContainer(t, cli, id, "", []string{"dspmqver", "-f", "8192", "-b"})
@@ -1165,7 +1163,7 @@ func TestVersioning(t *testing.T) {
 		Env: []string{"LICENSE=accept"},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	// Get whole logs and check versioning system
@@ -1286,7 +1284,7 @@ func TestTraceStrmqm(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	rc, _ := execContainer(t, cli, id, "", []string{"bash", "-c", "ls -A /var/mqm/trace | grep .TRC"})
@@ -1306,7 +1304,7 @@ func utilTestHealthCheck(t *testing.T, nonewpriv bool) {
 	hostConfig := getDefaultHostConfig(t, cli)
 	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, fmt.Sprintf("no-new-privileges:%v", nonewpriv))
 	id := runContainerWithHostConfig(t, cli, &containerConfig, hostConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	rc, out := execContainer(t, cli, id, "", []string{"chkmqhealthy"})
 	t.Log(out)
@@ -1344,7 +1342,7 @@ func utilTestStartedCheck(t *testing.T, nonewpriv bool) {
 	hostConfig := getDefaultHostConfig(t, cli)
 	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, fmt.Sprintf("no-new-privileges:%v", nonewpriv))
 	id := runContainerWithHostConfig(t, cli, &containerConfig, hostConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	rc, out := execContainer(t, cli, id, "", []string{"chkmqstarted"})
 	t.Log(out)
@@ -1381,7 +1379,7 @@ func TestEndMQMOpts(t *testing.T) {
 	}
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	killContainer(t, cli, id, "SIGTERM")
 	_, out := execContainer(t, cli, id, "", []string{"bash", "-c", "ps -ef | grep 'endmqm -w -r -tp 27'"})
@@ -1401,14 +1399,15 @@ func TestCustomLogFilePages(t *testing.T) {
 	}
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	testLogFilePages(t, cli, id, "qmlfp", "8192")
 }
 
-// TestLoggingConsoleSource tests default behavior which is
-// MQ_LOGGING_CONSOLE_SOURCE set to qmgr,web
+// TestLoggingConsoleSource tests the default behaviour where
+// MQ_LOGGING_CONSOLE_SOURCE = qmgr,web
+// Also checks for the default excluded entries that MQ_LOGGING_CONSOLE_EXCLUDE_ID defaults too
 func TestLoggingConsoleSource(t *testing.T) {
 
 	t.Parallel()
@@ -1423,24 +1422,26 @@ func TestLoggingConsoleSource(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
-	waitForReady(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
+	waitForWebConsoleReady(t, cli, id)
 
-	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "AMQ6206I")
-	if errJson != nil {
-		t.Errorf("%v", errJson)
+	// Check for qmgr logs in the container's stdout
+	// AMQ6206I is the 'command <insert> was issued' message (in this case we are looking for strmqm command)
+	_, err := waitForMessageInLog(t, cli, id, "AMQ6206I")
+	if err != nil {
+		t.Errorf("failed to find qmgr message 'AMQ6206I' in pod logs: %v", err)
 	}
 
-	//Check for web server logs existence in console logs since its visibility is default along with qmgr logs
-	jsonLogs, errJson = waitForMessageInLog(t, cli, id, "CWWKF0011I")
-	if errJson != nil {
-		t.Errorf("%v", errJson)
+	// Check for web server logs existence in console logs since its visibility is default along with qmgr logs
+	// CWWKF0011I is the code for the webconsole is ready
+	jsonLogs, err := waitForMessageInLog(t, cli, id, "CWWKF0011I")
+	if err != nil {
+		t.Errorf("failed to find web console message 'CWWKF0011I' in pod logs: %v", err)
 	}
 
-	isMessageFound := scanForExcludedEntries(jsonLogs)
-
-	if isMessageFound == true {
-		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	// Check for default excluded messages
+	if code := scanForExcludedEntries(jsonLogs); code != "" {
+		t.Errorf("Expected to exclude messageId by default; but messageId %q is present", code)
 	}
 
 	// Stop the container cleanly
@@ -1448,6 +1449,7 @@ func TestLoggingConsoleSource(t *testing.T) {
 }
 
 // TestOldBehaviorWebConsole sets LOG_FORMAT to json and verify logs are indeed in json format
+// Also checks for the default excluded entries that MQ_LOGGING_CONSOLE_EXCLUDE_ID defaults too
 func TestOldBehaviorWebConsole(t *testing.T) {
 
 	t.Parallel()
@@ -1460,14 +1462,12 @@ func TestOldBehaviorWebConsole(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 	jsonLogs := inspectLogs(t, cli, id)
 
-	isMessageFound := scanForExcludedEntries(jsonLogs)
-
-	if isMessageFound == true {
-		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	if code := scanForExcludedEntries(jsonLogs); code != "" {
+		t.Errorf("Expected to exclude messageId by default; but messageId %q is present", code)
 	}
 
 	if strings.Contains(jsonLogs, "Environment variable LOG_FORMAT is deprecated. Use MQ_LOGGING_CONSOLE_FORMAT instead.") {
@@ -1476,10 +1476,8 @@ func TestOldBehaviorWebConsole(t *testing.T) {
 		t.Errorf("Expected Message stating LOG_FORMAT is deprecated is not in the log")
 	}
 
-	isValidJSON := checkLogForValidJSON(jsonLogs)
-
-	if !isValidJSON {
-		t.Fatalf("Expected all log lines to be valid JSON.  Logs: %v ", jsonLogs)
+	if !checkLogForValidJSON(jsonLogs) {
+		t.Fatalf("Expected all log lines to be valid JSON. Logs: %v ", jsonLogs)
 	}
 
 	// Stop the container cleanly
@@ -1498,47 +1496,62 @@ func TestLoggingConsoleWithContRestart(t *testing.T) {
 			"LICENSE=accept",
 			"MQ_QMGR_NAME=qm1",
 			"MQ_LOGGING_CONSOLE_SOURCE=qmgr",
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=true",
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
 
-	defer cleanContainer(t, cli, id)
-	waitForReady(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
+	waitForWebConsoleReady(t, cli, id)
 
-	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "AMQ6206I")
-	if errJson != nil {
-		t.Errorf("%v", errJson)
+	// Check for qmgr logs in the container's stdout
+	// AMQ6206I is the 'command <insert> was issued' message (in this case we are looking for strmqm command)
+	jsonLogs, err := waitForMessageInLog(t, cli, id, "AMQ6206I")
+	if err != nil {
+		t.Errorf("failed to find qmgr message 'AMQ6206I' in pod logs: %v", err)
 	}
 
-	isMessageFound := scanForExcludedEntries(jsonLogs)
-
-	if isMessageFound == true {
-		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	// Check for default excluded messages
+	if code := scanForExcludedEntries(jsonLogs); code != "" {
+		t.Errorf("Expected to exclude messageId by default; but messageId %q is present", code)
 	}
 
+	// Restart the container and wait for the web console to be ready
 	stopContainer(t, cli, id)
+
+	// Check the container status to ensure it has stopped
+	containerState, err := cli.ContainerInspectWithFormat("{{.State.Status}}", id)
+	if err != nil {
+		t.Errorf("failed to determine if the container had stopped: %v", err)
+	}
+	if containerState != "exited" {
+		t.Fatalf("container failed to stop: container state was not \"exited\", instead it was: %q", containerState)
+	}
+
 	startContainer(t, cli, id)
-	waitForReady(t, cli, id)
+	waitForWebConsoleReady(t, cli, id)
 
 	jsonLogs = inspectLogs(t, cli, id)
 
-	if !strings.Contains(jsonLogs, "Stopped queue manager") || strings.Contains(jsonLogs, "CWWKF0011I") {
-		t.Errorf("CWWKF0011I which is not expected is present!!!!!")
+	// Confirm that the MQ_LOGGING_CONSOLE_SOURCE setting has persisted and that no web console messages are present
+	// CWWKF0011I is the code for the webconsole is ready
+	if strings.Contains(jsonLogs, "CWWKF0011I") {
+		t.Errorf("found code CWWKF0011I in container logs, expected message to have been excluded")
 	}
 
-	isMessageFoundAfterRestart := scanForExcludedEntries(jsonLogs)
-
-	if isMessageFoundAfterRestart == true {
-		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	// Check for default excluded messages
+	if code := scanForExcludedEntries(jsonLogs); code != "" {
+		t.Errorf("Expected to exclude messageId by default; but messageId %q is present", code)
 	}
 
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
 
-// TestLoggingWithQmgrAndExcludeId tests MQ_LOGGING_CONSOLE_SOURCE set to qmgr
-// and  exclude ID set to amq7230I.
-
+// TestLoggingWithQmgrAndExcludeId tests
+// MQ_LOGGING_CONSOLE_SOURCE set to qmgr
+// MQ_LOGGING_CONSOLE_FORMAT set to json
+// AMQ7230I message is excluded from the logs
 func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 	qmgrName := "qm1"
 
@@ -1551,53 +1564,63 @@ func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 			"MQ_QMGR_NAME=" + qmgrName,
 			"MQ_LOGGING_CONSOLE_SOURCE=qmgr",
 			"MQ_LOGGING_CONSOLE_FORMAT=json",
-			"MQ_LOGGING_CONSOLE_EXCLUDE_ID=amq7230I",
+			"MQ_LOGGING_CONSOLE_EXCLUDE_ID=AMQ7230I", // Log replay message code
+			"MQ_ENABLE_EMBEDDED_WEB_SERVER=true",
 		},
 	}
 
 	dir := "/var/mqm/qmgrs/" + qmgrName + "/errors"
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
-	waitForReady(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
+	waitForWebConsoleReady(t, cli, id)
 
-	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "AMQ6206I")
-	if errJson != nil {
-		t.Errorf("%v", errJson)
+	// Check for qmgr logs in the container's stdout
+	// AMQ6206I is the 'command <insert> was issued' message (in this case we are looking for strmqm command)
+	jsonLogs, err := waitForMessageInLog(t, cli, id, "AMQ6206I")
+	if err != nil {
+		t.Errorf("failed to find qmgr message 'AMQ6206I' in pod logs: %v", err)
 	}
 
-	isValidJSON := checkLogForValidJSON(jsonLogs)
-
-	if !isValidJSON {
-		t.Fatalf("Expected all log lines to be valid JSON.  Logs: %v ", jsonLogs)
+	if !checkLogForValidJSON(jsonLogs) {
+		t.Fatalf("Expected all log lines to be valid JSON. Logs: %v ", jsonLogs)
 	}
 
-	if strings.Contains(jsonLogs, "AMQ7230I") || strings.Contains(jsonLogs, "CWWKF0011I") {
-		t.Errorf("Expected to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	// Confirm that no web console messages are present
+	// CWWKF0011I is the code for the webconsole is ready
+	if strings.Contains(jsonLogs, "CWWKF0011I") {
+		t.Errorf("found code CWWKF0011I in container logs, expected message to have been excluded")
+	}
+
+	// Confirm that the excluded AMQ code is not present
+	if strings.Contains(jsonLogs, "AMQ7230I") {
+		t.Errorf("found code AMQ7230I in container logs, expected message to have been excluded")
 	}
 
 	stopContainer(t, cli, id)
 
-	//checking that message is only excluded from the console log, but not from the MQ error log
+	// Checking that message is only excluded from the console log, but not from the MQ error log
 	b := copyFromContainer(t, cli, id, filepath.Join(dir, "AMQERR01.json"))
 
-	foundInLog := 0
+	var foundInLog bool
 	r := bytes.NewReader(b)
 	scannernew := bufio.NewScanner(r)
 	for scannernew.Scan() {
 		textData := scannernew.Text()
 
 		if strings.Contains(textData, "AMQ7230I") {
-			foundInLog = 1
+			foundInLog = true
+			break
 		}
 	}
-	if foundInLog == 0 {
-		t.Errorf("mesageID AMQ7230I is not present in MQ LOG!!!!")
+	if !foundInLog {
+		t.Errorf("expected message code AMQ7230I to be present in MQ error log despite container log exclusion")
 	}
 
 }
 
-// TestLoggingConsoleSetToMqsc MQ_LOGGING_CONSOLE_SOURCE set to mqsc
+// TestLoggingConsoleSetToMqsc tests
+// MQ_LOGGING_CONSOLE_SOURCE set to mqsc
 func TestLoggingConsoleSetToMqsc(t *testing.T) {
 
 	t.Parallel()
@@ -1611,19 +1634,23 @@ func TestLoggingConsoleSetToMqsc(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
-	waitForReady(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
+	waitForWebConsoleReady(t, cli, id)
 
-	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "MQSC commands read")
-	if errJson != nil {
-		t.Errorf("%v", errJson)
-	} else { // Continue only if there is no error returned
+	// Confirm that the expected MQSC messages were logged
+	jsonLogs, err := waitForMessageInLog(t, cli, id, "MQSC commands read")
+	if err != nil {
+		t.Errorf("expected to find MQSC log messages in the container logs")
+	}
 
-		// Make sure messages from other sources are not printed
-		if strings.Contains(jsonLogs, "AMQ6206I") || strings.Contains(jsonLogs, "CWWKF0011I") {
-			t.Errorf("Logging source is set to mqsc, Qmgr message or web message  \"%v\" should not come!!!", jsonLogs)
-		}
+	// Confirm that no web console messages are present
+	if strings.Contains(jsonLogs, "CWWKF0011I") {
+		t.Errorf("found code CWWKF0011I in container logs, expected message to have been excluded")
+	}
 
+	// Confirm that no qmgr messages are present
+	if strings.Contains(jsonLogs, "AMQ6206I") {
+		t.Errorf("found code AMQ6206I in container logs, expected message to have been excluded")
 	}
 
 	// Stop the container cleanly
@@ -1645,24 +1672,23 @@ func TestLoggingConsoleSetToMqscJson(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
-	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "MQSC commands read")
+	// Confirm that the expected MQSC messages were logged
+	jsonLogs, err := waitForMessageInLog(t, cli, id, "MQSC commands read")
+	if err != nil {
+		t.Errorf("expected to find MQSC log messages in the container logs")
+	}
 
-	if errJson != nil {
-		t.Errorf("%v", errJson)
-	} else { // Continue only if there is no error returned
+	// Confirm that no qmgr messages are present
+	if strings.Contains(jsonLogs, "AMQ6206I") {
+		t.Errorf("found code AMQ6206I in container logs, expected message to have been excluded")
+	}
 
-		if strings.Contains(jsonLogs, "AMQ6206I") {
-			t.Errorf("Logging source is set to mqsc, Qmgr message  \"%v\" should not come!!!", jsonLogs)
-		} else {
-			//Check if the console logs are in correct json format
-			isValidJSON := checkLogForValidJSON(jsonLogs)
-			if !isValidJSON {
-				t.Fatalf("All log lines are not in a valid JSON format.  Logs: %v ", jsonLogs)
-			}
-		}
+	//Check if the console logs are in correct json format
+	if !checkLogForValidJSON(jsonLogs) {
+		t.Errorf("expected all log lines to be in JSON format: %v", jsonLogs)
 	}
 
 	// Stop the container cleanly
@@ -1702,23 +1728,25 @@ func TestMqscErrorLogLevel(t *testing.T) {
 
 	id := runContainer(t, cli, &containerConfig)
 	waitForReady(t, cli, id)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 
-	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "MQSC commands read")
+	// Confirm that the expected MQSC messages were logged
+	jsonLogs, err := waitForMessageInLog(t, cli, id, "MQSC commands read")
+	if err != nil {
+		t.Errorf("expected to find MQSC log messages in the container logs")
+	}
 
-	if errJson != nil {
-		t.Errorf("%v", errJson)
-	} else { // Continue only if there is no error returned
+	// Confirm that no qmgr messages are present
+	if strings.Contains(jsonLogs, "AMQ6206I") {
+		t.Errorf("found code AMQ6206I in container logs, expected message to have been excluded")
+	}
 
-		//Check if the console logs are in correct json format
-		isValidJSON := checkLogForValidJSON(jsonLogs)
-		if !isValidJSON {
-			t.Fatalf("All log lines are not in a valid JSON format. Logs: %v ", jsonLogs)
-		} else {
-			if !strings.Contains(jsonLogs, "\"type\":\"mqsc_log\",\"loglevel\":\"ERROR\"") {
-				t.Errorf("The autocfgmqsc.LOG did not return expected ERROR loglevel. Logs: %v", jsonLogs)
-			}
-		}
+	if !checkLogForValidJSON(jsonLogs) {
+		t.Errorf("expected all log lines to be in JSON format: %v", jsonLogs)
+	}
+
+	if !strings.Contains(jsonLogs, "\"type\":\"mqsc_log\",\"loglevel\":\"ERROR\"") {
+		t.Errorf("The autocfgmqsc.LOG did not return expected ERROR loglevel")
 	}
 }
 
@@ -1740,23 +1768,28 @@ func TestLoggingConsoleSetToWeb(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
-	waitForReady(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
+	waitForWebConsoleReady(t, cli, id)
 
-	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "CWWKF0011I")
-	if errJson != nil {
-		t.Errorf("%v", errJson)
+	// Check for web console logs in the container's stdout
+	// CWWKF0011I is the code for the webconsole is ready
+	jsonLogs, err := waitForMessageInLog(t, cli, id, "CWWKF0011I")
+	if err != nil {
+		t.Errorf("failed to find web console message 'CWWKF0011I' in pod logs: %v", err)
 	}
 
+	// Confirm that no qmgr messages are present
 	if strings.Contains(jsonLogs, "AMQ6206I") {
-		t.Errorf("Logging source is set to web, Qmgr message  \"%v\" should be excluded!!!", jsonLogs)
+		t.Errorf("found code AMQ6206I in container logs, expected message to have been excluded")
 	}
 
-	if strings.Contains(jsonLogs, "AMQ5041I") || strings.Contains(jsonLogs, "AMQ5052I") ||
-		strings.Contains(jsonLogs, "AMQ5051I") || strings.Contains(jsonLogs, "AMQ5037I") ||
-		strings.Contains(jsonLogs, "AMQ5975I") || strings.Contains(jsonLogs, "CWWKG0028A") ||
-		strings.Contains(jsonLogs, "CWWKS4105I") {
-		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	if !checkLogForValidJSON(jsonLogs) {
+		t.Errorf("expected all log lines to be in JSON format: %v", jsonLogs)
+	}
+
+	// Confirm the excluded message codes are not present
+	if strings.Contains(jsonLogs, "CWWKG0028A") || strings.Contains(jsonLogs, "CWWKS4105I") {
+		t.Errorf("found code CWWKG0028A or CWWKS4105I in container logs, expected message codes to have been excluded")
 	}
 
 	// Stop the container cleanly
@@ -1779,24 +1812,23 @@ func TestLoggingConsoleSetToQmgr(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
 	waitForReady(t, cli, id)
 
-	jsonLogs, errJson := waitForMessageInLog(t, cli, id, "AMQ6206I")
-	if errJson != nil {
-		t.Errorf("%v", errJson)
+	// Check for qmgr logs in the container's stdout
+	// AMQ6206I is the 'command <insert> was issued' message (in this case we are looking for strmqm command)
+	jsonLogs, err := waitForMessageInLog(t, cli, id, "AMQ6206I")
+	if err != nil {
+		t.Errorf("failed to find qmgr message 'AMQ6206I' in pod logs: %v", err)
 	}
 
-	isMessageFound := scanForExcludedEntries(jsonLogs)
-
-	if isMessageFound == true {
-		t.Errorf("Expected  to exclude messageId by default; but messageId \"%v\" is present", jsonLogs)
+	// Check for default excluded messages
+	if code := scanForExcludedEntries(jsonLogs); code != "" {
+		t.Errorf("Expected to exclude messageId by default; but messageId %q is present", code)
 	}
 
-	isValidJSON := checkLogForValidJSON(jsonLogs)
-
-	if !isValidJSON {
-		t.Fatalf("Expected all log lines to be valid JSON.  Logs: %v ", jsonLogs)
+	if !checkLogForValidJSON(jsonLogs) {
+		t.Fatalf("Expected all log lines to be valid JSON. Logs: %v ", jsonLogs)
 	}
 
 	// Stop the container cleanly
@@ -1818,12 +1850,14 @@ func TestWebLogsHeaderRotation(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id)
-	waitForReady(t, cli, id)
+	defer cleanContainer(t, cli, id, false)
+	waitForWebConsoleReady(t, cli, id)
 
-	consoleLogs, errJson := waitForMessageInLog(t, cli, id, "CWWKF0011I")
-	if errJson != nil {
-		t.Errorf("%v", errJson)
+	// Check for web console logs in the container's stdout
+	// CWWKF0011I is the code for the webconsole is ready
+	consoleLogs, err := waitForMessageInLog(t, cli, id, "CWWKF0011I")
+	if err != nil {
+		t.Errorf("failed to find web console message 'CWWKF0011I' in pod logs: %v", err)
 		//If there is error jump to last step and stop the container, else continue
 	} else {
 		//The below variable represents the first message in messages.log of web server, considered as the header message
@@ -1836,16 +1870,16 @@ func TestWebLogsHeaderRotation(t *testing.T) {
 			// Stop the container cleanly
 			stopContainer(t, cli, id)
 			startContainer(t, cli, id)
-			waitForReady(t, cli, id)
+			waitForWebConsoleReady(t, cli, id)
 
-			consoleLogs2, errJson := waitForMessageCountInLog(t, cli, id, "CWWKF0011I", 2)
-			if errJson != nil {
-				t.Errorf("%v", errJson)
+			consoleLogs, err := waitForMessageCountInLog(t, cli, id, "CWWKF0011I", 2)
+			if err != nil {
+				t.Errorf("%v", err)
 				//If there is error jump to last step and stop the container, else continue
 			} else {
-				t.Logf("Total headers found is %v", strings.Count(consoleLogs2, webLogheader))
-				if strings.Count(consoleLogs2, webLogheader) != 2 {
-					t.Errorf("Console logs do not contain header message after restart \"%v\"", consoleLogs2)
+				t.Logf("Total headers found is %v", strings.Count(consoleLogs, webLogheader))
+				if strings.Count(consoleLogs, webLogheader) != 2 {
+					t.Errorf("Console logs do not contain header message after restart %q", consoleLogs)
 				}
 			}
 		}
@@ -1922,7 +1956,7 @@ func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOu
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctrID)
+	defer cleanContainer(t, cli, ctrID, false)
 	startContainer(t, cli, ctrID)
 
 	if waitLong {
@@ -1996,7 +2030,7 @@ func TestReadOnlyRootFilesystem(t *testing.T) {
 		t.Fatal(err)
 	}
 	startContainer(t, cli, ctrID)
-	defer cleanContainer(t, cli, ctrID)
+	defer cleanContainer(t, cli, ctrID, false)
 
 	rc := waitForContainer(t, cli, ctrID, 30*time.Second)
 	if rc != 1 {
@@ -2066,7 +2100,7 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID)
+	defer cleanContainer(t, cli, ID, false)
 
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
@@ -2182,7 +2216,7 @@ func TestMissingCertError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctrID)
+	defer cleanContainer(t, cli, ctrID, false)
 	startContainer(t, cli, ctrID)
 
 	rc := waitForContainer(t, cli, ctrID, 30*time.Second)

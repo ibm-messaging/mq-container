@@ -19,6 +19,7 @@ limitations under the License.
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -39,6 +40,7 @@ type ContainerInterface interface {
 	ContainerWait(ctx context.Context, container string, condition string) (<-chan int64, <-chan error)
 	GetContainerLogs(ctx context.Context, container string, options ContainerLogsOptions) (string, error)
 	CopyFromContainer(container, srcPath string) ([]byte, error)
+	CopyFromContainerToDir(container, srcPath, dstPath string) error
 
 	GetContainerPort(ID string, hostPort int) (string, error)
 	GetContainerIPAddress(ID string) (string, error)
@@ -259,7 +261,7 @@ func (cli ContainerClient) ImageInspectWithFormat(format string, ID string) (str
 	}
 	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("exit status %v: %v", err, output)
 	}
 	return string(output), nil
 }
@@ -275,9 +277,9 @@ func (cli ContainerClient) ContainerInspectWithFormat(format string, ID string) 
 	}
 	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("exit status %v: %v", err, output)
 	}
-	return string(output), nil
+	return strings.TrimSuffix(string(output), "\n"), nil
 }
 
 // GetContainerPort gets the ports on a container
@@ -289,7 +291,7 @@ func (cli ContainerClient) GetContainerPort(ID string, hostPort int) (string, er
 	}
 	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("exit status %v: %v", err, output)
 	}
 	o := SanitizeString(string(output))
 	return strings.Split((o), ":")[1], nil
@@ -304,6 +306,21 @@ func (cli ContainerClient) GetContainerIPAddress(ID string) (string, error) {
 	return v, nil
 }
 
+// CopyFromContainerToDir copies a file or directory from a container to the destination path
+func (cli ContainerClient) CopyFromContainerToDir(container, srcPath, dstPath string) error {
+	args := []string{
+		copyFile,
+		container + ":" + srcPath,
+		dstPath,
+	}
+	out, err := cli.logCommand(cli.ContainerTool, args...).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("exit status %v: %v", err, out)
+	}
+
+	return nil
+}
+
 // CopyFromContainer copies a file from a container and returns its contents
 func (cli ContainerClient) CopyFromContainer(container, srcPath string) ([]byte, error) {
 	tmpDir, err := os.MkdirTemp("", "tmp")
@@ -311,15 +328,12 @@ func (cli ContainerClient) CopyFromContainer(container, srcPath string) ([]byte,
 		return nil, err
 	}
 	defer os.RemoveAll(tmpDir)
-	args := []string{
-		copyFile,
-		container + ":" + srcPath,
-		tmpDir + "/.",
-	}
-	_, err = cli.logCommand(cli.ContainerTool, args...).CombinedOutput()
+
+	err = cli.CopyFromContainerToDir(container, srcPath, tmpDir+"/.")
 	if err != nil {
 		return nil, err
 	}
+
 	//Get file name
 	fname := filepath.Base(srcPath)
 	data, err := os.ReadFile(pathutils.CleanPath(tmpDir, fname))
@@ -342,7 +356,7 @@ func (cli ContainerClient) ContainerInspect(containerID string) (ContainerDetail
 	}
 	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
-		return ContainerDetails{}, err
+		return ContainerDetails{}, fmt.Errorf("exit status %v: %v", err, output)
 	}
 
 	var container ContainerDetails
@@ -354,11 +368,13 @@ func (cli ContainerClient) ContainerInspect(containerID string) (ContainerDetail
 }
 
 func (cli ContainerClient) ContainerStop(container string, timeout *time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
+	defer cancel()
 	args := []string{
 		stopContainer,
 		container,
 	}
-	_, err := cli.logCommand(cli.ContainerTool, args...).Output()
+	_, err := cli.logCommandContext(ctx, cli.ContainerTool, args...).Output()
 	return err
 }
 
@@ -467,9 +483,9 @@ func (cli ContainerClient) GetContainerLogs(ctx context.Context, container strin
 		getLogs,
 		container,
 	}
-	output, err := cli.logCommand(cli.ContainerTool, args...).CombinedOutput()
+	output, err := cli.logCommandContext(ctx, cli.ContainerTool, args...).CombinedOutput()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("exit status %v: %v", err, output)
 	}
 	return string(output), nil
 }
@@ -508,7 +524,7 @@ func (cli ContainerClient) VolumeCreate(options VolumeCreateOptions) (string, er
 	}
 	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("exit status %v: %v", err, output)
 	}
 	name := SanitizeString(string(output))
 	return name, nil
@@ -548,7 +564,7 @@ func (cli ContainerClient) ImageBuild(context io.Reader, tag string, dockerfilen
 	}
 	output, err := cli.logCommand(cli.ContainerTool, args...).Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("exit status %v: %v", err, output)
 	}
 	sha := SanitizeString(string(output))
 	return sha, nil

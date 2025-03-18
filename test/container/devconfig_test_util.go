@@ -152,7 +152,7 @@ func runJMSTests(t *testing.T, cli ce.ContainerInterface, ID string, tls bool, u
 		}
 	}
 
-	defer cleanContainer(t, cli, jmsID)
+	defer cleanContainer(t, cli, jmsID, false)
 }
 
 // Parse JUnit log line and return true if line contains failed or aborted tests

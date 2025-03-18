@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -209,8 +210,25 @@ func cleanContainerQuiet(t *testing.T, cli ce.ContainerInterface, ID string) {
 	}
 }
 
-func cleanContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
+func cleanContainer(t *testing.T, cli ce.ContainerInterface, ID string, ignoreFDCs bool) {
 	logContainerDetails(t, cli, ID)
+
+	if !ignoreFDCs {
+		summaries, err := getQMFDCSummaries(cli, ID)
+		if err != nil {
+			t.Logf("WARN - Not checking for FDCs: failed to get FDC summaries: %v", err)
+		} else {
+			if len(summaries) > 0 {
+				t.Errorf("%d FDC(s) found in the queue manager!", len(summaries))
+				for _, summary := range summaries {
+					t.Log("\n" + summary)
+				}
+			} else {
+				t.Log("No FDCs found in the queue manager")
+			}
+		}
+	}
+
 	t.Logf("Stopping container: %v", ID)
 	timeout := 10 * time.Second
 	// Stop the container.  This allows the coverage output to be generated.
@@ -240,6 +258,68 @@ func cleanContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+// getQMFDCSummaries returns a slice of the summary blocks from each of the .FDC files in /var/mqm/errors
+func getQMFDCSummaries(cli ce.ContainerInterface, ID string) ([]string, error) {
+	summaries := []string{}
+	// Get a list of any FDC files
+	tmpDir, err := os.MkdirTemp("", "tmp-"+ID[:8]+"-*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(tmpDir)
+	err = cli.CopyFromContainerToDir(ID, "/var/mqm/errors/", tmpDir+"/")
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy errors directory from the container: %v", err)
+	}
+
+	tmpDir += "/errors/"
+	entries, err := os.ReadDir(tmpDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list errors directory: %v", err)
+	}
+
+	fdcPaths := []string{}
+	for _, entry := range entries {
+		split := strings.Split(entry.Name(), ".")
+		if split[len(split)-1] == "FDC" {
+			fdcPaths = append(fdcPaths, tmpDir+"/"+entry.Name())
+		}
+	}
+
+	var fileOpenErr error
+	for _, filePath := range fdcPaths {
+		// For each FDC file, read the file until we grab the summary block
+		file, err := os.Open(filePath)
+		if err != nil {
+			summaries = append(summaries, fmt.Sprintf("failed to get FDC summary for %s: %s", filePath, err))
+			fileOpenErr = errors.New("failed to open one or more FDC files, check logs for specific errors")
+			continue
+		}
+		defer file.Close()
+
+		fdcSummary := ""
+		summaryOpeningFound := false
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text() + "\n"
+			fdcSummary += line
+			// Check for the end of the summary block
+			if strings.Contains(line, "--+") {
+				// the pattern appears at the start and end of the summary so
+				// we need to make sure it is the second instance
+				if summaryOpeningFound {
+					break
+				} else {
+					summaryOpeningFound = true
+				}
+			}
+		}
+		summaries = append(summaries, fdcSummary)
+	}
+
+	return summaries, fileOpenErr
 }
 
 func generateRandomUID() string {
@@ -496,7 +576,7 @@ func startContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 func stopContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 	t.Logf("Stopping container: %v", ID)
 	timeout := 10 * time.Second
-	err := cli.ContainerStop(ID, &timeout) //Duration(20)*time.Second)
+	err := cli.ContainerStop(ID, &timeout)
 	if err != nil {
 		// Just log the error and continue
 		t.Log(err)
@@ -562,7 +642,7 @@ func waitForContainer(t *testing.T, cli ce.ContainerInterface, ID string, timeou
 
 // execContainer runs a command in a running container, and returns the exit code and output
 func execContainer(t *testing.T, cli ce.ContainerInterface, ID string, user string, cmd []string) (int, string) {
-	t.Logf("Running command: %v", cmd)
+	t.Logf("Container %s - Running command: %v", ID[:8], cmd)
 	exitcode, outputStr := cli.ExecContainer(ID, user, cmd)
 	return exitcode, outputStr
 }
@@ -589,6 +669,29 @@ func waitForReady(t *testing.T, cli ce.ContainerInterface, ID string) {
 			}
 		case <-ctx.Done():
 			t.Fatal("Timed out waiting for container to become ready")
+		}
+	}
+}
+
+func waitForWebConsoleReady(t *testing.T, cli ce.ContainerInterface, ID string) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
+	defer cancel()
+
+	for {
+		select {
+		case <-time.After(1 * time.Second):
+			rc, out := execContainer(t, cli, ID, "", []string{"dspmqweb"})
+
+			t.Logf("value of rc = %v, output: %v", rc, out)
+			if rc == 0 {
+				t.Log("MQ Web console is ready")
+				return
+			}
+		case <-ctx.Done():
+			rc, out := execContainer(t, cli, ID, "", []string{"dspmqweb"})
+			t.Logf("value of rc = %v, output: %v", rc, out)
+			t.Fatal("Timed out waiting for container webconsole to become ready")
 		}
 	}
 }
@@ -773,14 +876,16 @@ func countTarLines(t *testing.T, b []byte) int {
 	return total
 }
 
-// scanForExcludedEntries scans for default excluded messages
-func scanForExcludedEntries(msg string) bool {
-	if strings.Contains(msg, "AMQ5041I") || strings.Contains(msg, "AMQ5052I") ||
-		strings.Contains(msg, "AMQ5051I") || strings.Contains(msg, "AMQ5037I") ||
-		strings.Contains(msg, "AMQ5975I") {
-		return true
+// scanForExcludedEntries scans for default excluded messages. Returns the message code if found.
+// this checks for the default excluded messages MQ_LOGGING_CONSOLE_EXCLUDE_ID : https://www.ibm.com/docs/en/ibm-mq/9.4?topic=reference-mq-advanced-container-image
+func scanForExcludedEntries(msg string) string {
+	excludedEntries := []string{"AMQ5041I", "AMQ5052I", "AMQ5051I", "AMQ5037I", "AMQ5975I"}
+	for _, ee := range excludedEntries {
+		if strings.Contains(msg, ee) {
+			return ee
+		}
 	}
-	return false
+	return ""
 }
 
 // checkLogForValidJSON checks if the message is in Json format
@@ -849,36 +954,34 @@ func testLogFilePages(t *testing.T, cli ce.ContainerInterface, id string, qmName
 
 // waitForMessageInLog will check for a particular message with wait
 func waitForMessageInLog(t *testing.T, cli ce.ContainerInterface, id string, expectedMessageId string) (string, error) {
+	timeout := time.NewTimer(120 * time.Second)
 	var jsonLogs string
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
 	for {
 		select {
-		case <-time.After(1 * time.Second):
+		case <-timeout.C:
+			return "", fmt.Errorf("timeout waiting for expected message ID %q to be logged", expectedMessageId)
+		default:
 			jsonLogs = inspectLogs(t, cli, id)
 			if strings.Contains(jsonLogs, expectedMessageId) {
 				return jsonLogs, nil
 			}
-		case <-ctx.Done():
-			return "", fmt.Errorf("expected message Id %s was not logged", expectedMessageId)
 		}
 	}
 }
 
 // waitForMessageCountInLog will check for a particular message with wait and must occur exact number of times in log as specified by count
 func waitForMessageCountInLog(t *testing.T, cli ce.ContainerInterface, id string, expectedMessageId string, count int) (string, error) {
+	timeout := time.NewTimer(120 * time.Second)
 	var jsonLogs string
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
 	for {
 		select {
-		case <-time.After(1 * time.Second):
+		case <-timeout.C:
+			return "", fmt.Errorf("timeout waiting for expected message ID %q to be logged %d times", expectedMessageId, count)
+		default:
 			jsonLogs = inspectLogs(t, cli, id)
-			if strings.Contains(jsonLogs, expectedMessageId) && strings.Count(jsonLogs, expectedMessageId) == count {
+			if strings.Count(jsonLogs, expectedMessageId) == count {
 				return jsonLogs, nil
 			}
-		case <-ctx.Done():
-			return "", fmt.Errorf("expected message Id %s was not logged or it was not logged %v times", expectedMessageId, count)
 		}
 	}
 }
