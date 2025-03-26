@@ -3,6 +3,7 @@
 ## 9.4.3.0 (2025-06)
 
 * Updated to MQ version 9.4.3.0
+* Refactored the file permission logs to match the container logging format
 
 ## 9.4.2.0 (2025-02)
 
