@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2024
+© Copyright IBM Corporation 2017, 2025
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,16 +19,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
-	"github.com/ibm-messaging/mq-container/internal/command"
+	"github.com/ibm-messaging/mq-container/internal/pathutils"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 	"github.com/ibm-messaging/mq-container/pkg/mqini"
 )
@@ -338,47 +341,131 @@ func isExcludedMsgIdPresent(msg string, envExcludeIds []string) bool {
 }
 
 func logDiagnostics() {
+
 	if getDebug() {
+
 		log.Debug("--- Start Diagnostics ---")
 
-		// show the directory ownership/permissions
-		// #nosec G104
-		out, _, _ := command.Run("ls", "-l", "/mnt/")
-		log.Debugf("/mnt/:\n%s", out)
-		// #nosec G104
-		out, _, _ = command.Run("ls", "-l", "/mnt/mqm")
-		log.Debugf("/mnt/mqm:\n%s", out)
-		// #nosec G104
-		out, _, _ = command.Run("ls", "-l", "/mnt/mqm/data")
-		log.Debugf("/mnt/mqm/data:\n%s", out)
-		// #nosec G104
-		out, _, _ = command.Run("ls", "-l", "/mnt/mqm-log/log")
-		log.Debugf("/mnt/mqm-log/log:\n%s", out)
-		// #nosec G104
-		out, _, _ = command.Run("ls", "-l", "/mnt/mqm-data/qmgrs")
-		log.Debugf("/mnt/mqm-data/qmgrs:\n%s", out)
-		// #nosec G104
-		out, _, _ = command.Run("ls", "-l", "/var/mqm")
-		log.Debugf("/var/mqm:\n%s", out)
-		// #nosec G104
-		out, _, _ = command.Run("ls", "-l", "/var/mqm/errors")
-		log.Debugf("/var/mqm/errors:\n%s", out)
-		// #nosec G104
-		out, _, _ = command.Run("ls", "-l", "/etc/mqm")
-		log.Debugf("/etc/mqm:\n%s", out)
-		// #nosec G104
-		out, _, _ = command.Run("ls", "-l", "/run")
-		log.Debugf("/run:\n%s", out)
+		// list of directories to check for permission and ownership
+		paths := []string{
+			"/mnt/",
+			"/mnt/mqm",
+			"/mnt/mqm/data",
+			"/mnt/mqm-log/log",
+			"/mnt/mqm-data/qmgrs",
+			"/var/mqm",
+			"/var/mqm/errors",
+			"/etc/mqm",
+			"/run",
+		}
 
-		// Print out summary of any FDCs
-		// #nosec G204
-		cmd := exec.Command("/opt/mqm/bin/ffstsummary")
-		cmd.Dir = "/var/mqm/errors"
-		// #nosec G104
-		outB, _ := cmd.CombinedOutput()
-		log.Debugf("ffstsummary:\n%s", string(outB))
+		// Iterate over each path and log its permissions and ownership
+		for _, path := range paths {
+			logPathPermissions(path)
+		}
+
+		// Log FDC summary
+		logFDCSummary()
 
 		log.Debug("---  End Diagnostics  ---")
+	}
+
+}
+
+// logs the permissions or errors for a specific file or directory.
+func logPathPermissions(path string) {
+
+	//Retrieve the file/directory metadata
+	fileInfo, err := os.Stat(path)
+
+	if err != nil {
+		log.Debugf("%s: error retrieving info: %s", path, err.Error())
+		return
+	}
+
+	// Extract the owner and group details
+	var stat syscall.Stat_t
+	err = syscall.Stat(path, &stat)
+
+	if err != nil {
+		log.Debugf("%s: error reading directory: %s", path, err.Error())
+		return
+	}
+
+	// Log the parent directory's content details
+	if fileInfo.IsDir() {
+		entries, err := os.ReadDir(path)
+
+		if err != nil {
+			log.Debugf("%s: error reading directory: %s", path, err.Error())
+			return
+		}
+		// Obtain details for child-entries
+		for _, entry := range entries {
+			childInfo, err := entry.Info()
+
+			if err != nil {
+				log.Debugf("%s: error retrieving info for %s: %s", path, entry.Name(), err.Error())
+			} else {
+
+				var childStat syscall.Stat_t
+				childPath := pathutils.CleanPath(path, entry.Name())
+				err = syscall.Stat(childPath, &childStat)
+
+				if err != nil {
+					log.Debugf("%s: unable to retrieve %s information", path, entry.Name())
+				} else {
+					// Format the output
+					logFilePermission(path, childInfo, childStat)
+				}
+			}
+		}
+
+	} else {
+		// For non-directory, format the output
+		logFilePermission(path, fileInfo, stat)
+	}
+
+}
+
+func logFilePermission(path string, info fs.FileInfo, stat syscall.Stat_t) {
+
+	fileMode := info.Mode().String()
+	hardLinkCount := stat.Nlink
+
+	// Resolve owner name(fallback to UID if lookup fails)
+	fileOwner := fmt.Sprintf("%d", stat.Uid)
+	if owner, err := user.LookupId(fileOwner); err == nil {
+		fileOwner = owner.Username
+	}
+
+	// Resolve group name(fallback to GID if lookup fails)
+	fileGroup := fmt.Sprintf("%d", stat.Gid)
+	if group, err := user.LookupGroupId(fileGroup); err == nil {
+		fileGroup = group.Name
+	}
+
+	fileSize := info.Size()
+	modTime := info.ModTime().Format("Jan _2 15:04")
+	fileName := info.Name()
+
+	log.Debugf("%s:  %s %d %s %s %d %s %s", path, fileMode, hardLinkCount, fileOwner, fileGroup, fileSize, modTime, fileName)
+}
+
+func logFDCSummary() {
+	cmd := exec.Command("/opt/mqm/bin/ffstsummary")
+	cmd.Dir = "/var/mqm/errors"
+
+	//Capture combined Output
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Debugf("FDC Summary Error: %s", err.Error())
+		return
+	}
+
+	//Log Fdc summary output
+	if string(output) != "" {
+		log.Debugf("FDC summary: %s", string(output))
 	}
 }
 
