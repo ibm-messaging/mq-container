@@ -108,6 +108,14 @@ func goldenPath(t *testing.T, metrics bool) {
 	t.Run("Validate Default LogFilePages", func(t *testing.T) {
 		testLogFilePages(t, cli, id, "qm1", "4096")
 	})
+
+	t.Run("Validate Default LogPrimaryFiles", func(t *testing.T) {
+		testPrimaryLogFiles(t, cli, id, "qm1", "3")
+	})
+
+	t.Run("Validate Default LogSecondaryFiles", func(t *testing.T) {
+		testSecondaryLogFiles(t, cli, id, "qm1", "2")
+	})
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
@@ -1405,6 +1413,38 @@ func TestCustomLogFilePages(t *testing.T) {
 	waitForReady(t, cli, id)
 
 	testLogFilePages(t, cli, id, "qmlfp", "8192")
+}
+
+// TestCustomPrimaryLogFiles starts a qmgr with a custom number of LogPrimaryFiles set.
+// Check that the number of LogPrimaryFiles matches.
+func TestCustomPrimaryLogFiles(t *testing.T) {
+	t.Parallel()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+	containerConfig := ce.ContainerConfig{
+		Env: []string{"LICENSE=accept", "MQ_QMGR_PRIMARY_LOGFILES=16", "MQ_QMGR_NAME=qmlfp"},
+	}
+
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id, false)
+	waitForReady(t, cli, id)
+
+	testPrimaryLogFiles(t, cli, id, "qmlfp", "16")
+}
+
+// TestCustomSecondaryLogFiles starts a qmgr with a custom number of LogSecondaryFiles set.
+// Check that the number of LogSecondaryFiles matches.
+func TestCustomSecondaryLogFiles(t *testing.T) {
+	t.Parallel()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+	containerConfig := ce.ContainerConfig{
+		Env: []string{"LICENSE=accept", "MQ_QMGR_SECONDARY_LOGFILES=8", "MQ_QMGR_NAME=qmlfp"},
+	}
+
+	id := runContainer(t, cli, &containerConfig)
+	defer cleanContainer(t, cli, id, false)
+	waitForReady(t, cli, id)
+
+	testSecondaryLogFiles(t, cli, id, "qmlfp", "8")
 }
 
 // TestLoggingConsoleSource tests default behavior which is

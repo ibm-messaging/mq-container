@@ -1,5 +1,8 @@
 # Change log
 
+## XX (2025-XX)
+* New environment variables: MQ_QMGR_PRIMARY_LOGFILES, MQ_QMGR_SECONDARY_LOGFILES. These are meant to be set the number of logfiles when the default ones are not enough.
+
 ## 9.4.2.0 (2025-02)
 
 * Updated to MQ version 9.4.2.0

@@ -82,6 +82,30 @@ func createQueueManager(name string, devMode bool) (bool, error) {
 				log.Println("Warning: the value of MQ_QMGR_LOG_FILE_PAGES does not match the value of 'LogFilePages' in the qm.ini. This setting cannot be altered after Queue Manager creation.")
 			}
 		}
+		// Check if MQ_QMGR_PRIMARY_LOGFILES matches the value set in qm.ini
+		plf := os.Getenv("MQ_QMGR_PRIMARY_LOGFILES")
+		if plf != "" {
+			qmIniBytes, err := readQMIni(dataDir)
+			if err != nil {
+				log.Printf("Error reading qm.ini : %v", err)
+				return false, err
+			}
+			if !validatePrimaryLogFileSetting(qmIniBytes, plf) {
+				log.Println("Warning: the value of MQ_QMGR_PRIMARY_LOGFILES does not match the value of 'LogPrimaryFiles' in the qm.ini. This setting cannot be altered after Queue Manager creation.")
+			}
+		}
+		// Check if MQ_QMGR_SECONDARY_LOGFILES matches the value set in qm.ini
+		slf := os.Getenv("MQ_QMGR_SECONDARY_LOGFILES")
+		if slf != "" {
+			qmIniBytes, err := readQMIni(dataDir)
+			if err != nil {
+				log.Printf("Error reading qm.ini : %v", err)
+				return false, err
+			}
+			if !validateSecondaryLogFileSetting(qmIniBytes, slf) {
+				log.Println("Warning: the value of MQ_QMGR_SECONDARY_LOGFILES does not match the value of 'LogSecondaryFiles' in the qm.ini. This setting cannot be altered after Queue Manager creation.")
+			}
+		}
 		return false, nil
 	}
 
@@ -129,6 +153,20 @@ func validateLogFilePageSetting(iniFileBytes []byte, logFilePages string) bool {
 	lfpString := "LogFilePages=" + logFilePages
 	qminiConfigStr := string(iniFileBytes)
 	return strings.Contains(qminiConfigStr, lfpString)
+}
+
+// validatePrimaryLogFileSetting validates if the specified primaryLogFiles number is equal to the existing value in the qm.ini
+func validatePrimaryLogFileSetting(iniFileBytes []byte, primaryLogFiles string) bool {
+	plfString := "LogPrimaryFiles=" + primaryLogFiles
+	qminiConfigStr := string(iniFileBytes)
+	return strings.Contains(qminiConfigStr, plfString)
+}
+
+// validateSecondaryLogFileSetting validates if the specified secondaryLogFiles number is equal to the existing value in the qm.ini
+func validateSecondaryLogFileSetting(iniFileBytes []byte, secondaryLogFiles string) bool {
+	slfString := "LogSecondaryFiles=" + secondaryLogFiles
+	qminiConfigStr := string(iniFileBytes)
+	return strings.Contains(qminiConfigStr, slfString)
 }
 
 func updateCommandLevel() error {
@@ -284,6 +322,22 @@ func getCreateQueueManagerArgs(mounts map[string]string, name string, devMode bo
 			log.Printf("Error processing MQ_QMGR_LOG_FILE_PAGES, the default value for LogFilePages will be used. Err: %v", err)
 		} else {
 			args = append(args, "-lf", os.Getenv("MQ_QMGR_LOG_FILE_PAGES"))
+		}
+	}
+	if os.Getenv("MQ_QMGR_PRIMARY_LOGFILES") != "" {
+		_, err = strconv.Atoi(os.Getenv("MQ_QMGR_PRIMARY_LOGFILES"))
+		if err != nil {
+			log.Printf("Error processing MQ_QMGR_PRIMARY_LOGFILES, the default value for LogPrimaryFiles will be used. Err: %v", err)
+		} else {
+			args = append(args, "-lp", os.Getenv("MQ_QMGR_PRIMARY_LOGFILES"))
+		}
+	}
+	if os.Getenv("MQ_QMGR_SECONDARY_LOGFILES") != "" {
+		_, err = strconv.Atoi(os.Getenv("MQ_QMGR_SECONDARY_LOGFILES"))
+		if err != nil {
+			log.Printf("Error processing MQ_QMGR_SECONDARY_LOGFILES, the default value for LogSecondaryFiles will be used. Err: %v", err)
+		} else {
+			args = append(args, "-ls", os.Getenv("MQ_QMGR_SECONDARY_LOGFILES"))
 		}
 	}
 	args = append(args, name)
