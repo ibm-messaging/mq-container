@@ -24,7 +24,7 @@ env:
     - MAIN_BRANCH=v9.4.0
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
-    - BASE_MQ_LOCKED=false
+    - BASE_MQ_LOCKED=true
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
