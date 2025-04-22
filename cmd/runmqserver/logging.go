@@ -553,7 +553,7 @@ func canMQSCLogBeMirroredToConsole(message string) bool {
 
 // getTimeStamp fetches current time stamp
 func getTimeStamp() string {
-	const timestampFormat string = "2008-01-02T15:04:05.000Z07:00"
+	const timestampFormat string = "2006-01-02T15:04:05.000Z07:00"
 	t := time.Now()
 	return t.Format(timestampFormat)
 }
