@@ -6,7 +6,7 @@ The IBM MQ support have provided a generic set of steps in this page - https://w
 
 ## Applying ifix via Dockerfile
 
-There is a need to add commands for ifixes (patches or updates) of IBM MQ provided by support team to mq-container as well. This has to be done via the [Dockerfile](Dockerfile-Server) of the container. 
+There is a need to add commands for ifixes (patches or updates) of IBM MQ provided by support team to mq-container as well. This has to be done via the [Dockerfile](/Dockerfile-server) of the container. 
 
 ### Steps
 To add commands for ifixes in the Dockerfile, you can follow these steps:
