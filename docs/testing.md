@@ -29,7 +29,7 @@ You can specify the image to use directly by using the `MQ_IMAGE_ADVANCEDSERVER`
 MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:9.4.3.0-amd64 make test-advancedserver
 ```
 
-You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `ibm-mqadvanced-server:9.2.0.0-amd64`:
+You can also use the same environment variables you specified when [building](./building.md), for example, the following will try and test an image called `ibm-mqadvanced-server:9.2.0.0-amd64`:
 
 ```
 MQ_VERSION=9.2.0.0 make test-advancedserver
