@@ -45,15 +45,17 @@ func TestWatchDirectory(t *testing.T) {
 		return nil
 	}
 
-	assertCalls := func(t *testing.T, expect []string) {
+	assertCalls := func(t *testing.T, expect []string, shutdown context.CancelFunc) {
 		cbLock.RLock()
 		defer cbLock.RUnlock()
 
 		if len(updates) != len(expect) {
+			shutdown()
 			t.Fatalf("Watch calls do not match expectation:\n\tExpect:\t%v\n\tGot:\t%v\n", expect, updates)
 		}
 		for idx, exp := range expect {
 			if updates[idx] != exp {
+				shutdown()
 				t.Fatalf("Watch calls do not match expectation:\n\tExpect:\t%v\n\tGot:\t%v\n", expect, updates)
 			}
 		}
@@ -87,11 +89,11 @@ func TestWatchDirectory(t *testing.T) {
 
 			// Event should only trigger after debounce time.
 			// ... Check before (debounce/2) - expect no event
-			time.Sleep(debounceTime / 2)
-			assertCalls(t, []string{})
+			time.Sleep(cm.debounceTime / 2)
+			assertCalls(t, []string{}, cm.shutdownFn)
 			// ... Check after (debounce/2 + debounce) - should have event now
-			time.Sleep(debounceTime)
-			assertCalls(t, []string{sourceFilesystemEvent})
+			time.Sleep(cm.debounceTime)
+			assertCalls(t, []string{sourceFilesystemEvent}, cm.shutdownFn)
 			clearCalls()
 		})
 
@@ -99,40 +101,78 @@ func TestWatchDirectory(t *testing.T) {
 			metricstest.WriteCertsToDir(caCert, srvCerts[1], srvKeys[1], certDir, false)
 
 			// Recheck either side of debounce
-			time.Sleep(debounceTime / 2)
-			assertCalls(t, []string{})
-			time.Sleep(debounceTime)
-			assertCalls(t, []string{sourceFilesystemEvent})
+			time.Sleep(cm.debounceTime / 2)
+			assertCalls(t, []string{}, cm.shutdownFn)
+			time.Sleep(cm.debounceTime)
+			assertCalls(t, []string{sourceFilesystemEvent}, cm.shutdownFn)
 			clearCalls()
 		})
 	})
 
 	// Test polling fallback
-	t.Run("Filesystem event trigger", func(t *testing.T) {
-		certDir, err := os.MkdirTemp(os.TempDir(), "testCertMonitor_*")
-		if err != nil {
-			t.Fatalf("Failed to create temp dir: %v", err)
-		}
-		cm := newCertificateMonitor(context.Background(), certDir, log)
-		testPollInterval := 10 * time.Millisecond
-		cm.pollInterval = testPollInterval
-		metricstest.WriteCertsToDir(caCert, srvCerts[0], srvKeys[0], certDir, false)
-		err = cm.watch(callback)
-		if err != nil {
-			t.Fatalf("Failed to start watch: %v", err)
-		}
-		defer cm.shutdownFn()
+	t.Run("Filesystem polling fallback", func(t *testing.T) {
+		var validTiming bool
+		shouldRetry := true
+		for testDebounceTime := 1 * time.Millisecond; shouldRetry && testDebounceTime <= 10*time.Second && !validTiming; testDebounceTime = 2 * testDebounceTime {
+			t.Run(fmt.Sprintf("%s debounce", testDebounceTime.String()), func(t *testing.T) {
+				shouldRetry = false
+				clearCalls()
+				start := time.Now()
+				assertTiming := func(maxAllowed time.Duration, shutdown context.CancelFunc) {
+					endTime := time.Now()
+					elapsedTime := endTime.Sub(start)
+					if elapsedTime > maxAllowed {
+						shutdown()
+						time.Sleep(testDebounceTime)
+						shouldRetry = true
+						t.Skipf("Test has slept for too long to ensure validity; should sleep for less than %s but slept for %s", maxAllowed.String(), elapsedTime.String())
+					}
+				}
 
-		// Expect only two triggers to occur (despite quick interval) in 2.5 * debounceTime
-		time.Sleep(debounceTime / 2)
-		assertCalls(t, []string{})
-		time.Sleep(debounceTime)
-		assertCalls(t, []string{sourcePoll})
-		// Do not expect a fsevent - the poll will already have triggered and be in debounce time
-		metricstest.WriteCertsToDir(caCert, srvCerts[1], srvKeys[1], certDir, false)
-		time.Sleep(debounceTime)
-		assertCalls(t, []string{sourcePoll, sourcePoll})
-		clearCalls()
+				t.Log("Create test directory")
+				certDir, err := os.MkdirTemp(os.TempDir(), "testCertMonitor_*")
+				if err != nil {
+					t.Fatalf("Failed to create temp dir: %v", err)
+				}
+				testPollInterval := testDebounceTime / 10
+				t.Logf("Create monitor (poll %s; debounce %s)", testPollInterval, testDebounceTime)
+				cm := newCertificateMonitor(context.Background(), certDir, log)
+				cm.debounceTime = testDebounceTime
+				cm.pollInterval = testPollInterval
+				t.Log("Write initial certs")
+				metricstest.WriteCertsToDir(caCert, srvCerts[0], srvKeys[0], certDir, false)
+				t.Log("Start watch")
+				err = cm.watch(callback)
+				if err != nil {
+					t.Fatalf("Failed to start watch: %v", err)
+				}
+
+				// Expect only two triggers to occur (despite quick interval) in 2.5 * debounceTime
+				t.Log("Wait for half debounce")
+				time.Sleep(testDebounceTime / 2)
+				assertTiming(testDebounceTime, cm.shutdownFn)
+				assertCalls(t, []string{}, cm.shutdownFn)
+
+				t.Log("Wait until after first debounce")
+				time.Sleep(testDebounceTime)
+				assertTiming(2*testDebounceTime, cm.shutdownFn)
+				assertCalls(t, []string{sourcePoll}, cm.shutdownFn)
+
+				// Do not expect a fsevent - the poll will already have triggered and be in debounce time
+				metricstest.WriteCertsToDir(caCert, srvCerts[1], srvKeys[1], certDir, false)
+				t.Log("Wait until after second debounce")
+				time.Sleep(testDebounceTime)
+				assertTiming(3*testDebounceTime, cm.shutdownFn)
+				validTiming = true
+				assertCalls(t, []string{sourcePoll, sourcePoll}, cm.shutdownFn)
+
+				cm.shutdownFn()
+				clearCalls()
+			})
+		}
+		if !validTiming {
+			t.Fatalf("Could not find valid debounce time for test to pass")
+		}
 	})
 }
 

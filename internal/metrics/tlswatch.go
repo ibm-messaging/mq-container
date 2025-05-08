@@ -35,7 +35,7 @@ import (
 
 const (
 	defaultCertificatePollInverval = 15 * time.Minute
-	debounceTime                   = 1 * time.Second
+	defaultDebounceTime            = 1 * time.Second
 	sourceStartup                  = "startup"
 	sourceFilesystemEvent          = "fsevent"
 	sourcePoll                     = "poll"
@@ -52,6 +52,7 @@ type certificateMonitor struct {
 	shutdownFn   context.CancelFunc
 	certLock     sync.RWMutex
 	pollInterval time.Duration
+	debounceTime time.Duration
 }
 
 func loadAndWatchCertificates(ctx context.Context, certDir string, log *logger.Logger) (*certificateMonitor, error) {
@@ -80,6 +81,7 @@ func newCertificateMonitor(ctx context.Context, certDir string, log *logger.Logg
 		certDir:      certDir,
 		log:          log,
 		pollInterval: defaultCertificatePollInverval,
+		debounceTime: defaultDebounceTime,
 	}
 }
 
@@ -119,7 +121,7 @@ func (cm *certificateMonitor) watch(callback updateFn) error {
 			case <-cm.ctx.Done():
 				return
 			case source := <-triggerUpdateQueue:
-				time.Sleep(debounceTime)
+				time.Sleep(cm.debounceTime)
 				err := callback(source)
 				if err != nil {
 					cm.log.Errorf("error loading updated certificate pair for metrics server: %v", err)
