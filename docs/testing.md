@@ -21,28 +21,39 @@ make test-devserver
 make test-advancedserver
 ```
 
+#### Specify image to test
+
 You can specify the image to use directly by using the `MQ_IMAGE_ADVANCEDSERVER` or `MQ_IMAGE_DEVSERVER` variables, for example:
 
 ```
 MQ_IMAGE_ADVANCEDSERVER=ibm-mqadvanced-server:9.4.3.0-amd64 make test-advancedserver
 ```
 
-You can pass parameters to `go test` with an environment variable.  For example, to run the "TestGoldenPath" test, run the following command:
+You can also use the same environment variables you specified when [building](./building.md), for example, the following will try and test an image called `ibm-mqadvanced-server:9.2.0.0-amd64`:
+
+```
+MQ_VERSION=9.2.0.0 make test-advancedserver
+```
+
+#### Additional Test Parameters
+You can pass parameters to `go test` with an environment variable.  
+
+For example, to run the "TestGoldenPath" test, run the following command:
 
 ```
 TEST_OPTS_CONTAINER="-run TestGoldenPath" make test-advancedserver
+```
+
+For more verbose test output, including showing passing tests, run the following command:
+
+```
+TEST_OPTS_CONTAINER="-v" make test-advancedserver
 ```
 
 You can enable additional tracing of container engine commands by setting `TEST_LOG_CONTAINER_COMMANDS` to `true`:
 
 ```
 TEST_LOG_CONTAINER_COMMANDS="true" make test-advancedserver
-```
-
-You can also use the same environment variables you specified when [building](./building), for example, the following will try and test an image called `ibm-mqadvanced-server:9.2.0.0-amd64`:
-
-```
-MQ_VERSION=9.2.0.0 make test-advancedserver
 ```
 
 ### Running the Docker tests with code coverage
