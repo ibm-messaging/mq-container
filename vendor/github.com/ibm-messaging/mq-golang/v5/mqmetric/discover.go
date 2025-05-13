@@ -1070,7 +1070,9 @@ func createSubscriptions() error {
 					// Don't have a qmgr-level subscription to this topic. Should
 					// only do this subscription once at startup
 					mqtd, err = subscribe(ty.ObjectTopic, &ci.si.replyQObj)
-					ty.subHobj[QMgrMapKey] = mqtd
+					if err == nil {
+						ty.subHobj[QMgrMapKey] = mqtd
+					}
 				}
 			}
 
