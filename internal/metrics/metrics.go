@@ -28,6 +28,7 @@ import (
 
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
+	"github.com/ibm-messaging/mq-container/pkg/logrotation"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -37,6 +38,11 @@ const (
 
 	// keyDirMetrics is the location of the TLS keys to use for HTTPS metrics
 	keyDirMetrics = "/etc/mqm/metrics/pki/keys"
+
+	auditLogDirectory      = "/var/mqm/errors"
+	auditLogFilenameFormat = "metricaudit%02d.json"
+	auditLogMaxBytes       = 4 * 1024 * 1024
+	auditLogNumFiles       = 3
 )
 
 var (
@@ -82,6 +88,17 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 		return fmt.Errorf("Failed to validate HTTPS metrics configuration: %v", err)
 	}
 
+	// Generate appropriate audit log wrapper based on configuration
+	auditWrapper := passthroughHandlerFuncWrapper
+	if os.Getenv("MQ_LOGGING_METRICS_AUDIT_ENABLED") == "true" {
+		auditLog := logrotation.NewRotatingLogger(auditLogDirectory, auditLogFilenameFormat, auditLogMaxBytes, auditLogNumFiles)
+		err := auditLog.Init()
+		if err != nil {
+			return fmt.Errorf("Failed to set up metric audit log: %v", err)
+		}
+		auditWrapper = newAuditingHandlerFuncWrapper(qmName, auditLog)
+	}
+
 	if httpsMetricsEnabled {
 		log.Println("Starting HTTPS metrics gathering")
 	} else {
@@ -121,12 +138,14 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 	}
 
 	// Setup HTTP server to handle requests from Prometheus
-	http.Handle("/metrics", promhttp.Handler())
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-		// #nosec G104
-		w.Write([]byte("Status: METRICS ACTIVE"))
-	})
+	http.Handle("/metrics", wrapHandler(promhttp.Handler(), auditWrapper))
+	http.HandleFunc("/", auditWrapper(
+		func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(200)
+			// #nosec G104
+			w.Write([]byte("Status: METRICS ACTIVE"))
+		},
+	))
 
 	go func() {
 		var err error
