@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2019, 2020
+# © Copyright IBM Corporation 2019, 2025
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,52 +34,46 @@ get_archive_level() {
       echo "Skipping level lookup as '\$${archive_variable}' is not set"
       return
     fi
-    ./travis-build-scripts/artifact-util.sh -f "${!archive_variable}" -u "${REPOSITORY_USER}" -p "${REPOSITORY_CREDENTIAL}" -l "$level_path" -n snapshot --get-property
+    ./sps-build-scripts/artifact-util.sh -f "${!archive_variable}" -u "${REPOSITORY_USER}" -p "${REPOSITORY_CREDENTIAL}" -l "$level_path" -n snapshot --get-property
   fi
   read -r MQ_ARCHIVE_LEVEL < "$level_path"
   export MQ_ARCHIVE_LEVEL
 }
 
-#sps : Add feature override
-if [[ ("$TRAVIS_BRANCH" == "$MAIN_BRANCH" && "$TRAVIS_PULL_REQUEST" = "false") || "$TRAVIS_BRANCH" == ifix* || "$FEATURE_BUILD_OVERRIDE" = "true" ]]; then
-  echo 'Retrieving global tagcache' && echo -en 'travis_fold:start:tag-cache-retrieve\\r'
-  ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --check
-  ./travis-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ./.tagcache --get
-  echo -en 'travis_fold:end:tag-cache-retrieve\\r'
+#sps: modify the conditions to use the sps environment variables as we wouldn't have done a make to get the variables set in the Makefile?
+if [[ ("$BRANCH" == "$MAIN_BRANCH" && "$PIPELINE_NAMESPACE" != *pr*) || "$BRANCH" == ifix* || "$FEATURE_BUILD_OVERRIDE" = true ]]; then
+  echo 'Retrieving global tagcache'
+  ./sps-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ${SPS_BUILD_DIR}/.tagcache --check
+  ./sps-build-scripts/artifact-util.sh -c ${CACHE_PATH} -u ${REPOSITORY_USER} -p ${REPOSITORY_CREDENTIAL} -f cache/${TAGCACHE_FILE} -l ${SPS_BUILD_DIR}/.tagcache --get
 fi
+
 
 if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
   if [ "$LTS" != true ] ; then
-    echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
+    echo 'Building Developer JMS test image...'
     make build-devjmstest
-    echo -en 'travis_fold:end:build-devjmstest\\r'
-    echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
+    echo 'Building Developer image...'
     get_archive_level MQ_ARCHIVE_REPOSITORY_DEV
     make build-devserver
-    echo -en 'travis_fold:end:build-devserver\\r'
   fi
   if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
       if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" || "$ARCH" = "ppc64le" ]] ; then
-          echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
+          echo 'Building Production image...'
           get_archive_level MQ_ARCHIVE_REPOSITORY
           make build-advancedserver
-          echo -en 'travis_fold:end:build-advancedserver\\r'
       fi
   fi
 else
-  echo 'Building Developer JMS test image...' && echo -en 'travis_fold:start:build-devjmstest\\r'
+  echo 'Building Developer JMS test image...'
   make build-devjmstest
-  echo -en 'travis_fold:end:build-devjmstest\\r'
 
   if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
-    echo 'Building Developer image...' && echo -en 'travis_fold:start:build-devserver\\r'
+    echo 'Building Developer image...'
     get_archive_level MQ_ARCHIVE_REPOSITORY_DEV
     make build-devserver
-    echo -en 'travis_fold:end:build-devserver\\r'
   else
-    echo 'Building Production image...' && echo -en 'travis_fold:start:build-advancedserver\\r'
+    echo 'Building Production image...'
     get_archive_level MQ_ARCHIVE_REPOSITORY
     make build-advancedserver
-    echo -en 'travis_fold:end:build-advancedserver\\r'
   fi
 fi
