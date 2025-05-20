@@ -29,7 +29,7 @@ import (
 type RotatingLogger struct {
 	baseDirectory  string
 	filenameFormat string
-	maxFileSize    int
+	maxFileBytes   int
 	logFilesCount  int
 	lock           sync.Mutex
 }
@@ -37,13 +37,13 @@ type RotatingLogger struct {
 // NewRotatingLogger create a new RotatingLogger, it expects three input parameters,
 // basePath is the log-file path prefix,
 // filenameFormat is the format string used for each instance of the log file - it should include a `%d` (or variant such as `%02d`) to indicate the log file instance
-// maxFileSize is the max allowed log-file size in bytes,
+// maxFileBytes is the max allowed log-file size in bytes,
 // logFilesCount is the number of log files required to be created.
-func NewRotatingLogger(baseDirectory string, filenameFormat string, maxFileSize int, logFilesCount int) *RotatingLogger {
+func NewRotatingLogger(baseDirectory string, filenameFormat string, maxFileBytes int, logFilesCount int) *RotatingLogger {
 	return &RotatingLogger{
 		baseDirectory:  baseDirectory,
 		filenameFormat: filenameFormat,
-		maxFileSize:    maxFileSize,
+		maxFileBytes:   maxFileBytes,
 		logFilesCount:  logFilesCount,
 	}
 }
@@ -179,7 +179,7 @@ func (r *RotatingLogger) checkIfLogFileSizeExceeded(messageLineLength int, logFi
 		return false, err
 	}
 
-	return ((fileStat.Size() + int64(messageLineLength)) >= int64(r.maxFileSize)), nil
+	return ((fileStat.Size() + int64(messageLineLength)) >= int64(r.maxFileBytes)), nil
 
 }
 
