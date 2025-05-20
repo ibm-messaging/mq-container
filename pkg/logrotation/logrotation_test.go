@@ -3,7 +3,6 @@ package logrotation
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -121,5 +120,5 @@ func TestLogRotation(t *testing.T) {
 func createRotatingLogger(t *testing.T) *RotatingLogger {
 	dir := t.TempDir()
 
-	return NewRotatingLogger(filepath.Join(dir, "log"), 100, 3)
+	return NewRotatingLogger(dir, "test-%d.log", 100, 3)
 }

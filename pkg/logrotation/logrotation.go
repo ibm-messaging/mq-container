@@ -27,27 +27,31 @@ import (
 )
 
 type RotatingLogger struct {
-	basePath      string
-	maxFileSize   int
-	logFilesCount int
-	lock          sync.Mutex
+	baseDirectory  string
+	filenameFormat string
+	maxFileSize    int
+	logFilesCount  int
+	lock           sync.Mutex
 }
 
 // NewRotatingLogger create a new RotatingLogger, it expects three input parameters,
 // basePath is the log-file path prefix,
+// filenameFormat is the format string used for each instance of the log file - it should include a `%d` (or variant such as `%02d`) to indicate the log file instance
 // maxFileSize is the max allowed log-file size in bytes,
 // logFilesCount is the number of log files required to be created.
-func NewRotatingLogger(basePath string, maxFileSize, logFilesCount int) *RotatingLogger {
+func NewRotatingLogger(baseDirectory string, filenameFormat string, maxFileSize int, logFilesCount int) *RotatingLogger {
 	return &RotatingLogger{
-		basePath:      basePath,
-		maxFileSize:   maxFileSize,
-		logFilesCount: logFilesCount,
+		baseDirectory:  baseDirectory,
+		filenameFormat: filenameFormat,
+		maxFileSize:    maxFileSize,
+		logFilesCount:  logFilesCount,
 	}
 }
 
 // instanceFileName returns a log instance filename
 func (r *RotatingLogger) instanceFileName(instance int) string {
-	return fmt.Sprintf("%s-%d.log", r.basePath, instance)
+	filename := fmt.Sprintf(r.filenameFormat, instance)
+	return filepath.Join(r.baseDirectory, filename)
 }
 
 // Init creates log files
