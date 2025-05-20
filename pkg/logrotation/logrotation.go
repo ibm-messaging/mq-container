@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -150,7 +151,7 @@ func (r *RotatingLogger) performLogRotation() error {
 	// delete the last log file
 	lastLogFile := r.instanceFileName(r.logFilesCount)
 	if err := os.Remove(lastLogFile); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("error deleting the %d instance of log-file: %s", r.logFilesCount, r.basePath)
+		return fmt.Errorf("error deleting '%s': %w", lastLogFile, err)
 	}
 
 	// rename the remaining instances of the log-files
@@ -159,13 +160,14 @@ func (r *RotatingLogger) performLogRotation() error {
 		newLogFileInstance := r.instanceFileName(i)
 
 		if err := os.Rename(oldLogFileInstance, newLogFileInstance); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("error renaming %d instance to %d of log-file: %s", (i - 1), i, r.basePath)
+			return fmt.Errorf("error moving '%s' to '%s': %w", oldLogFileInstance, newLogFileInstance, err)
 		}
 	}
 
 	// create the first log-file
-	if err := os.WriteFile(r.instanceFileName(1), []byte(""), 0660); err != nil {
-		return fmt.Errorf("error creating the first instance of the log-file: %s", r.basePath)
+	firstInstancePath := r.instanceFileName(1)
+	if err := os.WriteFile(firstInstancePath, []byte(""), 0660); err != nil {
+		return fmt.Errorf("error creating log file ('%s'): %w", firstInstancePath, err)
 	}
 
 	return nil
