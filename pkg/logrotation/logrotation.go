@@ -76,6 +76,9 @@ func (r *RotatingLogger) Append(messageLine string, deduplicateLine bool) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
+	// Ensure message is terminated with a single line feed
+	messageLine = strings.TrimSpace(messageLine) + "\n"
+
 	// we will always log in the first instance of the log files
 	logFilePath := r.instanceFileName(1)
 
