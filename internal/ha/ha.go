@@ -34,7 +34,7 @@ func ConfigureNativeHA(log *logger.Logger) error {
 	}
 	fipsAvailable := fips.IsFIPSEnabled()
 
-	haCertLabel, haGroupCertLabel, _, _, err := tls.ConfigureHATLSKeystore()
+	haCertLabel, haGroupCertLabel, _, _, err := tls.ConfigureHATLSKeystore(log)
 	if err != nil {
 		return fmt.Errorf("error loading tls keys: %w", err)
 	}

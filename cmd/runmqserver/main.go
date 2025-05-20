@@ -243,7 +243,7 @@ func doMain() error {
 	// Determine FIPS compliance level
 	fips.ProcessFIPSType(log)
 
-	keyLabel, defaultCmsKeystore, defaultP12Truststore, err := tls.ConfigureDefaultTLSKeystores()
+	keyLabel, defaultCmsKeystore, defaultP12Truststore, err := tls.ConfigureDefaultTLSKeystores(log)
 	if err != nil {
 		logTermination(err)
 		return err
