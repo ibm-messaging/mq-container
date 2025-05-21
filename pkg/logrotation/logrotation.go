@@ -58,7 +58,11 @@ func (r *RotatingLogger) instanceFileName(instance int) string {
 // Init creates log files
 func (r *RotatingLogger) Init() error {
 	for i := 1; i <= r.logFilesCount; i++ {
-		err := os.WriteFile(r.instanceFileName(i), []byte(""), 0660)
+		logFile, err := os.OpenFile(r.instanceFileName(i), os.O_CREATE, 0600)
+		if err != nil {
+			return err
+		}
+		err = logFile.Close()
 		if err != nil {
 			return err
 		}
