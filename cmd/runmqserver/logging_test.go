@@ -28,16 +28,38 @@ var formatBasicTests = []struct {
 	outContains string
 }{
 	{
-		[]byte("{\"ibm_datetime\":\"2020/06/24 00:00:00\",\"message\":\"Hello world\"}"),
+		[]byte(`{"ibm_datetime":"2020/06/24 00:00:00","message":"Hello world"}`),
 		"Hello",
 	},
 	{
-		[]byte("{\"ibm_datetime\":\"2020/06/24 00:00:00\",\"message\":\"Hello world\", \"ibm_commentInsert1\":\"foo\"}"),
+		[]byte(`{"ibm_datetime":"2020/06/24 00:00:00","message":"Hello world", "ibm_commentInsert1":"foo"}`),
 		"CommentInsert1(foo)",
 	},
 	{
-		[]byte("{\"ibm_datetime\":\"2020/06/24 00:00:00\",\"message\":\"Hello world\", \"ibm_arithInsert1\":1}"),
+		[]byte(`{"ibm_datetime":"2020/06/24 00:00:00","message":"Hello world", "ibm_arithInsert1":1}`),
 		"ArithInsert1(1)",
+	},
+	{
+		[]byte(`{
+			"ibm_audit_eventName": "SECURITY_AUTHN",
+			"ibm_audit_eventSequenceNumber": "47",
+			"ibm_audit_eventTime": "2025-05-29T12:08:24.056+0000",
+			"ibm_audit_initiator.host.address": "10.254.16.2",
+			"ibm_audit_observer.id": "websphere: cp4i-audit-test-ibm-mq-0.qm.mq-test.svc.cluster.local:/mnt/mqm/data/web/installations/Installation1/:mqweb",
+			"ibm_audit_observer.name": "SecurityService",
+			"ibm_audit_outcome": "success",
+			"ibm_audit_reason.reasonCode": "200",
+			"ibm_audit_reason.reasonType": "HTTPS",
+			"ibm_audit_target.credential.token": "mquser1",
+			"ibm_audit_target.host.address": "10.254.16.109:9443",
+			"ibm_audit_target.id": "websphere: cp4i-audit-test-ibm-mq-0.qm.mq-test.svc.cluster.local:/mnt/mqm/data/web/installations/Installation1/:mqweb",
+			"ibm_audit_target.method": "GET",
+			"ibm_audit_target.name": "/ibmmq/console/",
+			"ibm_audit_target.session": "Vu5GA1hXQEyFRqmYH5mWlGS",
+			"ibm_datetime": "2025-05-29T12:08:24.057Z",
+			"type": "liberty_audit"
+		}`),
+		`AUDIT: eventName="SECURITY_AUTHN" eventSequenceNumber="47" outcome="success" reason.reasonCode="200" reason.reasonType="HTTPS" observer.id="websphere: cp4i-audit-test-ibm-mq-0.qm.mq-test.svc.cluster.local:/mnt/mqm/data/web/installations/Installation1/:mqweb" observer.name="SecurityService" initiator.host.address="10.254.16.2" target.id="websphere: cp4i-audit-test-ibm-mq-0.qm.mq-test.svc.cluster.local:/mnt/mqm/data/web/installations/Installation1/:mqweb" target.host.address="10.254.16.109:9443" target.credential.token="mquser1" target.method="GET" target.name="/ibmmq/console/" target.session="Vu5GA1hXQEyFRqmYH5mWlGS" eventTime="2025-05-29T12:08:24.056+0000"`,
 	},
 }
 
@@ -45,7 +67,10 @@ func TestFormatBasic(t *testing.T) {
 	for i, table := range formatBasicTests {
 		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
 			var inObj map[string]interface{}
-			json.Unmarshal(table.in, &inObj)
+			err := json.Unmarshal(table.in, &inObj)
+			if err != nil {
+				t.Fatalf("Error unmarshalling: %s", err.Error())
+			}
 			t.Logf("Unmarshalled: %+v", inObj)
 			out := formatBasic(inObj)
 			if !strings.Contains(out, table.outContains) {

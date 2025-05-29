@@ -100,9 +100,53 @@ func formatBasic(obj map[string]interface{}) string {
 	// Convert time zone information from some logs (e.g. Liberty) for consistency
 	obj["ibm_datetime"] = strings.Replace(obj["ibm_datetime"].(string), "+0000", "Z", 1)
 	// Escape any new-line characters, so that we don't get multi-line messages messing up the output
-	obj["message"] = strings.ReplaceAll(obj["message"].(string), "\n", "\\n")
+	if message, found := obj["message"]; found {
+		obj["message"] = strings.ReplaceAll(message.(string), "\n", "\\n")
+	}
 
-	if obj["type"] != nil && (obj["type"] == "liberty_trace") {
+	switch obj["type"] {
+	case "liberty_audit":
+		timestamp := obj["ibm_datetime"]
+		checkFields := []string{
+			"ibm_audit_eventName",
+			"ibm_audit_eventSequenceNumber",
+			"ibm_audit_outcome",
+			"ibm_audit_reason.reasonCode",
+			"ibm_audit_reason.reasonType",
+			"ibm_audit_observer.id",
+			"ibm_audit_observer.name",
+			"ibm_audit_initiator.host.address",
+			"ibm_audit_initiator.host.agent",
+			"ibm_audit_target.id",
+			"ibm_audit_target.host.address",
+			"ibm_audit_target.credential.token",
+			"ibm_audit_target.method",
+			"ibm_audit_target.name",
+			"ibm_audit_target.jmx.mbean.action",
+			"ibm_audit_target.jmx.mbean.name",
+			"ibm_audit_target.session",
+			"ibm_audit_eventTime",
+		}
+
+		msg := strings.Builder{}
+		msg.WriteString(timestamp.(string))
+		msg.WriteString(" AUDIT:")
+		for _, field := range checkFields {
+			fieldVal, found := obj[field]
+			if !found {
+				continue
+			}
+			displayName := strings.TrimPrefix(field, "ibm_audit_")
+
+			msg.WriteByte(' ')
+			msg.WriteString(displayName)
+			msg.WriteByte('=')
+			msg.WriteString(fmt.Sprintf("%#v", fieldVal))
+		}
+		msg.WriteByte('\n')
+
+		return msg.String()
+	case "liberty_trace":
 		timeStamp := obj["ibm_datetime"]
 		threadID := ""
 		srtModuleName := ""
