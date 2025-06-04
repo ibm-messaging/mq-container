@@ -86,6 +86,136 @@ func Test_validateLogFilePageSetting(t *testing.T) {
 	}
 }
 
+func Test_validatePrimaryLogFileSetting(t *testing.T) {
+	type args struct {
+		iniFilePath            string
+		isValid                bool
+		primaryLogFilesValue   string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "TestPrimaryLogFile1",
+			args: args{
+				iniFilePath:       "./test-files/testvalidateLogPrimaryFiles_1.ini",
+				isValid:           true,
+				primaryLogFilesValue: "3",
+			},
+		},
+		{
+			name: "TestPrimaryLogFile2",
+			args: args{
+				iniFilePath:       "./test-files/testvalidateLogPrimaryFiles_2.ini",
+				isValid:           true,
+				primaryLogFilesValue: "3",
+			},
+		},
+		{
+			name: "TestPrimaryLogFile3",
+			args: args{
+				iniFilePath:       "./test-files/testvalidateLogPrimaryFiles_3.ini",
+				isValid:           false,
+				primaryLogFilesValue: "10",
+			},
+		},
+		{
+			name: "TestPrimaryLogFile4",
+			args: args{
+				iniFilePath:       "./test-files/testvalidateLogPrimaryFiles_4.ini",
+				isValid:           false,
+				primaryLogFilesValue: "3",
+			},
+		},
+		{
+			name: "TestPrimaryLogFile5",
+			args: args{
+				iniFilePath:       "./test-files/testvalidateLogPrimaryFiles_5.ini",
+				isValid:           false,
+				primaryLogFilesValue: "1235",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			iniFileBytes, err := os.ReadFile(tt.args.iniFilePath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			validate := validatePrimaryLogFileSetting(iniFileBytes, tt.args.primaryLogFilesValue)
+			if validate != tt.args.isValid {
+				t.Fatalf("Expected ini file validation output to be %v got %v", tt.args.isValid, validate)
+			}
+		})
+	}
+}
+
+func Test_validateSecondaryLogFileSetting(t *testing.T) {
+	type args struct {
+		iniFilePath            string
+		isValid                bool
+		secondaryLogFilesValue string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "TestSecondaryLogFile1",
+			args: args{
+				iniFilePath:       "./test-files/testvalidateLogSecondaryFiles_1.ini",
+				isValid:           true,
+				secondaryLogFilesValue: "2",
+			},
+		},
+		{
+			name: "TestSecondaryLogFile2",
+			args: args{
+				iniFilePath:       "./test-files/testvalidateLogSecondaryFiles_2.ini",
+				isValid:           true,
+				secondaryLogFilesValue: "2",
+			},
+		},
+		{
+			name: "TestSecondaryLogFile3",
+			args: args{
+				iniFilePath:       "./test-files/testvalidateLogSecondaryFiles_3.ini",
+				isValid:           false,
+				secondaryLogFilesValue: "10",
+			},
+		},
+		{
+			name: "TestSecondaryLogFile4",
+			args: args{
+				iniFilePath:       "./test-files/testvalidateLogSecondaryFiles_4.ini",
+				isValid:           false,
+				secondaryLogFilesValue: "2",
+			},
+		},
+		{
+			name: "TestSecondaryLogFile5",
+			args: args{
+				iniFilePath:       "./test-files/testvalidateLogSecondaryFiles_5.ini",
+				isValid:           false,
+				secondaryLogFilesValue: "1235",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			iniFileBytes, err := os.ReadFile(tt.args.iniFilePath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			validate := validateSecondaryLogFileSetting(iniFileBytes, tt.args.secondaryLogFilesValue)
+			if validate != tt.args.isValid {
+				t.Fatalf("Expected ini file validation output to be %v got %v", tt.args.isValid, validate)
+			}
+		})
+	}
+}
+
 // Unit test for special character in queue manager names
 func Test_SpecialCharInQMNameReplacements(t *testing.T) {
 	type qmNames struct {
