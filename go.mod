@@ -1,6 +1,6 @@
 module github.com/ibm-messaging/mq-container
 
-go 1.23.6
+go 1.23.9
 
 require (
 	github.com/fsnotify/fsnotify v1.8.0
