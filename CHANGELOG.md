@@ -4,6 +4,7 @@
 
 * Updated to MQ version 9.4.3.0
 * Refactored the file permission logs to match the container logging format
+* Allow enabling audit logging of access to Prometheus metrics endpoint (enable audit logging by setting `MQ_LOGGING_METRICS_AUDIT_ENABLED=true`)
 
 ## 9.4.2.0 (2025-02)
 
