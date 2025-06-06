@@ -24,7 +24,7 @@ env:
     - MAIN_BRANCH=private-master
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
-    - BASE_MQ_LOCKED=false
+    - BASE_MQ_LOCKED=true
     - FEATURE_BUILD_OVERRIDE=false
     - DELIVERY_REGISTRY_NAMESPACE_OVERRIDE=hyc-mq-container-team-docker-local/travis-master
 
