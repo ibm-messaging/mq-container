@@ -24,7 +24,7 @@ env:
     - MAIN_BRANCH=private-master
     - TAGCACHE_FILE=tagcache
     - RELEASE=r1
-    - BASE_MQ_LOCKED=true
+    - BASE_MQ_LOCKED=false
     - FEATURE_BUILD_OVERRIDE=false
     - DELIVERY_REGISTRY_NAMESPACE_OVERRIDE=hyc-mq-container-team-docker-local/travis-master
 
@@ -43,7 +43,7 @@ jobs:
       name: "Basic AMD64 build"
       os: linux
       env:
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_3_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_4_ARCHIVE_REPOSITORY_DEV_AMD64
       script:
         - bash travis-build-scripts/travis-log-keepalive.sh &
         - bash -e travis-build-scripts/run.sh
@@ -61,8 +61,8 @@ jobs:
       os: linux
       env:
         - BUILD_ALL=true
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_3_ARCHIVE_REPOSITORY_AMD64
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_3_ARCHIVE_REPOSITORY_DEV_AMD64
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_4_ARCHIVE_REPOSITORY_AMD64
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_4_ARCHIVE_REPOSITORY_DEV_AMD64
       script:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
@@ -75,8 +75,8 @@ jobs:
       env:
         - BUILD_ALL=true
         - TEST_OPTS_CONTAINER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_3_ARCHIVE_REPOSITORY_S390X
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_3_ARCHIVE_REPOSITORY_DEV_S390X
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_4_ARCHIVE_REPOSITORY_S390X
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_4_ARCHIVE_REPOSITORY_DEV_S390X
       script:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh
@@ -89,8 +89,8 @@ jobs:
       env:
         - BUILD_ALL=true
         - TEST_OPTS_CONTAINER="-run TestGoldenPathWithMetrics"
-        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_3_ARCHIVE_REPOSITORY_PPC64LE
-        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_3_ARCHIVE_REPOSITORY_DEV_PPC64LE
+        - MQ_ARCHIVE_REPOSITORY=$MQ_9_4_4_ARCHIVE_REPOSITORY_PPC64LE
+        - MQ_ARCHIVE_REPOSITORY_DEV=$MQ_9_4_4_ARCHIVE_REPOSITORY_DEV_PPC64LE
       script:
       - bash travis-build-scripts/travis-log-keepalive.sh &
       - bash -e travis-build-scripts/run.sh

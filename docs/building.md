@@ -18,7 +18,7 @@ To build an IBM MQ image, navigate to the appropriate section:
 
 ### MQ Continuous Delivery (CD)
 
-The procedure below is for building the 9.4.3 release, on `amd64`, `ppc64le` and `s390x` architectures.
+The procedure below is for building the 9.4.4 release, on `amd64`, `ppc64le` and `s390x` architectures.
 
 1. Create a `downloads` directory in the root of this repository
 2. Identify the correct eImage part number for your architecture from https://www.ibm.com/support/pages/downloading-ibm-mq-94 and download
