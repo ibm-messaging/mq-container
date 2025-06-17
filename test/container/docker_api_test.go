@@ -1239,7 +1239,7 @@ func TestVersioning(t *testing.T) {
 			data := dataAr[len(dataAr)-1]
 
 			// Verify MQ version
-			pattern := regexp.MustCompile("^p\\d{3}-.+$")
+			pattern := regexp.MustCompile("^p\\d{3,4}-.+$")
 			if !pattern.MatchString(data) {
 				t.Errorf("Failed to validate mq level (%v)", data)
 			}
