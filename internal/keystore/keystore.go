@@ -27,19 +27,20 @@ import (
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 	"github.com/ibm-messaging/mq-container/internal/fips"
+	"github.com/ibm-messaging/mq-container/internal/sensitive"
 )
 
 // KeyStore describes information about a keystore file
 type KeyStore struct {
 	Filename     string
-	Password     string
+	Password     *sensitive.Sensitive
 	keyStoreType string
 	command      string
 	fipsEnabled  bool
 }
 
 // NewJKSKeyStore creates a new Java Key Store, managed by the runmqckm command
-func NewJKSKeyStore(filename, password string) *KeyStore {
+func NewJKSKeyStore(filename string, password *sensitive.Sensitive) *KeyStore {
 	keyStore := &KeyStore{
 		Filename:     filename,
 		Password:     password,
@@ -52,7 +53,7 @@ func NewJKSKeyStore(filename, password string) *KeyStore {
 }
 
 // NewCMSKeyStore creates a new MQ CMS Key Store, managed by the runmqakm command
-func NewCMSKeyStore(filename, password string) *KeyStore {
+func NewCMSKeyStore(filename string, password *sensitive.Sensitive) *KeyStore {
 	keyStore := &KeyStore{
 		Filename:     filename,
 		Password:     password,
@@ -65,7 +66,7 @@ func NewCMSKeyStore(filename, password string) *KeyStore {
 }
 
 // NewPKCS12KeyStore creates a new PKCS12 Key Store, managed by the runmqakm command
-func NewPKCS12KeyStore(filename, password string) *KeyStore {
+func NewPKCS12KeyStore(filename string, password *sensitive.Sensitive) *KeyStore {
 	keyStore := &KeyStore{
 		Filename:     filename,
 		Password:     password,
@@ -111,7 +112,7 @@ func (ks *KeyStore) Create() error {
 	}
 
 	// Create the keystore now we're sure it doesn't exist
-	out, _, err := command.Run(ks.command, "-keydb", "-create", ks.getFipsEnabledFlag(), "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password, "-stash")
+	out, _, err := command.Run(ks.command, "-keydb", "-create", ks.getFipsEnabledFlag(), "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password.String(), "-stash")
 	if err != nil {
 		return fmt.Errorf("error running \"%v -keydb -create\": %v %s", ks.command, err, out)
 	}
@@ -126,7 +127,7 @@ func (ks *KeyStore) CreateStash() error {
 	_, err := os.Stat(stashFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			out, _, err := command.Run(ks.command, "-keydb", ks.getFipsEnabledFlag(), "-stashpw", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
+			out, _, err := command.Run(ks.command, "-keydb", ks.getFipsEnabledFlag(), "-stashpw", "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password.String())
 			if err != nil {
 				return fmt.Errorf("error running \"%v -keydb -stashpw\": %v %s", ks.command, err, out)
 			}
@@ -137,8 +138,8 @@ func (ks *KeyStore) CreateStash() error {
 }
 
 // Import imports a certificate file in the keystore
-func (ks *KeyStore) Import(inputFile, password string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-import", ks.getFipsEnabledFlag(), "-file", inputFile, "-pw", password, "-target", ks.Filename, "-target_pw", ks.Password, "-target_type", ks.keyStoreType)
+func (ks *KeyStore) Import(inputFile string, password *sensitive.Sensitive) error {
+	out, _, err := command.Run(ks.command, "-cert", "-import", ks.getFipsEnabledFlag(), "-file", inputFile, "-pw", password.String(), "-target", ks.Filename, "-target_pw", ks.Password.String(), "-target_type", ks.keyStoreType)
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -import\": %v %s", ks.command, err, out)
 	}
@@ -147,7 +148,7 @@ func (ks *KeyStore) Import(inputFile, password string) error {
 
 // CreateSelfSignedCertificate creates a self-signed certificate in the keystore
 func (ks *KeyStore) CreateSelfSignedCertificate(label, dn, hostname string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-create", ks.getFipsEnabledFlag(), "-db", ks.Filename, "-pw", ks.Password, "-label", label, "-dn", dn, "-san_dnsname", hostname, "-size 2048 -sig_alg sha512 -eku serverAuth")
+	out, _, err := command.Run(ks.command, "-cert", "-create", ks.getFipsEnabledFlag(), "-db", ks.Filename, "-pw", ks.Password.String(), "-label", label, "-dn", dn, "-san_dnsname", hostname, "-size 2048 -sig_alg sha512 -eku serverAuth")
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -create\": %v %s", ks.command, err, out)
 	}
@@ -156,7 +157,7 @@ func (ks *KeyStore) CreateSelfSignedCertificate(label, dn, hostname string) erro
 
 // Add adds a CA certificate to the keystore
 func (ks *KeyStore) Add(inputFile, label string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-add", ks.getFipsEnabledFlag(), "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile, "-label", label)
+	out, _, err := command.Run(ks.command, "-cert", "-add", ks.getFipsEnabledFlag(), "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password.String(), "-file", inputFile, "-label", label)
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -add\": %v %s", ks.command, err, out)
 	}
@@ -165,7 +166,7 @@ func (ks *KeyStore) Add(inputFile, label string) error {
 
 // Add adds a CA certificate to the keystore
 func (ks *KeyStore) AddNoLabel(inputFile string) error {
-	out, _, err := command.Run(ks.command, "-cert", "-add", ks.getFipsEnabledFlag(), "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password, "-file", inputFile)
+	out, _, err := command.Run(ks.command, "-cert", "-add", ks.getFipsEnabledFlag(), "-db", ks.Filename, "-type", ks.keyStoreType, "-pw", ks.Password.String(), "-file", inputFile)
 	if err != nil {
 		return fmt.Errorf("error running \"%v -cert -add\": %v %s", ks.command, err, out)
 	}
@@ -174,7 +175,7 @@ func (ks *KeyStore) AddNoLabel(inputFile string) error {
 
 // GetCertificateLabels returns the labels of all certificates in the key store
 func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
-	out, _, err := command.Run(ks.command, "-cert", "-list", ks.getFipsEnabledFlag(), "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
+	out, _, err := command.Run(ks.command, "-cert", "-list", ks.getFipsEnabledFlag(), "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password.String())
 	if err != nil {
 		return nil, fmt.Errorf("error running \"%v -cert -list\": %v %s", ks.command, err, out)
 	}
@@ -200,14 +201,14 @@ func (ks *KeyStore) RenameCertificate(from, to string) error {
 		// runmqakm can't handle certs with ' in them so just use capicmd
 		// Overriding gosec here as this function is in an internal package and only callable by our internal functions.
 		// #nosec G204
-		cmd := exec.Command("/opt/mqm/gskit8/bin/gsk8capicmd_64", "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
+		cmd := exec.Command("/opt/mqm/gskit8/bin/gsk8capicmd_64", "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password.String(), "-label", from, "-new_label", to)
 		cmd.Env = append(os.Environ(), "LD_LIBRARY_PATH=/opt/mqm/gskit8/lib64/:/opt/mqm/gskit8/lib")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("error running \"%v -cert -rename\": %v %s", "/opt/mqm/gskit8/bin/gsk8capicmd_64", err, out)
 		}
 	} else {
-		out, _, err := command.Run(ks.command, "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password, "-label", from, "-new_label", to)
+		out, _, err := command.Run(ks.command, "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password.String(), "-label", from, "-new_label", to)
 		if err != nil {
 			return fmt.Errorf("error running \"%v -cert -rename\": %v %s", ks.command, err, out)
 		}
@@ -218,7 +219,7 @@ func (ks *KeyStore) RenameCertificate(from, to string) error {
 
 // ListAllCertificates Lists all certificates in the keystore
 func (ks *KeyStore) ListAllCertificates() ([]string, error) {
-	out, _, err := command.Run(ks.command, "-cert", "-list", ks.getFipsEnabledFlag(), "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password)
+	out, _, err := command.Run(ks.command, "-cert", "-list", ks.getFipsEnabledFlag(), "-type", ks.keyStoreType, "-db", ks.Filename, "-pw", ks.Password.String())
 	if err != nil {
 		return nil, fmt.Errorf("error running \"%v -cert -list\": %v %s", ks.command, err, out)
 	}
