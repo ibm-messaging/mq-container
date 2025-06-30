@@ -36,6 +36,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/keystore"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/pathutils"
+	"github.com/ibm-messaging/mq-container/internal/sensitive"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
@@ -68,7 +69,7 @@ const trustDirGroupHA = "/etc/mqm/groupha/pki/trust"
 
 type KeyStoreData struct {
 	Keystore          *keystore.KeyStore
-	Password          string
+	Password          *sensitive.Sensitive
 	TrustedCerts      []*pem.Block
 	KnownFingerPrints []string
 	KeyLabels         []string
@@ -316,7 +317,7 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string, log *log
 				}
 			}
 			// Create a new PKCS#12 Keystore - containing private key, public certificate & optional CA certificate
-			file, err := pkcs.Modern.Encode(privateKey, publicCertificate, caCertificate, tlsStore.Keystore.Password)
+			file, err := pkcs.Modern.Encode(privateKey, publicCertificate, caCertificate, tlsStore.Keystore.Password.String())
 			if err != nil {
 				return "", fmt.Errorf("Failed to encode PKCS#12 Keystore %s: %v", keySet.Name()+".p12", err)
 			}
@@ -680,17 +681,17 @@ func addCertificatesToCMSKeystore(cmsKeystore *KeyStoreData) error {
 }
 
 // generateRandomPassword generates a random 12 character password from the characters a-z, A-Z, 0-9
-func generateRandomPassword() string {
+func generateRandomPassword() *sensitive.Sensitive {
 	pwr.Seed(time.Now().Unix())
 	validChars := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 	validcharArray := []byte(validChars)
-	password := ""
+	password := []byte{}
 	for i := 0; i < 12; i++ {
 		// #nosec G404 - this is only for internal keystore and using math/rand pose no harm.
-		password = password + string(validcharArray[pwr.Intn(len(validcharArray))])
+		password = append(password, validcharArray[pwr.Intn(len(validcharArray))])
 	}
 
-	return password
+	return sensitive.New(password)
 }
 
 // addToKnownCertificates adds to the list of known certificates for a Keystore
