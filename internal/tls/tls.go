@@ -18,13 +18,12 @@ package tls
 import (
 	"bufio"
 	"crypto"
+	"crypto/rand"
 	"fmt"
-	pwr "math/rand"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"crypto/sha512"
 	"crypto/x509"
@@ -677,13 +676,13 @@ func addCertificatesToCMSKeystore(cmsKeystore *KeyStoreData) error {
 
 // generateRandomPassword generates a random 12 character password from the characters a-z, A-Z, 0-9
 func generateRandomPassword() *sensitive.Sensitive {
-	pwr.Seed(time.Now().Unix())
 	validChars := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 	validcharArray := []byte(validChars)
-	password := []byte{}
+	password := make([]byte, 12)
+	_, _ = rand.Read(password) // Errors are never returned from crypto/rand.Read()
+
 	for i := 0; i < 12; i++ {
-		// #nosec G404 - this is only for internal keystore and using math/rand pose no harm.
-		password = append(password, validcharArray[pwr.Intn(len(validcharArray))])
+		password[i] = validcharArray[int(password[i])%len(validcharArray)]
 	}
 
 	return sensitive.New(password)
