@@ -72,11 +72,6 @@ type KeyStoreData struct {
 	KeyLabels         []string
 }
 
-type P12KeyFiles struct {
-	Keystores []string
-	Password  string
-}
-
 type TLSStore struct {
 	Keystore   KeyStoreData
 	Truststore KeyStoreData
