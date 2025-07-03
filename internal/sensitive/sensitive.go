@@ -74,6 +74,7 @@ func (s *Sensitive) Clear() {
 //
 // NOTE: if the Sensitive object is garbage collected, or Clear() is called, this string will be zeroed even if it remains in scope
 func (s *Sensitive) String() string {
+	// #nosec G103 - unsafe package is required in order to prevent memory copy during type conversion to string
 	return unsafe.String(unsafe.SliceData(s.meta.buf), len(s.buf))
 }
 
