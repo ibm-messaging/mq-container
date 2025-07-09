@@ -45,15 +45,13 @@ func New(buf []byte) *Sensitive {
 func (s *Sensitive) Write(b []byte) error {
 	newBuf := append(s.buf, b...)
 	if &newBuf[0] != &s.buf[0] {
+		// buffer starts at a new address - must have moved to a new memory block
 		zeroMeta(s.meta)
 		s.setMeta(newBuf)
 		return nil
 	}
-	if &newBuf != &s.buf {
-		cancelZeroMeta(s.meta)
-		s.setMeta(newBuf)
-		return nil
-	}
+	// buffer hasn't moved, don't zero out current buffer as it's still in use, but do update the buffer to capture new length etc.
+	s.buf = newBuf
 	return nil
 }
 
@@ -87,11 +85,6 @@ func (s *Sensitive) setMeta(buf []byte) {
 	m.pin.Pin(&buf)
 	s.meta = m
 	runtime.SetFinalizer(m, zeroMeta)
-}
-
-func cancelZeroMeta(m *meta) {
-	m.pin.Unpin()
-	runtime.SetFinalizer(m, nil)
 }
 
 // zeroMeta zeroes the underlying buffer and removes all finalizers and memory pins
