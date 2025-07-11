@@ -299,7 +299,7 @@ func configureLogger(name string) (mirrorFunc, error) {
 			} else {
 				// The log being mirrored isn't JSON, so just print it. This can happen only in case of mqsc logs
 				if checkLogSourceForMirroring("mqsc") && canMQSCLogBeMirroredToConsole(msg) {
-					log.Printf(strings.TrimSpace(msg))
+					log.Printf("%s", strings.TrimSpace(msg))
 				}
 			}
 			return true
