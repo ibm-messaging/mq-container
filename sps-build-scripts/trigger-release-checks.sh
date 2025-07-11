@@ -14,33 +14,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#Not making any changes to this script as it will be covered as part of release check changes - sdp
+set -e
 
-if [ -n "${TRAVIS}" ]; then
-    GREEN="\033[32m"
-    RED="\033[31m"
+if [ -n "$PIPELINE_RUN_ID" ]; then
+  if [ -z "$GOPATH" ]; then
+    echo "GOPATH not set to clone release checks."
+    exit 1
+  fi
 
-    END="\033[0m"
+  EVENT_SOURCE="$(get_env APP_REPO_NAME)"
+  echo "EVENT_SOURCE is set to $EVENT_SOURCE"
 
-    RIGHTARROW="\xE2\x96\xB6"
-    GREENRIGHTARROW=${GREEN}${RIGHTARROW}${END}
+  if [ -z "$EVENT_SOURCE" ]; then
+    echo "EVENT_SOURCE is not set. Release checks cannot be triggered. Exiting...."
+    exit 1
+  fi
 
-    TICK="\xE2\x9C\x94"
-    CROSS="\xE2\x9C\x97"
-    GREENTICK=${GREEN}${TICK}${END}
-    REDCROSS=${RED}${CROSS}${END}
+  echo "Triggering release checks for event source: $EVENT_SOURCE"
 
-    printf "${GREENRIGHTARROW} Attempting to trigger new release-checks build\n"
+  REPO="$GOPATH/src/github.ibm.com/mq-cloudpak/release-checks"
+  mkdir -p "$REPO"
 
-    repo_name=$(echo "${TRAVIS_REPO_SLUG}" | cut -d'/' -f2-)
+  echo "Cloning release-checks repo..."
+  git clone git@github.ibm.com:mq-cloudpak/release-checks.git "$REPO" && cd "$REPO"
 
-    request_body="{ \"request\": { \"message\": \"Trigger release checks build from ${repo_name}:${TRAVIS_BRANCH}\", \"branch\": \"main\", \"merge_mode\": \"deep_merge_append\", \"config\": { \"env\": { \"global\": [ \"EVENT_SOURCE=${repo_name}\" ]}}}}"
-
-    request_response="$(curl -X POST -H "Content-Type: application/json" -H "Travis-API-Version: 3" -H "Authorization: token ${TRAVIS_TOKEN}" -d "${request_body}" https://v3.travis.ibm.com/api/repo/mq-cloudpak%2Frelease-checks/requests -o /dev/null -w "%{http_code}" -s)"
-    if [ "$request_response" != "202" ]; then
-        printf "${REDCROSS} ${RED}Could not create new request${END}\n"
-        exit 1
-    else
-        printf "${GREENTICK} Successfully created new request\n"
-    fi
+  go run scripts/sps_tekton.go "$EVENT_SOURCE"
 fi
