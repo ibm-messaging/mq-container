@@ -25,4 +25,4 @@ sudo apt update || :
 sudo apt-get install -y jq
 
 go install golang.org/x/lint/golint@latest
-curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $GOPATH/bin v2.14.0 || echo "Gosec not installed. Platform may not be supported."
+curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $GOPATH/bin v2.22.5 || echo "Gosec not installed. Platform may not be supported."

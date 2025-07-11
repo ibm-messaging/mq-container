@@ -442,9 +442,9 @@ func TestVolumeUnmount(t *testing.T) {
 	if rc == 0 {
 		t.Errorf("Expected chkmqhealthy to fail")
 		_, df := execContainer(t, cli, ctrID, "", []string{"df"})
-		t.Logf(df)
+		t.Logf("%v", df)
 		_, ps := execContainer(t, cli, ctrID, "", []string{"ps", "-ef"})
-		t.Logf(ps)
+		t.Logf("%v", ps)
 	}
 }
 

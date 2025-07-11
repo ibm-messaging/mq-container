@@ -968,7 +968,7 @@ func startContainerError(t *testing.T, cli ce.ContainerInterface, ID string) err
 
 // testLogFilePages validates that the specified number of logFilePages is present in the qm.ini file.
 func testLogFilePages(t *testing.T, cli ce.ContainerInterface, id string, qmName string, expectedLogFilePages string) {
-	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/" + qmName + "/qm.ini")
+	catIniFileCommand := fmt.Sprintf("%s", "cat /var/mqm/qmgrs/" + qmName + "/qm.ini")
 	_, iniContent := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
 
 	if !strings.Contains(iniContent, "LogFilePages="+expectedLogFilePages) {
