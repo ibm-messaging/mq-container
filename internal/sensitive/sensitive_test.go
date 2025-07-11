@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"runtime"
 	"testing"
+	"time"
 )
 
 func TestString(t *testing.T) {
@@ -60,6 +61,7 @@ func TestMultipleExpansions(t *testing.T) {
 	for i := range 10 {
 		s.Write([]byte(fmt.Sprintf("-%d", i)))
 		runtime.GC()
+		time.Sleep(10 * time.Millisecond)
 	}
 	expected := "initial-0-1-2-3-4-5-6-7-8-9"
 	actual := string(append([]byte(nil), []byte(s.String())...)) // Copy bytes from the string, not just a clone of the pointer
@@ -131,6 +133,7 @@ func TestGCRedaction(t *testing.T) {
 
 			t.Logf("Before GC: []byte='%s' (%x); string='%s' (%x)", string(asByte), asByte, asString, asString)
 			runtime.GC()
+			time.Sleep(10 * time.Millisecond)
 
 			stringCopy := string(append([]byte(nil), []byte(asString)...)) // Copy bytes from the string, not just a clone of the pointer
 			byteCopy := make([]byte, len(asByte))
