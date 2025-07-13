@@ -16,16 +16,15 @@
 
 set -e
 
-if [ -n "$PIPELINE_RUN_ID" ]; then
-  if [ -z "$GOPATH" ]; then
+if [[ -n "$PIPELINE_RUN_ID" ]]; then
+  if [[ -z "$GOPATH" ]]; then
     echo "GOPATH not set to clone release checks."
     exit 1
   fi
 
   EVENT_SOURCE="$(get_env APP_REPO_NAME)"
-  echo "EVENT_SOURCE is set to $EVENT_SOURCE"
 
-  if [ -z "$EVENT_SOURCE" ]; then
+  if [[ -z "$EVENT_SOURCE" ]]; then
     echo "EVENT_SOURCE is not set. Release checks cannot be triggered. Exiting...."
     exit 1
   fi
