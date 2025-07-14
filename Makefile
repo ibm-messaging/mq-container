@@ -19,7 +19,9 @@
 
 include config.env
 include source-branch.env
+ifdef PIPELINE_RUN_ID
 include pipeline.env
+endif
 
 # arch_uname is the platform architecture according to the uname program.  Can be differ by OS, e.g. `arm64` on macOS, but `aarch64` on Linux.
 arch_uname := $(shell uname -m)
