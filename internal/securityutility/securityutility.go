@@ -24,22 +24,30 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/ibm-messaging/mq-container/internal/sensitive"
 )
 
 // EncodeSecrets takes a secret/password as an input and encodes the password using securityUtility
 // and returns the encoded password
-func EncodeSecrets(secret string) (string, error) {
+func EncodeSecrets(secret *sensitive.Sensitive) (string, error) {
 	_, err := os.Stat("/opt/mqm/web/bin/securityUtility")
 	if err != nil && os.IsNotExist(err) {
 		return "", err
 	}
-	if len(secret) > 256 {
-		return "", fmt.Errorf("length of password is greater than the maximum length of 256 characters, length of password is %d", len(secret))
+	if secret.Len() > 256 {
+		return "", fmt.Errorf("length of password is greater than the maximum length of 256 characters, length of password is %d", secret.Len())
+	}
+	script := []byte("source setmqenv -s;/opt/mqm/web/bin/server; /opt/mqm/web/bin/securityUtility encode --encoding=aes ")
+	scriptSecret := sensitive.New(script)
+	err = scriptSecret.Append(secret)
+	if err != nil {
+		return "", err
 	}
 	// Set the java environment required for running securityUtility tool and then run the securityUtility tool
 	// to encode the password using "aes" encoding
 	// #nosec G204
-	cmd := exec.Command("/bin/sh", "-c", "source setmqenv -s;/opt/mqm/web/bin/server; /opt/mqm/web/bin/securityUtility encode --encoding=aes "+secret)
+	cmd := exec.Command("/bin/sh", "-c", scriptSecret.String())
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "JAVA_HOME=/opt/mqm/java/jre64/jre")
 

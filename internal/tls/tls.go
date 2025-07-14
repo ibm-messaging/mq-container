@@ -18,13 +18,12 @@ package tls
 import (
 	"bufio"
 	"crypto"
+	"crypto/rand"
 	"fmt"
-	pwr "math/rand"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"crypto/sha512"
 	"crypto/x509"
@@ -36,6 +35,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/keystore"
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/pathutils"
+	"github.com/ibm-messaging/mq-container/internal/sensitive"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
@@ -68,7 +68,7 @@ const trustDirGroupHA = "/etc/mqm/groupha/pki/trust"
 
 type KeyStoreData struct {
 	Keystore          *keystore.KeyStore
-	Password          string
+	Password          *sensitive.Sensitive
 	TrustedCerts      []*pem.Block
 	KnownFingerPrints []string
 	KeyLabels         []string
@@ -79,11 +79,6 @@ type privateKeyInfo struct {
 	keySetName string
 	directory  string
 	filename   string
-}
-
-type P12KeyFiles struct {
-	Keystores []string
-	Password  string
 }
 
 type TLSStore struct {
@@ -316,7 +311,7 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string, log *log
 				}
 			}
 			// Create a new PKCS#12 Keystore - containing private key, public certificate & optional CA certificate
-			file, err := pkcs.Modern.Encode(privateKey, publicCertificate, caCertificate, tlsStore.Keystore.Password)
+			file, err := pkcs.Modern.Encode(privateKey, publicCertificate, caCertificate, tlsStore.Keystore.Password.String())
 			if err != nil {
 				return "", fmt.Errorf("Failed to encode PKCS#12 Keystore %s: %v", keySet.Name()+".p12", err)
 			}
@@ -680,17 +675,17 @@ func addCertificatesToCMSKeystore(cmsKeystore *KeyStoreData) error {
 }
 
 // generateRandomPassword generates a random 12 character password from the characters a-z, A-Z, 0-9
-func generateRandomPassword() string {
-	pwr.Seed(time.Now().Unix())
+func generateRandomPassword() *sensitive.Sensitive {
 	validChars := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 	validcharArray := []byte(validChars)
-	password := ""
+	password := make([]byte, 12)
+	_, _ = rand.Read(password) // Errors are never returned from crypto/rand.Read()
+
 	for i := 0; i < 12; i++ {
-		// #nosec G404 - this is only for internal keystore and using math/rand pose no harm.
-		password = password + string(validcharArray[pwr.Intn(len(validcharArray))])
+		password[i] = validcharArray[int(password[i])%len(validcharArray)]
 	}
 
-	return password
+	return sensitive.New(password)
 }
 
 // addToKnownCertificates adds to the list of known certificates for a Keystore

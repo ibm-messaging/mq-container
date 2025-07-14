@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/securityutility"
+	"github.com/ibm-messaging/mq-container/internal/sensitive"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
@@ -65,7 +66,8 @@ func CheckForPasswords(log *logger.Logger) error {
 	appPassword, appPwdSet := os.LookupEnv(MQ_APP_PWD_ENV)
 
 	if adminPwdSet && len(strings.TrimSpace(adminPassword)) > 0 {
-		encodedAdminPassword, err := securityutility.EncodeSecrets(adminPassword)
+		adminPasswordSensitive := sensitive.New([]byte(adminPassword))
+		encodedAdminPassword, err := securityutility.EncodeSecrets(adminPasswordSensitive)
 		if err != nil {
 			return fmt.Errorf("encoding Admin password for web server failed with error %v", err)
 		}
@@ -90,7 +92,8 @@ func CheckForPasswords(log *logger.Logger) error {
 	}
 
 	if appPwdSet && len(strings.TrimSpace(appPassword)) > 0 {
-		encodedAppPassword, err := securityutility.EncodeSecrets(appPassword)
+		appPasswordSensitive := sensitive.New([]byte(appPassword))
+		encodedAppPassword, err := securityutility.EncodeSecrets(appPasswordSensitive)
 		if err != nil {
 			return fmt.Errorf("encoding App password for web server failed with error %v", err)
 		}
@@ -123,11 +126,12 @@ func readMQSecrets(secretName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(passwordBuf) > 256 {
-		err = fmt.Errorf("the length of the password cannot be more than 256 characters, length of the password was %v", len(passwordBuf))
+	passwordSensitive := sensitive.New(passwordBuf)
+	if passwordSensitive.Len() > 256 {
+		err = fmt.Errorf("the length of the password cannot be more than 256 characters, length of the password was %v", passwordSensitive.Len())
 		return "", err
 	}
-	encodedPassword, err := securityutility.EncodeSecrets(string(passwordBuf))
+	encodedPassword, err := securityutility.EncodeSecrets(passwordSensitive)
 	if err != nil {
 		return "", err
 	}
