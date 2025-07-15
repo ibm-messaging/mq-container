@@ -37,5 +37,5 @@ cd "$GOPATH/src/github.ibm.com/mq-cloudpak/pipeline-util"
 make install
 
 echo 'Sync with linked stage branch for ifix ...' && echo -en 'start:sync-latest\\r'
-pipeline-util stages sync --stage=dev-ifix --mq-snapshot-name=${MQ_SNAPSHOT_NAME} --apar-number=${APAR_NUMBER} --sync-branch-name=${BRANCH} --sync-repository-name=mq-container --promotion-type=IFIX --travis-token=${TRAVIS_TOKEN}
+pipeline-util stages sync --stage=dev-ifix --mq-snapshot-name=${MQ_SNAPSHOT_NAME} --apar-number=${APAR_NUMBER} --sync-branch-name=${BRANCH} --sync-repository-name=mq-container --promotion-type=IFIX --sps-token=${MQCON2_IAM_KEY}
 echo -en 'end:sync-latest\\r'

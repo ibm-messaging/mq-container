@@ -23,10 +23,7 @@ END="\033[0m"
 
 
 RIGHTARROW="\xE2\x96\xB6"
-BLUERIGHTARROW=${BLUE}${RIGHTARROW}${END}
 GREENRIGHTARROW=${GREEN}${RIGHTARROW}${END}
-
-ERROR=${RED}
 
 TICK="\xE2\x9C\x94"
 CROSS="\xE2\x9C\x97"
@@ -53,4 +50,3 @@ else
 fi
 
 echo "Check and upload base MQ driver process completed."
-
