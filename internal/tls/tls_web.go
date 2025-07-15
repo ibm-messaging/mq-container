@@ -23,6 +23,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/mqtemplate"
 	"github.com/ibm-messaging/mq-container/internal/pathutils"
 	"github.com/ibm-messaging/mq-container/internal/securityutility"
+	"github.com/ibm-messaging/mq-container/internal/sensitive"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 )
 
@@ -30,7 +31,7 @@ import (
 const webKeystoreDefault = "default.p12"
 
 // ConfigureWebTLS configures TLS for the web server
-func ConfigureWebTLS(keyLabel string, log *logger.Logger, password string) error {
+func ConfigureWebTLS(keyLabel string, log *logger.Logger, password *sensitive.Sensitive) error {
 
 	// Return immediately if we have no certificate to use as identity
 	if keyLabel == "" && os.Getenv("MQ_GENERATE_CERTIFICATE_HOSTNAME") == "" {
