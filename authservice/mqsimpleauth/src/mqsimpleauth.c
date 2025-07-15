@@ -141,6 +141,7 @@ static void MQENTRY mqsimpleauth_authenticate_user_csp(
     *pReason = MQRC_SERVICE_ERROR;
     if (csp_user)
     {
+      memset(csp_user, 0, pSecurityParms->CSPUserIdLength);
       free(csp_user);
     }
     return;
@@ -200,10 +201,12 @@ static void MQENTRY mqsimpleauth_authenticate_user_csp(
   }
   if (csp_user)
   {
+    memset(csp_user, 0, pSecurityParms->CSPUserIdLength);
     free(csp_user);
   }
   if (csp_pass)
   {
+    memset(csp_pass, 0, pSecurityParms->CSPPasswordLength);
     free(csp_pass);
   }
   return;
@@ -286,6 +289,7 @@ static void MQENTRY mqsimpleauth_authenticate_user(
       }
       if (spuser)
       {
+        memset(spuser, 0, sizeof(PMQCHAR12) + 1);
         free(spuser);
       }
     }
