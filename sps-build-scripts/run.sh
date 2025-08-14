@@ -46,13 +46,7 @@ eval "$DOCKER_DOWNGRADE"
 ./sps-build-scripts/build.sh
 
 ##sps: Test images
-if [[ -z $PIPELINE_RUN_ID ]] ; then
-  ./sps-build-scripts/test.sh
-else
-  if [[ "$ARCH" == "amd64" ]]; then
-    ./sps-build-scripts/test.sh
-  fi
-fi
+./sps-build-scripts/test.sh
 
 ## Push images
 if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
@@ -62,7 +56,7 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
       exit 0
     fi
    ./sps-build-scripts/push.sh developer
-    ./sps-build-scripts/push.sh production
+   ./sps-build-scripts/push.sh production
   fi
 else
   if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then

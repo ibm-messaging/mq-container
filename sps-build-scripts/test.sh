@@ -20,9 +20,9 @@ set -e
 if [ ! "$SKIP_UNIT_TEST" ] ; then
   if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
     if [ "$LTS" != true ] ; then
-      echo 'Testing Developer image... start:test-devserver\\r'
+      echo 'Testing Developer image... start:test-devserver'
       make test-devserver
-      echo 'end:test-devserver\\r'
+      echo 'end:test-devserver'
     fi
     if [ "$BUILD_ALL" = true ] || [ "$LTS" = true ] ; then
       if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" || "$ARCH" = "ppc64le" ]] ; then
@@ -32,13 +32,13 @@ if [ ! "$SKIP_UNIT_TEST" ] ; then
     fi
   else
     if [[ "$BUILD_INTERNAL_LEVEL" == *".DE"* ]]; then
-      echo 'Testing Developer image... start:test-devserver\\r'
+      echo 'Testing Developer image... start:test-devserver'
       make test-devserver
-      echo -en 'end:test-devserver\\r'
+      echo -en 'end:test-devserver'
     else
-      echo 'Testing Production image...start:test-advancedserver\\r'
+      echo 'Testing Production image...start:test-advancedserver'
       make test-advancedserver
-      echo -en 'end:test-advancedserver\\r'
+      echo -en 'end:test-advancedserver'
     fi
   fi
 else

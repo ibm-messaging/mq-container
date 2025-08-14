@@ -17,7 +17,11 @@ ifneq (,$(PIPELINE_RUN_ID))
 	PIPELINE_BRANCH=$(BRANCH)
 	BUILD_DIRECTORY=$(SPS_BUILD_DIR)
 	BUILD_SCRIPTS_PATH=sps-build-scripts
-	COMMAND=docker
+	COMMAND=podman
+	IMAGE_FORMAT=--format docker
+	ifeq "$(ARCH)" "ppc64le"
+	    NUM_CPU=2
+	endif
 ifeq "$(PIPELINE_NAMESPACE)" "pr"
 	PIPELINE_PULL_REQUEST=true
 endif
@@ -31,8 +35,6 @@ else
 	BUILD_DIRECTORY=$(TRAVIS_BUILD_DIR)
 	BUILD_SCRIPTS_PATH=travis-build-scripts
 endif
-
-
 
 # If this is a fake master build, push images to alternative location (pipeline wont consider these images GA candidates)
 ifeq ($(shell [ "$(TRAVIS)" = "true" ] && [ -n "$(MAIN_BRANCH)" ] && [ -n "$(SOURCE_BRANCH)" ] && [ "$(MAIN_BRANCH)" != "$(SOURCE_BRANCH)" ] && ( [ -n "$(FEATURE_BUILD_OVERRIDE)" ] && [ "$(FEATURE_BUILD_OVERRIDE)" != "true" ] ) && echo "true"), true)

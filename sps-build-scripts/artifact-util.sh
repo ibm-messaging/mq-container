@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2020
+# © Copyright IBM Corporation 2020, 2025
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ END="\033[0m"
 
 
 RIGHTARROW="\xE2\x96\xB6"
-BLUERIGHTARROW=${BLUE}${RIGHTARROW}${END}
+
 GREENRIGHTARROW=${GREEN}${RIGHTARROW}${END}
 
 ERROR=${RED}
@@ -53,8 +53,7 @@ SPACER="\n\n"
 USER=
 CREDENTIAL=
 FILE_NAME=
-BUILD_ID=
-REGISTRY_HOSTNAME=
+
 FILE_LOCATION=
 PROPERTY_NAME=
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2020
+# © Copyright IBM Corporation 2020, 2025
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,16 +40,18 @@ REDCROSS=${RED}${CROSS}${END}
 
 SPACER="\n\n"
 
-while getopts r:n:i:t:d:h:u:p: flag
-do
+while getopts r:n:i:t:d:h:u:p: flag; do
     case "${flag}" in
-        r) REGISTRY=${OPTARG};;
-        n) NAMESPACE=${OPTARG};;
-        i) IMAGE=${OPTARG};;
-        t) TAG=${OPTARG};;
-        d) DIGESTS=${OPTARG};;
-        u) USER=${OPTARG};;
-        p) CREDENTIAL=${OPTARG};;
+        r) REGISTRY=${OPTARG} ;;
+        n) NAMESPACE=${OPTARG} ;;
+        i) IMAGE=${OPTARG} ;;
+        t) TAG=${OPTARG} ;;
+        d) DIGESTS=${OPTARG} ;;
+        u) USER=${OPTARG} ;;
+        p) CREDENTIAL=${OPTARG} ;;
+        *) 
+            echo "Unknown option: -${flag}" >&2
+            ;;
     esac
 done
 
@@ -59,16 +61,19 @@ if [[ -z $REGISTRY || -z $NAMESPACE || -z $IMAGE || -z $TAG || -z $DIGESTS ]] ; 
   exit 1
 fi
 
-# Docker CLI manifest commands require experimental features to be turned on
-export DOCKER_CLI_EXPERIMENTAL=enabled
+echo "At create-manifest, COMMAND: ${COMMAND}"
+if [ "$COMMAND" == "docker" ]; then
+  # Docker CLI manifest commands require experimental features to be turned on
+  export DOCKER_CLI_EXPERIMENTAL=enabled
+fi
 
 MANIFESTS=""
 for digest in $DIGESTS ; do \
   MANIFESTS+=" $REGISTRY/$NAMESPACE/$IMAGE@$digest"
 done
 
-docker login $REGISTRY -u $USER -p $CREDENTIAL
-docker manifest create $REGISTRY/$NAMESPACE/$IMAGE:$TAG $MANIFESTS
-MANIFEST_DIGEST=$(docker manifest push --purge $REGISTRY/$NAMESPACE/$IMAGE:$TAG)
+$COMMAND login $REGISTRY -u $USER -p $CREDENTIAL
+$COMMAND manifest create $REGISTRY/$NAMESPACE/$IMAGE:$TAG $MANIFESTS > /dev/null
+MANIFEST_DIGEST=$($COMMAND manifest push $PUSH_OPTIONS $REGISTRY/$NAMESPACE/$IMAGE:$TAG)
 
-echo $MANIFEST_DIGEST
+echo ${MANIFEST_DIGEST}

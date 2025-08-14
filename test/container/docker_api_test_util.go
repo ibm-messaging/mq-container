@@ -849,7 +849,13 @@ func createImage(t *testing.T, cli ce.ContainerInterface, files []struct{ Name, 
 	}
 	_, err = cli.ImageBuild(r, tag, pathutils.CleanPath(tmpDir, files[0].Name))
 	if err != nil {
-		t.Fatal(err)
+		t.Logf("Image build failed with %v", err)
+		t.Logf("Retrying ...")
+		time.Sleep(5 * time.Second)
+		_, err = cli.ImageBuild(r, tag, pathutils.CleanPath(tmpDir, files[0].Name))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 	return tag
 }
@@ -968,7 +974,7 @@ func startContainerError(t *testing.T, cli ce.ContainerInterface, ID string) err
 
 // testLogFilePages validates that the specified number of logFilePages is present in the qm.ini file.
 func testLogFilePages(t *testing.T, cli ce.ContainerInterface, id string, qmName string, expectedLogFilePages string) {
-	catIniFileCommand := fmt.Sprintf("%s", "cat /var/mqm/qmgrs/" + qmName + "/qm.ini")
+	catIniFileCommand := fmt.Sprintf("%s", "cat /var/mqm/qmgrs/"+qmName+"/qm.ini")
 	_, iniContent := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
 
 	if !strings.Contains(iniContent, "LogFilePages="+expectedLogFilePages) {

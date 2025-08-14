@@ -51,7 +51,7 @@ MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Container tests
 TEST_OPTS_CONTAINER ?=
 # Timeout for the  tests
-TEST_TIMEOUT_CONTAINER ?= 45m
+TEST_TIMEOUT_CONTAINER ?= 60m
 # MQ_IMAGE_ADVANCEDSERVER is the name of the built MQ Advanced image
 MQ_IMAGE_ADVANCEDSERVER ?=ibm-mqadvanced-server
 # MQ_IMAGE_DEVSERVER is the name of the built MQ Advanced for Developers image
@@ -106,8 +106,11 @@ include Makefile.pipeline.mk
 
 ifeq "$(COMMAND)" "podman"
 	NUM_CPU ?= $(or $(shell podman info --format "{{.Host.CPUs}}"),2)
+# Push options used while pushing the manifest
+	PUSH_OPTIONS="$(IMAGE_FORMAT) --rm"
 else ifeq "$(COMMAND)" "docker"
 	NUM_CPU ?= $(or $(shell docker info --format "{{ .NCPU }}"),2)
+	PUSH_OPTIONS="--purge"
 else
 	NUM_CPU ?= 2
 endif
@@ -292,6 +295,7 @@ define build-mq
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
 	  --platform=linux/$(ARCH) \
+	  $(IMAGE_FORMAT) \
 	  $(EXTRA_LABELS) \
 	  --target $5 \
 	  .
@@ -420,10 +424,10 @@ endif
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)**"$(END)))
 ifneq "$(LTS)" "true"
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_DEVSERVER_MANIFEST)**"$(END)))
-	echo $(shell ./$(BUILD_SCRIPTS_PATH)/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_DEVSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL)  -d "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST) $(MQ_IMAGE_DEVSERVER_S390X_DIGEST) $(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)" $(END))
+	echo $(shell COMMAND=$(COMMAND) PUSH_OPTIONS=$(PUSH_OPTIONS) ./$(BUILD_SCRIPTS_PATH)/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_DEVSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL)  -d "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST) $(MQ_IMAGE_DEVSERVER_S390X_DIGEST) $(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)" $(END))
 endif
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_ADVANCEDSERVER_MANIFEST)**"$(END)))
-	echo $(shell ./$(BUILD_SCRIPTS_PATH)/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)" $(END))
+	echo $(shell COMMAND=$(COMMAND) PUSH_OPTIONS=$(PUSH_OPTIONS) ./$(BUILD_SCRIPTS_PATH)/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)" $(END))
 
 #sps : modify the build scripts path
 .PHONY: build-manifest
