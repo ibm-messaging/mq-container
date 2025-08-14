@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017, 2023
+# © Copyright IBM Corporation 2017, 2025
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@
 
 include config.env
 include source-branch.env
+ifdef PIPELINE_RUN_ID
+include pipeline.env
+endif
 
 # arch_uname is the platform architecture according to the uname program.  Can be differ by OS, e.g. `arm64` on macOS, but `aarch64` on Linux.
 arch_uname := $(shell uname -m)
@@ -48,7 +51,7 @@ MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Container tests
 TEST_OPTS_CONTAINER ?=
 # Timeout for the  tests
-TEST_TIMEOUT_CONTAINER ?= 45m
+TEST_TIMEOUT_CONTAINER ?= 60m
 # MQ_IMAGE_ADVANCEDSERVER is the name of the built MQ Advanced image
 MQ_IMAGE_ADVANCEDSERVER ?=ibm-mqadvanced-server
 # MQ_IMAGE_DEVSERVER is the name of the built MQ Advanced for Developers image
@@ -98,10 +101,16 @@ SPACE:= $(EMPTY) $(EMPTY)
 # MQ_VERSION_VRM is MQ_VERSION with only the Version, Release and Modifier fields (no Fix field).  e.g. 9.2.0 instead of 9.2.0.0
 MQ_VERSION_VRM=$(subst $(SPACE),.,$(wordlist 1,3,$(subst .,$(SPACE),$(MQ_VERSION))))
 
+#sps : Set the pipeline parameters
+include Makefile.pipeline.mk
+
 ifeq "$(COMMAND)" "podman"
 	NUM_CPU ?= $(or $(shell podman info --format "{{.Host.CPUs}}"),2)
+# Push options used while pushing the manifest
+	PUSH_OPTIONS="$(IMAGE_FORMAT) --rm"
 else ifeq "$(COMMAND)" "docker"
 	NUM_CPU ?= $(or $(shell docker info --format "{{ .NCPU }}"),2)
+	PUSH_OPTIONS="--purge"
 else
 	NUM_CPU ?= 2
 endif
@@ -129,105 +138,12 @@ else ifeq "$(ARCH)" "arm64"
 	MQ_ARCHIVE_DEV_ARCH:=ARM64
 endif
 
-# If this is a fake master build, push images to alternative location (pipeline wont consider these images GA candidates)
-ifeq ($(shell [ "$(TRAVIS)" = "true" ] && [ -n "$(MAIN_BRANCH)" ] && [ -n "$(SOURCE_BRANCH)" ] && [ "$(MAIN_BRANCH)" != "$(SOURCE_BRANCH)" ] && echo "true"), true)
-	MQ_DELIVERY_REGISTRY_NAMESPACE="master-fake"
-endif
-
-# LTS_TAG is the tag modifier for an LTS container build
-LTS_TAG=
-ifeq "$(LTS)" "true"
-ifneq "$(LTS_TAG_OVERRIDE)" "$(EMPTY)"
-	LTS_TAG=$(LTS_TAG_OVERRIDE)
-else
-	LTS_TAG=-lts
-endif
-	MQ_ARCHIVE:=$(MQ_VERSION)-IBM-MQ-Advanced-Non-Install-Linux$(MQ_ARCHIVE_ARCH).tar.gz
-	MQ_DELIVERY_REGISTRY_NAMESPACE:=$(MQ_DELIVERY_REGISTRY_NAMESPACE)$(LTS_TAG)
-endif
-
-ifneq (,$(findstring release-candidate,$(TRAVIS_TAG)))
-    MQ_DELIVERY_REGISTRY_NAMESPACE=release-candidates
-endif
-
-ifneq "$(MQ_DELIVERY_REGISTRY_NAMESPACE)" "$(EMPTY)"
-	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)/$(MQ_DELIVERY_REGISTRY_NAMESPACE)
-else
-	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)
-endif
-
-ifeq ($(shell [ ! -z $(TRAVIS) ] && echo "$(TRAVIS_BRANCH)" | grep -q '^ifix-' && echo true), true)
-	MQ_DELIVERY_REGISTRY_FULL_PATH=$(MQ_DELIVERY_REGISTRY_HOSTNAME)/$(MQ_DELIVERY_REGISTRY_NAMESPACE_IFIX)
-	MQ_DELIVERY_REGISTRY_NAMESPACE=$(MQ_DELIVERY_REGISTRY_NAMESPACE_IFIX)
-endif
-
-# image tagging
-
-ifneq "$(RELEASE)" "$(EMPTY)"
-	EXTRA_LABELS_RELEASE=--label "release=$(RELEASE)"
-	RELEASE_TAG="-$(RELEASE)"
-endif
-
-ifneq "$(MQ_ARCHIVE_LEVEL)" "$(EMPTY)"
-	EXTRA_LABELS_LEVEL=--label "mq-build=$(MQ_ARCHIVE_LEVEL)"
-endif
-
-EXTRA_LABELS=$(EXTRA_LABELS_RELEASE) $(EXTRA_LABELS_LEVEL)
-
-ifeq "$(TIMESTAMPFLAT)" "$(EMPTY)"
-	TIMESTAMPFLAT=$(shell date "+%Y%m%d%H%M%S")
-endif
-
-ifeq "$(GIT_COMMIT)" "$(EMPTY)"
-	GIT_COMMIT=$(shell git rev-parse --short HEAD)
-endif
-
-ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" = "false" ] && [ "$(TRAVIS_BRANCH)" = "$(MAIN_BRANCH)" ] && echo true), true)
-	MQ_MANIFEST_TAG_SUFFIX=.$(TIMESTAMPFLAT).$(GIT_COMMIT)
-endif
-
-ifeq ($(shell [ ! -z $(TRAVIS) ] && [ "$(TRAVIS_PULL_REQUEST)" = "false" ] && echo "$(TRAVIS_BRANCH)" | grep -q '^ifix-' && echo true), true)
-	MQ_MANIFEST_TAG_SUFFIX=-$(APAR_NUMBER)-$(FIX_NUMBER).$(TIMESTAMPFLAT).$(GIT_COMMIT)
-endif
-
 # Make sure we don't use VOLUME_MOUNT_OPTIONS for Podman on macOS
 ifeq "$(COMMAND)" "podman"
 	ifeq "$(shell uname -s)" "Darwin"
 		VOLUME_MOUNT_OPTIONS:=
 	endif
 endif
-
-PATH_TO_MQ_TAG_CACHE=$(TRAVIS_BUILD_DIR)/.tagcache
-ifneq "$(TRAVIS)" "$(EMPTY)"
-ifneq ("$(wildcard $(PATH_TO_MQ_TAG_CACHE))","")
-include $(PATH_TO_MQ_TAG_CACHE)
-endif
-endif
-
-MQ_AMD64_TAG=$(MQ_MANIFEST_TAG)-amd64
-MQ_S390X_TAG?=$(MQ_MANIFEST_TAG)-s390x
-MQ_PPC64LE_TAG?=$(MQ_MANIFEST_TAG)-ppc64le
-
-# end image tagging
-
-MQ_IMAGE_FULL_RELEASE_NAME=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)
-MQ_IMAGE_DEV_FULL_RELEASE_NAME=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG)
-
-#setup variables for fat-manifests
-MQ_IMAGE_DEVSERVER_MANIFEST=$(MQ_IMAGE_DEVSERVER):$(MQ_MANIFEST_TAG)
-MQ_IMAGE_ADVANCEDSERVER_MANIFEST=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_MANIFEST_TAG)
-MQ_IMAGE_DEVSERVER_AMD64=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEVSERVER):$(MQ_AMD64_TAG)
-MQ_IMAGE_DEVSERVER_S390X=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEVSERVER):$(MQ_S390X_TAG)
-MQ_IMAGE_DEVSERVER_PPC64LE=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEVSERVER):$(MQ_PPC64LE_TAG)
-MQ_IMAGE_ADVANCEDSERVER_AMD64=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_AMD64_TAG)
-MQ_IMAGE_ADVANCEDSERVER_S390X=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_S390X_TAG)
-MQ_IMAGE_ADVANCEDSERVER_PPC64LE=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_PPC64LE_TAG)
-
-MQ_IMAGE_DEVSERVER_MANIFEST_IFIX=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEVSERVER):$(MQ_MANIFEST_TAG)
-MQ_IMAGE_ADVANCESERVER_MANIFEST_IFIX=$(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_MANIFEST_TAG)
-
-PROJECT_DIR := $(shell pwd)
-BUILD_MANIFEST_FILE := $(PROJECT_DIR)/latest-build-info/build-manifest.yaml
 
 ###############################################################################
 # Build targets
@@ -300,7 +216,7 @@ cache-mq-tag:
 
 # Vendor Go dependencies for the Container tests
 test/container/vendor:
-	cd test/container && /usr/local/go/bin/go mod vendor
+	cd test/container && go mod vendor
 
 # Shortcut to just run the unit tests
 .PHONY: test-unit
@@ -311,11 +227,12 @@ define inspect-image
 	@$(COMMAND) inspect --format ">>> IMAGE UNDER TEST\n    RepoTags:     {{.RepoTags}}\n    RepoDigests:  {{.RepoDigests}}\n    Created:      {{.Created}}\n    Architecture: {{.Architecture}}" $1:$2
 endef
 
+#sps modify the go path in test-advanced server from /usr/local/go/bin/go to go
 .PHONY: test-advancedserver
-test-advancedserver: test/container/vendor
+test-advancedserver:
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(call inspect-image,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG))
-	cd test/container && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) /usr/local/go/bin/go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) $(TEST_OPTS_CONTAINER)
+	cd test/container && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) $(TEST_OPTS_CONTAINER)
 
 .PHONY: build-devjmstest
 build-devjmstest:
@@ -323,17 +240,17 @@ build-devjmstest:
 	cd test/messaging && $(COMMAND) build --tag $(DEV_JMS_IMAGE) .
 
 .PHONY: test-devserver
-test-devserver: test/container/vendor
+test-devserver:
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) on $(shell $(COMMAND) --version)"$(END)))
 	$(call inspect-image,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG))
-	cd test/container && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=false DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) /usr/local/go/bin/go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) -tags mqdev $(TEST_OPTS_CONTAINER)
+	cd test/container && TEST_IMAGE=$(MQ_IMAGE_DEVSERVER):$(MQ_TAG) EXPECTED_LICENSE=Developer DEV_JMS_IMAGE=$(DEV_JMS_IMAGE) IBMJRE=false DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) -tags mqdev $(TEST_OPTS_CONTAINER)
 
 .PHONY: coverage
 coverage:
 	mkdir coverage
 
-.PHONY: test-advancedserver-cover
-test-advancedserver-cover: test/container/vendor coverage
+.PHONY:
+test-advancedserver-cover: coverage
 	$(info $(SPACER)$(shell printf $(TITLE)"Test $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) with code coverage on $(shell $(COMMAND) --version)"$(END)))
 	rm -f ./coverage/unit*.cov
 	# Run unit tests with coverage, for each package under 'internal'
@@ -381,6 +298,7 @@ define build-mq
 	  --label vcs-type=git \
 	  --label vcs-url=$(IMAGE_SOURCE) \
 	  $(if $(findstring $(arch_go),$(ARCH)),,--platform=linux/$(ARCH)) \
+	  $(IMAGE_FORMAT) \
 	  $(EXTRA_LABELS) \
 	  --target $5 \
 	  .
@@ -496,7 +414,7 @@ ifneq "$(LTS)" "true"
 	$(eval MQ_IMAGE_DEVSERVER_S390X_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_S390X) | jq -r .Digest))
 	$(eval MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_PPC64LE) | jq -r .Digest))
 
-	$(shell ./travis-build-scripts/check-digest.sh -r "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)" -n "$(MQ_IMAGE_DEVSERVER_S390X_DIGEST)" -i "$(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)")
+	$(shell ./$(BUILD_SCRIPTS_PATH)/check-digest.sh -r "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)" -n "$(MQ_IMAGE_DEVSERVER_S390X_DIGEST)" -i "$(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)")
 
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_AMD64) has a digest of $(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_S390X) has a digest of $(MQ_IMAGE_DEVSERVER_S390X_DIGEST)**"$(END)))
@@ -506,17 +424,17 @@ endif
 	$(eval MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_S390X) | jq -r .Digest))
 	$(eval MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) | jq -r .Digest))
 
-	$(shell ./travis-build-scripts/check-digest.sh -r "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST)" -n "$(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)" -i "$(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)")
+	$(shell ./$(BUILD_SCRIPTS_PATH)/check-digest.sh -r "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST)" -n "$(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)" -i "$(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)")
 
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_AMD64) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_S390X) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)**"$(END)))
 ifneq "$(LTS)" "true"
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_DEVSERVER_MANIFEST)**"$(END)))
-	echo $(shell ./travis-build-scripts/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_DEVSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL)  -d "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST) $(MQ_IMAGE_DEVSERVER_S390X_DIGEST) $(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)" $(END))
+	echo $(shell COMMAND=$(COMMAND) PUSH_OPTIONS=$(PUSH_OPTIONS) ./$(BUILD_SCRIPTS_PATH)/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_DEVSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL)  -d "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST) $(MQ_IMAGE_DEVSERVER_S390X_DIGEST) $(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)" $(END))
 endif
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_ADVANCEDSERVER_MANIFEST)**"$(END)))
-	echo $(shell ./travis-build-scripts/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)" $(END))
+	echo $(shell COMMAND=$(COMMAND) PUSH_OPTIONS=$(PUSH_OPTIONS) ./$(BUILD_SCRIPTS_PATH)/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)" $(END))
 
 .PHONY: build-manifest
 build-manifest:	build-skopeo-container
@@ -538,7 +456,7 @@ build-manifest:	build-skopeo-container
 	$(eval MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST=$(shell $(COMMAND) run skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCESERVER_MANIFEST_IFIX) | jq -r .Digest))
 	$(info $(shell printf "** Determined the built has a advanceserver digest for ifix of $(MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built has a devserver digest for ifix  of $(MQ_IMAGE_DEVSERVER_MANIFEST_DIGEST)**"$(END)))
-	@./travis-build-scripts/create-build-manifest.sh -f $(BUILD_MANIFEST_FILE) -o $(MQ_MANIFEST_TAG) -t $(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)  -u ${MQ_IMAGE_DEVSERVER_S390X_DIGEST} -p ${MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST} -r ${MQ_IMAGE_DEVSERVER_MANIFEST_DIGEST} -n $(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) -a ${MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST} -m ${MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST} -s ${MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST}
+	@./$(BUILD_SCRIPTS_PATH)/create-build-manifest.sh -f $(BUILD_MANIFEST_FILE) -o $(MQ_MANIFEST_TAG) -t $(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)  -u ${MQ_IMAGE_DEVSERVER_S390X_DIGEST} -p ${MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST} -r ${MQ_IMAGE_DEVSERVER_MANIFEST_DIGEST} -n $(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) -a ${MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST} -m ${MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST} -s ${MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST}
 
 .PHONY: build-skopeo-container
 build-skopeo-container:
@@ -556,7 +474,7 @@ clean:
 
 .PHONY: go-install
 go-install:
-	ARCH=$(ARCH) ./travis-build-scripts/go-install.sh
+	ARCH=$(ARCH) ./$(BUILD_SCRIPTS_PATH)/go-install.sh
 
 .PHONY: install-build-deps
 install-build-deps:
@@ -565,7 +483,7 @@ install-build-deps:
 .PHONY: install-credential-helper
 install-credential-helper:
 ifeq ($(ARCH),amd64)
-	ARCH=$(ARCH) ./travis-build-scripts/install-credential-helper.sh
+	ARCH=$(ARCH) ./$(BUILD_SCRIPTS_PATH)/install-credential-helper.sh
 endif
 
 .PHONY: build-cov
@@ -627,7 +545,7 @@ endif
 
 .PHONY: commit-build-manifest
 commit-build-manifest:
-	@echo "The value of CURRENT_BRANCH is: $(TRAVIS_BRANCH)"
+	@echo "The value of CURRENT_BRANCH is: $(PIPELINE_BRANCH)"
 	@echo "The value of BUILD_MANIFEST_FILE is: $(BUILD_MANIFEST_FILE)"
 	echo "Checking git status..."
 	git status
@@ -636,6 +554,6 @@ commit-build-manifest:
 	echo "Committing changes..."
 	git commit -m "[ci skip]: Commit the digests for ifix and the build-manifest back to the branch"
 	echo "Pulling latest changes from remote..."
-	git pull --rebase origin $(TRAVIS_BRANCH)
+	git pull --rebase origin $(PIPELINE_BRANCH)
 	echo "Pushing changes to remote..."
-	git push origin HEAD:$(TRAVIS_BRANCH)
+	git push origin HEAD:$(PIPELINE_BRANCH)

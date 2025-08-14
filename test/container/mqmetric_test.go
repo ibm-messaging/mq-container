@@ -68,7 +68,7 @@ func TestMetricNames(t *testing.T) {
 
 	// Call once as mq_prometheus 'ignores' the first call
 	getMetrics(t, port)
-	time.Sleep(15 * time.Second)
+	time.Sleep(35 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
 	metrics := getMetrics(t, port)

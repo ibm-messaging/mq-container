@@ -599,6 +599,12 @@ func (cli ContainerClient) ContainerCreate(config *ContainerConfig, hostConfig *
 	lines := strings.Split(strings.ReplaceAll(string(output), "\r\n", "\n"), "\n")
 	if err != nil {
 		return strings.Join(lines, "\n"), err
+		time.Sleep(5 * time.Second)
+		output, err = cli.logCommand(cli.ContainerTool, args...).Output()
+		lines = strings.Split(strings.ReplaceAll(string(output), "\r\n", "\n"), "\n")
+		if err != nil {
+			return strings.Join(lines, "\n"), err
+		}
 	}
 	return lines[0], nil
 }

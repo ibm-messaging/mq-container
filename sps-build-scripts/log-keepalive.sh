@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# © Copyright IBM Corporation 2020, 2025
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+k=0
+dd=$(date)
+
+# Output 200 lines of dummy output to force the logs to flush if they have broken, happens every 8 mins
+while true; do
+    echo -e "start heartbeat: $k"
+    echo -e "\033[33;1mDumping heartbeat logs to keep build alive - $dd\033[0m"
+    for i in {1..200}; do 
+        echo "Keepalive $i" > /dev/null
+    done
+    sleep 120
+    echo -e "end heartbeat: $k\r"
+    k=$((k+1))
+    dd=$(date)
+done
