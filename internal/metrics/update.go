@@ -178,7 +178,7 @@ func initialiseMetrics(log *logger.Logger) (map[string]*metricData, error) {
 							log.Debugf("Metrics: Skipping metric, metric is not enabled for key [%s]", key)
 						}
 					} else {
-						log.Errorf("Metrics Error: Skipping metric, unexpected key [%s]", key)
+						log.Printf("Metrics Warning: Skipping metric, unexpected key [%s]", key)
 						validMetrics = false
 					}
 				}
