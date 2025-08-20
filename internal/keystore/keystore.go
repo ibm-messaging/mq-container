@@ -30,6 +30,11 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/sensitive"
 )
 
+func fileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return err == nil
+}
+
 // KeyStore describes information about a keystore file
 type KeyStore struct {
 	Filename     string
@@ -198,14 +203,29 @@ func (ks *KeyStore) GetCertificateLabels() ([]string, error) {
 // RenameCertificate renames the specified certificate
 func (ks *KeyStore) RenameCertificate(from, to string) error {
 	if ks.command == "/opt/mqm/bin/runmqakm" {
-		// runmqakm can't handle certs with ' in them so just use capicmd
+		// runmqakm can't handle certs with ' in them so just use capicmd or certutil
+		var gskitLib, gskitCommand string
+		var err error
+		switch {
+		case fileExists("/opt/mqm/gskit9"):
+			gskitLib = "/opt/mqm/gskit9/lib64/:/opt/mqm/gskit9/lib"
+			gskitCommand = "/opt/mqm/gskit9/bin/gsk9certutil_64"
+		case fileExists("/opt/mqm/gskit8"):
+			gskitLib = "/opt/mqm/gskit8/lib64/:/opt/mqm/gskit8/lib"
+			gskitCommand = "/opt/mqm/gskit8/bin/gsk8capicmd_64"
+		default:
+			err = fmt.Errorf("error finding gskit installation")
+		}
+		if err != nil {
+			return err
+		}
 		// Overriding gosec here as this function is in an internal package and only callable by our internal functions.
 		// #nosec G204
-		cmd := exec.Command("/opt/mqm/gskit8/bin/gsk8capicmd_64", "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password.String(), "-label", from, "-new_label", to)
-		cmd.Env = append(os.Environ(), "LD_LIBRARY_PATH=/opt/mqm/gskit8/lib64/:/opt/mqm/gskit8/lib")
+		cmd := exec.Command(gskitCommand, "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password.String(), "-label", from, "-new_label", to)
+		cmd.Env = append(os.Environ(), "LD_LIBRARY_PATH="+gskitLib)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			return fmt.Errorf("error running \"%v -cert -rename\": %v %s", "/opt/mqm/gskit8/bin/gsk8capicmd_64", err, out)
+			return fmt.Errorf("error running \"%v -cert -rename\": %v %s", gskitCommand, err, out)
 		}
 	} else {
 		out, _, err := command.Run(ks.command, "-cert", "-rename", "-db", ks.Filename, "-pw", ks.Password.String(), "-label", from, "-new_label", to)
@@ -213,7 +233,6 @@ func (ks *KeyStore) RenameCertificate(from, to string) error {
 			return fmt.Errorf("error running \"%v -cert -rename\": %v %s", ks.command, err, out)
 		}
 	}
-
 	return nil
 }
 
