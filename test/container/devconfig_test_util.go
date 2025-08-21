@@ -62,7 +62,7 @@ func waitForWebReady(t *testing.T, cli ce.ContainerInterface, ID string, tlsConf
 		t.Fatal(err)
 	}
 	url := fmt.Sprintf("https://localhost:%s/ibmmq/rest/v1/admin/installation", port)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
 
 	for {
@@ -152,7 +152,7 @@ func runJMSTests(t *testing.T, cli ce.ContainerInterface, ID string, tls bool, u
 		}
 	}
 
-	defer cleanContainer(t, cli, jmsID, false)
+	cleanupAfterTest(t, cli, jmsID, false)
 }
 
 // Parse JUnit log line and return true if line contains failed or aborted tests

@@ -42,8 +42,8 @@ func TestMultiInstanceStartStop(t *testing.T) {
 	for _, volume := range volumes {
 		defer removeVolume(t, cli, volume)
 	}
-	defer cleanContainer(t, cli, qm1aId, false)
-	defer cleanContainer(t, cli, qm1bId, false)
+	cleanupAfterTest(t, cli, qm1aId, false)
+	cleanupAfterTest(t, cli, qm1bId, false)
 
 	waitForReady(t, cli, qm1aId)
 	waitForReady(t, cli, qm1bId)
@@ -142,8 +142,8 @@ func TestMultiInstanceRace(t *testing.T) {
 
 	defer removeVolume(t, cli, qm1aData)
 	defer removeVolume(t, cli, qm1bData)
-	defer cleanContainer(t, cli, qm1aId, false)
-	defer cleanContainer(t, cli, qm1bId, false)
+	cleanupAfterTest(t, cli, qm1aId, false)
+	cleanupAfterTest(t, cli, qm1bId, false)
 
 	waitForReady(t, cli, qm1aId)
 	waitForReady(t, cli, qm1bId)
@@ -220,7 +220,7 @@ func TestMultiInstanceNoMounts(t *testing.T) {
 	}
 
 	defer removeVolume(t, cli, qm1aData)
-	defer cleanContainer(t, cli, qm1aId, false)
+	cleanupAfterTest(t, cli, qm1aId, false)
 
 	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount '/mnt/mqm'", 30*time.Second)
 }

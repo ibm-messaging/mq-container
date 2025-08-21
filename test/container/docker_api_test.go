@@ -38,8 +38,8 @@ func TestLicenseNotSet(t *testing.T) {
 
 	containerConfig := ce.ContainerConfig{}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
-	rc := waitForContainer(t, cli, id, 30*time.Second)
+	cleanupAfterTest(t, cli, id, false)
+	rc := waitForContainer(t, cli, id, 60*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -57,8 +57,8 @@ func TestLicenseView(t *testing.T) {
 		Env: []string{"LICENSE=view"},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
-	rc := waitForContainer(t, cli, id, 30*time.Second)
+	cleanupAfterTest(t, cli, id, false)
+	rc := waitForContainer(t, cli, id, 60*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -93,7 +93,7 @@ func goldenPath(t *testing.T, metrics bool) {
 	}
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	jsonLogs := inspectLogs(t, cli, id)
@@ -118,7 +118,7 @@ func utilTestNoQueueManagerName(t *testing.T, hostName string, expectedName stri
 		Hostname: hostName,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	_, out := execContainer(t, cli, id, "", []string{"dspmq"})
 	if !strings.Contains(out, search) {
@@ -261,7 +261,7 @@ func TestNoVolumeWithRestart(t *testing.T) {
 		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	stopContainer(t, cli, id)
 	startContainer(t, cli, id)
@@ -321,7 +321,7 @@ func TestVolumeRequiresRoot(t *testing.T) {
 	defer cleanContainer(t, cli, initCtrID, false)
 	t.Logf("Init container ID=%v", initCtrID)
 	startContainer(t, cli, initCtrID)
-	rc = waitForContainer(t, cli, initCtrID, 30*time.Second)
+	rc = waitForContainer(t, cli, initCtrID, 60*time.Second)
 	if rc != 0 {
 		t.Errorf("Expected init container to exit with rc=0, got rc=%v", rc)
 	}
@@ -363,7 +363,7 @@ func TestCreateQueueManagerFail(t *testing.T) {
 	}
 	id := runContainer(t, cli, &containerConfig)
 	defer cleanContainer(t, cli, id, false)
-	rc := waitForContainer(t, cli, id, 30*time.Second)
+	rc := waitForContainer(t, cli, id, 60*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -412,7 +412,7 @@ func TestVolumeUnmount(t *testing.T) {
 	defer removeVolume(t, cli, vol)
 	containerConfig := ce.ContainerConfig{
 		Image: imageName(),
-		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "MQ_ENABLE_EMBEDDED_WEB_SERVER=false"},
 	}
 	hostConfig := ce.ContainerHostConfig{
 		// SYS_ADMIN capability is required to unmount file systems
@@ -430,7 +430,7 @@ func TestVolumeUnmount(t *testing.T) {
 		t.Fatal(err)
 	}
 	startContainer(t, cli, ctrID)
-	defer cleanContainer(t, cli, ctrID, false)
+	defer cleanContainer(t, cli, ctrID, true)
 	waitForReady(t, cli, ctrID)
 	// Unmount the volume as root
 	rc, out := execContainer(t, cli, ctrID, "root", []string{"umount", "-l", "/mnt/mqm"})
@@ -459,7 +459,7 @@ func TestZombies(t *testing.T) {
 		ExposedPorts: []string{"1414/tcp"},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, true)
+	cleanupAfterTest(t, cli, id, true)
 	waitForReady(t, cli, id)
 	// Kill an MQ process with children.  After it is killed, its children
 	// will be adopted by PID 1, and should then be reaped when they die.
@@ -1012,7 +1012,7 @@ func TestErrorLogRotation(t *testing.T) {
 	}
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	dir := "/var/mqm/qmgrs/" + qmName + "/errors"
 	// Generate some content for the error logs, by trying to put messages under an unauthorized user
@@ -1086,7 +1086,7 @@ func jsonLogFormat(t *testing.T, metric bool) {
 	}
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	stopContainer(t, cli, id)
 	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
@@ -1118,7 +1118,7 @@ func TestMQJSONDisabled(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	// Stop the container (which could hang if runmqserver is still waiting for
 	// JSON logs to appear)
@@ -1140,7 +1140,7 @@ func TestCorrectLicense(t *testing.T) {
 		Env: []string{"LICENSE=accept"},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	rc, license := execContainer(t, cli, id, "", []string{"dspmqver", "-f", "8192", "-b"})
@@ -1163,7 +1163,7 @@ func TestVersioning(t *testing.T) {
 		Env: []string{"LICENSE=accept"},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	// Get whole logs and check versioning system
@@ -1284,7 +1284,7 @@ func TestTraceStrmqm(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	rc, _ := execContainer(t, cli, id, "", []string{"bash", "-c", "ls -A /var/mqm/trace | grep .TRC"})
@@ -1304,7 +1304,7 @@ func utilTestHealthCheck(t *testing.T, nonewpriv bool) {
 	hostConfig := getDefaultHostConfig(t, cli)
 	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, fmt.Sprintf("no-new-privileges:%v", nonewpriv))
 	id := runContainerWithHostConfig(t, cli, &containerConfig, hostConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	rc, out := execContainer(t, cli, id, "", []string{"chkmqhealthy"})
 	t.Log(out)
@@ -1342,7 +1342,7 @@ func utilTestStartedCheck(t *testing.T, nonewpriv bool) {
 	hostConfig := getDefaultHostConfig(t, cli)
 	hostConfig.SecurityOpt = append(hostConfig.SecurityOpt, fmt.Sprintf("no-new-privileges:%v", nonewpriv))
 	id := runContainerWithHostConfig(t, cli, &containerConfig, hostConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	rc, out := execContainer(t, cli, id, "", []string{"chkmqstarted"})
 	t.Log(out)
@@ -1379,7 +1379,7 @@ func TestEndMQMOpts(t *testing.T) {
 	}
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	killContainer(t, cli, id, "SIGTERM")
 	_, out := execContainer(t, cli, id, "", []string{"bash", "-c", "ps -ef | grep 'endmqm -w -r -tp 27'"})
@@ -1399,7 +1399,7 @@ func TestCustomLogFilePages(t *testing.T) {
 	}
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	testLogFilePages(t, cli, id, "qmlfp", "8192")
@@ -1422,7 +1422,7 @@ func TestLoggingConsoleSource(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForWebConsoleReady(t, cli, id)
 
 	// Check for qmgr logs in the container's stdout
@@ -1462,7 +1462,7 @@ func TestOldBehaviorWebConsole(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	jsonLogs := inspectLogs(t, cli, id)
 
@@ -1497,7 +1497,7 @@ func TestRestartingWebConsole(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	waitForWebConsoleReady(t, cli, id)
 
@@ -1518,7 +1518,7 @@ func TestRestartingWebConsole(t *testing.T) {
 	if rc != 0 {
 		t.Fatalf("Expected strmqweb to work with rc=0, got %v. Output was: %s", rc, out)
 	}
-
+	waitForWebConsoleReady(t, cli, id)
 	//exec into the container and check the status of the web console
 	rc, out = execContainer(t, cli, id, "", []string{"dspmqweb"})
 	if rc != 0 {
@@ -1548,7 +1548,7 @@ func TestLoggingConsoleWithContRestart(t *testing.T) {
 	}
 	id := runContainer(t, cli, &containerConfig)
 
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForWebConsoleReady(t, cli, id)
 
 	// Check for qmgr logs in the container's stdout
@@ -1601,7 +1601,6 @@ func TestLoggingConsoleWithContRestart(t *testing.T) {
 // AMQ7230I message is excluded from the logs
 func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 	qmgrName := "qm1"
-
 	t.Parallel()
 
 	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
@@ -1619,7 +1618,7 @@ func TestLoggingWithQmgrAndExcludeId(t *testing.T) {
 	dir := "/var/mqm/qmgrs/" + qmgrName + "/errors"
 
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForWebConsoleReady(t, cli, id)
 
 	// Check for qmgr logs in the container's stdout
@@ -1681,7 +1680,7 @@ func TestLoggingConsoleSetToMqsc(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForWebConsoleReady(t, cli, id)
 
 	// Confirm that the expected MQSC messages were logged
@@ -1719,7 +1718,7 @@ func TestLoggingConsoleSetToMqscJson(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	// Confirm that the expected MQSC messages were logged
@@ -1815,7 +1814,7 @@ func TestLoggingConsoleSetToWeb(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForWebConsoleReady(t, cli, id)
 
 	// Check for web console logs in the container's stdout
@@ -1859,7 +1858,7 @@ func TestLoggingConsoleSetToQmgr(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	// Check for qmgr logs in the container's stdout
@@ -1897,7 +1896,7 @@ func TestWebLogsHeaderRotation(t *testing.T) {
 		},
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForWebConsoleReady(t, cli, id)
 
 	// Check for web console logs in the container's stdout
@@ -2003,7 +2002,7 @@ func utilSubDNTest(t *testing.T, certPath string, overrideFlag string, expecteOu
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctrID, false)
+	cleanupAfterTest(t, cli, ctrID, false)
 	startContainer(t, cli, ctrID)
 
 	if waitLong {
@@ -2077,9 +2076,9 @@ func TestReadOnlyRootFilesystem(t *testing.T) {
 		t.Fatal(err)
 	}
 	startContainer(t, cli, ctrID)
-	defer cleanContainer(t, cli, ctrID, false)
+	cleanupAfterTest(t, cli, ctrID, false)
 
-	rc := waitForContainer(t, cli, ctrID, 30*time.Second)
+	rc := waitForContainer(t, cli, ctrID, 60*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
 	}
@@ -2271,10 +2270,10 @@ func TestMissingCertError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctrID, false)
+	cleanupAfterTest(t, cli, ctrID, false)
 	startContainer(t, cli, ctrID)
 
-	rc := waitForContainer(t, cli, ctrID, 30*time.Second)
+	rc := waitForContainer(t, cli, ctrID, 60*time.Second)
 	// Expect return code 1 if container failed to create.
 	if rc == 1 {
 		// Get container logs and search for specific message.

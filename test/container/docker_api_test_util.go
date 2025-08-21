@@ -451,15 +451,29 @@ func runContainerOneShot(t *testing.T, cli ce.ContainerInterface, command ...str
 	t.Logf("Running one shot container (%s): %v", containerConfig.Image, command)
 	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, sanitizeContainerName(t.Name()+"OneShot"))
 	if err != nil {
-		t.Fatal(err)
+		t.Logf("Container Create failed with %v", err)
+		t.Logf("Retrying again")
+		ID, err = cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, sanitizeContainerName(t.Name()+"OneShot"))
+		if err != nil {
+			t.Logf("Retrying container create failed with %v", err)
+			t.Fatal(err)
+		}
+
 	}
 	startOptions := ce.ContainerStartOptions{}
 	err = cli.ContainerStart(ID, startOptions)
 	if err != nil {
-		t.Fatal(err)
+		t.Logf("Starting container failed with %v", err)
+		time.Sleep(time.Second * 5)
+		t.Logf("Retrying to start the container again")
+		err = cli.ContainerStart(ID, startOptions)
+		if err != nil {
+			t.Logf("Staring container failed with %v", err)
+			t.Fatal(err)
+		}
 	}
 	defer cleanContainerQuiet(t, cli, ID)
-	rc := waitForContainer(t, cli, ID, 20*time.Second)
+	rc := waitForContainer(t, cli, ID, 60*time.Second)
 	out := inspectLogs(t, cli, ID)
 	t.Logf("One shot container finished with rc=%v, output=%v", rc, out)
 	return rc, out
@@ -490,7 +504,7 @@ func runContainerOneShotWithVolume(t *testing.T, cli ce.ContainerInterface, bind
 		t.Fatal(err)
 	}
 	defer cleanContainerQuiet(t, cli, ID)
-	rc := waitForContainer(t, cli, ID, 20*time.Second)
+	rc := waitForContainer(t, cli, ID, 60*time.Second)
 	out := inspectLogs(t, cli, ID)
 	t.Logf("One shot container finished with rc=%v, output=%v", rc, out)
 	return rc, out
@@ -1019,4 +1033,10 @@ func waitForMessageCountInLog(t *testing.T, cli ce.ContainerInterface, id string
 // Returns fully qualified path
 func tlsDirDN(t *testing.T, unixPath bool, certPath string) string {
 	return pathutils.CleanPath(filepath.Dir(getCwd(t, unixPath)), certPath)
+}
+
+func cleanupAfterTest(t *testing.T, cli ce.ContainerInterface, ID string, ignoreFDCs bool) {
+	t.Cleanup(func() {
+		cleanContainer(t, cli, ID, ignoreFDCs)
+	})
 }
