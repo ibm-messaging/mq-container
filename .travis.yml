@@ -19,6 +19,10 @@ sudo: required
 services:
   - docker
 
+branches:
+  except:
+  - private-master
+
 env:
   global:
     - MAIN_BRANCH=private-master
