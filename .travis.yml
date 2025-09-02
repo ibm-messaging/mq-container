@@ -31,13 +31,6 @@ env:
     - BASE_MQ_LOCKED=false
     - FEATURE_BUILD_OVERRIDE=false
     - DELIVERY_REGISTRY_NAMESPACE_OVERRIDE=hyc-mq-container-team-docker-local/travis-master
-    - MQ_9_4_4_ARCHIVE_REPOSITORY_DEV_AMD64=https://na.artifactory.swg-devops.com/artifactory/hyc-mq-container-team-docker-local/sdp/IBM_MQ_ADVANCED_DEV_9.4.4.0_AMD64.tar.gz
-    - MQ_9_4_4_ARCHIVE_REPOSITORY_DEV_PPC64LE=https://na.artifactory.swg-devops.com/artifactory/hyc-mq-container-team-docker-local/sdp/IBM_MQ_ADVANCED_DEV_9.4.4.0_PPCLE.tar.gz
-    - MQ_9_4_4_ARCHIVE_REPOSITORY_DEV_S390X=https://na.artifactory.swg-devops.com/artifactory/hyc-mq-container-team-docker-local/sdp/IBM_MQ_ADVANCED_DEV_9.4.4.0_S390X.tar.gz
-    - MQ_9_4_4_ARCHIVE_REPOSITORY_AMD64=https://na.artifactory.swg-devops.com/artifactory/hyc-mq-container-team-docker-local/sdp/IBM_MQ_ADVANCED_9.4.4.0_AMD64.tar.gz
-    - MQ_9_4_4_ARCHIVE_REPOSITORY_PPC64LE=https://na.artifactory.swg-devops.com/artifactory/hyc-mq-container-team-docker-local/sdp/IBM_MQ_ADVANCED_9.4.4.0_PPCLE.tar.gz
-    - MQ_9_4_4_ARCHIVE_REPOSITORY_S390X=https://na.artifactory.swg-devops.com/artifactory/hyc-mq-container-team-docker-local/sdp/IBM_MQ_ADVANCED_9.4.4.0_S390X.tar.gz
-
 
 go_import_path: "github.com/ibm-messaging/mq-container"
 
