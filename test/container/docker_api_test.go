@@ -158,7 +158,7 @@ func TestWithVolumeNoMetrics(t *testing.T) {
 func withVolume(t *testing.T, metric bool) {
 	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	vol := createVolume(t, cli, t.Name())
-	defer removeVolume(t, cli, vol)
+	cleanupVolume(t, cli, vol)
 	containerConfig := ce.ContainerConfig{
 		Image: imageName(),
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
@@ -190,7 +190,7 @@ func withVolume(t *testing.T, metric bool) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID2, false)
+	cleanupAfterTest(t, cli, ID2, false)
 	startContainer(t, cli, ID2)
 	waitForReady(t, cli, ID2)
 }
@@ -200,17 +200,17 @@ func TestWithSplitVolumesLogsData(t *testing.T) {
 	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
-	defer removeVolume(t, cli, qmsharedlogs)
+	cleanupVolume(t, cli, qmsharedlogs)
 	qmshareddata := createVolume(t, cli, "qmshareddata")
-	defer removeVolume(t, cli, qmshareddata)
+	cleanupVolume(t, cli, qmshareddata)
 
 	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, qmshareddata, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"}, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	defer removeVolume(t, cli, qmVol)
-	defer cleanContainer(t, cli, qmID, false)
+	cleanupVolume(t, cli, qmVol)
+	cleanupAfterTest(t, cli, qmID, false)
 
 	waitForReady(t, cli, qmID)
 }
@@ -220,15 +220,15 @@ func TestWithSplitVolumesLogsOnly(t *testing.T) {
 	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
-	defer removeVolume(t, cli, qmsharedlogs)
+	cleanupVolume(t, cli, qmsharedlogs)
 
 	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, "", []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"}, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	defer removeVolume(t, cli, qmVol)
-	defer cleanContainer(t, cli, qmID, false)
+	cleanupVolume(t, cli, qmVol)
+	cleanupAfterTest(t, cli, qmID, false)
 
 	waitForReady(t, cli, qmID)
 }
@@ -238,15 +238,15 @@ func TestWithSplitVolumesDataOnly(t *testing.T) {
 	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
 	qmshareddata := createVolume(t, cli, "qmshareddata")
-	defer removeVolume(t, cli, qmshareddata)
+	cleanupVolume(t, cli, qmshareddata)
 
 	err, qmID, qmVol := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata, []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"}, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	defer removeVolume(t, cli, qmVol)
-	defer cleanContainer(t, cli, qmID, false)
+	cleanupVolume(t, cli, qmVol)
+	cleanupAfterTest(t, cli, qmID, false)
 
 	waitForReady(t, cli, qmID)
 }
@@ -355,14 +355,14 @@ func TestCreateQueueManagerFail(t *testing.T) {
 		USER 1001`, imageName())},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	rc := waitForContainer(t, cli, id, 60*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
@@ -385,14 +385,14 @@ func TestStartQueueManagerFail(t *testing.T) {
 		USER 1001`, imageName())},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	rc := waitForContainer(t, cli, id, 30*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
@@ -409,7 +409,7 @@ func TestVolumeUnmount(t *testing.T) {
 
 	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 	vol := createVolume(t, cli, t.Name())
-	defer removeVolume(t, cli, vol)
+	cleanupVolume(t, cli, vol)
 	containerConfig := ce.ContainerConfig{
 		Image: imageName(),
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "MQ_ENABLE_EMBEDDED_WEB_SERVER=false"},
@@ -430,7 +430,7 @@ func TestVolumeUnmount(t *testing.T) {
 		t.Fatal(err)
 	}
 	startContainer(t, cli, ctrID)
-	defer cleanContainer(t, cli, ctrID, true)
+	cleanupAfterTest(t, cli, ctrID, true)
 	waitForReady(t, cli, ctrID)
 	// Unmount the volume as root
 	rc, out := execContainer(t, cli, ctrID, "root", []string{"umount", "-l", "/mnt/mqm"})
@@ -498,14 +498,14 @@ func TestMQSC(t *testing.T) {
 		{"test.mqsc", "DEFINE QLOCAL(test)"},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	rc := -1
@@ -547,14 +547,14 @@ func TestLargeMQSC(t *testing.T) {
 		{"test.mqsc", buf.String()},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	rc := -1
@@ -624,14 +624,14 @@ func TestRedactValidMQSC(t *testing.T) {
 		{"test.mqsc", buf.String()},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 	stopContainer(t, cli, id)
 	scanner := bufio.NewScanner(strings.NewReader(inspectLogs(t, cli, id)))
@@ -693,14 +693,14 @@ func TestRedactInvalidMQSC(t *testing.T) {
 		{"test.mqsc", buf.String()},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "MQ_CONNAUTH_USE_HTP=true", "MQ_APP_PASSWORD=passw0rd"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	rc := waitForContainer(t, cli, id, 90*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
@@ -736,14 +736,14 @@ func TestInvalidMQSC(t *testing.T) {
 		{"mqscTest.mqsc", "DEFINE INVALIDLISTENER('TEST.LISTENER.TCP') TRPTYPE(TCP) PORT(1414) CONTROL(QMGR) REPLACE"},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	rc := waitForContainer(t, cli, id, 90*time.Second)
 	if rc != 1 {
 		t.Errorf("Expected rc=1, got rc=%v", rc)
@@ -767,14 +767,14 @@ func TestSimpleMQIniMerge(t *testing.T) {
 			"Log:\n   LogSecondaryFiles=28"},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
@@ -810,14 +810,14 @@ func TestMultipleIniMerge(t *testing.T) {
 			"ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF"},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
 	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
@@ -849,9 +849,9 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 			"ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF"},
 	}
 	firstImage := createImage(t, cli, filesFirstContainer)
-	defer deleteImage(t, cli, firstImage)
+	cleanupImage(t, cli, firstImage)
 	vol := createVolume(t, cli, t.Name())
-	defer removeVolume(t, cli, vol)
+	cleanupVolume(t, cli, vol)
 
 	containerConfig := ce.ContainerConfig{
 		Image: firstImage,
@@ -897,7 +897,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 	}
 
 	secondImage := createImage(t, cli, filesSecondContainer)
-	defer deleteImage(t, cli, secondImage)
+	cleanupImage(t, cli, secondImage)
 
 	containerConfig2 := ce.ContainerConfig{
 		Image: secondImage,
@@ -908,7 +908,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ctr2ID, false)
+	cleanupAfterTest(t, cli, ctr2ID, false)
 	startContainer(t, cli, ctr2ID)
 	waitForReady(t, cli, ctr2ID)
 
@@ -948,14 +948,14 @@ func TestReadiness(t *testing.T) {
 		{"test.mqsc", buf.String()},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "DEBUG=1"},
 		Image: tag,
 	}
 	id := runContainer(t, cli, &containerConfig)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	queueCheckCommand := fmt.Sprintf("echo 'DISPLAY QLOCAL(test%v)' | runmqsc", numQueues)
 	_, mqsc := execContainer(t, cli, id, "", []string{"cat", "/etc/mqm/test.mqsc"})
 	t.Log(mqsc)
@@ -1760,7 +1760,7 @@ func TestMqscErrorLogLevel(t *testing.T) {
 		{"test.mqsc", "DEFINE QLOCAL(test)\nDEFINE QLOCAL(test)"},
 	}
 	tag := createImage(t, cli, files)
-	defer deleteImage(t, cli, tag)
+	cleanupImage(t, cli, tag)
 
 	containerConfig := ce.ContainerConfig{
 		Env: []string{
@@ -1774,7 +1774,7 @@ func TestMqscErrorLogLevel(t *testing.T) {
 
 	id := runContainer(t, cli, &containerConfig)
 	waitForReady(t, cli, id)
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 
 	// Confirm that the expected MQSC messages were logged
 	jsonLogs, err := waitForMessageInLog(t, cli, id, "MQSC commands read")
@@ -2114,11 +2114,11 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 	}
 
 	ephData := createVolume(t, cli, "ephData"+t.Name())
-	defer removeVolume(t, cli, ephData)
+	cleanupVolume(t, cli, ephData)
 	ephRun := createVolume(t, cli, "ephRun"+t.Name())
-	defer removeVolume(t, cli, ephRun)
+	cleanupVolume(t, cli, ephRun)
 	ephTmp := createVolume(t, cli, "ephTmp"+t.Name())
-	defer removeVolume(t, cli, ephTmp)
+	cleanupVolume(t, cli, ephTmp)
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
 			ephRun + ":/run",
@@ -2147,7 +2147,7 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, ID, false)
+	cleanupAfterTest(t, cli, ID, false)
 
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)

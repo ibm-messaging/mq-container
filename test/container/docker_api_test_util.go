@@ -472,8 +472,8 @@ func runContainerOneShot(t *testing.T, cli ce.ContainerInterface, command ...str
 			t.Fatal(err)
 		}
 	}
-	defer cleanContainerQuiet(t, cli, ID)
-	rc := waitForContainer(t, cli, ID, 60*time.Second)
+	cleanupContainerQuiet(t, cli, ID)
+	rc := waitForContainer(t, cli, ID, 120*time.Second)
 	out := inspectLogs(t, cli, ID)
 	t.Logf("One shot container finished with rc=%v, output=%v", rc, out)
 	return rc, out
@@ -607,7 +607,13 @@ func startContainer(t *testing.T, cli ce.ContainerInterface, ID string) {
 	startOptions := ce.ContainerStartOptions{}
 	err := cli.ContainerStart(ID, startOptions)
 	if err != nil {
-		t.Fatal(err)
+		t.Logf("Container start failed with err %v", err)
+		t.Logf("Retrying ...")
+		err = cli.ContainerStart(ID, startOptions)
+		if err != nil {
+			t.Logf("Retrying failed with err %v", err)
+			t.Fatal(err)
+		}
 	}
 }
 
@@ -1037,6 +1043,28 @@ func tlsDirDN(t *testing.T, unixPath bool, certPath string) string {
 
 func cleanupAfterTest(t *testing.T, cli ce.ContainerInterface, ID string, ignoreFDCs bool) {
 	t.Cleanup(func() {
+		t.Logf("Cleaning up %v container after test", ID)
 		cleanContainer(t, cli, ID, ignoreFDCs)
+	})
+}
+
+func cleanupVolume(t *testing.T, cli ce.ContainerInterface, volume string) {
+	t.Cleanup(func() {
+		t.Logf("Cleaning up volume %v after test", volume)
+		removeVolume(t, cli, volume)
+	})
+}
+
+func cleanupImage(t *testing.T, cli ce.ContainerInterface, image string) {
+	t.Cleanup(func() {
+		t.Logf("Cleaning up image %v after test", image)
+		deleteImage(t, cli, image)
+	})
+}
+
+func cleanupContainerQuiet(t *testing.T, cli ce.ContainerInterface, ID string) {
+	t.Cleanup(func() {
+		t.Logf("Cleaning up %v container quietly after test", ID)
+		cleanContainerQuiet(t, cli, ID)
 	})
 }

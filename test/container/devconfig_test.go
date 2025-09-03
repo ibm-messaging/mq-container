@@ -868,11 +868,11 @@ func TestRORFSDevNoAppPassword(t *testing.T) {
 
 	// Create volumes for mounting into container
 	ephData := createVolume(t, cli, "ephData"+t.Name())
-	defer removeVolume(t, cli, ephData)
+	cleanupVolume(t, cli, ephData)
 	ephRun := createVolume(t, cli, "ephRun"+t.Name())
-	defer removeVolume(t, cli, ephRun)
+	cleanupVolume(t, cli, ephRun)
 	ephTmp := createVolume(t, cli, "ephTmp"+t.Name())
-	defer removeVolume(t, cli, ephTmp)
+	cleanupVolume(t, cli, ephTmp)
 
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
@@ -899,7 +899,7 @@ func TestRORFSDevNoAppPassword(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	startContainer(t, cli, id)
 
 	waitForReady(t, cli, id)
