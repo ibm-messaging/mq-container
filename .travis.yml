@@ -105,7 +105,7 @@ jobs:
         - PUSH_MANIFEST_ONLY=true
       script: bash -e travis-build-scripts/run.sh
     - stage: trigger-release-checks
-      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate* 
+      if: branch = private-master AND type != pull_request OR tag =~ ^release-candidate*
       name: "Trigger release-checks build"
       script: bash -e travis-build-scripts/trigger-release-checks.sh
 

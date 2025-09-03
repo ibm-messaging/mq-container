@@ -41,13 +41,13 @@ if ($UBUNTU); then
   echo "deb ${APT_URL} ${UBUNTU_CODENAME}-updates main restricted" >> /etc/apt/sources.list
   echo "deb ${APT_URL} ${UBUNTU_CODENAME}-security main restricted" >> /etc/apt/sources.list
   # Install additional packages required by MQ, this install process and the runtime scripts
-  EXTRA_DEBS="bash bc ca-certificates coreutils curl debianutils file findutils gawk grep libc-bin mount passwd procps sed tar util-linux"
+  EXTRA_DEBS="bash bc ca-certificates coreutils curl debianutils file findutils gawk grep libc-bin mount passwd procps sed tar util-linux libicu-dev"
   apt-get update
   apt-get install -y --no-install-recommends ${EXTRA_DEBS}
 fi
 
-if ($RPM); then	
-  EXTRA_RPMS="bash bc ca-certificates file findutils gawk glibc-common grep ncurses-libs passwd procps-ng sed shadow-utils tar util-linux which"
+if ($RPM); then
+  EXTRA_RPMS="bash bc ca-certificates file findutils gawk glibc-common grep ncurses-libs passwd procps-ng sed shadow-utils tar util-linux which libicu"
   # Install additional packages required by MQ, this install process and the runtime scripts
   $YUM && yum -y install --setopt install_weak_deps=false ${EXTRA_RPMS}
   $MICRODNF && microdnf --disableplugin=subscription-manager -y install ${EXTRA_RPMS}
