@@ -3,6 +3,7 @@
 ## 9.4.4.0 (2025-10)
 
 * Updated to MQ version 9.4.4.0
+* Logs now consistently routed to stdout/stderr; logs to stdout will conform to the selected log format (MQ_LOGGING_CONSOLE_FORMAT), logs to stderr are unformatted errors
 
 ## 9.4.3.0 (2025-06)
 

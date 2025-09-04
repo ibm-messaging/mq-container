@@ -34,6 +34,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/pathutils"
 	"github.com/ibm-messaging/mq-container/pkg/logger"
 	"github.com/ibm-messaging/mq-container/pkg/mqini"
+	"github.com/ibm-messaging/mq-container/pkg/syncwriter"
 )
 
 // var debug = false
@@ -288,10 +289,11 @@ func configureLogger(name string) (mirrorFunc, error) {
 	d := getDebug()
 	switch f {
 	case "json":
-		log, err = logger.NewLogger(os.Stderr, d, true, name)
+		log, err = logger.NewLogger(os.Stdout, d, true, name)
 		if err != nil {
 			return nil, err
 		}
+		mirrorLogWriter := syncwriter.For(os.Stdout)
 		return func(msg string, isQMLog bool) bool {
 			arrLoggingConsoleExcludeIds := strings.Split(strings.ToUpper(os.Getenv("MQ_LOGGING_CONSOLE_EXCLUDE_ID")), ",")
 			if isExcludedMsgIdPresent(msg, arrLoggingConsoleExcludeIds) {
@@ -307,24 +309,25 @@ func configureLogger(name string) (mirrorFunc, error) {
 				if err != nil {
 					log.Printf("Failed to unmarshall JSON in log message - %v", msg)
 				} else {
-					fmt.Println(msg)
+					mirrorLogWriter.Println(msg)
 				}
 			} else {
 				// The log being mirrored isn't JSON. This can happen only in case of 'mqsc' logs
 				// Also if the logging source is from autocfgmqsc.LOG, then we have to construct the json string as per below logic
 				if checkLogSourceForMirroring("mqsc") && canMQSCLogBeMirroredToConsole(msg) {
 					logLevel := determineMQSCLogLevel(strings.TrimSpace(msg))
-					fmt.Printf("{\"ibm_datetime\":\"%s\",\"type\":\"mqsc_log\",\"loglevel\":\"%s\",\"message\":\"%s\"}\n",
+					mirrorLogWriter.Printf("{\"ibm_datetime\":\"%s\",\"type\":\"mqsc_log\",\"loglevel\":\"%s\",\"message\":\"%s\"}\n",
 						getTimeStamp(), logLevel, strings.TrimSpace(msg))
 				}
 			}
 			return true
 		}, nil
 	case "basic":
-		log, err = logger.NewLogger(os.Stderr, d, false, name)
+		log, err = logger.NewLogger(os.Stdout, d, false, name)
 		if err != nil {
 			return nil, err
 		}
+		mirrorLogWriter := syncwriter.For(os.Stdout)
 		return func(msg string, isQMLog bool) bool {
 			arrLoggingConsoleExcludeIds := strings.Split(strings.ToUpper(os.Getenv("MQ_LOGGING_CONSOLE_EXCLUDE_ID")), ",")
 			if isExcludedMsgIdPresent(msg, arrLoggingConsoleExcludeIds) {
@@ -341,18 +344,18 @@ func configureLogger(name string) (mirrorFunc, error) {
 				if err != nil {
 					log.Printf("Failed to unmarshall JSON in log message - %v", err)
 				} else {
-					fmt.Print(formatBasic(obj))
+					mirrorLogWriter.Print(formatBasic(obj))
 				}
 			} else {
 				// The log being mirrored isn't JSON, so just print it. This can happen only in case of mqsc logs
 				if checkLogSourceForMirroring("mqsc") && canMQSCLogBeMirroredToConsole(msg) {
-					log.Printf("%s", strings.TrimSpace(msg))
+					log.Print(strings.TrimSpace(msg))
 				}
 			}
 			return true
 		}, nil
 	default:
-		log, err = logger.NewLogger(os.Stdout, d, false, name)
+		log, err = logger.NewLogger(os.Stderr, d, false, name)
 		if err != nil {
 			return nil, err
 		}

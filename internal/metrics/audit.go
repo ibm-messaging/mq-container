@@ -22,6 +22,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/ibm-messaging/mq-container/pkg/syncwriter"
 )
 
 type auditEvent struct {
@@ -63,7 +65,7 @@ func newAuditingHandlerFuncWrapper(qmName string, logger logHandler) handlerFunc
 			eventBytes, err := json.Marshal(event)
 			if err != nil {
 				logger.Append(fmt.Sprintf("Error writing audit log; next event may contain incomplete data: %s", err.Error()), false)
-				fmt.Printf("Error constructing audit log event: %s\n", err.Error())
+				syncwriter.For(os.Stderr).Printf("Error constructing audit log event: %s\n", err.Error())
 			}
 			logger.Append(string(eventBytes), false)
 		}

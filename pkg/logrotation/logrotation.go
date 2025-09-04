@@ -25,6 +25,8 @@ import (
 	"slices"
 	"strings"
 	"sync"
+
+	"github.com/ibm-messaging/mq-container/pkg/syncwriter"
 )
 
 type RotatingLogger struct {
@@ -86,24 +88,26 @@ func (r *RotatingLogger) Append(messageLine string, deduplicateLine bool) {
 	// we will always log in the first instance of the log files
 	logFilePath := r.instanceFileName(1)
 
+	errOutput := syncwriter.For(os.Stderr)
+
 	// open the log file in append mode
 	// for the gosec rule Id: G302 - Expect file permissions to be 0600 or less
 	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
-		fmt.Printf("Failed to open log file: %v\n", err)
+		errOutput.Printf("Failed to open log file: %v\n", err)
 		return
 	}
 
 	defer func(f *os.File) {
 		if err := logFile.Close(); err != nil {
-			fmt.Printf("Error: %v, Failed to close log file: %s\n", err, logFilePath)
+			errOutput.Printf("Error: %v, Failed to close log file: %s\n", err, logFilePath)
 		}
 	}(logFile)
 
 	// check if the message should be appended to the file
 	shouldBeAppended, err := r.checkIfMessageShouldBeAppended(logFilePath, messageLine, deduplicateLine)
 	if err != nil {
-		fmt.Printf("Failed to validate the currentLog and the lastLog line %v\n", err)
+		errOutput.Printf("Failed to validate the currentLog and the lastLog line %v\n", err)
 	}
 
 	if !shouldBeAppended {
@@ -113,7 +117,7 @@ func (r *RotatingLogger) Append(messageLine string, deduplicateLine bool) {
 	// check if the logFileSize has exceeded the maxFileSize then perform the logrotation
 	logFileSizeExceeded, err := r.checkIfLogFileSizeExceeded(len(messageLine), logFile)
 	if err != nil {
-		fmt.Printf("Failed to validate log file size: %v\n", err)
+		errOutput.Printf("Failed to validate log file size: %v\n", err)
 		return
 	}
 
@@ -122,25 +126,25 @@ func (r *RotatingLogger) Append(messageLine string, deduplicateLine bool) {
 		// close the current log file
 		err = logFile.Close()
 		if err != nil {
-			fmt.Printf("Error: %v, Failed to close log file: %v\n", err, logFile.Name())
+			errOutput.Printf("Error: %v, Failed to close log file: %v\n", err, logFile.Name())
 		}
 
 		// perform log rotation
 		err = r.performLogRotation()
 		if err != nil {
-			fmt.Printf("Failed to perform log-rotation: %v\n", err)
+			errOutput.Printf("Failed to perform log-rotation: %v\n", err)
 		}
 
 		// open the newly created logFile
 		logFile, err = os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
-			fmt.Printf("Failed to open log file: %v\n", err)
+			errOutput.Printf("Failed to open log file: %v\n", err)
 			return
 		}
 
 		defer func(f *os.File) {
 			if err := logFile.Close(); err != nil {
-				fmt.Printf("Error: %v, Failed to close log file: %s\n", err, logFilePath)
+				errOutput.Printf("Error: %v, Failed to close log file: %s\n", err, logFilePath)
 			}
 		}(logFile)
 	}
@@ -148,7 +152,7 @@ func (r *RotatingLogger) Append(messageLine string, deduplicateLine bool) {
 	// append the message to the file
 	_, err = logFile.WriteString(messageLine)
 	if err != nil {
-		fmt.Printf("Failed to write to log file: %v\n", err)
+		errOutput.Printf("Failed to write to log file: %v\n", err)
 	}
 
 }
@@ -225,7 +229,7 @@ func (r *RotatingLogger) getLogLastLine(logFilePath string) (string, error) {
 
 	defer func() {
 		if err := logFile.Close(); err != nil {
-			fmt.Printf("error closing logfile: %s", logFilePath)
+			syncwriter.For(os.Stderr).Printf("error closing logfile: %s", logFilePath)
 		}
 	}()
 
