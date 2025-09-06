@@ -23,8 +23,8 @@ env:
   global:
     - MAIN_BRANCH=v9.4.3
     - TAGCACHE_FILE=tagcache
-    - RELEASE=r1
-    - BASE_MQ_LOCKED=true
+    - RELEASE=r2
+    - BASE_MQ_LOCKED=false
     - FEATURE_BUILD_OVERRIDE=false
     - DELIVERY_REGISTRY_NAMESPACE_OVERRIDE=hyc-mq-container-team-docker-local/travis-master
 
