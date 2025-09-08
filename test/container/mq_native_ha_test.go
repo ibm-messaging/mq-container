@@ -45,14 +45,14 @@ func TestNativeHABasic(t *testing.T) {
 	for i := 0; i <= 2; i++ {
 		nhaPort := basePort + i
 		vol := createVolume(t, cli, containerNames[i])
-		defer removeVolume(t, cli, vol)
+		cleanupVolume(t, cli, vol)
 		qmVolumes = append(qmVolumes, vol)
 		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
 		hostConfig := getHostConfig(t, 1, "", "", vol, "", "", false)
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr, false)
+		cleanupAfterTest(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
@@ -89,14 +89,14 @@ func TestNativeHAFailover(t *testing.T) {
 	for i := 0; i <= 2; i++ {
 		nhaPort := basePort + i
 		vol := createVolume(t, cli, containerNames[i])
-		defer removeVolume(t, cli, vol)
+		cleanupVolume(t, cli, vol)
 		qmVolumes = append(qmVolumes, vol)
 		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
 		hostConfig := getHostConfig(t, 1, "", "", vol, "", "", false)
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr, false)
+		cleanupAfterTest(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
@@ -148,7 +148,7 @@ func TestNativeHASecure(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr, false)
+		cleanupAfterTest(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
@@ -188,7 +188,7 @@ func TestNativeHASecureCipherSpec(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr, false)
+		cleanupAfterTest(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
@@ -229,7 +229,7 @@ func TestNativeHASecureCipherSpecFIPS(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr, false)
+		cleanupAfterTest(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
@@ -274,7 +274,7 @@ func TestNativeHASecureCipherSpecNonFIPSCipher(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr, false)
+		cleanupAfterTest(t, cli, ctr, false)
 		// We expect container to fail in this case because the cipher is non-FIPS and we have asked for FIPS compliance
 		// by setting MQ_ENABLE_FIPS=true
 		qmReplicaIDs[i] = ctr
@@ -308,11 +308,11 @@ func TestNativeHAFailoverWithRoRFs(t *testing.T) {
 	for i := 0; i <= 2; i++ {
 		nhaPort := basePort + i
 		vol := createVolume(t, cli, containerNames[i])
-		defer removeVolume(t, cli, vol)
+		cleanupVolume(t, cli, vol)
 		volRun := createVolume(t, cli, "ephRun"+containerNames[i])
-		defer removeVolume(t, cli, volRun)
+		cleanupVolume(t, cli, volRun)
 		volTmp := createVolume(t, cli, "ephTmp"+containerNames[i])
-		defer removeVolume(t, cli, volTmp)
+		cleanupVolume(t, cli, volTmp)
 
 		qmVolumes = append(qmVolumes, vol)
 		qmVolumes = append(qmVolumes, volRun)
@@ -323,7 +323,7 @@ func TestNativeHAFailoverWithRoRFs(t *testing.T) {
 		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
 		networkingConfig := getNativeHANetworkConfig("host")
 		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
-		defer cleanContainer(t, cli, ctr, false)
+		cleanupAfterTest(t, cli, ctr, false)
 		qmReplicaIDs[i] = ctr
 	}
 
