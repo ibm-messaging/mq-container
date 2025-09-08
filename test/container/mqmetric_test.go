@@ -30,7 +30,7 @@ func TestGoldenPathMetric(t *testing.T) {
 
 	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 
 	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
@@ -57,7 +57,7 @@ func TestMetricNames(t *testing.T) {
 
 	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 
 	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
@@ -102,7 +102,7 @@ func TestMetricLabels(t *testing.T) {
 	cli := ce.NewContainerClient()
 	requiredLabels := []string{"qmgr"}
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
 		t.Fatal(err)
@@ -150,7 +150,7 @@ func TestRapidFirePrometheus(t *testing.T) {
 
 	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
 		t.Fatal(err)
@@ -184,7 +184,7 @@ func TestSlowPrometheus(t *testing.T) {
 
 	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
 		t.Fatal(err)
@@ -215,7 +215,7 @@ func TestContainerRestart(t *testing.T) {
 
 	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
 		t.Fatal(err)
@@ -265,7 +265,7 @@ func TestQMRestart(t *testing.T) {
 
 	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 
 	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
@@ -322,7 +322,7 @@ func TestValidValues(t *testing.T) {
 
 	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{defaultMetricPort})
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	// hostname := getIPAddress(t, cli, id)
 	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {
@@ -358,7 +358,7 @@ func TestChangingValues(t *testing.T) {
 
 	cli := ce.NewContainerClient()
 	id := runContainerWithPorts(t, cli, metricsContainerConfig(), []int{1414, defaultMetricPort})
-	defer cleanContainer(t, cli, id, false)
+	cleanupAfterTest(t, cli, id, false)
 	// hostname := getIPAddress(t, cli, id)
 	port, err := cli.GetContainerPort(id, defaultMetricPort)
 	if err != nil {

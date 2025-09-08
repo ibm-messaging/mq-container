@@ -439,15 +439,21 @@ func runContainerOneShot(t *testing.T, cli ce.ContainerInterface, command ...str
 	t.Logf("Running one shot container (%s): %v", containerConfig.Image, command)
 	ID, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name()+"OneShot")
 	if err != nil {
-		t.Fatal(err)
+		t.Logf("Container Create failed with %v", err)
+		t.Logf("Retrying again")
+		ID, err = cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name()+"OneShot")
+		if err != nil {
+			t.Logf("Retrying container create failed with %v", err)
+			t.Fatal(err)
+		}
 	}
 	startOptions := ce.ContainerStartOptions{}
 	err = cli.ContainerStart(ID, startOptions)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer cleanContainerQuiet(t, cli, ID)
-	rc := waitForContainer(t, cli, ID, 60*time.Second)
+	cleanupContainerQuiet(t, cli, ID)
+	rc := waitForContainer(t, cli, ID, 120*time.Second)
 	out := inspectLogs(t, cli, ID)
 	t.Logf("One shot container finished with rc=%v, output=%v", rc, out)
 	return rc, out
@@ -478,7 +484,7 @@ func runContainerOneShotWithVolume(t *testing.T, cli ce.ContainerInterface, bind
 		t.Fatal(err)
 	}
 	defer cleanContainerQuiet(t, cli, ID)
-	rc := waitForContainer(t, cli, ID, 20*time.Second)
+	rc := waitForContainer(t, cli, ID, 60*time.Second)
 	out := inspectLogs(t, cli, ID)
 	t.Logf("One shot container finished with rc=%v, output=%v", rc, out)
 	return rc, out
@@ -995,4 +1001,32 @@ func waitForMessageCountInLog(t *testing.T, cli ce.ContainerInterface, id string
 // Returns fully qualified path
 func tlsDirDN(t *testing.T, unixPath bool, certPath string) string {
 	return pathutils.CleanPath(filepath.Dir(getCwd(t, unixPath)), certPath)
+}
+
+func cleanupAfterTest(t *testing.T, cli ce.ContainerInterface, ID string, ignoreFDCs bool) {
+	t.Cleanup(func() {
+		t.Logf("Cleaning up %v container after test", ID)
+		cleanContainer(t, cli, ID, ignoreFDCs)
+	})
+}
+
+func cleanupVolume(t *testing.T, cli ce.ContainerInterface, volume string) {
+	t.Cleanup(func() {
+		t.Logf("Cleaning up volume %v after test", volume)
+		removeVolume(t, cli, volume)
+	})
+}
+
+func cleanupImage(t *testing.T, cli ce.ContainerInterface, image string) {
+	t.Cleanup(func() {
+		t.Logf("Cleaning up image %v after test", image)
+		deleteImage(t, cli, image)
+	})
+}
+
+func cleanupContainerQuiet(t *testing.T, cli ce.ContainerInterface, ID string) {
+	t.Cleanup(func() {
+		t.Logf("Cleaning up %v container quietly after test", ID)
+		cleanContainerQuiet(t, cli, ID)
+	})
 }

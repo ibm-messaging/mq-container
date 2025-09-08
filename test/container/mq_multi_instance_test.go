@@ -40,10 +40,10 @@ func TestMultiInstanceStartStop(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, volume := range volumes {
-		defer removeVolume(t, cli, volume)
+		cleanupVolume(t, cli, volume)
 	}
-	defer cleanContainer(t, cli, qm1aId, false)
-	defer cleanContainer(t, cli, qm1bId, false)
+	cleanupAfterTest(t, cli, qm1aId, false)
+	cleanupAfterTest(t, cli, qm1bId, false)
 
 	waitForReady(t, cli, qm1aId)
 	waitForReady(t, cli, qm1bId)
@@ -79,10 +79,10 @@ func TestMultiInstanceContainerStop(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, volume := range volumes {
-		defer removeVolume(t, cli, volume)
+		cleanupVolume(t, cli, volume)
 	}
-	defer cleanContainer(t, cli, qm1aId, false)
-	defer cleanContainer(t, cli, qm1bId, false)
+	cleanupAfterTest(t, cli, qm1aId, false)
+	cleanupAfterTest(t, cli, qm1bId, false)
 
 	waitForReady(t, cli, qm1aId)
 	waitForReady(t, cli, qm1bId)
@@ -118,9 +118,9 @@ func TestMultiInstanceRace(t *testing.T) {
 	t.Skipf("Skipping %v until file lock is implemented", t.Name())
 	cli := ce.NewContainerClient()
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
-	defer removeVolume(t, cli, qmsharedlogs)
+	cleanupVolume(t, cli, qmsharedlogs)
 	qmshareddata := createVolume(t, cli, "qmshareddata")
-	defer removeVolume(t, cli, qmshareddata)
+	cleanupVolume(t, cli, qmshareddata)
 
 	qmsChannel := make(chan QMChan)
 
@@ -140,10 +140,10 @@ func TestMultiInstanceRace(t *testing.T) {
 	qm1aId, qm1aData := qm1a.QMId, qm1a.QMData
 	qm1bId, qm1bData := qm1b.QMId, qm1b.QMData
 
-	defer removeVolume(t, cli, qm1aData)
-	defer removeVolume(t, cli, qm1bData)
-	defer cleanContainer(t, cli, qm1aId, false)
-	defer cleanContainer(t, cli, qm1bId, false)
+	cleanupVolume(t, cli, qm1aData)
+	cleanupVolume(t, cli, qm1bData)
+	cleanupAfterTest(t, cli, qm1aId, false)
+	cleanupAfterTest(t, cli, qm1bId, false)
 
 	waitForReady(t, cli, qm1aId)
 	waitForReady(t, cli, qm1bId)
@@ -165,8 +165,8 @@ func TestMultiInstanceNoSharedMounts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer removeVolume(t, cli, qm1aData)
-	defer cleanContainer(t, cli, qm1aId, false)
+	cleanupVolume(t, cli, qm1aData)
+	cleanupAfterTest(t, cli, qm1aId, false)
 
 	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount '/mnt/mqm-log'", 30*time.Second)
 }
@@ -177,15 +177,15 @@ func TestMultiInstanceNoSharedLogs(t *testing.T) {
 	cli := ce.NewContainerClient()
 
 	qmshareddata := createVolume(t, cli, "qmshareddata")
-	defer removeVolume(t, cli, qmshareddata)
+	cleanupVolume(t, cli, qmshareddata)
 
 	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, "", qmshareddata, miEnv, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	defer removeVolume(t, cli, qm1aData)
-	defer cleanContainer(t, cli, qm1aId, false)
+	cleanupVolume(t, cli, qm1aData)
+	cleanupAfterTest(t, cli, qm1aId, false)
 
 	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount '/mnt/mqm-log'", 30*time.Second)
 }
@@ -196,15 +196,15 @@ func TestMultiInstanceNoSharedData(t *testing.T) {
 	cli := ce.NewContainerClient()
 
 	qmsharedlogs := createVolume(t, cli, "qmsharedlogs")
-	defer removeVolume(t, cli, qmsharedlogs)
+	cleanupVolume(t, cli, qmsharedlogs)
 
 	err, qm1aId, qm1aData := startMultiVolumeQueueManager(t, cli, true, qmsharedlogs, "", miEnv, "", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	defer removeVolume(t, cli, qm1aData)
-	defer cleanContainer(t, cli, qm1aId, false)
+	cleanupVolume(t, cli, qm1aData)
+	cleanupAfterTest(t, cli, qm1aId, false)
 
 	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount '/mnt/mqm-data'", 30*time.Second)
 }
@@ -219,8 +219,8 @@ func TestMultiInstanceNoMounts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer removeVolume(t, cli, qm1aData)
-	defer cleanContainer(t, cli, qm1aId, false)
+	cleanupVolume(t, cli, qm1aData)
+	cleanupAfterTest(t, cli, qm1aId, false)
 
 	waitForTerminationMessage(t, cli, qm1aId, "Missing required mount '/mnt/mqm'", 30*time.Second)
 }
@@ -235,10 +235,10 @@ func TestRoRFsMultiInstanceContainerStop(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, volume := range volumes {
-		defer removeVolume(t, cli, volume)
+		cleanupVolume(t, cli, volume)
 	}
-	defer cleanContainer(t, cli, qm1aId, false)
-	defer cleanContainer(t, cli, qm1bId, false)
+	cleanupAfterTest(t, cli, qm1aId, false)
+	cleanupAfterTest(t, cli, qm1bId, false)
 
 	waitForReady(t, cli, qm1aId)
 	waitForReady(t, cli, qm1bId)
