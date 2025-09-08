@@ -19,6 +19,10 @@ sudo: required
 services:
   - docker
 
+branches:
+  except:
+  - v9.4.0
+
 env:
   global:
     - MAIN_BRANCH=v9.4.0
