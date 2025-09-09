@@ -18,7 +18,6 @@ limitations under the License.
 package fips
 
 import (
-	"fmt"
 	"os"
 	"testing"
 )
@@ -35,7 +34,7 @@ func TestEnableFIPSAuto(t *testing.T) {
 func TestEnableFIPSTrue(t *testing.T) {
 	// Test MQ_ENABLE_FIPS=true
 	os.Setenv("MQ_ENABLE_FIPS", "true")
-	fmt.Println(os.Getenv("MQ_ENABLE_FIPS"))
+	t.Log(os.Getenv("MQ_ENABLE_FIPS"))
 	ProcessFIPSType(nil)
 	fipsType := IsFIPSEnabled()
 	if !fipsType {

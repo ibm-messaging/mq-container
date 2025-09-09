@@ -24,8 +24,9 @@ import (
 	"os"
 	"os/user"
 	"strconv"
-	"sync"
 	"time"
+
+	"github.com/ibm-messaging/mq-container/pkg/syncwriter"
 )
 
 // timestampFormat matches the format used by MQ messages (includes milliseconds)
@@ -36,8 +37,7 @@ const errorLevel string = "ERROR"
 
 // A Logger is used to log messages to stdout
 type Logger struct {
-	mutex       sync.Mutex
-	writer      io.Writer
+	writer      *syncwriter.SyncWriter
 	debug       bool
 	json        bool
 	processName string
@@ -62,8 +62,7 @@ func NewLogger(writer io.Writer, debug bool, json bool, serverName string) (*Log
 		userName = user.Username
 	}
 	return &Logger{
-		mutex:       sync.Mutex{},
-		writer:      writer,
+		writer:      syncwriter.For(writer),
 		debug:       debug,
 		json:        json,
 		processName: os.Args[0],
@@ -101,17 +100,14 @@ func (l *Logger) log(level string, msg string) {
 		"type":            "mq_containerlog",
 	}
 	s, err := l.format(entry)
-	l.mutex.Lock()
 	if err != nil {
-		// TODO: Fix this
-		fmt.Println(err)
+		syncwriter.For(os.Stderr).Println(err)
 	}
 	if l.json {
-		fmt.Fprintln(l.writer, s)
+		l.writer.Println(s)
 	} else {
-		fmt.Fprint(l.writer, s)
+		l.writer.Print(s)
 	}
-	l.mutex.Unlock()
 }
 
 // Debug logs a line as debug

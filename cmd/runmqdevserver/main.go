@@ -65,17 +65,17 @@ func configureLogger() error {
 	}
 	switch f {
 	case "json":
-		log, err = logger.NewLogger(os.Stderr, d, true, n)
+		log, err = logger.NewLogger(os.Stdout, d, true, n)
 		if err != nil {
 			return err
 		}
 	case "basic":
-		log, err = logger.NewLogger(os.Stderr, d, false, n)
+		log, err = logger.NewLogger(os.Stdout, d, false, n)
 		if err != nil {
 			return err
 		}
 	default:
-		log, err = logger.NewLogger(os.Stdout, d, false, n)
+		log, err = logger.NewLogger(os.Stderr, d, false, n)
 		return fmt.Errorf("invalid value for LOG_FORMAT: %v", f)
 	}
 	return nil
