@@ -32,7 +32,7 @@ func TestJSONLogger(t *testing.T) {
 	s := "Hello world"
 	l.Print(s)
 	var e map[string]interface{}
-	err = json.Unmarshal([]byte(buf.String()), &e)
+	err = json.Unmarshal(buf.Bytes(), &e)
 	if err != nil {
 		t.Error(err)
 	}
