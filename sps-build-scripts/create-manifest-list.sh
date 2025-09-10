@@ -74,4 +74,13 @@ $COMMAND login $REGISTRY -u $USER -p $CREDENTIAL
 $COMMAND manifest create $REGISTRY/$NAMESPACE/$IMAGE:$TAG $MANIFESTS > /dev/null
 MANIFEST_DIGEST=$($COMMAND manifest push $PUSH_OPTIONS $REGISTRY/$NAMESPACE/$IMAGE:$TAG)
 
-echo ${MANIFEST_DIGEST}
+if [ "$COMMAND" = "podman" ]; then
+    echo "Inspecting image with skopeo: docker://$REGISTRY/$NAMESPACE/$IMAGE:$TAG"
+    MANIFEST_DIGEST=$(skopeo inspect docker://$REGISTRY/$NAMESPACE/$IMAGE:$TAG | jq -r '.Digest')
+fi
+
+if [ -z "$MANIFEST_DIGEST" ]; then
+  echo "Warning: At create-manifest, Failed to retrieve manifest digest"
+else
+  echo "MANIFEST_DIGEST: $MANIFEST_DIGEST"
+fi
