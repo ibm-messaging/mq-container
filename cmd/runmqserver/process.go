@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018
+© Copyright IBM Corporation 2018, 2025
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,10 +42,14 @@ func verifySingleProcess() error {
 
 // Verifies that there is only one instance running of the given program name.
 func verifyOnlyOne(programName string) (int, error) {
-	// #nosec G104
-	out, _, _ := command.Run("ps", "-e", "--format", "cmd")
-	//if this goes wrong then assume we are the only one
-	numOfProg := strings.Count(out, programName)
+	out, _, err := command.Run("pgrep", programName)
+	if err != nil {
+		log.Debugf("Failed to confirm single process: %v", err)
+		// Don't fail the container in this case, which can occur when
+		// using a CPU emulator
+		return 1, nil
+	}
+	numOfProg := strings.Count(out, "\n")
 	if numOfProg != 1 {
 		return numOfProg, fmt.Errorf("Expected there to be only 1 instance of %s but found %d", programName, numOfProg)
 	}
