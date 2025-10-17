@@ -33,27 +33,25 @@ END="\033[0m"
 
 ERROR=${RED}
 
-TICK="\xE2\x9C\x94"
 CROSS="\xE2\x9C\x97"
 REDCROSS=${RED}${CROSS}${END}
 
 
-SPACER="\n\n"
-
 while getopts r:n:i:t:d:h:u:p: flag; do
     case "${flag}" in
-        r) REGISTRY=${OPTARG} ;;
-        n) NAMESPACE=${OPTARG} ;;
-        i) IMAGE=${OPTARG} ;;
-        t) TAG=${OPTARG} ;;
-        d) DIGESTS=${OPTARG} ;;
-        u) USER=${OPTARG} ;;
-        p) CREDENTIAL=${OPTARG} ;;
+        r) REGISTRY="${OPTARG}" ;;
+        n) NAMESPACE="${OPTARG}" ;;
+        i) IMAGE="${OPTARG}" ;;
+        t) TAG="${OPTARG}" ;;
+        d) DIGESTS="${OPTARG}" ;;
+        u) USER="${OPTARG}" ;;
+        p) CREDENTIAL="${OPTARG}" ;;
         *) 
             echo "Unknown option: -${flag}" >&2
             ;;
     esac
 done
+
 
 if [[ -z $REGISTRY || -z $NAMESPACE || -z $IMAGE || -z $TAG || -z $DIGESTS ]] ; then 
   printf "${REDCROSS} ${ERROR}Missing parameter!${END}\n"
@@ -62,7 +60,7 @@ if [[ -z $REGISTRY || -z $NAMESPACE || -z $IMAGE || -z $TAG || -z $DIGESTS ]] ; 
 fi
 
 echo "At create-manifest, COMMAND: ${COMMAND}"
-if [ "$COMMAND" == "docker" ]; then
+if [[ "$COMMAND" == "docker" ]]; then
   # Docker CLI manifest commands require experimental features to be turned on
   export DOCKER_CLI_EXPERIMENTAL=enabled
 fi
@@ -74,14 +72,14 @@ done
 
 $COMMAND login $REGISTRY -u $USER -p $CREDENTIAL
 $COMMAND manifest create $REGISTRY/$NAMESPACE/$IMAGE:$TAG $MANIFESTS > /dev/null
-MANIFEST_DIGEST=$($COMMAND manifest push $PUSH_OPTIONS $REGISTRY/$NAMESPACE/$IMAGE:$TAG)
+MANIFEST_DIGEST=$($COMMAND manifest push $PUSH_OPTIONS $COMPRESSION_FLAGS $REGISTRY/$NAMESPACE/$IMAGE:$TAG)
 
-if [ "$COMMAND" = "podman" ]; then
+if [[ "$COMMAND" = "podman" ]]; then
     echo "Inspecting image with skopeo: docker://$REGISTRY/$NAMESPACE/$IMAGE:$TAG"
     MANIFEST_DIGEST=$(skopeo inspect docker://$REGISTRY/$NAMESPACE/$IMAGE:$TAG | jq -r '.Digest')
 fi
 
-if [ -z "$MANIFEST_DIGEST" ]; then
+if [[ -z "$MANIFEST_DIGEST" ]]; then
   echo "Warning: At create-manifest, Failed to retrieve manifest digest"
 else
   echo "MANIFEST_DIGEST: $MANIFEST_DIGEST"
