@@ -53,7 +53,7 @@ do
     esac
 done
 
-if [[ -z $REGISTRY || -z $NAMESPACE || -z $IMAGE || -z $TAG || -z $DIGESTS ]] ; then 
+if [[ -z $REGISTRY || -z $NAMESPACE || -z $IMAGE || -z $TAG || -z $DIGESTS ]] ; then
   printf "${REDCROSS} ${ERROR}Missing parameter!${END}\n"
   printf "${ERROR}$usage${END}\n"
   exit 1
@@ -72,7 +72,7 @@ done
 
 $COMMAND login $REGISTRY -u $USER -p $CREDENTIAL
 $COMMAND manifest create $REGISTRY/$NAMESPACE/$IMAGE:$TAG $MANIFESTS > /dev/null
-MANIFEST_DIGEST=$($COMMAND manifest push $PUSH_OPTIONS $REGISTRY/$NAMESPACE/$IMAGE:$TAG)
+MANIFEST_DIGEST=$($COMMAND manifest push $PUSH_OPTIONS $COMPRESSION_FLAGS $REGISTRY/$NAMESPACE/$IMAGE:$TAG)
 
 if [ "$COMMAND" = "podman" ]; then
     echo "Inspecting image with skopeo: docker://$REGISTRY/$NAMESPACE/$IMAGE:$TAG"
