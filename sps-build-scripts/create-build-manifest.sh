@@ -16,14 +16,6 @@
 
 set -e
 
-BINPATH="/usr/local/bin/"
-CV_YQ_VERSION=3.3.2
-echo "Installing yq..."
-curl -LO "https://github.com/mikefarah/yq/releases/download/$CV_YQ_VERSION/yq_linux_amd64"
-chmod +x yq_linux_amd64
-sudo mv yq_linux_amd64 ${BINPATH}/yq
-
-
 MQ_VERSION_TAG=
 
 MQ_IMAGE_DEVSERVER_AMD64_DIGEST=
