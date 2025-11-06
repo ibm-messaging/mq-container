@@ -83,7 +83,7 @@ ENV genmqpkg_inc32=0 \
   genmqpkg_incsamp=1 \
   genmqpkg_incsdk=0 \
   genmqpkg_inctls=1 \
-  genmqpkg_incunthrd=0 \
+  genmqpkg_incnothrd=0 \
   genmqpkg_incweb=1
 ADD $MQ_ARCHIVE /opt/mqm-noinstall
 # Run genmqpkg to reduce the MQ packages included
