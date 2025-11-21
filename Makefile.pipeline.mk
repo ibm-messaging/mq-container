@@ -19,6 +19,7 @@ ifneq (,$(PIPELINE_RUN_ID))
 	BUILD_SCRIPTS_PATH=sps-build-scripts
 	COMMAND=podman
 	IMAGE_FORMAT=--format docker
+	NETWORK := --network=host
 	ifeq "$(ARCH)" "ppc64le"
 	    NUM_CPU=2
 	endif
