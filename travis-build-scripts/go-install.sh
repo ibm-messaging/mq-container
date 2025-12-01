@@ -19,7 +19,7 @@
 
 set -ex
 
-GO_VERSION="1.24.6"
+GO_VERSION="1.25.3"
 sudo rm -rf /usr/local/go
 DOWNLOAD_URL="https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz"
 curl -fLo go.tar.gz "${DOWNLOAD_URL}"
