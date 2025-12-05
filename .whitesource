@@ -8,7 +8,7 @@
     "baseBranches": [
       "private-master",
       "v9.4.0",
-      "v9.4.3"
+      "v9.4.4"
     ]
   },
   "issueSettings": {
