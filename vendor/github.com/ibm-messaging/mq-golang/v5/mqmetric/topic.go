@@ -1,12 +1,7 @@
-/*
-Package mqmetric contains a set of routines common to several
-commands used to export MQ metrics to different backend
-storage mechanisms including Prometheus and InfluxDB.
-*/
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2022
+  Copyright (c) IBM Corporation 2016, 2025
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -89,9 +84,9 @@ func TopicInitAttributes() {
 	st.Attributes[attr] = newStatusAttribute(attr, "Number of subscribers", ibmmq.MQIA_SUB_COUNT)
 
 	attr = ATTR_TOPIC_SINCE_PUB_MSG
-	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Msg", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Msg", DUMMY_PCFATTR)
 	attr = ATTR_TOPIC_SINCE_SUB_MSG
-	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Msg", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Msg", DUMMY_PCFATTR)
 
 	os.init = true
 	traceExit("TopicInitAttributes", 0)

@@ -254,7 +254,9 @@ and the basic associated metric name.
 As an example, one of the metrics available in Prometheus might be "ibmmq_channel_bytes_sent" with
 the full name created by combining the product name, the class, and the individual metric.
 
-Access to these metrics requires the "useObjectStatus" (or "-ibmmq.useStatus" as command line flag) configuration
+For queues and queue managers, these metrics are always available.
+
+Access to other metrics in this set requires the "useObjectStatus" (or "-ibmmq.useStatus" as command line flag) configuration
 attribute to be set for the collector.
 
 Class: amqp
@@ -281,12 +283,24 @@ Class: channel
   ATTR_CHL_NETTIME_LONG           : nettime_long
   ATTR_CHL_NETTIME_SHORT          : nettime_short
   ATTR_CHL_RQMNAME                : rqmname
+  ATTR_CHL_SECPROT                : security_protocol
   ATTR_CHL_SINCE_MSG              : time_since_msg
+  ATTR_CHL_SSLCIPH                : sslciph
+  ATTR_CHL_START                  : start_epoch
   ATTR_CHL_STATUS                 : status
   ATTR_CHL_SUBSTATE               : substate
   ATTR_CHL_TYPE                   : type
   ATTR_CHL_XQTIME_LONG            : xmitq_time_long
   ATTR_CHL_XQTIME_SHORT           : xmitq_time_short
+
+Class: channelmqtt
+  ATTR_CHL_MQTT_CLIENT_ID         : clientid
+  ATTR_CHL_MQTT_INDOUBT_INPUT     : indoubt_input
+  ATTR_CHL_MQTT_INDOUBT_OUTPUT    : indoubt_output
+  ATTR_CHL_MQTT_MESSAGES_RECEIVED : messages_rcvd
+  ATTR_CHL_MQTT_MESSAGES_SENT     : messages_sent
+  ATTR_CHL_MQTT_PENDING_OUT       : pending_outbound
+  ATTR_CHL_MQTT_PROTOCOL          : protocol
 
 Class: cluster
   ATTR_CLUSTER_QMTYPE             : qmtype
@@ -295,6 +309,7 @@ Class: cluster
 
 Class: qmgr
   ATTR_QMGR_ACTIVE_LISTENERS      : active_listeners
+  ATTR_QMGR_ACTIVE_SERVICES       : active_services
   ATTR_QMGR_CHINIT_STATUS         : channel_initiator_status
   ATTR_QMGR_CMD_SERVER_STATUS     : command_server_status
   ATTR_QMGR_CONNECTION_COUNT      : connection_count
@@ -306,6 +321,7 @@ Class: qmgr
   ATTR_QMGR_LOG_RESTART_EXTENT    : log_extent_restart
   ATTR_QMGR_LOG_RESTART_SIZE      : log_size_restart
   ATTR_QMGR_LOG_REUSABLE_SIZE     : log_size_reusable
+  ATTR_QMGR_LOG_START             : log_start_epoch
   ATTR_QMGR_MAX_ACTIVE_CHANNELS   : max_active_channels
   ATTR_QMGR_MAX_CHANNELS          : max_channels
   ATTR_QMGR_MAX_TCP_CHANNELS      : max_tcp_channels
@@ -360,4 +376,144 @@ Class: bufferpool/pageset
   ATTR_PS_TOTAL                   : pages_total
   ATTR_PS_UNUSED                  : pages_unused
 
-This page was automatically generated from the source tree on 2025-02-22 07:16:25
+Statistics Events
+-----------------
+
+Queue Manager and Queue Metrics can be extracted from Statistics Events, as an alternative
+to many of the published resource metrics. These are not a precise duplicate, and the metric
+names are not necessarily the same as derived from the publications. So you should design
+dashboards based on the mechanism used to collect the metrics. Most of these names will actually
+show up with a "_count" suffix which is not included here for clarity.
+
+These are available on all Distributed platforms (not z/OS) by setting the STATQ and STATMQI options
+on the queue manager and queues. The STATCHL option is not used as very similar numbers come from
+the existing channel status attributes. See the README for additional information on this approach.
+
+Class: queue
+  average_queue_time_seconds                       destructive_mqget_message                       
+  destructive_mqget_message_bytes                  destructive_mqget_non_persistent_message        
+  destructive_mqget_non_persistent_message_bytes   destructive_mqget_persistent_message            
+  destructive_mqget_persistent_message_bytes       expired_message                                 
+  failed_destructive_mqget                         failed_mqget_browse                             
+  failed_mqput                                     failed_mqput1                                   
+  max_depth                                        min_depth                                       
+  mqget_browse_bytes                               mqget_browse_message                            
+  mqget_browse_non_persistent_bytes                mqget_browse_non_persistent_message             
+  mqget_browse_persistent_bytes                    mqget_browse_persistent_message                 
+  mqput1_message                                   mqput1_non_persistent_message                   
+  mqput1_persistent_message                        mqput_message                                   
+  mqput_non_persistent_message                     mqput_persistent_message                        
+  purged_message                                   put_message_bytes                               
+  put_non_persistent_message_bytes                 put_persistent_message_bytes                    
+  queue_avoided_put                                                                                
+
+Class: qmgr
+  concurrent_connections_high_water_mark           destructive_mqget_message                       
+  destructive_mqget_message_bytes                  destructive_mqget_non_persistent_message        
+  destructive_mqget_non_persistent_message_bytes   destructive_mqget_persistent_message            
+  destructive_mqget_persistent_message_bytes       expired_message                                 
+  failed_destructive_mqget                         failed_mqcb                                     
+  failed_mqclose                                   failed_mqclose_authinfo                         
+  failed_mqclose_cfstruc                           failed_mqclose_channel                          
+  failed_mqclose_comminfo                          failed_mqclose_listener                         
+  failed_mqclose_namelist                          failed_mqclose_process                          
+  failed_mqclose_qmgr                              failed_mqclose_queue                            
+  failed_mqclose_service                           failed_mqclose_stgclass                         
+  failed_mqclose_topic                             failed_mqclose_unknown                          
+  failed_mqcmit                                    failed_mqconn_mqconnx                           
+  failed_mqctl                                     failed_mqget_browse                             
+  failed_mqinq                                     failed_mqinq_authinfo                           
+  failed_mqinq_cfstruc                             failed_mqinq_channel                            
+  failed_mqinq_comminfo                            failed_mqinq_listener                           
+  failed_mqinq_namelist                            failed_mqinq_process                            
+  failed_mqinq_qmgr                                failed_mqinq_queue                              
+  failed_mqinq_service                             failed_mqinq_stgclass                           
+  failed_mqinq_topic                               failed_mqinq_unknown                            
+  failed_mqopen                                    failed_mqopen_authinfo                          
+  failed_mqopen_cfstruc                            failed_mqopen_channel                           
+  failed_mqopen_comminfo                           failed_mqopen_listener                          
+  failed_mqopen_namelist                           failed_mqopen_process                           
+  failed_mqopen_qmgr                               failed_mqopen_queue                             
+  failed_mqopen_service                            failed_mqopen_stgclass                          
+  failed_mqopen_topic                              failed_mqopen_unknown                           
+  failed_mqput                                     failed_mqput1                                   
+  failed_mqput1_topic                              failed_mqput_topic                              
+  failed_mqset                                     failed_mqset_authinfo                           
+  failed_mqset_cfstruc                             failed_mqset_channel                            
+  failed_mqset_comminfo                            failed_mqset_listener                           
+  failed_mqset_namelist                            failed_mqset_process                            
+  failed_mqset_qmgr                                failed_mqset_queue                              
+  failed_mqset_service                             failed_mqset_stgclass                           
+  failed_mqset_topic                               failed_mqset_unknown                            
+  failed_mqstat                                    failed_mqsub                                    
+  failed_mqsubrq                                   failed_unsubscribe                              
+  mqback                                           mqcb                                            
+  mqcb_deregister                                  mqcb_register                                   
+  mqcb_resume                                      mqcb_suspend                                    
+  mqclose                                          mqclose_authinfo                                
+  mqclose_cfstruc                                  mqclose_channel                                 
+  mqclose_comminfo                                 mqclose_listener                                
+  mqclose_namelist                                 mqclose_process                                 
+  mqclose_qmgr                                     mqclose_queue                                   
+  mqclose_service                                  mqclose_stgclass                                
+  mqclose_topic                                    mqclose_unknown                                 
+  mqcmit                                           mqconn_mqconnx                                  
+  mqctl                                            mqctl_resume                                    
+  mqctl_start                                      mqctl_stop                                      
+  mqctl_suspect                                    mqdisc                                          
+  mqdisc_implicit                                  mqdisc_normal                                   
+  mqdisc_qmgr                                      mqget_browse_bytes                              
+  mqget_browse_message                             mqget_browse_non_persistent_bytes               
+  mqget_browse_non_persistent_message              mqget_browse_persistent_bytes                   
+  mqget_browse_persistent_message                  mqinq                                           
+  mqinq_authinfo                                   mqinq_cfstruc                                   
+  mqinq_channel                                    mqinq_comminfo                                  
+  mqinq_listener                                   mqinq_namelist                                  
+  mqinq_process                                    mqinq_qmgr                                      
+  mqinq_queue                                      mqinq_service                                   
+  mqinq_stgclass                                   mqinq_topic                                     
+  mqinq_unknown                                    mqopen                                          
+  mqopen_authinfo                                  mqopen_cfstruc                                  
+  mqopen_channel                                   mqopen_comminfo                                 
+  mqopen_listener                                  mqopen_namelist                                 
+  mqopen_process                                   mqopen_qmgr                                     
+  mqopen_queue                                     mqopen_service                                  
+  mqopen_stgclass                                  mqopen_topic                                    
+  mqopen_unknown                                   mqput1_message                                  
+  mqput1_non_persistent_message                    mqput1_persistent_message                       
+  mqput1_topic_messages                            mqput1_topic_non_persistent_messages            
+  mqput1_topic_persistent_messages                 mqput_message                                   
+  mqput_non_persistent_message                     mqput_persistent_message                        
+  mqput_topic_messages                             mqput_topic_non_persistent_messages             
+  mqput_topic_persistent_messages                  mqset                                           
+  mqset_authinfo                                   mqset_cfstruc                                   
+  mqset_channel                                    mqset_comminfo                                  
+  mqset_listener                                   mqset_namelist                                  
+  mqset_process                                    mqset_qmgr                                      
+  mqset_queue                                      mqset_service                                   
+  mqset_stgclass                                   mqset_topic                                     
+  mqset_unknown                                    mqstat                                          
+  mqsub_durable                                    mqsub_durable_alter                             
+  mqsub_durable_create                             mqsub_durable_highwater_admin                   
+  mqsub_durable_highwater_all                      mqsub_durable_highwater_api                     
+  mqsub_durable_highwater_proxy                    mqsub_durable_lowwater_admin                    
+  mqsub_durable_lowwater_all                       mqsub_durable_lowwater_api                      
+  mqsub_durable_lowwater_proxy                     mqsub_durable_resume                            
+  mqsub_non_durable                                mqsub_non_durable_alter                         
+  mqsub_non_durable_create                         mqsub_non_durable_highwater_admin               
+  mqsub_non_durable_highwater_all                  mqsub_non_durable_highwater_api                 
+  mqsub_non_durable_highwater_proxy                mqsub_non_durable_lowwater_admin                
+  mqsub_non_durable_lowwater_all                   mqsub_non_durable_lowwater_api                  
+  mqsub_non_durable_lowwater_proxy                 mqsub_non_durable_resume                        
+  mqsubrq                                          publish_message_bytes                           
+  publish_messages                                 publish_non_persistent_message_bytes            
+  publish_non_persistent_messages                  publish_persistent_message_bytes                
+  publish_persistent_messages                      purged_messages                                 
+  put_message_bytes                                put_non_persistent_message_bytes                
+  put_persistent_message_bytes                     put_topic_message_bytes                         
+  put_topic_non_persistent_message_bytes           put_topic_persistent_message_bytes              
+  unsubscribe_durable                              unsubscribe_durable_keep                        
+  unsubscribe_durable_remove                       unsubscribe_non_durable                         
+  unsubscribe_non_durable_keep                     unsubscribe_non_durable_remove                  
+
+This page was automatically generated from the source tree on 2025-12-04 12:20:00

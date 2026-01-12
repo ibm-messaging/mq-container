@@ -1,12 +1,7 @@
-/*
-Package mqmetric contains a set of routines common to several
-commands used to export MQ metrics to different backend
-storage mechanisms including Prometheus and InfluxDB.
-*/
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2023
+  Copyright (c) IBM Corporation 2016, 2025
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -33,7 +28,11 @@ import (
 )
 
 // var statusDummy = fmt.Sprintf("dummy")
-var timeTravelWarningIssued = false
+var (
+	timeTravelWarningIssued  = false
+	persistenceWarningIssued = false
+	clearQBuf                = make([]byte, 32768)
+)
 
 /*
 This file defines types and constructors for elements related to status
@@ -80,7 +79,7 @@ func newStatusAttribute(n string, d string, p int32) *StatusAttribute {
 }
 
 func newPseudoStatusAttribute(n string, d string) *StatusAttribute {
-	s := newStatusAttribute(n, d, -1)
+	s := newStatusAttribute(n, d, DUMMY_PCFATTR)
 	s.Pseudo = true
 	return s
 }
@@ -133,7 +132,7 @@ func statusTimeDiff(now time.Time, d string, t string) int64 {
 				if diff < -(60 * 5) { // Cannot have status from the future but allow a tiny amount of flex
 					if !timeTravelWarningIssued {
 						logError("Status reports appear to be from the future. Difference is approximately %d seconds. Check the TZ Offset value in the program configuration.", int64(-diff))
-						logDebug("statusTimeDiff d:%s t:%s diff:%f tzoffset: %f err:%v\n", d, t, diff, ci.tzOffsetSecs, err)
+						logDebug("statusTimeDiff d:%s t:%s diff:%f tzoffset: %f err:%v", d, t, diff, ci.tzOffsetSecs, err)
 						timeTravelWarningIssued = true
 					}
 				}
@@ -147,23 +146,143 @@ func statusTimeDiff(now time.Time, d string, t string) int64 {
 	return rc
 }
 
-func clearQ(hObj ibmmq.MQObject) {
-	buf := make([]byte, 0)
-	// Empty replyQ in case any left over from previous errors
-	for ok := true; ok; {
-		getmqmd := ibmmq.NewMQMD()
+func statusTimeEpoch(d string, t string) int64 {
+
+	traceEntry("statusTimeEpoch")
+	ci := getConnection(GetConnectionKey())
+
+	// If there's any error in parsing the timestamp - perhaps
+	// the value has not been set yet - then just return 0
+	epoch := int64(0)
+
+	timeStampLayout := timeStampLayoutDot
+	if len(d) == 10 && len(t) == 8 {
+		if strings.Contains(t, ":") {
+			timeStampLayout = timeStampLayoutColon
+		}
+		parsedT, err := time.ParseInLocation(timeStampLayout, d+" "+t, time.Local)
+		if err == nil {
+			epoch = parsedT.UnixNano() / (1000 * 1000) // convert to milliseconds
+			// The collector may not be running in the same timezone as the qmgr, so we adjust it a bit more
+			epoch -= int64(ci.tzOffsetSecs * 1000)
+		}
+	}
+	// logInfo("statusTimeEpoch d:%s t:%s tzoffset:%f err:%v t.Local:%+v\n", d, t, ci.tzOffsetSecs, err, time.Local)
+	traceExit("statusTimeEpoch", 0)
+	return epoch
+}
+
+func getMsgWithoutTruncation(hObj ibmmq.MQObject) (*ibmmq.MQMD, int, error) {
+	var err error
+	var md *ibmmq.MQMD
+
+	traceEntry("getMsgWithoutTruncation")
+
+	msgLen := 0
+	for trunc := true; trunc; {
+		// Now get the response. Reset the MD and GMO on each iteration to ensure we don't get mixed up
+		// with anything that gets modified (like the CCSID) even on failed/truncated GETs.
+		md = ibmmq.NewMQMD()
 		gmo := ibmmq.NewMQGMO()
 		gmo.Options = ibmmq.MQGMO_NO_SYNCPOINT
 		gmo.Options |= ibmmq.MQGMO_FAIL_IF_QUIESCING
 		gmo.Options |= ibmmq.MQGMO_NO_WAIT
 		gmo.Options |= ibmmq.MQGMO_CONVERT
-		gmo.Options |= ibmmq.MQGMO_ACCEPT_TRUNCATED_MSG
-		_, err := hObj.Get(getmqmd, gmo, buf)
+
+		// logTrace("clearQWithoutTruncation: Trying MQGET with clearQBuffer size %d ", len(clearQBuf))
+		msgLen, err = hObj.Get(md, gmo, clearQBuf)
+		if err != nil {
+			mqreturn := err.(*ibmmq.MQReturn)
+			if mqreturn.MQCC != ibmmq.MQCC_OK && mqreturn.MQRC == ibmmq.MQRC_TRUNCATED_MSG_FAILED && len(clearQBuf) < maxBufSize {
+				// Double the size, apart from capping it at 100MB
+				clearQBuf = append(clearQBuf, make([]byte, len(clearQBuf))...)
+				if len(clearQBuf) > maxBufSize {
+					clearQBuf = clearQBuf[0:maxBufSize]
+				}
+			} else {
+				if mqreturn.MQRC != ibmmq.MQRC_NO_MSG_AVAILABLE {
+					traceExitF("getMsgWithoutTruncation", 1, "BufSize %d Error %v", len(clearQBuf), err)
+					return md, msgLen, err
+				} else {
+					// Quit cleanly
+					trunc = false
+					// err = nil
+				}
+			}
+		} else {
+			trunc = false
+		}
+	}
+
+	traceExit("getMsgWithoutTruncation", 0)
+	return md, msgLen, err
+}
+
+func clearQ(hObj ibmmq.MQObject, usingReadAhead bool) {
+	var err error
+	var getmqmd *ibmmq.MQMD
+	// msgLen := 0
+	p := 0
+	buf := make([]byte, 0)
+
+	traceEntryF("clearQ", "QueueName=%s readAhead=%v", hObj.Name, usingReadAhead)
+
+	// Empty reply and publication destination queues in case any left over from previous runs.
+	// Do it in batches if the messages are persistent. Which they shouldn't be, but you
+	// never know.
+	for ok := true; ok; {
+		if !usingReadAhead {
+			getmqmd = ibmmq.NewMQMD()
+			gmo := ibmmq.NewMQGMO()
+			gmo.Options = ibmmq.MQGMO_SYNCPOINT_IF_PERSISTENT
+			gmo.Options = ibmmq.MQGMO_NO_SYNCPOINT
+			gmo.Options |= ibmmq.MQGMO_FAIL_IF_QUIESCING
+			gmo.Options |= ibmmq.MQGMO_NO_WAIT
+			gmo.Options |= ibmmq.MQGMO_CONVERT
+			gmo.Options |= ibmmq.MQGMO_ACCEPT_TRUNCATED_MSG
+			_, err = hObj.Get(getmqmd, gmo, buf)
+
+		} else {
+			// logDebug("Reverting to clearMsgWithoutTruncation")
+			getmqmd, _, err = getMsgWithoutTruncation(hObj)
+		}
+
+		// logDebug("clearQ: got message with err %v p=%d", err, getmqmd.Persistence)
 
 		if err != nil && err.(*ibmmq.MQReturn).MQCC == ibmmq.MQCC_FAILED {
 			ok = false
+		} else if getmqmd.Persistence == ibmmq.MQPER_PERSISTENT {
+			p++
+			if (p % 50) == 0 {
+				err = hObj.GetHConn().Cmit()
+				if err != nil {
+					logError("Problem committing removal of persistent messages: %v", err)
+				} else {
+					logTrace("Successful MQCMIT")
+					p = 0
+				}
+			}
+
+			if !persistenceWarningIssued {
+				persistenceWarningIssued = true
+				logWarn("Response messages are unnecessarily persistent. Check the DEFPSIST value on the configured reply queues.")
+			}
+		}
+
+	}
+
+	// If we've not committed removal of a final batch of persistent messages, do it now.
+	if p > 0 {
+		err := hObj.GetHConn().Cmit()
+		if err != nil {
+			logError("Problem committing removal of persistent messages: %v", err)
+		} else {
+			logTrace("Successful MQCMIT")
+
 		}
 	}
+	traceExit("clearQ", 0)
+
 	return
 }
 
@@ -171,7 +290,7 @@ func statusClearReplyQ() {
 	traceEntry("statusClearReplyQ")
 	ci := getConnection(GetConnectionKey())
 
-	clearQ(ci.si.statusReplyQObj)
+	clearQ(ci.si.statusReplyQObj, ci.si.statusReplyQReadAhead)
 
 	traceExit("statusClearReplyQ", 0)
 	return
@@ -200,6 +319,8 @@ func statusSetCommandHeaders() (*ibmmq.MQMD, *ibmmq.MQPMO, *ibmmq.MQCFH, []byte)
 	putmqmd.ReplyToQ = ci.si.statusReplyQObj.Name
 	putmqmd.MsgType = ibmmq.MQMT_REQUEST
 	putmqmd.Report = ibmmq.MQRO_PASS_DISCARD_AND_EXPIRY
+
+	putmqmd.Expiry = int32(ci.waitInterval) * EXPIRY_MULTIPLIER
 
 	buf := make([]byte, 0)
 
@@ -263,7 +384,7 @@ func statusGetReply(correlId []byte) (*ibmmq.MQCFH, []byte, bool, error) {
 		// command tries to use this replyQ.
 		allDone = true
 		if err.(*ibmmq.MQReturn).MQRC != ibmmq.MQRC_NO_MSG_AVAILABLE {
-			logError("StatusGetReply error : %v\n", err)
+			logError("StatusGetReply error : %v", err)
 		}
 		traceExitErr("statusGetReply", 3, err)
 		return nil, nil, allDone, err

@@ -251,6 +251,21 @@ func (p *PCFParameter) Bytes() []byte {
 			offset += 4
 		}
 
+	case C.MQCFT_INTEGER_FILTER:
+		buf = make([]byte, C.MQCFIF_STRUC_LENGTH)
+		offset := 0
+
+		endian.PutUint32(buf[offset:], uint32(p.Type))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(len(buf)))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(p.Filter.Parameter))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(p.Filter.Operator))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(p.Filter.FilterValue.(int32)))
+		offset += 4
+
 	case C.MQCFT_STRING:
 		buf = make([]byte, C.MQCFST_STRUC_LENGTH_FIXED+roundTo4(int32(len(p.String[0]))))
 		offset := 0
@@ -265,8 +280,50 @@ func (p *PCFParameter) Bytes() []byte {
 		endian.PutUint32(buf[offset:], uint32(len(p.String[0])))
 		offset += 4
 		copy(buf[offset:], []byte(p.String[0]))
+
+	case C.MQCFT_STRING_FILTER:
+		// Use "\000" as the string if you need an empty/null parameter
+		fv := p.Filter.FilterValue.(string)
+
+		buf = make([]byte, C.MQCFSF_STRUC_LENGTH_FIXED+roundTo4(int32(len(fv))))
+		offset := 0
+		endian.PutUint32(buf[offset:], uint32(p.Type))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(len(buf)))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(p.Filter.Parameter))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(p.Filter.Operator))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(C.MQCCSI_DEFAULT))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(len(fv)))
+		offset += 4
+		copy(buf[offset:], []byte(fv))
+
+	// Expect to be given a string that can be decoded into bytes. For example, "aabb12".
+	// Return nil if the bytestring cannot be converted from the hex
+	case C.MQCFT_BYTE_STRING:
+		bs, err := hex.DecodeString(p.String[0])
+		if err != nil {
+			// Can't easily change to return or report the error without breaking existing apps.
+			logError("Trying to serialise PCF ByteString parameter \"%s\" : %v\n", p.String[0], err)
+			return nil
+		}
+		buf = make([]byte, C.MQCFST_STRUC_LENGTH_FIXED+roundTo4(int32(len(bs))))
+		offset := 0
+		endian.PutUint32(buf[offset:], uint32(p.Type))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(len(buf)))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(p.Parameter))
+		offset += 4
+		endian.PutUint32(buf[offset:], uint32(len(bs)))
+		offset += 4
+		copy(buf[offset:], bs)
+
 	default:
-		fmt.Printf("mqiPCF.go: Trying to serialise PCF parameter. Unknown PCF type %d\n", p.Type)
+		logError("mqiPCF.go: Trying to serialise PCF parameter. Unknown PCF type %d\n", p.Type)
 	}
 	return buf
 }

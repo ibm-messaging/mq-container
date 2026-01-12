@@ -30,8 +30,8 @@ package ibmmq
 ****************************************************************
 *
 *   <BEGIN_BUILDINFO>
-*   Generated on:  2/14/25 9:37 AM
-*   Build Level:   p942-L250214
+*   Generated on:  10/3/25, 11:37 AM
+*   Build Level:   p944-L251003
 *   Build Type:    Production
 *   <END_BUILDINFO>
  */
@@ -138,6 +138,9 @@ const (
 	MQAT_WLM                       int32  = 31
 	MQAT_XCF                       int32  = 20
 	MQAT_ZOS                       int32  = 2
+	MQAUSC_ALLCHECKS               int32  = 2
+	MQAUSC_ALLCONNS                int32  = 1
+	MQAUSC_FAILURES                int32  = 0
 	MQAUTHENTICATE_OS              int32  = 0
 	MQAUTHENTICATE_PAM             int32  = 1
 	MQAUTHOPT_CUMULATIVE           int32  = 256
@@ -326,6 +329,7 @@ const (
 	MQCACF_EVENT_APPL_IDENTITY     int32  = 3049
 	MQCACF_EVENT_APPL_NAME         int32  = 3050
 	MQCACF_EVENT_APPL_ORIGIN       int32  = 3051
+	MQCACF_EVENT_DUPLICATE_FROM    int32  = 3232
 	MQCACF_EVENT_Q_MGR             int32  = 3047
 	MQCACF_EVENT_USER_ID           int32  = 3045
 	MQCACF_EXCL_OPERATOR_MESSAGES  int32  = 3205
@@ -355,7 +359,7 @@ const (
 	MQCACF_LAST_PUB_TIME           int32  = 3162
 	MQCACF_LAST_PUT_DATE           int32  = 3128
 	MQCACF_LAST_PUT_TIME           int32  = 3129
-	MQCACF_LAST_USED               int32  = 3231
+	MQCACF_LAST_USED               int32  = 3232
 	MQCACF_LOCAL_Q_NAMES           int32  = 3015
 	MQCACF_LOG_PATH                int32  = 3074
 	MQCACF_LOG_START_DATE          int32  = 3214
@@ -1043,7 +1047,7 @@ const (
 	MQCMDI_SEC_SIGNOFF_ERROR       int32  = 17
 	MQCMDI_SEC_TIMER_ZERO          int32  = 14
 	MQCMDI_SEC_UPPERCASE           int32  = 21
-	MQCMDL_CURRENT_LEVEL           int32  = 942
+	MQCMDL_CURRENT_LEVEL           int32  = 944
 	MQCMDL_LEVEL_1                 int32  = 100
 	MQCMDL_LEVEL_101               int32  = 101
 	MQCMDL_LEVEL_110               int32  = 110
@@ -1099,6 +1103,8 @@ const (
 	MQCMDL_LEVEL_940               int32  = 940
 	MQCMDL_LEVEL_941               int32  = 941
 	MQCMDL_LEVEL_942               int32  = 942
+	MQCMDL_LEVEL_943               int32  = 943
+	MQCMDL_LEVEL_944               int32  = 944
 	MQCMD_ACCOUNTING_MQI           int32  = 167
 	MQCMD_ACCOUNTING_Q             int32  = 168
 	MQCMD_ACTIVITY_MSG             int32  = 69
@@ -1857,6 +1863,7 @@ const (
 	MQIACF_ERROR_OFFSET            int32  = 1018
 	MQIACF_ESCAPE_TYPE             int32  = 1017
 	MQIACF_EVENT_APPL_TYPE         int32  = 1010
+	MQIACF_EVENT_DUPLICATE_COUNT   int32  = 1478
 	MQIACF_EVENT_ORIGIN            int32  = 1011
 	MQIACF_EXCLUDE_INTERVAL        int32  = 1134
 	MQIACF_EXPIRY                  int32  = 1244
@@ -1881,7 +1888,7 @@ const (
 	MQIACF_INVALID_DEST_COUNT      int32  = 1371
 	MQIACF_ITEM_COUNT              int32  = 1378
 	MQIACF_KNOWN_DEST_COUNT        int32  = 1369
-	MQIACF_LAST_USED               int32  = 1477
+	MQIACF_LAST_USED               int32  = 1478
 	MQIACF_LDAP_CONNECTION_STATUS  int32  = 1409
 	MQIACF_LISTENER_ATTRS          int32  = 1222
 	MQIACF_LISTENER_STATUS_ATTRS   int32  = 1223
@@ -2482,6 +2489,7 @@ const (
 	MQIA_ARCHIVE                   int32  = 60
 	MQIA_AUTHENTICATION_FAIL_DELAY int32  = 259
 	MQIA_AUTHENTICATION_METHOD     int32  = 266
+	MQIA_AUTHOREV_SCOPE            int32  = 277
 	MQIA_AUTHORITY_EVENT           int32  = 47
 	MQIA_AUTH_INFO_TYPE            int32  = 66
 	MQIA_AUTO_REORGANIZATION       int32  = 173
@@ -2562,7 +2570,7 @@ const (
 	MQIA_IP_ADDRESS_VERSION        int32  = 93
 	MQIA_KEY_REUSE_COUNT           int32  = 267
 	MQIA_LAST                      int32  = 2000
-	MQIA_LAST_USED                 int32  = 276
+	MQIA_LAST_USED                 int32  = 279
 	MQIA_LDAP_AUTHORMD             int32  = 263
 	MQIA_LDAP_NESTGRP              int32  = 264
 	MQIA_LDAP_SECURE_COMM          int32  = 261
@@ -2608,6 +2616,8 @@ const (
 	MQIA_NPM_DELIVERY              int32  = 196
 	MQIA_OPEN_INPUT_COUNT          int32  = 17
 	MQIA_OPEN_OUTPUT_COUNT         int32  = 18
+	MQIA_OTEL_PROPAGATION_CONTROL  int32  = 279
+	MQIA_OTEL_TRACE                int32  = 278
 	MQIA_OUTBOUND_PORT_MAX         int32  = 140
 	MQIA_OUTBOUND_PORT_MIN         int32  = 110
 	MQIA_PAGESET_ID                int32  = 62
@@ -3056,6 +3066,15 @@ const (
 	MQOP_START_WAIT                int32  = 2
 	MQOP_STOP                      int32  = 4
 	MQOP_SUSPEND                   int32  = 65536
+	MQOTEL_PCTL_AS_PARENT          int32  = 3
+	MQOTEL_PCTL_AUTO               int32  = 2
+	MQOTEL_PCTL_MANUAL             int32  = 1
+	MQOTEL_PCTL_QMGR               int32  = 0
+	MQOTEL_TRACE_AS_PARENT         int32  = 4
+	MQOTEL_TRACE_NONE              int32  = 3
+	MQOTEL_TRACE_OFF               int32  = 1
+	MQOTEL_TRACE_ON                int32  = 2
+	MQOTEL_TRACE_QMGR              int32  = 0
 	MQOT_ALIAS_Q                   int32  = 1002
 	MQOT_ALL                       int32  = 1001
 	MQOT_AMQP_CHANNEL              int32  = 1021
@@ -3309,7 +3328,9 @@ const (
 	MQRCCF_ALREADY_JOINED          int32  = 3157
 	MQRCCF_APPL_STATUS_NOT_FOUND   int32  = 4097
 	MQRCCF_ATTR_VALUE_ERROR        int32  = 4005
+	MQRCCF_ATTR_VALUE_ERROR_QSG_QM int32  = 3390
 	MQRCCF_ATTR_VALUE_FIXED        int32  = 3213
+	MQRCCF_AUTHORIZED              int32  = 3391
 	MQRCCF_AUTH_VALUE_ERROR        int32  = 3171
 	MQRCCF_AUTH_VALUE_MISSING      int32  = 3172
 	MQRCCF_BACKLOG_OUT_OF_RANGE    int32  = 3356
@@ -4352,12 +4373,14 @@ const (
 	MQRQ_CLIENT_INST_LIMIT         int32  = 27
 	MQRQ_CLOSE_NOT_AUTHORIZED      int32  = 3
 	MQRQ_CMD_NOT_AUTHORIZED        int32  = 4
+	MQRQ_CONN_AUTHORIZED           int32  = 65
 	MQRQ_CONN_NOT_AUTHORIZED       int32  = 1
 	MQRQ_CSP_NOT_AUTHORIZED        int32  = 29
 	MQRQ_FAILOVER_NOT_PERMITTED    int32  = 31
 	MQRQ_FAILOVER_PERMITTED        int32  = 30
 	MQRQ_MAX_ACTIVE_CHANNELS       int32  = 24
 	MQRQ_MAX_CHANNELS              int32  = 25
+	MQRQ_OPEN_AUTHORIZED           int32  = 66
 	MQRQ_OPEN_NOT_AUTHORIZED       int32  = 2
 	MQRQ_Q_MGR_QUIESCING           int32  = 6
 	MQRQ_Q_MGR_STOPPING            int32  = 5
@@ -4368,6 +4391,8 @@ const (
 	MQRQ_SSL_PEER_NAME_ERROR       int32  = 16
 	MQRQ_SSL_UNKNOWN_REVOCATION    int32  = 19
 	MQRQ_STANDBY_ACTIVATED         int32  = 32
+	MQRQ_SUB_AUTHORIZED            int32  = 67
+	MQRQ_SUB_DEST_AUTHORIZED       int32  = 68
 	MQRQ_SUB_DEST_NOT_AUTHORIZED   int32  = 18
 	MQRQ_SUB_NOT_AUTHORIZED        int32  = 17
 	MQRQ_SVRCONN_INST_LIMIT        int32  = 26
@@ -4961,10 +4986,12 @@ const (
 	MQZFP_CURRENT_VERSION          int32  = 1
 	MQZFP_LENGTH_1                 int32  = 24
 	MQZFP_VERSION_1                int32  = 1
-	MQZIC_CURRENT_LENGTH           int32  = 84
-	MQZIC_CURRENT_VERSION          int32  = 1
+	MQZIC_CURRENT_LENGTH           int32  = 1108
+	MQZIC_CURRENT_VERSION          int32  = 2
 	MQZIC_LENGTH_1                 int32  = 84
+	MQZIC_LENGTH_2                 int32  = 1108
 	MQZIC_VERSION_1                int32  = 1
+	MQZIC_VERSION_2                int32  = 2
 	MQZID_AUTHENTICATE_USER        int32  = 10
 	MQZID_CHECK_AUTHORITY          int32  = 2
 	MQZID_CHECK_PRIVILEGED         int32  = 13
@@ -5060,6 +5087,7 @@ const (
 	MQ_DISTINGUISHED_NAME_LENGTH   int32  = 1024
 	MQ_DNS_GROUP_NAME_LENGTH       int32  = 18
 	MQ_DSG_NAME_LENGTH             int32  = 8
+	MQ_ENCRYPTION_KEY_LENGTH       int32  = 256
 	MQ_ENTITY_NAME_LENGTH          int32  = 1024
 	MQ_ENV_INFO_LENGTH             int32  = 96
 	MQ_EXIT_DATA_LENGTH            int32  = 32
@@ -5100,6 +5128,7 @@ const (
 	MQ_LOG_CORREL_ID_LENGTH        int32  = 8
 	MQ_LOG_EXTENT_NAME_LENGTH      int32  = 24
 	MQ_LOG_PATH_LENGTH             int32  = 1024
+	MQ_LONG_USER_ID_LENGTH         int32  = 1024
 	MQ_LRSN_LENGTH                 int32  = 12
 	MQ_LSN_LENGTH                  int32  = 64
 	MQ_LTERM_OVERRIDE_LENGTH       int32  = 8

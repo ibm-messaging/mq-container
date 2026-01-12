@@ -185,12 +185,12 @@ func metricsContainerConfig() *ce.ContainerConfig {
 
 func metricNames() []string {
 
-	// NB: There are currently a total of 131 metrics, but the following 37 do not generate values (based on the queue manager configuration)
+	// NB: There are currently a total of 138 metrics, but the following 44 do not generate values (based on the queue manager configuration)
 	// - log_occupied_by_reusable_extents_bytes
 	// - log_occupied_by_extents_waiting_to_be_archived_bytes
 	// - log_required_for_media_recovery_bytes
 	// - log_sequence_number_quorum_total (Only produced by NativeHA Queue Managers)
-	// - 33 "recovery_*" and "replication_*" metrics (Only produced by NativeHA Queue Managers)
+	// - 40 "recovery_*" and "replication_*" metrics (Only produced by NativeHA Queue Managers)
 
 	names := []string{
 		"cpu_load_one_minute_average_percentage",
@@ -222,7 +222,7 @@ func metricNames() []string {
 		"log_file_system_in_use_bytes",
 		"log_file_system_free_space_percentage",
 		"log_sequence_number_disk_total",
-		// disabled : pending a fix for RTC defect 323483 : "log_slowest_write_timestamp_seconds",
+		"log_slowest_write_timestamp_seconds",
 		"log_slowest_write_since_restart_seconds",
 		"durable_subscription_create_total",
 		"durable_subscription_alter_total",

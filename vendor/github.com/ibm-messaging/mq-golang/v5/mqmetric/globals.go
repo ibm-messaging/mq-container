@@ -1,3 +1,8 @@
+/*
+Package mqmetric contains a set of routines common to several
+commands used to export MQ metrics to different backend
+storage mechanisms including Prometheus and OpenTelemetry.
+*/
 package mqmetric
 
 /*
@@ -24,18 +29,27 @@ import (
 )
 
 type sessionInfo struct {
-	qMgr            ibmmq.MQQueueManager
-	cmdQObj         ibmmq.MQObject
-	replyQObj       ibmmq.MQObject
-	qMgrObject      ibmmq.MQObject
+	qMgr       ibmmq.MQQueueManager
+	cmdQObj    ibmmq.MQObject
+	qMgrObject ibmmq.MQObject
+
 	replyQBaseName  string
 	replyQ2BaseName string
-	statusReplyQObj ibmmq.MQObject
-	statusReplyBuf  []byte
+	statisticsQName string
+
+	replyQObj       ibmmq.MQObject
+	replyQReadAhead bool
+
+	statusReplyQObj       ibmmq.MQObject
+	statusReplyQReadAhead bool
+	statusReplyBuf        []byte
+
+	statisticsQObj       ibmmq.MQObject
+	statisticsQReadAhead bool
+	statisticsQBuf       []byte
 
 	platform         int32
 	commandLevel     int32
-	version          string // includes fixpack levels eg "09040001"
 	maxHandles       int32
 	resolvedQMgrName string
 
@@ -51,10 +65,13 @@ type connectionInfo struct {
 	usePublications      bool
 	useStatus            bool
 	useResetQStats       bool
+	useStatistics        bool
 	useDepthFromStatus   bool
 	showInactiveChannels bool
+	showCustomAttribute  bool
 	hideSvrConnJobname   bool
 	hideAMQPClientId     bool
+	hideMQTTClientId     bool
 
 	durableSubPrefix string
 
@@ -64,6 +81,7 @@ type connectionInfo struct {
 
 	discoveryDone    bool
 	publicationCount int
+	statisticsCount  int
 
 	waitInterval int
 
@@ -75,6 +93,7 @@ type objectStatus struct {
 	init       bool
 	objectSeen map[string]bool
 	s          *StatusSet
+	statistics *StatusSet
 }
 
 // These object types are the same where possible as the MQI MQOT definitions
@@ -101,7 +120,8 @@ const (
 	OT_PS            = 18
 	OT_CLUSTER       = 19
 	OT_CHANNEL_AMQP  = 20
-	OT_LAST_USED     = OT_CHANNEL_AMQP
+	OT_CHANNEL_MQTT  = 21
+	OT_LAST_USED     = OT_CHANNEL_MQTT
 )
 
 var connectionMap = make(map[string]*connectionInfo)
@@ -109,22 +129,32 @@ var connectionKey string
 
 const DUMMY_STRING = "-" // To provide a non-empty value for certain fields
 const DEFAULT_CONNECTION_KEY = "@defaultConnection"
+const DUMMY_PCFATTR = -1 // For metrics that don't have an explicit PCF attribute
+
+// Command messages are put with an expiry so they don't hang around too long. And any remaining
+// responses are also set to expire because of an MQRO setting. We use the WaitInterval as the basis.
+// First multiply by 10 (to get from seconds to the tenths used in MQMD.Expiry), then give more time
+// than the actual waitInterval to allow traval in both directions + processing + a slop factor
+const EXPIRY_MULTIPLIER = 10 * 5
 
 // This are used externally so we need to maintain them as public exports until
 // there's a major version change. At which point we will move them to fields of
 // the objectStatus structure, retrievable by a getXXX() call instead of as public
 // variables. The mq-metric-samples exporters will then need to change to match.
 var (
-	Metrics            AllMetrics
-	QueueManagerStatus StatusSet
-	ChannelStatus      StatusSet
-	ChannelAMQPStatus  StatusSet
-	QueueStatus        StatusSet
-	TopicStatus        StatusSet
-	SubStatus          StatusSet
-	UsagePsStatus      StatusSet
-	UsageBpStatus      StatusSet
-	ClusterStatus      StatusSet
+	Metrics                AllMetrics
+	QueueManagerStatus     StatusSet
+	QueueManagerStatistics StatusSet
+	ChannelStatus          StatusSet
+	ChannelAMQPStatus      StatusSet
+	ChannelMQTTStatus      StatusSet
+	QueueStatus            StatusSet
+	QueueStatistics        StatusSet
+	TopicStatus            StatusSet
+	SubStatus              StatusSet
+	UsagePsStatus          StatusSet
+	UsageBpStatus          StatusSet
+	ClusterStatus          StatusSet
 )
 
 func newConnectionInfo(key string) *connectionInfo {
@@ -140,18 +170,24 @@ func newConnectionInfo(key string) *connectionInfo {
 	ci.useStatus = false
 	ci.useResetQStats = false
 	ci.showInactiveChannels = false
+	ci.showCustomAttribute = false
+
 	ci.hideSvrConnJobname = false
 	ci.hideAMQPClientId = false
+	ci.hideMQTTClientId = false
 
 	ci.globalSlashWarning = false
 	ci.localSlashWarning = false
 	ci.discoveryDone = false
 	ci.publicationCount = 0
+	ci.statisticsCount = 0
 
 	for i := 1; i <= OT_LAST_USED; i++ {
 		ci.objectStatus[i].init = false
 		ci.objectStatus[i].s = new(StatusSet)
 	}
+	ci.objectStatus[OT_Q].statistics = new(StatusSet)
+	ci.objectStatus[OT_Q_MGR].statistics = new(StatusSet)
 
 	if key == "" {
 		key = DEFAULT_CONNECTION_KEY
@@ -184,6 +220,8 @@ func GetObjectStatus(key string, objectType int) *StatusSet {
 			return &ChannelStatus
 		case OT_CHANNEL_AMQP:
 			return &ChannelAMQPStatus
+		case OT_CHANNEL_MQTT:
+			return &ChannelMQTTStatus
 		case OT_Q_MGR:
 			return &QueueManagerStatus
 		case OT_Q:
@@ -204,6 +242,22 @@ func GetObjectStatus(key string, objectType int) *StatusSet {
 	} else {
 		ci := getConnection(key)
 		return ci.objectStatus[objectType].s
+	}
+}
+
+func GetObjectStatistics(key string, objectType int) *StatusSet {
+	if key == "" || key == DEFAULT_CONNECTION_KEY {
+		switch objectType {
+		case OT_Q_MGR:
+			return &QueueManagerStatistics
+		case OT_Q:
+			return &QueueStatistics
+		default:
+			return nil
+		}
+	} else {
+		ci := getConnection(key)
+		return ci.objectStatus[objectType].statistics
 	}
 }
 

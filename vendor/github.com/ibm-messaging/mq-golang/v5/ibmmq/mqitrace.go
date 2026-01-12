@@ -39,7 +39,15 @@ func SetTrace(b bool) {
 }
 
 func logTrace(format string, v ...interface{}) {
-	if tracing {
+	logInternal(tracing, format, v...)
+}
+
+func logError(format string, v ...interface{}) {
+	logInternal(true, "ERROR: "+format, v...)
+}
+
+func logInternal(force bool, format string, v ...interface{}) {
+	if force {
 		d := time.Now().Format("2006-01-02T15:04:05.000")
 		fmt.Fprintf(os.Stderr, "[ibmmq] %s : ", d)
 		fmt.Fprintf(os.Stderr, format, v...)

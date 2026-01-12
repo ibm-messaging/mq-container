@@ -1,8 +1,3 @@
-/*
-Package mqmetric contains a set of routines common to several
-commands used to export MQ metrics to different backend
-storage mechanisms including Prometheus and InfluxDB.
-*/
 package mqmetric
 
 /*
@@ -25,12 +20,12 @@ package mqmetric
 */
 
 /*
-Functions in this file use the DISPLAY QStatus command to extract metrics
-about MQ queues
+Functions in this file use the DISPLAY QSTATUS, DISPLAY QUEUE and RESET QSTATS commands
+to extract metrics about MQ queues
 */
 
 import (
-	//	"fmt"
+	_ "fmt"
 
 	"strings"
 	"time"
@@ -62,6 +57,7 @@ const (
 	ATTR_Q_DEPTH        = "depth"
 	ATTR_Q_INTERVAL_PUT = "mqput_mqput1_count"
 	ATTR_Q_INTERVAL_GET = "mqget_count"
+
 	// This is the Highest Depth returned over an interval via the
 	// RESET QSTATS command. Contrast with the attribute_max_depth
 	// value which is the DISPLAY QL(x) MAXDEPTH attribute.
@@ -85,23 +81,30 @@ func QueueInitAttributes() {
 		traceExit("QueueInitAttributes", 1)
 		return
 	}
+
 	st.Attributes = make(map[string]*StatusAttribute)
 
 	attr := ATTR_Q_NAME
 	st.Attributes[attr] = newPseudoStatusAttribute(attr, "Queue Name")
 
 	attr = ATTR_Q_SINCE_PUT
-	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Put", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Put", DUMMY_PCFATTR)
 	attr = ATTR_Q_SINCE_GET
-	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Get", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Get", DUMMY_PCFATTR)
 
 	// These are the integer status fields that are of interest
 	attr = ATTR_Q_MSGAGE
 	st.Attributes[attr] = newStatusAttribute(attr, "Oldest Message", ibmmq.MQIACF_OLDEST_MSG_AGE)
-	attr = ATTR_Q_IPPROCS
-	st.Attributes[attr] = newStatusAttribute(attr, "Input Handles", ibmmq.MQIA_OPEN_INPUT_COUNT)
-	attr = ATTR_Q_OPPROCS
-	st.Attributes[attr] = newStatusAttribute(attr, "Output Handles", ibmmq.MQIA_OPEN_OUTPUT_COUNT)
+
+	// Don't want to add these if only the UsePublication option is active, as the descriptions
+	// of the metrics can conflict in Prometheus. These are the same attributes from the
+	// excludeMetric map in discover.go
+	if ci.useStatus {
+		attr = ATTR_Q_IPPROCS
+		st.Attributes[attr] = newStatusAttribute(attr, "Input Handles", ibmmq.MQIA_OPEN_INPUT_COUNT)
+		attr = ATTR_Q_OPPROCS
+		st.Attributes[attr] = newStatusAttribute(attr, "Output Handles", ibmmq.MQIA_OPEN_OUTPUT_COUNT)
+	}
 	attr = ATTR_Q_UNCOM
 	if ci.si.platform == ibmmq.MQPL_ZOS {
 		st.Attributes[attr] = newStatusAttribute(attr, "Uncommitted Messages (Yes/No)", ibmmq.MQIACF_UNCOMMITTED_MSGS)
@@ -120,7 +123,7 @@ func QueueInitAttributes() {
 	// Usually we get the QDepth from published resources, But on z/OS we can get it from the QSTATUS response. We
 	// also have an option where we are ignoring most of the queue publications even if we use subscriptions for other
 	// object (qmgr/NHA) resources
-	if !ci.usePublications || ci.useDepthFromStatus {
+	if !ci.usePublications || ci.useDepthFromStatus || ci.useStatistics {
 		attr = ATTR_Q_DEPTH
 		// The description should match the published metric, including case
 		st.Attributes[attr] = newStatusAttribute(attr, "Queue depth", ibmmq.MQIA_CURRENT_Q_DEPTH)
@@ -142,9 +145,9 @@ func QueueInitAttributes() {
 	// usually - but not always - come from the published resource stats. So we don't have direct access to it.
 	// Recording the MaxDepth allows Prometheus etc to do the calculation regardless of how the CurDepth was obtained.
 	attr = ATTR_Q_MAX_DEPTH
-	st.Attributes[attr] = newStatusAttribute(attr, "Queue Max Depth", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "Queue Max Depth", DUMMY_PCFATTR)
 	attr = ATTR_Q_USAGE
-	st.Attributes[attr] = newStatusAttribute(attr, "Queue Usage", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "Queue Usage", DUMMY_PCFATTR)
 
 	attr = ATTR_Q_QTIME_SHORT
 	st.Attributes[attr] = newStatusAttribute(attr, "Queue Time Short", ibmmq.MQIACF_Q_TIME_INDICATOR)
@@ -358,6 +361,9 @@ func inquireQueueAttributes(objectPatternsList string) error {
 		pcfparm.Type = ibmmq.MQCFT_INTEGER_LIST
 		pcfparm.Parameter = ibmmq.MQIACF_Q_ATTRS
 		pcfparm.Int64Value = []int64{int64(ibmmq.MQIA_MAX_Q_DEPTH), int64(ibmmq.MQIA_USAGE), int64(ibmmq.MQIA_DEFINITION_TYPE), int64(ibmmq.MQCA_Q_DESC), int64(ibmmq.MQCA_CLUSTER_NAME)}
+		if ci.showCustomAttribute {
+			pcfparm.Int64Value = append(pcfparm.Int64Value, int64(ibmmq.MQCA_CUSTOM))
+		}
 		cfh.ParameterCount++
 		buf = append(buf, pcfparm.Bytes()...)
 
@@ -597,6 +603,14 @@ func parseQAttrData(cfh *ibmmq.MQCFH, buf []byte) {
 			if v != "" {
 				if qInfo, ok := qInfoMap[qName]; ok {
 					qInfo.Description = printableStringUTF8(v)
+				}
+			}
+
+		case ibmmq.MQCA_CUSTOM:
+			v := elem.String[0]
+			if v != "" {
+				if qInfo, ok := qInfoMap[qName]; ok {
+					qInfo.Custom = printableStringUTF8(v)
 				}
 			}
 

@@ -21,8 +21,8 @@ func TestGenerateMetricNamesMap(t *testing.T) {
 
 	metricNamesMap := generateMetricNamesMap()
 
-	if len(metricNamesMap) != 131 {
-		t.Errorf("Expected mapping-size=%d; actual %d", 131, len(metricNamesMap))
+	if len(metricNamesMap) != 138 {
+		t.Errorf("Expected mapping-size=%d; actual %d", 138, len(metricNamesMap))
 	}
 
 	actual, ok := metricNamesMap[testKey1]

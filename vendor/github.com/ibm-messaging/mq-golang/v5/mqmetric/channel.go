@@ -1,12 +1,7 @@
-/*
-Package mqmetric contains a set of routines common to several
-commands used to export MQ metrics to different backend
-storage mechanisms including Prometheus and InfluxDB.
-*/
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2022
+  Copyright (c) IBM Corporation 2016, 2025
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -44,6 +39,10 @@ const (
 	ATTR_CHL_JOBNAME  = "jobname"
 	ATTR_CHL_RQMNAME  = "rqmname"
 
+	ATTR_CHL_SSLCIPH = "sslciph"
+	ATTR_CHL_SECPROT = "security_protocol" // MQSECPROT_*
+
+	ATTR_CHL_START         = "start_epoch" // Given in milliseconds
 	ATTR_CHL_MESSAGES      = "messages"
 	ATTR_CHL_BYTES_SENT    = "bytes_sent"
 	ATTR_CHL_BYTES_RCVD    = "bytes_rcvd"
@@ -120,6 +119,9 @@ func ChannelInitAttributes() {
 	attr = ATTR_CHL_CONNNAME
 	st.Attributes[attr] = newPseudoStatusAttribute(attr, "Connection Name")
 
+	attr = ATTR_CHL_START
+	st.Attributes[attr] = newStatusAttribute(attr, "Start Time (epoch ms)", DUMMY_PCFATTR)
+
 	// These are the integer status fields that are of interest
 	attr = ATTR_CHL_MESSAGES
 	st.Attributes[attr] = newStatusAttribute(attr, "Messages (API Calls for SVRCONN)", ibmmq.MQIACH_MSGS)
@@ -186,19 +188,26 @@ func ChannelInitAttributes() {
 	st.Attributes[attr].index = idxDefault(zos, 1)
 
 	attr = ATTR_CHL_SINCE_MSG
-	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Msg", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Msg", DUMMY_PCFATTR)
 
 	// These are not really monitoring metrics but it may enable calculations to be made such as %used for
 	// the channel instance availability. It's extracted at startup of the program via INQUIRE_CHL and not updated later
 	// until rediscovery is done based on a separate schedule.
 	attr = ATTR_CHL_MAX_INST
-	st.Attributes[attr] = newStatusAttribute(attr, "MaxInst", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "MaxInst", DUMMY_PCFATTR)
 	attr = ATTR_CHL_MAX_INSTC
-	st.Attributes[attr] = newStatusAttribute(attr, "MaxInstC", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "MaxInstC", DUMMY_PCFATTR)
 	// Current Instances is treated a bit oddly. Although reported on each channel status,
 	// it actually refers to the total number of instances of the same name.
 	attr = ATTR_CHL_CUR_INST
-	st.Attributes[attr] = newStatusAttribute(attr, "Current Instances", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "Current Instances", DUMMY_PCFATTR)
+
+	// The protocol (TLS12, TLS13) etc is encoded as an integer already
+	attr = ATTR_CHL_SECPROT
+	st.Attributes[attr] = newStatusAttribute(attr, "Negotiated TLS Protocol", ibmmq.MQIACH_SECURITY_PROTOCOL)
+	// The actual negotiated cipher is a string to be added as a tag
+	attr = ATTR_CHL_SSLCIPH
+	st.Attributes[attr] = newPseudoStatusAttribute(attr, "Negotiated TLS Cipher")
 
 	traceExit("ChannelInitAttributes", 0)
 }
@@ -300,6 +309,7 @@ func CollectChannelStatus(patterns string) error {
 				st.Attributes[ATTR_CHL_CONNNAME].Values[key] = newStatusValueString(DUMMY_STRING)
 				st.Attributes[ATTR_CHL_JOBNAME].Values[key] = newStatusValueString(DUMMY_STRING)
 				st.Attributes[ATTR_CHL_RQMNAME].Values[key] = newStatusValueString(DUMMY_STRING)
+				st.Attributes[ATTR_CHL_SSLCIPH].Values[key] = newStatusValueString(DUMMY_STRING)
 
 				st.Attributes[ATTR_CHL_STATUS].Values[key] = newStatusValueInt64(int64(ibmmq.MQCHS_INACTIVE))
 				st.Attributes[ATTR_CHL_STATUS_SQUASH].Values[key] = newStatusValueInt64(SQUASH_CHL_STATUS_STOPPED)
@@ -378,7 +388,7 @@ func collectChannelStatus(pattern string, instanceType int32) error {
 	for allReceived := false; !allReceived; {
 		cfh, buf, allReceived, err = statusGetReply(putmqmd.MsgId)
 		if buf != nil {
-			key := parseChlData(instanceType, cfh, buf)
+			key := parseChlStatusData(instanceType, cfh, buf)
 			if key != "" {
 				os.objectSeen[key] = true
 			}
@@ -390,10 +400,10 @@ func collectChannelStatus(pattern string, instanceType int32) error {
 }
 
 // Given a PCF response message, parse it to extract the desired statistics
-func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
+func parseChlStatusData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 	var elem *ibmmq.PCFParameter
 
-	traceEntry("parseChlData")
+	traceEntry("parseChlStatusData")
 
 	ci := getConnection(GetConnectionKey())
 	os := &ci.objectStatus[OT_CHANNEL]
@@ -405,6 +415,7 @@ func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 	rqmName := ""
 	startDate := ""
 	startTime := ""
+	cipherSpec := ""
 	key := ""
 
 	lastMsgDate := ""
@@ -415,7 +426,7 @@ func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 	offset := 0
 	datalen := len(buf)
 	if cfh == nil || cfh.ParameterCount == 0 {
-		traceExit("parseChlData", 1)
+		traceExit("parseChlStatusData", 1)
 		return ""
 	}
 
@@ -480,7 +491,7 @@ func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 		for k, _ := range os.objectSeen {
 			re := regexp.MustCompile(subKey)
 			if re.MatchString(k) {
-				traceExit("parseChlData", 2)
+				traceExit("parseChlStatusData", 2)
 				return ""
 			}
 		}
@@ -508,6 +519,8 @@ func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 				lastMsgTime = strings.TrimSpace(elem.String[0])
 			case ibmmq.MQCACH_LAST_MSG_DATE:
 				lastMsgDate = strings.TrimSpace(elem.String[0])
+			case ibmmq.MQCACH_SSL_CIPHER_SPEC:
+				cipherSpec = strings.TrimSpace(elem.String[0])
 			}
 		}
 	}
@@ -518,6 +531,14 @@ func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 		st.Attributes[ATTR_CHL_SINCE_MSG].Values[key] = newStatusValueInt64(diff)
 	}
 
+	if cipherSpec == "" {
+		cipherSpec = DUMMY_STRING
+	}
+	st.Attributes[ATTR_CHL_SSLCIPH].Values[key] = newStatusValueString(cipherSpec)
+
+	epoch := statusTimeEpoch(startDate, startTime)
+	st.Attributes[ATTR_CHL_START].Values[key] = newStatusValueInt64(epoch)
+
 	// Bump the number of active instances of the channel, treating it a bit like a
 	// regular config attribute.
 	if s, ok := chlInfoMap[chlName]; ok {
@@ -526,7 +547,7 @@ func parseChlData(instanceType int32, cfh *ibmmq.MQCFH, buf []byte) string {
 		}
 	}
 
-	traceExitF("parseChlData", 0, "Key: %s", key)
+	traceExitF("parseChlStatusData", 0, "Key: %s", key)
 	return key
 }
 

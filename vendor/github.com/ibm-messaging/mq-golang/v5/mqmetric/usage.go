@@ -1,8 +1,3 @@
-/*
-Package mqmetric contains a set of routines common to several
-commands used to export MQ metrics to different backend
-storage mechanisms including Prometheus and InfluxDB.
-*/
 package mqmetric
 
 /*

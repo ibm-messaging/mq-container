@@ -1,8 +1,3 @@
-/*
-Package mqmetric contains a set of routines common to several
-commands used to export MQ metrics to different backend
-storage mechanisms including Prometheus and InfluxDB.
-*/
 package mqmetric
 
 /*
@@ -77,7 +72,7 @@ func SubInitAttributes() {
 	st.Attributes[attr] = newStatusAttribute(attr, "Subscription Type", ibmmq.MQIACF_SUB_TYPE)
 
 	attr = ATTR_SUB_SINCE_PUB_MSG
-	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Message Received", -1)
+	st.Attributes[attr] = newStatusAttribute(attr, "Time Since Message Received", DUMMY_PCFATTR)
 
 	// These are the integer status fields that are of interest
 	attr = ATTR_SUB_MESSAGES

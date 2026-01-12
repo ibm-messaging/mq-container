@@ -1,7 +1,7 @@
 package mqmetric
 
 /*
-  Copyright (c) IBM Corporation 2016, 2023
+  Copyright (c) IBM Corporation 2016, 2025
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -48,13 +48,19 @@ type ConnectionConfig struct {
 	TZOffsetSecs  float64
 	SingleConnect bool
 
-	UsePublications      bool
-	UseStatus            bool
-	UseResetQStats       bool
+	UsePublications bool
+	UseStatus       bool
+	UseResetQStats  bool
+	UseStatistics   bool
+	StatisticsQ     string
+
 	ShowInactiveChannels bool
+	ShowCustomAttribute  bool
 	HideSvrConnJobname   bool
 	HideAMQPClientId     bool
-	WaitInterval         int
+	HideMQTTClientId     bool
+
+	WaitInterval int
 
 	CcdtUrl  string
 	ConnName string
@@ -131,8 +137,10 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 
 	ci.tzOffsetSecs = cc.TZOffsetSecs
 	ci.showInactiveChannels = cc.ShowInactiveChannels
+	ci.showCustomAttribute = cc.ShowCustomAttribute
 	ci.hideSvrConnJobname = cc.HideSvrConnJobname
 	ci.hideAMQPClientId = cc.HideAMQPClientId
+	ci.hideMQTTClientId = cc.HideMQTTClientId
 
 	ci.durableSubPrefix = cc.DurableSubPrefix
 
@@ -212,6 +220,12 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 				ibmmq.MQIA_PERFORMANCE_EVENT,
 				ibmmq.MQIA_MAX_HANDLES,
 				ibmmq.MQIA_PLATFORM}
+			if cc.UseStatistics {
+				// We don't know yet what the platform is.
+				// If it turns out to be z/OS, the MQINQ will fail, but that's OK:
+				// You would have to correct the configuration to not use these events.
+				selectors = append(selectors, ibmmq.MQIA_STATISTICS_MQI)
+			}
 
 			v, err = ci.si.qMgrObject.Inq(selectors)
 			if err == nil {
@@ -219,14 +233,18 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 				ci.si.platform = v[ibmmq.MQIA_PLATFORM].(int32)
 				ci.si.commandLevel = v[ibmmq.MQIA_COMMAND_LEVEL].(int32)
 				ci.si.maxHandles = v[ibmmq.MQIA_MAX_HANDLES].(int32)
+				ci.useStatistics = cc.UseStatistics
 
 				if ci.si.platform == ibmmq.MQPL_ZOS {
 					ci.usePublications = false
+					ci.useStatistics = false
+
 					ci.useResetQStats = cc.UseResetQStats
 					evEnabled := v[ibmmq.MQIA_PERFORMANCE_EVENT].(int32)
 					if ci.useResetQStats && evEnabled == 0 {
 						errorString = "Requested use of RESET QSTATS but queue manager has PERFMEV(DISABLED)"
 						err = errors.New(errorString)
+						mqreturn = &ibmmq.MQReturn{MQCC: ibmmq.MQCC_FAILED, MQRC: ibmmq.MQRC_ENVIRONMENT_ERROR}
 					}
 				} else {
 					if cc.UsePublications {
@@ -240,9 +258,21 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 					} else {
 						ci.usePublications = false
 					}
+
+					if cc.UseStatistics {
+						evEnabled := v[ibmmq.MQIA_STATISTICS_MQI].(int32)
+						if evEnabled == 0 {
+							errorString = "Configuration has asked to use statistics events but queue manager has STATMQI set to OFF."
+							err = errors.New(errorString)
+							mqreturn = &ibmmq.MQReturn{MQCC: ibmmq.MQCC_FAILED, MQRC: ibmmq.MQRC_ENVIRONMENT_ERROR}
+						}
+					}
 				}
 			} else {
 				errorString = "Cannot inquire on queue manager object"
+				if cc.UseStatistics {
+					errorString += ". Cannot set the useStatistics option for z/OS queue managers"
+				}
 				mqreturn = err.(*ibmmq.MQReturn)
 			}
 		} else {
@@ -250,6 +280,8 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 			mqreturn = err.(*ibmmq.MQReturn)
 		}
 	}
+
+	// err = errors.New("TESTING") // for testing - force an error
 
 	// MQOPEN of the COMMAND QUEUE
 	if err == nil {
@@ -271,28 +303,15 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 
 	}
 
-	// MQOPEN of a reply queue also used for subscription delivery
+	// MQOPEN of a reply queue used for status polling, and responses to any other PCF commands.
+	// Although this is replyQ2, we now open it first to give a chance of executing CLEAR QL(replyQ) before
+	// that subscription delivery queue has been opened
+	inputOpt := ibmmq.MQOO_INPUT_EXCLUSIVE
 	if err == nil {
 		mqod := ibmmq.NewMQOD()
-		openOptions := ibmmq.MQOO_INPUT_EXCLUSIVE | ibmmq.MQOO_FAIL_IF_QUIESCING
+		openOptions := inputOpt | ibmmq.MQOO_FAIL_IF_QUIESCING
 		openOptions |= ibmmq.MQOO_INQUIRE
-		mqod.ObjectType = ibmmq.MQOT_Q
-		mqod.ObjectName = replyQ
-		ci.si.replyQObj, err = ci.si.qMgr.Open(mqod, openOptions)
-		ci.si.replyQBaseName = replyQ
-		if err == nil {
-			ci.si.queuesOpened = true
-			clearQ(ci.si.replyQObj)
-		} else {
-			errorString = "Cannot open queue " + mqod.ObjectName
-			mqreturn = err.(*ibmmq.MQReturn)
-		}
-	}
 
-	// MQOPEN of a second reply queue used for status polling
-	if err == nil {
-		mqod := ibmmq.NewMQOD()
-		openOptions := ibmmq.MQOO_INPUT_EXCLUSIVE | ibmmq.MQOO_FAIL_IF_QUIESCING
 		mqod.ObjectType = ibmmq.MQOT_Q
 		ci.si.replyQ2BaseName = replyQ2
 		if replyQ2 != "" {
@@ -305,16 +324,133 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 			errorString = "Cannot open queue " + mqod.ObjectName
 			mqreturn = err.(*ibmmq.MQReturn)
 		} else {
-			clearQ(ci.si.statusReplyQObj)
+			ci.si.queuesOpened = true
+
+			// There may be performance benefits to using READAHEAD on the reply queues, but we
+			// need to know if it's going to be used. We don't use the MQOO option to ask for
+			// it explicitly, but rely on the queue's default option. So find that with an MQINQ
+			// and stash it.
+			ci.si.statusReplyQReadAhead = false
+
+			selectors := []int32{ibmmq.MQIA_DEF_READ_AHEAD}
+			vals, inqErr := ci.si.statusReplyQObj.Inq(selectors)
+			if inqErr == nil {
+				ra := vals[ibmmq.MQIA_DEF_READ_AHEAD]
+				if ra == ibmmq.MQREADA_YES {
+					ci.si.statusReplyQReadAhead = true
+				}
+				logTrace("DEF_READ_AHEAD for %s: %d", mqod.ObjectName, ra)
+
+			} else {
+				// log the error but ignore it
+				logWarn("Cannot find DEF_READ_AHEAD for %s: %v", mqod.ObjectName, inqErr)
+
+			}
+
+			// This queue ought always to be empty, but we'll clear it via repeated MQGETs anyway.
+			clearQ(ci.si.statusReplyQObj, ci.si.statusReplyQReadAhead)
+
+			// Before we open the subscription delivery queue, we will try to clear it using the CLEAR QLOCAL.
+			// command. We can't do that once it's been opened. But if this fails, ignore the error. The reply queue
+			// names have to be different, and replyQ must refer to a local queue. But we can't check the queue type
+			// in advance, so we'll try it anyway.
+			if replyQ2 != "" && replyQ2 != replyQ {
+				clearQPCF(replyQ, ci.si.cmdQObj, ci.si.statusReplyQObj, ci.si.statusReplyQReadAhead)
+			}
+
+			// Similarly, clear the statistics queue (default SYSTEM.ADMIN.STATISTICS.QUEUE) if that is configured
+			if cc.UseStatistics && cc.StatisticsQ != "" {
+				// clearQPCF(cc.StatisticsQ, ci.si.cmdQObj, ci.si.statusReplyQObj, ci.si.statusReplyQReadAhead)
+			}
+		}
+	}
+
+	// MQOPEN of a reply queue used for subscription delivery
+	if err == nil {
+		mqod := ibmmq.NewMQOD()
+		openOptions := inputOpt | ibmmq.MQOO_FAIL_IF_QUIESCING
+		openOptions |= ibmmq.MQOO_INQUIRE
+		mqod.ObjectType = ibmmq.MQOT_Q
+		mqod.ObjectName = replyQ
+		ci.si.replyQObj, err = ci.si.qMgr.Open(mqod, openOptions)
+		ci.si.replyQBaseName = replyQ
+		if err == nil {
+			ci.si.queuesOpened = true
+			ci.si.replyQReadAhead = false
+
+			// Do the inquire again, this time for the main replyQ, if it's not the same as the 2ary reply queue
+			if replyQ2 != "" && replyQ2 != replyQ {
+				selectors := []int32{ibmmq.MQIA_DEF_READ_AHEAD}
+				vals, inqErr := ci.si.replyQObj.Inq(selectors)
+				if inqErr == nil {
+					ra := vals[ibmmq.MQIA_DEF_READ_AHEAD]
+					if ra == ibmmq.MQREADA_YES {
+						ci.si.replyQReadAhead = true
+					}
+					logTrace("DEF_READ_AHEAD for %s: %d", mqod.ObjectName, ra)
+				} else {
+					// log the error but ignore it
+					logWarn("Cannot find DEF_READ_AHEAD for %s: %v", mqod.ObjectName, inqErr)
+				}
+			} else {
+				ci.si.replyQReadAhead = ci.si.statusReplyQReadAhead
+			}
+
+			clearQ(ci.si.replyQObj, ci.si.replyQReadAhead)
+		} else {
+			errorString = "Cannot open queue " + mqod.ObjectName
+			mqreturn = err.(*ibmmq.MQReturn)
+		}
+	}
+
+	// MQOPEN of the queue used for statistics messages if configured
+	if err == nil && cc.UseStatistics {
+		mqod := ibmmq.NewMQOD()
+		openOptions := inputOpt | ibmmq.MQOO_FAIL_IF_QUIESCING
+		openOptions |= ibmmq.MQOO_INQUIRE
+
+		mqod.ObjectType = ibmmq.MQOT_Q
+		mqod.ObjectName = cc.StatisticsQ
+		ci.si.statisticsQObj, err = ci.si.qMgr.Open(mqod, openOptions)
+		ci.si.statisticsQName = cc.StatisticsQ
+		ci.si.statisticsQBuf = make([]byte, 32768)
+		if err == nil {
+			ci.si.queuesOpened = true
+			ci.si.statisticsQReadAhead = false
+
+			// Do the inquire again, this time for the statistics queue
+			selectors := []int32{ibmmq.MQIA_DEF_READ_AHEAD}
+			vals, inqErr := ci.si.statisticsQObj.Inq(selectors)
+			if inqErr == nil {
+				ra := vals[ibmmq.MQIA_DEF_READ_AHEAD]
+				if ra == ibmmq.MQREADA_YES {
+					ci.si.statisticsQReadAhead = true
+				}
+				logTrace("DEF_READ_AHEAD for %s: %d", mqod.ObjectName, ra)
+			} else {
+				// log the error but ignore it
+				logWarn("Cannot find DEF_READ_AHEAD for %s: %v", mqod.ObjectName, inqErr)
+			}
+
+			clearQ(ci.si.statisticsQObj, ci.si.statisticsQReadAhead)
+
+			initStatisticsAttrs(ci)
+
+		} else {
+			errorString = "Cannot open queue " + mqod.ObjectName
+			mqreturn = err.(*ibmmq.MQReturn)
 		}
 	}
 
 	// Start from a clean set of subscriptions. Errors from this can be ignored.
 	if err == nil && ci.durableSubPrefix != "" && ci.usePublications {
-		clearDurableSubscriptions(ci.durableSubPrefix, ci.si.cmdQObj, ci.si.statusReplyQObj)
+		clearDurableSubscriptions(ci.durableSubPrefix, ci.si.cmdQObj, ci.si.statusReplyQObj, ci.si.statusReplyQReadAhead)
 	}
 
+	// If anything has gone wrong in the initial connection and object access then return an error.
 	if err != nil {
+		// All the `err` objects should have been converted to `mqreturn` objects. But if not,
+		// then force it with a FAILED code.
 		if mqreturn == nil {
 			mqreturn = &ibmmq.MQReturn{MQCC: ibmmq.MQCC_FAILED, MQRC: ibmmq.MQRC_ENVIRONMENT_ERROR}
 		}
@@ -332,7 +468,8 @@ func initConnectionKey(key string, qMgrName string, replyQ string, replyQ2 strin
 }
 
 /*
-EndConnection tidies up by closing the queues and disconnecting.
+EndConnection tidies up by closing the queues and disconnecting. All errors here
+are ignored as there's very little that can be done if anything goes wrong.
 */
 func EndConnection() {
 	traceEntry("EndConnection")
@@ -360,6 +497,9 @@ func EndConnection() {
 		ci.si.replyQObj.Close(0)
 		ci.si.statusReplyQObj.Close(0)
 		ci.si.qMgrObject.Close(0)
+		if ci.useStatistics {
+			ci.si.statisticsQObj.Close(0)
+		}
 	}
 
 	// MQDISC regardless of other errors
@@ -422,7 +562,9 @@ func getMessageWithHObj(wait bool, hObj ibmmq.MQObject) ([]byte, error) {
 	// Backout the first attempt so we retry the same message
 	if err != nil && err.(*ibmmq.MQReturn).MQRC == ibmmq.MQRC_NOT_CONVERTED {
 		if transNeeded {
-			hObj.GetHConn().Back()
+			if ibmmq.IsUsableHObj(hObj) {
+				hObj.GetHConn().Back()
+			}
 		}
 		convertToAlternateCP = true
 		getmqmd.CodedCharSetId = ALTERNATE_CCSID
@@ -430,7 +572,9 @@ func getMessageWithHObj(wait bool, hObj ibmmq.MQObject) ([]byte, error) {
 	}
 
 	if transNeeded {
-		hObj.GetHConn().Cmit()
+		if ibmmq.IsUsableHObj(hObj) {
+			hObj.GetHConn().Cmit()
+		}
 	}
 	// By the time we've been through here once successfully, we should know
 	// whether we need to continue with the transactional version
@@ -571,13 +715,13 @@ We can't use the resubscribe/close technique here because a) we don't know in ad
 subscription names are and b) we don't know which queue is attached - the collector configuration
 might have changed. So we do this cleanup using the PCF commands.
 */
-func clearDurableSubscriptions(prefix string, cmdQObj ibmmq.MQObject, replyQObj ibmmq.MQObject) {
+func clearDurableSubscriptions(prefix string, cmdQObj ibmmq.MQObject, replyQObj ibmmq.MQObject, readAhead bool) {
 	var err error
 
 	subNameList := make(map[string]string)
 	traceEntry("clearDurableSubscriptions")
 
-	clearQ(replyQObj)
+	clearQ(replyQObj, readAhead)
 	putmqmd, pmo, cfh, buf := statusSetCommandHeaders()
 
 	// Can allow all the other fields to default
@@ -624,9 +768,10 @@ func clearDurableSubscriptions(prefix string, cmdQObj ibmmq.MQObject, replyQObj 
 	// For each of th returned subscription names, do the delete
 	for subName, _ := range subNameList {
 		logDebug("About to delete subscription %s", subName)
-		clearQ(replyQObj)
+		clearQ(replyQObj, readAhead)
 
 		putmqmd, pmo, cfh, buf := statusSetCommandHeaders()
+
 		// Can allow all the other fields to default
 		cfh.Command = ibmmq.MQCMD_DELETE_SUBSCRIPTION
 
@@ -658,6 +803,50 @@ func clearDurableSubscriptions(prefix string, cmdQObj ibmmq.MQObject, replyQObj 
 
 	traceExitErr("clearDurableSubscriptions", 0, err)
 
+}
+
+// This tries to issue the "CLEAR QLOCAL" command for fast emptying of a queue during startup, before
+// we've actually opened the queue. This will fail if the queue is not a predefined local queue, but
+// we can ignore that error.
+func clearQPCF(qName string, cmdQObj ibmmq.MQObject, replyQObj ibmmq.MQObject, readAhead bool) {
+	var err error
+
+	traceEntryF("clearQPCF", "for queue %s", qName)
+
+	clearQ(replyQObj, readAhead)
+	putmqmd, pmo, cfh, buf := statusSetCommandHeaders()
+
+	// Can allow all the other fields to default
+	cfh.Command = ibmmq.MQCMD_CLEAR_Q
+
+	// Add the parameters one at a time into a buffer
+	pcfparm := new(ibmmq.PCFParameter)
+	pcfparm.Type = ibmmq.MQCFT_STRING
+	pcfparm.Parameter = ibmmq.MQCA_Q_NAME
+	pcfparm.String = []string{qName}
+	cfh.ParameterCount++
+	buf = append(buf, pcfparm.Bytes()...)
+
+	// Once we know the total number of parameters, put the
+	// CFH header on the front of the buffer.
+	buf = append(cfh.Bytes(), buf...)
+
+	// And now put the command to the queue
+	err = cmdQObj.Put(putmqmd, pmo, buf)
+	if err != nil {
+		traceExitErr("clearQPCF", 1, err)
+		return
+	}
+
+	// Don't really care about the responses, just loop until
+	// the operation is complete one way or the other
+	for allReceived := false; !allReceived; {
+		_, _, allReceived, err = statusGetReply(putmqmd.MsgId)
+	}
+
+	traceExitErr("clearQPCF", 0, err)
+
+	return
 }
 
 // Given a PCF response message, parse it to extract the desired fields

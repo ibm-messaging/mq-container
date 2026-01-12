@@ -59,7 +59,6 @@ int addNewCharAttrs(MQLONG a[],MQLONG l[]) {
 */
 import "C"
 import (
-	"fmt"
 	"os"
 	"sync"
 )
@@ -150,7 +149,7 @@ func getAttrInfo(attrs []int32) (int, int, int) {
 
 		if addedAttrs < 0 {
 			// Force an immediate exit if the arrays are not large enough.
-			fmt.Printf("Error: mqiattrs.go: MAX_NEW_MQCA_ATTRS is too small. Increase from %d\n", C.MAX_NEW_MQCA_ATTRS)
+			logError("mqiattrs.go: MAX_NEW_MQCA_ATTRS is too small. Increase from %d\n", C.MAX_NEW_MQCA_ATTRS)
 			os.Exit(1)
 		}
 		for i := 0; i < addedAttrs; i++ {

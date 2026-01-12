@@ -371,6 +371,18 @@ func MQItoString(class string, value int) string {
 			s = ""
 		}
 
+	case "AUSC":
+		switch v {
+		case 0:
+			s = "MQAUSC_FAILURES"
+		case 1:
+			s = "MQAUSC_ALLCONNS"
+		case 2:
+			s = "MQAUSC_ALLCHECKS"
+		default:
+			s = ""
+		}
+
 	case "AUTHENTICATE":
 		switch v {
 		case 0:
@@ -1469,6 +1481,10 @@ func MQItoString(class string, value int) string {
 			s = "MQCMDL_LEVEL_941"
 		case 942:
 			s = "MQCMDL_LEVEL_942"
+		case 943:
+			s = "MQCMDL_LEVEL_943"
+		case 944:
+			s = "MQCMDL_LEVEL_944"
 		default:
 			s = ""
 		}
@@ -3409,6 +3425,36 @@ func MQItoString(class string, value int) string {
 			s = ""
 		}
 
+	case "OTEL_PCTL":
+		switch v {
+		case 0:
+			s = "MQOTEL_PCTL_QMGR"
+		case 1:
+			s = "MQOTEL_PCTL_MANUAL"
+		case 2:
+			s = "MQOTEL_PCTL_AUTO"
+		case 3:
+			s = "MQOTEL_PCTL_AS_PARENT"
+		default:
+			s = ""
+		}
+
+	case "OTEL_TRACE":
+		switch v {
+		case 0:
+			s = "MQOTEL_TRACE_QMGR"
+		case 1:
+			s = "MQOTEL_TRACE_OFF"
+		case 2:
+			s = "MQOTEL_TRACE_ON"
+		case 3:
+			s = "MQOTEL_TRACE_NONE"
+		case 4:
+			s = "MQOTEL_TRACE_AS_PARENT"
+		default:
+			s = ""
+		}
+
 	case "PAGECLAS":
 		switch v {
 		case 0:
@@ -4303,6 +4349,14 @@ func MQItoString(class string, value int) string {
 			s = "MQRQ_STANDBY_ACTIVATED"
 		case 33:
 			s = "MQRQ_REPLICA_ACTIVATED"
+		case 65:
+			s = "MQRQ_CONN_AUTHORIZED"
+		case 66:
+			s = "MQRQ_OPEN_AUTHORIZED"
+		case 67:
+			s = "MQRQ_SUB_AUTHORIZED"
+		case 68:
+			s = "MQRQ_SUB_DEST_AUTHORIZED"
 		default:
 			s = ""
 		}

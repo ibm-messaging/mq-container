@@ -134,16 +134,23 @@ func (e *MQReturn) Error() string {
 }
 
 func IsUsableHObj(o MQObject) bool {
-	if o.hObj != C.MQHO_UNUSABLE_HOBJ {
-		return true
+	rc := false
+	if o.qMgr == nil {
+		rc = false
+	} else if o.hObj != C.MQHO_UNUSABLE_HOBJ {
+		rc = true
 	} else {
-		return false
+		rc = false
 	}
+	// logTrace("IsUsableHObj hObj:%v rc:%v", o, rc)
+	return rc
 }
 
 func IsUsableHandle(mh MQMessageHandle) bool {
 	rc := false
-	if mh.hMsg != C.MQHM_NONE && mh.hMsg != C.MQHM_UNUSABLE_HMSG {
+	if mh.qMgr == nil {
+		rc = false
+	} else if mh.hMsg != C.MQHM_NONE && mh.hMsg != C.MQHM_UNUSABLE_HMSG {
 		rc = true
 	}
 	return rc
@@ -397,6 +404,15 @@ func (object *MQObject) Close(goCloseOptions int32) error {
 
 	mqCloseOptions = C.MQLONG(goCloseOptions)
 
+	if !IsUsableHObj(*object) {
+		err := &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HOBJ_ERROR,
+			verb: "MQCLOSE",
+		}
+		traceExitErr("Close", 2, err)
+		return err
+	}
+
 	savedHConn := object.qMgr.hConn
 	savedHObj := object.hObj
 
@@ -481,6 +497,15 @@ func (subObject *MQObject) Subrq(gosro *MQSRO, action int32) error {
 	var mqsro C.MQSRO
 
 	traceEntry("Subrq")
+
+	if !IsUsableHObj(*subObject) {
+		err := &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HOBJ_ERROR,
+			verb: "MQSUBRQ",
+		}
+		traceExitErr("Subrq", 2, err)
+		return err
+	}
 
 	copySROtoC(&mqsro, gosro)
 
@@ -636,6 +661,15 @@ func (object MQObject) Put(gomd *MQMD,
 	var ptr C.PMQVOID
 
 	traceEntry("Put")
+
+	if !IsUsableHObj(object) {
+		err := &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HOBJ_ERROR,
+			verb: "MQPUT",
+		}
+		traceExitErr("Put", 2, err)
+		return err
+	}
 
 	err := checkMD(gomd, "MQPUT")
 	if err != nil {
@@ -833,6 +867,15 @@ func (object MQObject) getInternal(gomd *MQMD,
 		return 0, removed, err
 	}
 
+	if !IsUsableHObj(object) {
+		err = &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HOBJ_ERROR,
+			verb: "MQGET",
+		}
+		traceExitErr("getInternal", 3, err)
+		return 0, removed, err
+	}
+
 	bufflen := 0
 	if useCap {
 		bufflen = cap(buffer)
@@ -919,6 +962,15 @@ func (object MQObject) Inq(goSelectors []int32) (map[int32]interface{}, error) {
 	var charLength int
 
 	traceEntry("Inq")
+
+	if !IsUsableHObj(object) {
+		err := &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HOBJ_ERROR,
+			verb: "MQINQ",
+		}
+		traceExitErr("Inq", 2, err)
+		return nil, err
+	}
 
 	intAttrCount, _, charAttrLen := getAttrInfo(goSelectors)
 
@@ -1050,6 +1102,15 @@ func (object MQObject) Set(goSelectors map[int32]interface{}) error {
 	var charLength int
 
 	traceEntry("Set")
+
+	if !IsUsableHObj(object) {
+		err := &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HOBJ_ERROR,
+			verb: "MQSET",
+		}
+		traceExitErr("Set", 2, err)
+		return err
+	}
 
 	// Pass through the map twice. First time lets us
 	// create an array of selector names from map keys which is then
@@ -1190,6 +1251,14 @@ func (handle *MQMessageHandle) DltMH(godmho *MQDMHO) error {
 
 	traceEntry("DltMH")
 
+	if !IsUsableHandle(*handle) {
+		err := &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HMSG_ERROR,
+			verb: "MQDLTMH",
+		}
+		traceExitErr("DltMh", 2, err)
+		return err
+	}
 	copyDMHOtoC(&mqdmho, godmho)
 
 	C.MQDLTMH(handle.qMgr.hConn,
@@ -1241,6 +1310,15 @@ func (handle *MQMessageHandle) SetMP(gosmpo *MQSMPO, name string, gopd *MQPD, va
 	var propertyFloat64 C.MQFLOAT64
 
 	traceEntry("SetMP")
+
+	if !IsUsableHandle(*handle) {
+		err := &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HMSG_ERROR,
+			verb: "MQSETMH",
+		}
+		traceExitErr("SetMh", 2, err)
+		return err
+	}
 
 	mqName.VSLength = (C.MQLONG)(len(name))
 	mqName.VSCCSID = C.MQCCSI_APPL
@@ -1373,6 +1451,15 @@ func (handle *MQMessageHandle) DltMP(godmpo *MQDMPO, name string) error {
 
 	traceEntry("DltMP")
 
+	if !IsUsableHandle(*handle) {
+		err := &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HMSG_ERROR,
+			verb: "MQDLTMP",
+		}
+		traceExitErr("DltMp", 2, err)
+		return err
+	}
+
 	mqName.VSLength = (C.MQLONG)(len(name))
 	mqName.VSCCSID = C.MQCCSI_APPL
 	if mqName.VSLength > 0 {
@@ -1429,6 +1516,15 @@ func (handle *MQMessageHandle) InqMP(goimpo *MQIMPO, gopd *MQPD, name string) (s
 	const propbufsize = 10240
 
 	traceEntry("InqMP")
+
+	if !IsUsableHandle(*handle) {
+		err := &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HMSG_ERROR,
+			verb: "MQINQMP",
+		}
+		traceExitErr("InqMp", 2, err)
+		return "", nil, err
+	}
 
 	mqName.VSLength = (C.MQLONG)(len(name))
 	mqName.VSCCSID = C.MQCCSI_APPL
@@ -1546,7 +1642,13 @@ func GetHeader(md *MQMD, buf []byte) (interface{}, int, error) {
 func readStringFromFixedBuffer(r io.Reader, l int32) string {
 	tmpBuf := make([]byte, l)
 	binary.Read(r, endian, tmpBuf)
-	return strings.TrimSpace(string(tmpBuf))
+
+	s := string(tmpBuf)
+	i := strings.IndexByte(s, 0)
+	if i >= 0 {
+		s = s[0:i]
+	}
+	return strings.TrimSpace(s)
 }
 
 // The date/time fields are being taken from a valid MQMD but they still might not be

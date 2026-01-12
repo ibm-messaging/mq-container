@@ -34,6 +34,8 @@ extern void MQCALLBACK_C(MQHCONN hc,MQMD *md,MQGMO *gmo,PMQVOID buf,MQCBC *cbc);
 // These functions deal with stashing the hObj value across callbacks, because
 // the MQ C client will sometimes set hObj=0 for EVENTS (eg qmgr stopping) instead
 // of the registered hObj. That can lead to unexpected callback invocations.
+// This behaviour is now recognised as a defect in the qmgr code; it's being fixed
+// but not for older versions. So we have to be able to cope with it.
 static void *saveHObj(PMQCBD mqcbd, MQHOBJ hObj) {
   mqcbd->CallbackArea = malloc(sizeof(MQHOBJ));
   // If the malloc has failed, you've got real problems. But we can
@@ -221,6 +223,15 @@ func (object *MQObject) CB(goOperation int32, gocbd *MQCBD, gomd *MQMD, gogmo *M
 	var mqgmo C.MQGMO
 
 	traceEntry("CB(Q)")
+
+	if !IsUsableHObj(*object) {
+		err := &MQReturn{MQCC: MQCC_FAILED,
+			MQRC: MQRC_HOBJ_ERROR,
+			verb: "MQCB",
+		}
+		traceExitErr("CB(Q)", 4, err)
+		return err
+	}
 
 	err := checkMD(gomd, "MQCB")
 	if err != nil {

@@ -4,7 +4,7 @@ import (
 	"strconv"
 )
 
-// This file was created from the source tree on 2025-02-22 07:17:06
+// This file was created from the source tree on 2025-10-08 07:55:42
 
 // This module converts a PCF integer type (from the MQIA* ranges) into
 // the prefix that can then be used to convert its value into a string
@@ -43,6 +43,7 @@ var pcfAttrMap = map[int32]string{
 	MQIA_AUTHENTICATION_FAIL_DELAY: "",
 	MQIA_AUTHENTICATION_METHOD:     "MQAUTHENTICATE",
 	MQIA_AUTH_INFO_TYPE:            "MQAIT",
+	MQIA_AUTHOREV_SCOPE:            "MQAUSC",
 	MQIA_AUTHORITY_EVENT:           "MQEVR",
 	MQIA_AUTO_REORGANIZATION:       "MQREORG",
 	MQIA_AUTO_REORG_INTERVAL:       "",
@@ -165,6 +166,8 @@ var pcfAttrMap = map[int32]string{
 	MQIA_NPM_DELIVERY:              "MQDLV",
 	MQIA_OPEN_INPUT_COUNT:          "",
 	MQIA_OPEN_OUTPUT_COUNT:         "",
+	MQIA_OTEL_PROPAGATION_CONTROL:  "MQOTEL_PCTL",
+	MQIA_OTEL_TRACE:                "MQOTEL_TRACE",
 	MQIA_OUTBOUND_PORT_MAX:         "",
 	MQIA_OUTBOUND_PORT_MIN:         "",
 	MQIA_PAGESET_ID:                "",
@@ -364,6 +367,7 @@ var pcfAttrMap = map[int32]string{
 	MQIACF_ERROR_OFFSET:            "",
 	MQIACF_ESCAPE_TYPE:             "MQET",
 	MQIACF_EVENT_APPL_TYPE:         "MQAT",
+	MQIACF_EVENT_DUPLICATE_COUNT:   "",
 	MQIACF_EVENT_ORIGIN:            "MQEVO",
 	MQIACF_EXCLUDE_INTERVAL:        "",
 	MQIACF_EXPIRY:                  "",
