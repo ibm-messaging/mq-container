@@ -2288,3 +2288,62 @@ func TestMissingCertError(t *testing.T) {
 		t.Errorf("Some other error occurred %v", rc)
 	}
 }
+
+// TestReadinessProbe checks if the readiness probe has been logged
+func TestReadinessProbe(t *testing.T) {
+
+	t.Parallel()
+
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=QM1",
+		},
+	}
+
+	id := runContainer(t, cli, &containerConfig)
+	cleanupAfterTest(t, cli, id, false)
+
+	waitForReady(t, cli, id)
+
+	jsonLogs := inspectLogs(t, cli, id)
+
+	if !strings.Contains(jsonLogs, "Readiness Probe Passed:") {
+		t.Errorf("Readiness probe log entry not found in container logs")
+	}
+
+	stopContainer(t, cli, id)
+
+}
+
+// TestLivenessProbe checks if the liveness probe has been logged
+func TestLivenessProbe(t *testing.T) {
+
+	t.Parallel()
+
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=QM1",
+		},
+	}
+
+	id := runContainer(t, cli, &containerConfig)
+	cleanupAfterTest(t, cli, id, false)
+
+	waitForReady(t, cli, id)
+	waitForLive(t, cli, id)
+
+	jsonLogs := inspectLogs(t, cli, id)
+
+	if !strings.Contains(jsonLogs, "Liveness Probe Passed:") {
+		t.Errorf("Liveness probe log entry not found in container logs")
+	}
+
+	stopContainer(t, cli, id)
+
+}

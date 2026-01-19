@@ -34,6 +34,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/tls"
 	"github.com/ibm-messaging/mq-container/pkg/containerruntimelogger"
 	"github.com/ibm-messaging/mq-container/pkg/name"
+	"github.com/ibm-messaging/mq-container/pkg/probesocket"
 )
 
 func doMain() error {
@@ -377,6 +378,19 @@ func doMain() error {
 		return err
 	}
 
+	// setup probe socket connection
+	probeSocketCtx, probeSocketCtxCancel := context.WithCancel(context.Background())
+	defer probeSocketCtxCancel()
+
+	probeSocket, err := probesocket.NewProbeSocket(name, getLogFormat())
+	if err != nil {
+		return err
+	}
+	err = probeSocket.Start(probeSocketCtx)
+	if err != nil {
+		return err
+	}
+
 	//If the queue manager has started successfully, reflect mqsc logs when enabled
 	if checkLogSourceForMirroring("mqsc") {
 		_, err = mirrorMQSCLogs(ctx, &wg, name, mf)
@@ -419,6 +433,10 @@ func doMain() error {
 	}
 	// Wait for terminate signal
 	<-signalControl
+
+	probeSocketCtxCancel()
+	probeSocket.Wait()
+
 	return nil
 }
 

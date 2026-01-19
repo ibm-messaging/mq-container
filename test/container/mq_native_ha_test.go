@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ibm-messaging/mq-container/internal/mqversion"
 	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
 
@@ -343,4 +344,65 @@ func TestNativeHAFailoverWithRoRFs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+// TestStartupProbe creates 3 containers in a Native HA queue manager configuration
+// and check if the the statup probe passes for the active container
+func TestStartupProbe(t *testing.T) {
+
+	cli := ce.NewContainerClient()
+
+	version, err := cli.GetMQVersion(imageName())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isNativeHAUnsupported, err := mqversion.IsVersionLessThan(strings.TrimSpace(version), "9.2.2.0")
+	if err != nil {
+		t.Fatalf("Error comparing versions: %v", err)
+	}
+
+	if isNativeHAUnsupported {
+		t.Skipf("Skipping %s as test requires at least MQ 9.2.2.0 but image version is %s", t.Name(), version)
+	}
+
+	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
+	qmReplicaIds := [3]string{}
+	qmVolumes := []string{}
+
+	//Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	//If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
+	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
+		vol := createVolume(t, cli, containerNames[i])
+		cleanupVolume(t, cli, vol)
+		qmVolumes = append(qmVolumes, vol)
+
+		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
+
+		hostConfig := getHostConfig(t, 1, "", "", vol, "", "", false)
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+
+		networkingConfig := getNativeHANetworkConfig("host")
+
+		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkingConfig, containerNames[i])
+		cleanupAfterTest(t, cli, ctr, false)
+
+		qmReplicaIds[i] = ctr
+	}
+
+	waitForReadyHA(t, cli, qmReplicaIds)
+
+	activeReplicaId, err := getActiveReplicaInstances(t, cli, qmReplicaIds)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	jsonLogs := inspectLogs(t, cli, activeReplicaId.Active)
+
+	if !strings.Contains(jsonLogs, "Startup Probe") {
+		t.Errorf("Startup probe log entry not found in container logs")
+	}
+
 }

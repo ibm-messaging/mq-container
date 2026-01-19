@@ -26,11 +26,13 @@ import (
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/pkg/name"
+	"github.com/ibm-messaging/mq-container/pkg/probesocket"
 )
 
 func queueManagerHealthy(ctx context.Context) (bool, error) {
 	name, err := name.GetQueueManagerName()
 	if err != nil {
+		probesocket.SendProbeLogs(probesocket.ERROR, probesocket.LivenessProbeSockPath, fmt.Sprintf("Liveness Probe Failed: %v", err))
 		return false, err
 	}
 	// Specify the queue manager name, just in case someone's created a second queue manager
@@ -41,6 +43,7 @@ func queueManagerHealthy(ctx context.Context) (bool, error) {
 	fmt.Printf("%s", out)
 	if err != nil {
 		fmt.Println(err)
+		probesocket.SendProbeLogs(probesocket.ERROR, probesocket.LivenessProbeSockPath, fmt.Sprintf("Liveness Probe Failed: %v", err))
 		return false, err
 	}
 	readyStrings := []string{
@@ -52,9 +55,13 @@ func queueManagerHealthy(ctx context.Context) (bool, error) {
 	}
 	for _, checkString := range readyStrings {
 		if strings.Contains(string(out), checkString) {
+			probesocket.SendProbeLogs(probesocket.INFO, probesocket.LivenessProbeSockPath, fmt.Sprintf("Liveness Probe Passed: %v", string(out)))
 			return true, nil
 		}
 	}
+
+	// liveness probe will fail because the queue-manager status is not one of readyStrings
+	probesocket.SendProbeLogs(probesocket.ERROR, probesocket.LivenessProbeSockPath, fmt.Sprintf("Liveness Probe Failed: queue manager returned unhealthy status, %s", string(out)))
 	return false, nil
 }
 
