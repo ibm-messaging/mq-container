@@ -95,30 +95,3 @@ func parseVRMF(vrmfString string) (*vrmf, error) {
 	}
 	return &parsed, nil
 }
-
-func IsVersionLessThan(currentVersion, minSupportedVersion string) (bool, error) {
-
-	compareResult, err := compareVersionStrings(currentVersion, minSupportedVersion)
-	if err != nil {
-		return false, err
-	}
-
-	return compareResult < 0, nil
-
-}
-
-func compareVersionStrings(currentVersion, minSupportedVersion string) (int, error) {
-
-	minSupportedVRMF, err := parseVRMF(minSupportedVersion)
-	if err != nil {
-		return 0, err
-	}
-
-	currentVRMF, err := parseVRMF(currentVersion)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse current version: %w", err)
-	}
-
-	return currentVRMF.compare(*minSupportedVRMF), nil
-
-}

@@ -717,26 +717,6 @@ func waitForReady(t *testing.T, cli ce.ContainerInterface, ID string) {
 	}
 }
 
-func waitForLive(t *testing.T, cli ce.ContainerInterface, ID string) {
-
-	context, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
-	defer cancel()
-
-	for {
-		select {
-		case <-time.After(1 * time.Second):
-			rc, _ := execContainer(t, cli, ID, "", []string{"chkmqhealthy"})
-
-			if rc == 0 {
-				return
-			}
-
-		case <-context.Done():
-			t.Fatal("Timed out waiting for the queue manager to become live")
-		}
-	}
-}
-
 func waitForWebConsoleReady(t *testing.T, cli ce.ContainerInterface, ID string) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)

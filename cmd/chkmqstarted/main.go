@@ -29,7 +29,6 @@ import (
 
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/pkg/name"
-	"github.com/ibm-messaging/mq-container/pkg/probesocket"
 )
 
 func queueManagerStarted(ctx context.Context) (bool, error) {
@@ -155,15 +154,11 @@ func doMain() int {
 
 	started, err := queueManagerStarted(ctx)
 	if err != nil {
-		probesocket.SendProbeLogs(probesocket.ERROR, probesocket.StartupProbeSockPath, fmt.Sprintf("Startup Probe Failed: %v", err))
 		return 2
 	}
 	if !started {
-		probesocket.SendProbeLogs(probesocket.INFO, probesocket.StartupProbeSockPath, "Startup Probe: container not started")
 		return 1
 	}
-
-	probesocket.SendProbeLogs(probesocket.INFO, probesocket.StartupProbeSockPath, "Startup Probe Passed: container started successfully")
 	return 0
 }
 

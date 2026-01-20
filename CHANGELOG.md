@@ -3,7 +3,6 @@
 ## 9.4.5.0 (2026-02)
 
 * Updated to MQ version 9.4.5.0
-* Probe logging is now enabled by default; liveness, readiness, and startup probe logs are written to stdout. Use the `-skip-log` or `--skip-log` flag to suppress probe logging.
 
 ## 9.4.4.0 (2025-10)
 
