@@ -174,6 +174,10 @@ func doMain() error {
 	cleanVolumeBestEffort("/mnt/mqm/scratch", []string{
 		filepath.Join("/mnt/mqm/scratch", "secrets"),
 		filepath.Join("/mnt/mqm/scratch", "termination-log"),
+		filepath.Join("/mnt/mqm/scratch", "MQInstanaTracing/userconfiginstana.ini"),
+		filepath.Join("/mnt/mqm/scratch", "10-dev.mqsc"),
+		filepath.Join("/mnt/mqm/scratch", "20-dev-tls.mqsc"),
+		filepath.Join("/mnt/mqm/scratch", "qm-service-component.ini"),
 	}, log)
 
 	// Create ephemeral volumes
