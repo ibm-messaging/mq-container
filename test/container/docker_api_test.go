@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2024
+© Copyright IBM Corporation 2017, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1446,6 +1446,65 @@ func TestLoggingConsoleSource(t *testing.T) {
 
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
+}
+
+// TestMQEnableCleanTmpOnStartEnabled starts a qmgr with MQ_ENABLE_CLEAN_TMP_ON_START set to true.
+// The test validates that the contents of /tmp is deleted when the container is restarted.
+func TestMQEnableCleanTmpOnStartEnabled(t *testing.T) {
+	t.Parallel()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+	containerConfig := ce.ContainerConfig{
+		Env:   []string{"LICENSE=accept", "MQ_ENABLE_CLEAN_TMP_ON_START=true", "MQ_QMGR_NAME=QM1"},
+		Image: imageName(),
+	}
+
+	// Creates the container, writes to /tmp, then restarts the container
+	id := setupMQEnableCleanTmpOnStartContainer(t, cli, containerConfig)
+	rc, out := execContainer(t, cli, id, "", []string{"bash", "-c", "ls -1 /tmp | wc -l"})
+	if rc != 0 {
+		t.Fatalf("Expected listing files in /tmp to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+	trimmedOutput := strings.TrimSpace(out)
+	if trimmedOutput != "0" {
+		t.Fatalf("Expected listing files in /tmp to give an output of %s, got %s.", "0", trimmedOutput)
+	}
+	rc, out = execContainer(t, cli, id, "", []string{"bash", "-c", "ls -1 /mnt/mqm/tmp | wc -l"})
+	if rc != 0 {
+		t.Fatalf("Expected listing files in /mnt/mqm/tmp to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+	trimmedOutput = strings.TrimSpace(out)
+	if trimmedOutput != "0" {
+		t.Fatalf("Expected listing files in /mnt/mqm/tmp to give an output of %s, got %s.", "0", trimmedOutput)
+	}
+}
+
+// TestMQEnableCleanTmpOnStartDisabled starts a qmgr with the value of MQ_ENABLE_CLEAN_TMP_ON_START set to false.
+// The test validates that the contents of /tmp is not deleted when the container is restarted.
+func TestMQEnableCleanTmpOnStartDisabled(t *testing.T) {
+	t.Parallel()
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+	containerConfig := ce.ContainerConfig{
+		Env:   []string{"LICENSE=accept", "MQ_ENABLE_CLEAN_TMP_ON_START=false", "MQ_QMGR_NAME=QM1"},
+		Image: imageName(),
+	}
+	// Creates the container, writes to /tmp, then restarts the container
+	id := setupMQEnableCleanTmpOnStartContainer(t, cli, containerConfig)
+	rc, out := execContainer(t, cli, id, "", []string{"bash", "-c", "ls -1 /tmp | wc -l"})
+	if rc != 0 {
+		t.Fatalf("Expected listing files in /tmp to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+	trimmedOutput := strings.TrimSpace(out)
+	if trimmedOutput != "1" {
+		t.Fatalf("Expected listing files in /tmp to give an output of %s, got %s.", "1", trimmedOutput)
+	}
+	rc, out = execContainer(t, cli, id, "", []string{"bash", "-c", "ls -1 /mnt/mqm/tmp | wc -l"})
+	if rc != 0 {
+		t.Fatalf("Expected listing files in /mnt/mqm/tmp to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+	trimmedOutput = strings.TrimSpace(out)
+	if trimmedOutput != "1" {
+		t.Fatalf("Expected listing files in /mnt/mqm/tmp to give an output of %s, got %s.", "1", trimmedOutput)
+	}
 }
 
 // TestOldBehaviorWebConsole sets LOG_FORMAT to json and verify logs are indeed in json format

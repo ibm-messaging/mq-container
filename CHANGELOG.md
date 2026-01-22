@@ -3,6 +3,8 @@
 ## 9.4.5.0 (2026-02)
 
 * Updated to MQ version 9.4.5.0
+* New environment variable: MQ_ENABLE_CLEAN_TMP_ON_START
+  * Setting the value to `true` will delete the contents of `/tmp` on container startup
 
 ## 9.4.4.0 (2025-10)
 

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2024
+© Copyright IBM Corporation 2017, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1067,4 +1067,52 @@ func cleanupContainerQuiet(t *testing.T, cli ce.ContainerInterface, ID string) {
 		t.Logf("Cleaning up %v container quietly after test", ID)
 		cleanContainerQuiet(t, cli, ID)
 	})
+}
+
+// setupMQEnableCleanTmpOnStartContainer is used to facilitate tests which validate the environment variable "MQ_ENABLE_CLEAN_TMP_ON_START"
+func setupMQEnableCleanTmpOnStartContainer(t *testing.T, cli ce.ContainerClient, containerConfig ce.ContainerConfig) string {
+	// Mount a volume to /tmp to store the data
+	ephTmp := createVolume(t, cli, "ephTmp"+t.Name())
+	cleanupVolume(t, cli, ephTmp)
+	hostConfig := ce.ContainerHostConfig{
+		Binds: []string{
+			ephTmp + ":/tmp",
+		},
+	}
+	addCoverageBindIfAvailable(t, &hostConfig)
+
+	networkingConfig := ce.ContainerNetworkSettings{}
+	id, err := cli.ContainerCreate(&containerConfig, &hostConfig, &networkingConfig, t.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleanupAfterTest(t, cli, id, false)
+	startContainer(t, cli, id)
+	waitForReady(t, cli, id)
+
+	// Write a file to /tmp so that we can check if it is deleted or not
+	rc, out := execContainer(t, cli, id, "", []string{"bash", "-c", "touch /tmp/test-file.txt"})
+	if rc != 0 {
+		t.Fatalf("Expected writing a file to /tmp to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+	// Write a file to /mnt/mqm/tmp so that we can check if it is deleted or not
+	rc, out = execContainer(t, cli, id, "", []string{"bash", "-c", "touch /mnt/mqm/tmp/test-file.txt"})
+	if rc != 0 {
+		t.Fatalf("Expected writing a file to /tmp to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+	// Restart the container to allow startup code to be run
+	stopContainer(t, cli, id)
+
+	// Check the container status to ensure it has stopped
+	containerState, err := cli.ContainerInspectWithFormat("{{.State.Status}}", id)
+	if err != nil {
+		t.Errorf("failed to determine if the container had stopped: %v", err)
+	}
+	if containerState != "exited" {
+		t.Fatalf("container failed to stop: container state was not \"exited\", instead it was: %q", containerState)
+	}
+	// Start the container again
+	startContainer(t, cli, id)
+	waitForReady(t, cli, id)
+	return id
 }

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2024
+© Copyright IBM Corporation 2017, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import (
 	"flag"
 	"os"
 	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/ibm-messaging/mq-container/internal/copy"
@@ -116,6 +117,18 @@ func doMain() error {
 		return err
 	}
 
+	err = createVolume("/mnt/mqm/scratch")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	err = createVolume("/mnt/mqm/tmp")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
 	err = createVolume("/mnt/mqm-log/log")
 	if err != nil {
 		logTermination(err)
@@ -141,6 +154,27 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
+	// Delete the contents of the /tmp directory if 'MQ_ENABLE_CLEAN_TMP_ON_START' is set to 'true'.
+	if os.Getenv("MQ_ENABLE_CLEAN_TMP_ON_START") == "true" {
+		err = cleanVolume("/tmp")
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+
+		err = cleanVolume("/mnt/mqm/tmp")
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+	}
+
+	// Delete the contents of /mnt/mqm/scratch, respecting skipped paths, and warning on failures.
+	cleanVolumeBestEffort("/mnt/mqm/scratch", []string{
+		filepath.Join("/mnt/mqm/scratch", "secrets"),
+		filepath.Join("/mnt/mqm/scratch", "termination-log"),
+	}, log)
 
 	// Create ephemeral volumes
 	err = createVolume("/run/scratch/runmqserver")

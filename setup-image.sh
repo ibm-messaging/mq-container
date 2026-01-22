@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- mode: sh -*-
-# © Copyright IBM Corporation 2015, 2023
+# © Copyright IBM Corporation 2015, 2026
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +36,8 @@ install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-log/log
 install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-data
 install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-data/qmgrs
 install --directory --mode 2775 --owner 1001 --group root /run
+install --directory --mode 2775 --owner 1001 --group root /mnt/mqm/scratch
+install --directory --mode 2775 --owner 1001 --group root /mnt/mqm/tmp
 
 # Create the directory for MQ configuration files
 install --directory --mode 2775 --owner 1001 --group root /etc/mqm

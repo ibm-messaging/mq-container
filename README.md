@@ -33,6 +33,7 @@ Note that in order to use the image, it is necessary to accept the terms of the 
 - **MQ_LOGGING_CONSOLE_EXCLUDE_ID** - Excludes log messages with the specified ID.  The log messages still appear in the log file on disk, but are excluded from the container's stdout.  Defaults to "AMQ5041I,AMQ5052I,AMQ5051I,AMQ5037I,AMQ5975I".
 - **MQ_LOGGING_METRICS_AUDIT_ENABLED** - Set this to `true` to enable audit logging of access to the Prometheus metrics endpoint. Log output is to a JSON file in `/var/mqm/errors/`. Requires that `MQ_ENABLE_METRICS=true` is also set.
 - **MQ_ENABLE_METRICS** - Set this to `true` to generate Prometheus metrics for your Queue Manager.
+- **MQ_ENABLE_CLEAN_TMP_ON_START** - Set this to `true` to delete the contents of `/tmp` on container startup
 
 See the [default developer configuration docs](docs/developer-config.md) for the extra environment variables supported by the MQ Advanced for Developers image.
 
