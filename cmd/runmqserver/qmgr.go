@@ -167,7 +167,11 @@ func startQueueManager(name string) error {
 
 func stopQueueManager(name string) error {
 	log.Println("Stopping queue manager")
-	qmGracePeriod := os.Getenv("MQ_GRACE_PERIOD")
+	qmGracePeriod, err := strconv.Atoi(os.Getenv("MQ_GRACE_PERIOD"))
+	if err != nil {
+		log.Printf("Error processing MQ_GRACE_PERIOD, the default value for QM Grace Period will be used. Err: %v", err)
+		qmGracePeriod = 30
+	}
 	status, err := ready.Status(context.Background(), name)
 	if err != nil {
 		log.Printf("Error getting status for queue manager %v. The 'dspmq' command returned reason: %v",
@@ -175,13 +179,14 @@ func stopQueueManager(name string) error {
 
 		return err
 	}
+	qmGracePeriodStr := strconv.Itoa(qmGracePeriod)
 	isStandby := status.StandbyQM()
-	args := []string{"-w", "-r", "-tp", qmGracePeriod, name}
+	args := []string{"-w", "-r", "-tp", qmGracePeriodStr, name}
 	if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
 		if isStandby {
 			args = []string{"-x", name}
 		} else {
-			args = []string{"-s", "-w", "-tp", qmGracePeriod, name}
+			args = []string{"-s", "-w", "-tp", qmGracePeriodStr, name}
 		}
 	}
 	out, rc, err := command.Run("endmqm", args...)
