@@ -172,7 +172,7 @@ func doMain() error {
 
 	// Delete the contents of /mnt/mqm/scratch, respecting skipped paths, and warning on failures.
 	cleanVolumeBestEffort("/mnt/mqm/scratch", []string{
-		filepath.Join("/mnt/mqm/scratch", "secrets"),
+		filepath.Join("/mnt/mqm/scratch", "secrets/kubernetes.io/serviceaccount"),
 		filepath.Join("/mnt/mqm/scratch", "termination-log"),
 		filepath.Join("/mnt/mqm/scratch", "MQInstanaTracing/userconfiginstana.ini"),
 		filepath.Join("/mnt/mqm/scratch", "10-dev.mqsc"),
