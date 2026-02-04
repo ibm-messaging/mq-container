@@ -16,5 +16,5 @@ docker run \
   --env LICENSE=accept \
   --env MQ_QMGR_NAME=QM1 \
   --detach \
-  ibm-mqadvanced-server:9.4.5.0-amd64
+  ibm-mqadvanced-server:10.0.0.0-amd64
 ```
