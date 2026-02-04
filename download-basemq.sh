@@ -38,7 +38,7 @@ elif [ "$FILE_FOUND" -eq 404 ]; then
    curl -s --list-only --location $BASE_MQ_LOCATION | sed 's/href=/\nhref=/g' |grep href=\" |sed 's/.*href="//g;s/".*//g'  > downloads/base-mq-file-list.txt
    echo "$MQ_ARCHIVE_DEV is not available at $BASE_MQ_LOCATION" && echo "================================================="
    grep "$MQ_VERSION_VRM" downloads/base-mq-file-list.txt| grep "IBM-MQ-" && echo "=================================================" && echo "$MQ_VERSION_VRM images available in the download site are listed above"
-   echo "Choose any of the available version and run build command for example,'MQ_VERSION=9.4.0.0 make build-devserver'"
+   echo "Choose any of the available version and run build command for example,'MQ_VERSION=10.0.0.0 make build-devserver'"
    rm -f downloads/base-mq-file-list.txt
    exit 1
 else
