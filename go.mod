@@ -1,6 +1,6 @@
 module github.com/ibm-messaging/mq-container
 
-go 1.25.3
+go 1.25.5
 
 require (
 	github.com/ibm-messaging/mq-golang v2.0.0+incompatible

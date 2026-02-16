@@ -482,6 +482,8 @@ func TestSSLFIPSYES(t *testing.T) {
 
 // TestDevSecureFIPSYESWeb verifies if the MQ Web Server is running in FIPS mode
 func TestDevSecureFIPSTrueWeb(t *testing.T) {
+	t.Skipf("Skipping %v until test defect(5439) is fixed", t.Name())
+	
 	t.Parallel()
 
 	cli := ce.NewContainerClient()
