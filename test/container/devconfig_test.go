@@ -2,7 +2,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2023
+© Copyright IBM Corporation 2018, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -480,10 +480,8 @@ func TestSSLFIPSYES(t *testing.T) {
 	stopContainer(t, cli, ID)
 }
 
-// TestDevSecureFIPSYESWeb verifies if the MQ Web Server is running in FIPS mode
+// TestDevSecureFIPSTrueWeb verifies if the MQ Web Server is running in FIPS mode
 func TestDevSecureFIPSTrueWeb(t *testing.T) {
-	t.Skipf("Skipping %v until test defect(5439) is fixed", t.Name())
-	
 	t.Parallel()
 
 	cli := ce.NewContainerClient()
@@ -507,8 +505,8 @@ func TestDevSecureFIPSTrueWeb(t *testing.T) {
 	}
 	hostConfig := ce.ContainerHostConfig{
 		Binds: []string{
-			tlsDir(t, false) + ":/etc/mqm/pki/keys/default",
-			tlsDir(t, false) + ":/etc/mqm/pki/trust/default",
+			tlsDirFIPS(t, false) + ":/etc/mqm/pki/keys/default",
+			tlsDirFIPS(t, false) + ":/etc/mqm/pki/trust/default",
 		},
 	}
 	addCoverageBindIfAvailable(t, &hostConfig)
@@ -533,7 +531,7 @@ func TestDevSecureFIPSTrueWeb(t *testing.T) {
 
 	startContainer(t, cli, ID)
 	waitForReady(t, cli, ID)
-	cert := filepath.Join(tlsDir(t, true), "server.crt")
+	cert := filepath.Join(tlsDirFIPS(t, true), "server.crt")
 	waitForWebReady(t, cli, ID, createTLSConfig(t, cert, tlsPassPhrase))
 
 	// Create a TLS Config with a cipher to use when connecting over HTTPS

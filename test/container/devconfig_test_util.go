@@ -2,7 +2,7 @@
 // +build mqdev
 
 /*
-© Copyright IBM Corporation 2018, 2024
+© Copyright IBM Corporation 2018, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -84,6 +84,10 @@ func waitForWebReady(t *testing.T, cli ce.ContainerInterface, ID string, tlsConf
 // tlsDir returns the host directory where the test certificate(s) are located
 func tlsDir(t *testing.T, unixPath bool) string {
 	return pathutils.CleanPath(filepath.Dir(getCwd(t, unixPath)), "../tls")
+}
+
+func tlsDirFIPS(t *testing.T, unixPath bool) string {
+	return pathutils.CleanPath(filepath.Dir(getCwd(t, unixPath)), "../tlsfips")
 }
 
 func tlsDirWithCA(t *testing.T, unixPath bool) string {
