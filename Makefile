@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017, 2025
+# © Copyright IBM Corporation 2017, 2026
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -62,18 +62,24 @@ MQ_MANIFEST_TAG ?= $(MQ_VERSION)$(RELEASE_TAG)$(LTS_TAG)$(MQ_MANIFEST_TAG_SUFFIX
 MQ_TAG ?= $(MQ_MANIFEST_TAG)-$(ARCH)
 # COMMAND is the container command to run.  "podman" or "docker"
 COMMAND ?=$(shell type -p podman 2>&1 >/dev/null && echo podman || echo docker)
-# MQ_DELIVERY_REGISTRY_HOSTNAME is a remote registry to push the MQ Image to (if required)
-MQ_DELIVERY_REGISTRY_HOSTNAME ?=
-# MQ_DELIVERY_REGISTRY_NAMESPACE is the namespace/path on the delivery registry (if required)
-MQ_DELIVERY_REGISTRY_NAMESPACE ?=
-# MQ_DELIVERY_REGISTRY_USER is the user for the remote registry (if required)
-MQ_DELIVERY_REGISTRY_USER ?=
-# MQ_DELIVERY_REGISTRY_CREDENTIAL is the password/API key for the remote registry (if required)
-MQ_DELIVERY_REGISTRY_CREDENTIAL ?=
+# IMAGE_REGISTRY_DELIVERY_HOSTNAME is a icr registry to push the MQ Image to (if required)
+IMAGE_REGISTRY_DELIVERY_HOSTNAME ?=
+# IMAGE_REGISTRY_DELIVERY_NAMESPACE is the namespace/path on the delivery registry (if required)
+IMAGE_REGISTRY_DELIVERY_NAMESPACE ?=
+# IMAGE_REGISTRY_DELIVERY_USER is the user for the remote registry (if required)
+IMAGE_REGISTRY_DELIVERY_USER ?=
+# IMAGE_REGISTRY_DELIVERY_CREDENTIAL is the password/API key for the remote registry (if required)
+IMAGE_REGISTRY_DELIVERY_CREDENTIAL ?=
 # LTS is a boolean value to enable/disable LTS container build
 LTS ?= false
 # VOLUME_MOUNT_OPTIONS is used when bind-mounting files from the "downloads" directory into the container.  By default, SELinux labels are automatically re-written, but this doesn't work on some filesystems with extended attributes (xattrs).  You can turn off the label re-writing by setting this variable to be blank.
 VOLUME_MOUNT_OPTIONS ?= :Z
+
+# Set feature override variables to default values
+# FEATURE_BUILD_OVERRIDE and FEATURE_BUILD_OVERRIDE_NAMESPACE are set to True in the respective SPS triggers
+FEATURE_BUILD_OVERRIDE ?= false
+IMAGE_REGISTRY_DELIVERY_NAMESPACE_OVERRIDE ?=
+IMAGE_REGISTRY_DELIVERY_REPO_PREFIX_OVERRIDE ?=
 
 ###############################################################################
 # Other variables
@@ -175,7 +181,7 @@ ifneq "$(BUILD_RSYNC_SERVER)" "$(EMPTY)"
 	rsync -rv -e "ssh -o BatchMode=yes -q -o StrictHostKeyChecking=no" --include="*/" --include="*.tar.gz" --exclude="*" $(BUILD_RSYNC_USER)@$(BUILD_RSYNC_SERVER):"$(BUILD_RSYNC_PATH)" downloads/$(MQ_ARCHIVE_DEV)
 else
 ifneq "$(MQ_ARCHIVE_REPOSITORY_DEV)" "$(EMPTY)"
-	curl --fail --user $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" --output downloads/$(MQ_ARCHIVE_DEV)
+	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" --output downloads/$(MQ_ARCHIVE_DEV)
 else
 	./download-basemq.sh -r $(MQ_ARCHIVE_DEV) -v $(MQ_VERSION_VRM)
 endif
@@ -188,7 +194,7 @@ ifneq "$(BUILD_RSYNC_SERVER)" "$(EMPTY)"
 	rsync -rv -e "ssh -o BatchMode=yes -q -o StrictHostKeyChecking=no" --include="*/" --include="*.tar.gz" --exclude="*" $(BUILD_RSYNC_USER)@$(BUILD_RSYNC_SERVER):"$(BUILD_RSYNC_PATH)" downloads/$(MQ_ARCHIVE)
 else
 ifneq "$(MQ_ARCHIVE_REPOSITORY)" "$(EMPTY)"
-	curl --fail --user $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY)" --output downloads/$(MQ_ARCHIVE)
+	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY)" --output downloads/$(MQ_ARCHIVE)
 endif
 endif
 
@@ -352,90 +358,84 @@ include Makefile.formatting.mk
 ###############################################################################
 .PHONY: pull-mq-archive
 pull-mq-archive:
-	curl --fail --user $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY)" --output downloads/$(MQ_ARCHIVE)
+	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY)" --output downloads/$(MQ_ARCHIVE)
 
 .PHONY: pull-mq-archive-dev
 pull-mq-archive-dev:
-	curl --fail --user $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" --output downloads/$(MQ_ARCHIVE_DEV)
+	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" --output downloads/$(MQ_ARCHIVE_DEV)
 
 .PHONY: push-advancedserver
 push-advancedserver:
-	@if [ $(MQ_DELIVERY_REGISTRY_NAMESPACE) = "master-fake" ]; then\
-		echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
-	fi
-	$(info $(SPACER)$(shell printf $(TITLE)"Push production image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
-	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
-	$(COMMAND) tag $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
-	$(COMMAND) push $(COMPRESSION_FLAGS) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
+	$(info $(SPACER)$(shell printf $(TITLE)"Push production image to $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)"$(END)))
+	$(COMMAND) login $(IMAGE_REGISTRY_DELIVERY_HOSTNAME) -u $(IMAGE_REGISTRY_DELIVERY_USER) -p $(IMAGE_REGISTRY_DELIVERY_CREDENTIAL)
+	$(COMMAND) tag $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG) $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
+	$(COMMAND) push $(COMPRESSION_FLAGS) $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
 
 .PHONY: push-devserver
 push-devserver:
-	@if [ $(MQ_DELIVERY_REGISTRY_NAMESPACE) = "master-fake" ]; then\
-		echo "Detected fake master build. Note that the push destination is set to the fake master namespace: $(MQ_DELIVERY_REGISTRY_FULL_PATH)";\
-	fi
-	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
-	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
-	$(COMMAND) tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
-	$(COMMAND) push $(COMPRESSION_FLAGS) $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
+	$(info $(SPACER)$(shell printf $(TITLE)"Push developer image to $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)"$(END)))
+	$(COMMAND) login $(IMAGE_REGISTRY_DELIVERY_HOSTNAME) -u $(IMAGE_REGISTRY_DELIVERY_USER) -p $(IMAGE_REGISTRY_DELIVERY_CREDENTIAL)
+	$(COMMAND) tag $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG) $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
+	$(COMMAND) push $(COMPRESSION_FLAGS) $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
 
 .PHONY: pull-advancedserver
 pull-advancedserver:
-	$(info $(SPACER)$(shell printf $(TITLE)"Pull production image from $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
-	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
-	$(COMMAND) pull $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
-	$(COMMAND) tag $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME) $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG)
+	$(info $(SPACER)$(shell printf $(TITLE)"Pull production image from $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)"$(END)))
+	$(COMMAND) login $(IMAGE_REGISTRY_DELIVERY_HOSTNAME) -u $(IMAGE_REGISTRY_DELIVERY_USER) -p $(IMAGE_REGISTRY_DELIVERY_CREDENTIAL)
+	$(COMMAND) pull $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME)
+	$(COMMAND) tag $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)/$(MQ_IMAGE_FULL_RELEASE_NAME) $(MQ_IMAGE_ADVANCEDSERVER)\:$(MQ_TAG)
 
 .PHONY: pull-devserver
 pull-devserver:
-	$(info $(SPACER)$(shell printf $(TITLE)"Pull developer image from $(MQ_DELIVERY_REGISTRY_FULL_PATH)"$(END)))
-	$(COMMAND) login $(MQ_DELIVERY_REGISTRY_HOSTNAME) -u $(MQ_DELIVERY_REGISTRY_USER) -p $(MQ_DELIVERY_REGISTRY_CREDENTIAL)
-	$(COMMAND) pull $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
-	$(COMMAND) tag $(MQ_DELIVERY_REGISTRY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME) $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG)
+	$(info $(SPACER)$(shell printf $(TITLE)"Pull developer image from $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)"$(END)))
+	$(COMMAND) login $(IMAGE_REGISTRY_DELIVERY_HOSTNAME) -u $(IMAGE_REGISTRY_DELIVERY_USER) -p $(IMAGE_REGISTRY_DELIVERY_CREDENTIAL)
+	$(COMMAND) pull $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME)
+	$(COMMAND) tag $(IMAGE_REGISTRY_DELIVERY_FULL_PATH)/$(MQ_IMAGE_DEV_FULL_RELEASE_NAME) $(MQ_IMAGE_DEVSERVER)\:$(MQ_TAG)
 
-# sps: modify the build scripts path
+
 .PHONY: push-manifest
 push-manifest: build-skopeo-container
 	$(info $(SPACER)$(shell printf $(TITLE)"** Determining the image digests **"$(END)))
 ifneq "$(LTS)" "true"
-	$(eval MQ_IMAGE_DEVSERVER_AMD64_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_AMD64) | jq -r .Digest))
-	$(eval MQ_IMAGE_DEVSERVER_S390X_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_S390X) | jq -r .Digest))
-	$(eval MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_PPC64LE) | jq -r .Digest))
+	$(eval MQ_IMAGE_DEVSERVER_AMD64_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_AMD64) | jq -r .Digest))
+	$(eval MQ_IMAGE_DEVSERVER_S390X_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_S390X) | jq -r .Digest))
+	$(eval MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_PPC64LE) | jq -r .Digest))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_AMD64) has a digest of $(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_S390X) has a digest of $(MQ_IMAGE_DEVSERVER_S390X_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_PPC64LE) has a digest of $(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)**"$(END)))
 endif
-	$(eval MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_AMD64) | jq -r .Digest))
-	$(eval MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_S390X) | jq -r .Digest))
-	$(eval MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_AMD64) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_S390X) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) | jq -r .Digest))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_AMD64) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_S390X) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)**"$(END)))
 ifneq "$(LTS)" "true"
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_DEVSERVER_MANIFEST)**"$(END)))
-	COMMAND=$(COMMAND) PUSH_OPTIONS=$(PUSH_OPTIONS) COMPRESSION_FLAGS="$(COMPRESSION_FLAGS)" ./$(BUILD_SCRIPTS_PATH)/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_DEVSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL)  -d "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST) $(MQ_IMAGE_DEVSERVER_S390X_DIGEST) $(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)" $(END)
+	COMMAND=$(COMMAND) PUSH_OPTIONS=$(PUSH_OPTIONS) COMPRESSION_FLAGS="$(COMPRESSION_FLAGS)" ./$(BUILD_SCRIPTS_PATH)/create-manifest-list.sh -r $(IMAGE_REGISTRY_DELIVERY_HOSTNAME) -n $(IMAGE_REGISTRY_DELIVERY_NAMESPACE) -i $(MQ_IMAGE_DEVSERVER) -t $(MQ_MANIFEST_TAG) -u $(IMAGE_REGISTRY_DELIVERY_USER) -p $(IMAGE_REGISTRY_DELIVERY_CREDENTIAL)  -d "$(MQ_IMAGE_DEVSERVER_AMD64_DIGEST) $(MQ_IMAGE_DEVSERVER_S390X_DIGEST) $(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)" $(END)
 endif
 	$(info $(shell printf "** Calling script to create fat-manifest for $(MQ_IMAGE_ADVANCEDSERVER_MANIFEST)**"$(END)))
-	COMMAND=$(COMMAND) PUSH_OPTIONS=$(PUSH_OPTIONS) COMPRESSION_FLAGS="$(COMPRESSION_FLAGS)" ./$(BUILD_SCRIPTS_PATH)/create-manifest-list.sh -r $(MQ_DELIVERY_REGISTRY_HOSTNAME) -n $(MQ_DELIVERY_REGISTRY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG) -u $(MQ_ARCHIVE_REPOSITORY_USER) -p $(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)" $(END)
+	COMMAND=$(COMMAND) PUSH_OPTIONS=$(PUSH_OPTIONS) COMPRESSION_FLAGS="$(COMPRESSION_FLAGS)" ./$(BUILD_SCRIPTS_PATH)/create-manifest-list.sh -r $(IMAGE_REGISTRY_DELIVERY_HOSTNAME) -n $(IMAGE_REGISTRY_DELIVERY_NAMESPACE) -i $(MQ_IMAGE_ADVANCEDSERVER) -t $(MQ_MANIFEST_TAG) -u $(IMAGE_REGISTRY_DELIVERY_USER) -p $(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) -d "$(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST) $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)" $(END)
 
-#sps : modify the build scripts path
+
 .PHONY: build-manifest
 build-manifest:	build-skopeo-container
-	$(eval MQ_IMAGE_DEVSERVER_AMD64_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_AMD64) | jq -r .Digest))
-	$(eval MQ_IMAGE_DEVSERVER_S390X_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_S390X) | jq -r .Digest))
-	$(eval MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_PPC64LE) | jq -r .Digest))
+	$(eval MQ_IMAGE_DEVSERVER_AMD64_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_AMD64) | jq -r .Digest))
+	$(eval MQ_IMAGE_DEVSERVER_S390X_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_S390X) | jq -r .Digest))
+	$(eval MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_PPC64LE) | jq -r .Digest))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_AMD64) has a digest of $(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_S390X) has a digest of $(MQ_IMAGE_DEVSERVER_S390X_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_DEVSERVER_PPC64LE) has a digest of $(MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST)**"$(END)))
 
-	$(eval MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_AMD64) | jq -r .Digest))
-	$(eval MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_S390X) | jq -r .Digest))
-	$(eval MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_AMD64) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_S390X) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) | jq -r .Digest))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_AMD64) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_S390X) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE) has a digest of $(MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST)**"$(END)))
 
-	$(eval MQ_IMAGE_DEVSERVER_MANIFEST_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_MANIFEST_IFIX) | jq -r .Digest))
-	$(eval MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(MQ_ARCHIVE_REPOSITORY_USER):$(MQ_ARCHIVE_REPOSITORY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCESERVER_MANIFEST_IFIX) | jq -r .Digest))
+	$(eval MQ_IMAGE_DEVSERVER_MANIFEST_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_DEVSERVER_MANIFEST_IFIX) | jq -r .Digest))
+	$(eval MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST=$(shell $(COMMAND) run $(NETWORK) skopeo:latest --override-os linux inspect --creds $(IMAGE_REGISTRY_DELIVERY_USER):$(IMAGE_REGISTRY_DELIVERY_CREDENTIAL) docker://$(MQ_IMAGE_ADVANCESERVER_MANIFEST_IFIX) | jq -r .Digest))
 	$(info $(shell printf "** Determined the built has a advanceserver digest for ifix of $(MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST)**"$(END)))
 	$(info $(shell printf "** Determined the built has a devserver digest for ifix  of $(MQ_IMAGE_DEVSERVER_MANIFEST_DIGEST)**"$(END)))
 	@./$(BUILD_SCRIPTS_PATH)/create-build-manifest.sh -f $(BUILD_MANIFEST_FILE) -o $(MQ_MANIFEST_TAG) -t $(MQ_IMAGE_DEVSERVER_AMD64_DIGEST)  -u ${MQ_IMAGE_DEVSERVER_S390X_DIGEST} -p ${MQ_IMAGE_DEVSERVER_PPC64LE_DIGEST} -r ${MQ_IMAGE_DEVSERVER_MANIFEST_DIGEST} -n $(MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST) -a ${MQ_IMAGE_ADVANCEDSERVER_S390X_DIGEST} -m ${MQ_IMAGE_ADVANCEDSERVER_PPC64LE_DIGEST} -s ${MQ_IMAGE_ADVANCESERVER_MANIFEST_DIGEST}
@@ -454,7 +454,7 @@ clean:
 	rm -rf ./build
 	rm -rf ./deps
 
-#sps :modify the build scripts path
+
 .PHONY: go-install
 go-install:
 	ARCH=$(ARCH) ./$(BUILD_SCRIPTS_PATH)/go-install.sh
@@ -463,7 +463,7 @@ go-install:
 install-build-deps:
 	ARCH=$(ARCH) ./install-build-deps.sh
 
-#sps :modify the build scripts path
+
 .PHONY: install-credential-helper
 install-credential-helper:
 ifeq ($(ARCH),amd64)
@@ -527,7 +527,6 @@ ifneq (,$(findstring podman,$(COMMAND)))
 	@test "$(word 1,$(subst ., ,$(PODMAN_VERSION)))" -ge "4" || (echo "Error: Podman version 4.4 or greater is required" && exit 1)
 endif
 
-#sps : modify the branch
 .PHONY: commit-build-manifest
 commit-build-manifest:
 	@echo "The value of CURRENT_BRANCH is: $(PIPELINE_BRANCH)"
