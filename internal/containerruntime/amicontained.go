@@ -45,7 +45,6 @@ import (
 	"strings"
 
 	"github.com/syndtr/gocapability/capability"
-	"golang.org/x/sys/unix"
 )
 
 // ContainerRuntime is the type for the various container runtime strings.
@@ -218,36 +217,6 @@ func GetCapabilities(pid int) (map[string][]string, error) {
 	}
 
 	return allowedCaps, nil
-}
-
-// GetSeccompEnforcingMode returns the seccomp enforcing level (disabled, filtering, strict)
-// for a process.
-// If pid is less than one, it returns the seccomp enforcing mode for "self".
-func GetSeccompEnforcingMode(pid int) SeccompMode {
-	file := "/proc/self/status"
-	if pid > 0 {
-		file = fmt.Sprintf("/proc/%d/status", pid)
-	}
-
-	return getSeccompEnforcingMode(readFileString(file))
-}
-
-func getSeccompEnforcingMode(input string) SeccompMode {
-	mode := getStatusEntry(input, "Seccomp:")
-	sm, ok := seccompModes[mode]
-	if ok {
-		return sm
-	}
-
-	// Pre linux 3.8, check if Seccomp is supported, via CONFIG_SECCOMP.
-	if err := unix.Prctl(unix.PR_GET_SECCOMP, 0, 0, 0, 0); err != unix.EINVAL {
-		// Make sure the kernel has CONFIG_SECCOMP_FILTER.
-		if err := unix.Prctl(unix.PR_SET_SECCOMP, unix.SECCOMP_MODE_FILTER, 0, 0, 0); err != unix.EINVAL {
-			return SeccompModeStrict
-		}
-	}
-
-	return SeccompModeDisabled
 }
 
 // TODO: make this function more efficient and read the file line by line.
