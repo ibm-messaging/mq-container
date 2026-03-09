@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2023
+© Copyright IBM Corporation 2017, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
 	containerruntime "github.com/ibm-messaging/mq-container/internal/containerruntime"
@@ -146,6 +147,14 @@ func updateCommandLevel() error {
 }
 
 func startQueueManager(name string) error {
+	if os.Getenv("MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE") == "true" {
+		// Set the soft limit again before starting MQ, just in case it has been altered.
+		err := setNoFileSoftLimitEqualToHardLimit()
+		if err != nil {
+			log.Printf("Warning: Unable to increase the soft limit for the number of open files. Err: %v", err)
+		}
+	}
+
 	log.Println("Starting queue manager")
 	out, rc, err := command.Run("strmqm", "-x", name)
 	if err != nil {
@@ -362,4 +371,18 @@ func replaceCharsInQMName(qmname string) string {
 		replacedName = strings.ReplaceAll(replacedName, "/", "&")
 	}
 	return replacedName
+}
+
+// setNoFileSoftLimitEqualToHardLimit sets the soft limit for open file descriptors equal to the hard limit
+func setNoFileSoftLimitEqualToHardLimit() error {
+	// Go sets the soft limit to the hard limit - 1 when 'os' is imported, as well as caching the original value and using it for child processes.
+	// Explicitly set the soft limit equal to the hard limit (Which will also clear the cache).
+	var limit syscall.Rlimit
+	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit)
+	if err != nil {
+		return err
+	}
+	limit.Cur = limit.Max
+	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit)
+	return err
 }

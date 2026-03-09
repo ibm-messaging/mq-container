@@ -1,7 +1,7 @@
 package containerengine
 
 /*
-© Copyright IBM Corporation 2017, 2024
+© Copyright IBM Corporation 2017, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -121,6 +121,7 @@ var argNetwork = "--network"
 var argSecurityOptions = "--security-opt"
 var argSignal = "--signal"
 var argReadOnlyRootfs = "--read-only"
+var argUlimit = "--ulimit"
 
 // generic
 var toolVersion = "version"
@@ -165,7 +166,15 @@ type ContainerHostConfig struct {
 	CapAdd         []string      // Linux capabilities to add to the container
 	CapDrop        []string      // Linux capabilities to drop from the container
 	SecurityOpt    []string
-	ReadOnlyRootfs bool // Readonly root file system
+	ReadOnlyRootfs bool     // Readonly root file system
+	Ulimits        []Ulimit // Ulimit options
+}
+
+// Ulimit represents a ulimit setting
+type Ulimit struct {
+	Name string
+	Soft int64
+	Hard int64
 }
 
 type ContainerNetworkSettings struct {
@@ -705,6 +714,13 @@ func getHostConfigArgs(args []string, hostConfig *ContainerHostConfig) []string 
 	// Add --read-only flag to enable Read Only Root File system on the container
 	if hostConfig.ReadOnlyRootfs {
 		args = append(args, []string{argReadOnlyRootfs}...)
+	}
+	// Add ulimit options
+	if hostConfig.Ulimits != nil {
+		for _, ulimit := range hostConfig.Ulimits {
+			ulimitStr := fmt.Sprintf("%s=%d:%d", ulimit.Name, ulimit.Soft, ulimit.Hard)
+			args = append(args, []string{argUlimit, ulimitStr}...)
+		}
 	}
 
 	return args

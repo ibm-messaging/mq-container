@@ -44,6 +44,14 @@ func doMain() error {
 	var devFlag = flag.Bool("dev", false, "used when running this program from runmqdevserver to control how TLS is configured")
 	flag.Parse()
 
+	if os.Getenv("MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE") == "true" {
+		// Set the soft limit for number of open files equal to the hard limit.
+		err := setNoFileSoftLimitEqualToHardLimit()
+		if err != nil {
+			log.Printf("Warning: Unable to increase the soft limit for the number of open files. Err: %v", err)
+		}
+	}
+
 	name, nameErr := name.GetQueueManagerName()
 	mf, err := configureLogger(name)
 	if err != nil {

@@ -34,6 +34,7 @@ Note that in order to use the image, it is necessary to accept the terms of the 
 - **MQ_LOGGING_METRICS_AUDIT_ENABLED** - Set this to `true` to enable audit logging of access to the Prometheus metrics endpoint. Log output is to a JSON file in `/var/mqm/errors/`. Requires that `MQ_ENABLE_METRICS=true` is also set.
 - **MQ_ENABLE_METRICS** - Set this to `true` to generate Prometheus metrics for your Queue Manager.
 - **MQ_ENABLE_CLEAN_TMP_ON_START** - Set this to `true` to delete the contents of `/tmp` on container startup
+- **MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE** - Set this to `true` to enable the soft limit for the number of open files to be increased up to the hard limit before starting MQ. MQ will run with the increased soft limit. Defaults to `true`.
 
 See the [default developer configuration docs](docs/developer-config.md) for the extra environment variables supported by the MQ Advanced for Developers image.
 
