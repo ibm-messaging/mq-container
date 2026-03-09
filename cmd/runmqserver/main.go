@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2024
+© Copyright IBM Corporation 2017, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,6 +41,14 @@ func doMain() error {
 	var noLogRuntimeFlag = flag.Bool("nologruntime", false, "used when running this program from another program, to control log output")
 	var devFlag = flag.Bool("dev", false, "used when running this program from runmqdevserver to control how TLS is configured")
 	flag.Parse()
+
+	if os.Getenv("MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE") == "true" {
+		// Set the soft limit for number of open files equal to the hard limit.
+		err := setNoFileSoftLimitEqualToHardLimit()
+		if err != nil {
+			log.Printf("Warning: Unable to increase the soft limit for the number of open files. Err: %v", err)
+		}
+	}
 
 	name, nameErr := name.GetQueueManagerName()
 	mf, err := configureLogger(name)

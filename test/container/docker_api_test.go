@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2024
+© Copyright IBM Corporation 2017, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -2231,5 +2231,149 @@ func TestMissingCertError(t *testing.T) {
 	} else {
 		// Some other error occurred
 		t.Errorf("Some other error occurred %v", rc)
+	}
+}
+
+// TestSoftFileLimitIncreaseDisabled starts a queue manager with a reduced soft limit for open files (1024)
+// and MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE set to false. It verifies that the soft limit for each process (other than PID 1)
+// running in the container remains at 1024.
+func TestSoftFileLimitIncreaseDisabled(t *testing.T) {
+	t.Parallel()
+
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+
+	// Set up container with reduced soft file limit and MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE=false
+	containerConfig := ce.ContainerConfig{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=QM1", "MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE=false"},
+		Image: imageName(),
+	}
+
+	hostConfig := getDefaultHostConfig(t, cli)
+	// Set nofile ulimit with soft limit of 1024 and hard limit of 2048
+	var containerNoFileSoftLimit, containerNoFileHardLimit int64
+	containerNoFileSoftLimit = 1024
+	containerNoFileHardLimit = 2048
+	hostConfig.Ulimits = []ce.Ulimit{
+		{
+			Name: "nofile",
+			Soft: containerNoFileSoftLimit,
+			Hard: containerNoFileHardLimit,
+		},
+	}
+
+	id := runContainerWithHostConfig(t, cli, &containerConfig, hostConfig)
+	cleanupAfterTest(t, cli, id, false)
+	waitForReady(t, cli, id)
+
+	// Get all process IDs in the container (excluding java processes)
+	// Java processes are excluded as the ones spawned as part of the MQ Web Console set their own limits
+	rc, out := execContainer(t, cli, id, "", []string{"bash", "-c", "ps -eo pid,comm --no-headers | grep -v java | awk '{print $1}'"})
+	if rc != 0 {
+		t.Fatalf("Expected listing processes to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+
+	pids := strings.Split(strings.TrimSpace(out), "\n")
+	if len(pids) == 0 {
+		t.Fatal("Expected to find at least one process")
+	}
+
+	// Remove the final PID from the list as it is our exec session
+	pids = pids[:len(pids)-1]
+
+	// Check soft limit for each process
+	for _, pid := range pids {
+		pid = strings.TrimSpace(pid)
+
+		// Read the soft limit from /proc/<pid>/limits
+		rc, limitOut := execContainer(t, cli, id, "", []string{"bash", "-c", fmt.Sprintf("set -o pipefail; grep 'Max open files' /proc/%s/limits | awk '{print $4}'", pid)})
+		if rc != 0 {
+			// The process may have exited already, skip it
+			continue
+		}
+
+		softLimit := strings.TrimSpace(limitOut)
+		// PID 1 will have an increased limit as it is the 'runmqserver' go process (Which increases its own soft limit)
+		if pid == "1" {
+			// The increased soft limit is one below the hard limit (This the behaviour of go)
+			if softLimit != strconv.FormatInt(containerNoFileHardLimit-1, 10) {
+				t.Errorf("Expected soft limit for PID %s to be %d, got %s", pid, containerNoFileSoftLimit-1, softLimit)
+			}
+		} else {
+			if softLimit != strconv.FormatInt(containerNoFileSoftLimit, 10) {
+				t.Errorf("Expected soft limit for PID %s to be %d, got %s", pid, containerNoFileSoftLimit, softLimit)
+			}
+		}
+	}
+}
+
+// TestSoftFileLimitIncreaseEnabled starts a queue manager with a reduced soft limit for open files (1024)
+// and MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE set to true. It verifies that the soft limit for each process
+// running in the container is increased to match the hard limit (2048).
+func TestSoftFileLimitIncreaseEnabled(t *testing.T) {
+	t.Parallel()
+
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+
+	// Set up container with reduced soft file limit and MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE=true
+	containerConfig := ce.ContainerConfig{
+		Env:   []string{"LICENSE=accept", "MQ_QMGR_NAME=QM1", "MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE=true"},
+		Image: imageName(),
+	}
+
+	hostConfig := getDefaultHostConfig(t, cli)
+	// Set nofile ulimit with soft limit of 1024 and hard limit of 2048
+	var containerNoFileSoftLimit, containerNoFileHardLimit int64
+	containerNoFileSoftLimit = 1024
+	containerNoFileHardLimit = 2048
+	hostConfig.Ulimits = []ce.Ulimit{
+		{
+			Name: "nofile",
+			Soft: containerNoFileSoftLimit,
+			Hard: containerNoFileHardLimit,
+		},
+	}
+
+	id := runContainerWithHostConfig(t, cli, &containerConfig, hostConfig)
+	cleanupAfterTest(t, cli, id, false)
+	waitForReady(t, cli, id)
+
+	// Get all process IDs in the container
+	rc, out := execContainer(t, cli, id, "", []string{"bash", "-c", "ps -eo pid --no-headers"})
+	if rc != 0 {
+		t.Fatalf("Expected listing processes to work with rc=0, got %v. Output was: %s", rc, out)
+	}
+
+	pids := strings.Split(strings.TrimSpace(out), "\n")
+	if len(pids) == 0 {
+		t.Fatal("Expected to find at least one process")
+	}
+
+	// Remove the final PID from the list as it is our exec session
+	pids = pids[:len(pids)-1]
+
+	// Check soft and hard limits for each process
+	for _, pid := range pids {
+		pid = strings.TrimSpace(pid)
+
+		// Read the soft and hard limits from /proc/<pid>/limits
+		rc, limitOut := execContainer(t, cli, id, "", []string{"bash", "-c", fmt.Sprintf("set -o pipefail; grep 'Max open files' /proc/%s/limits | awk '{print $4, $5}'", pid)})
+		if rc != 0 {
+			// The process may have exited already, skip it
+			continue
+		}
+
+		limits := strings.Fields(strings.TrimSpace(limitOut))
+		if len(limits) < 2 {
+			t.Errorf("Expected to get both soft and hard limits for PID %s, got: %s", pid, limitOut)
+			continue
+		}
+
+		softLimit := limits[0]
+		hardLimit := limits[1]
+
+		// When MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE=true, the soft limit should equal the hard limit
+		if softLimit != hardLimit {
+			t.Errorf("Expected soft limit for PID %s to equal the hard limit (%s), got soft=%s", pid, hardLimit, softLimit)
+		}
 	}
 }

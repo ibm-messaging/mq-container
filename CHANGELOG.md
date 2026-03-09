@@ -2,6 +2,8 @@
 ## 9.4.0.20-r1 (2026-03)
 
 * Updated to MQ version 9.4.0.20
+* New environment variable: MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE
+  * Setting the value to `true` raises the soft limit for the number of open files up to the hard limit prior to starting MQ.
 
 ## 9.4.0.17-r1 (2026-01)
 
