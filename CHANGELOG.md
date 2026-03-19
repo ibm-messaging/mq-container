@@ -3,6 +3,7 @@
 ## 10.0.0.0 (2026-06)
 
 * Updated to MQ version 10.0.0.0
+* Added version 3.7.0 (2025.3.0) of the IBM MQ tracing user exit. See [IBM MQ tracing](https://www.ibm.com/docs/en/SSE1JP5_current/src/pages/ecosystem/ibmmq/mq_tracing.html) in the IBM Instana documentation.
 
 ## 9.4.5.0-r2 (2026-03)
 * New environment variable: MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE

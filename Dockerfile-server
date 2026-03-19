@@ -204,3 +204,36 @@ ENV MQ_DEV=true \
   MQS_PERMIT_UNKNOWN_ID=true
 USER 1001
 ENTRYPOINT ["runmqdevserver"]
+
+###############################################################################
+# Build stage to configure the IBM MQ tracing user exit
+###############################################################################
+FROM $BASE_IMAGE:$BASE_TAG AS instana-exit
+ARG INSTANA_ARCHIVE
+ADD $INSTANA_ARCHIVE /opt/instana
+WORKDIR /opt/instana
+COPY /tracing/userconfiginstana.ini userconfiginstana.ini
+RUN mkdir -p /opt/instana/exit/MQInstanaTracing/lib64 \
+  && cp mqtracingexit_r /opt/instana/exit/MQInstanaTracing/MQInstanaTracingExit.so_r \
+  && cp tracelibrary.so /opt/instana/exit/MQInstanaTracing/tracelibrary.so \
+  && cp libopentelemetry_* /opt/instana/exit/MQInstanaTracing/lib64 \
+  && cp mqtracingexit.conf /opt/instana/exit/MQInstanaTracing/mqtracingexit.conf \
+  && cp userconfiginstana.ini /opt/instana/exit/MQInstanaTracing/userconfiginstana.ini \
+  && chown -R 1001:root /opt/instana/exit/MQInstanaTracing \
+  && chmod -R g+w /opt/instana/exit/MQInstanaTracing
+
+###############################################################################
+# Add the IBM MQ tracing user exit to MQ image
+###############################################################################
+FROM mq-server AS mq-server-instana
+COPY --chown=1001:root --from=instana-exit /opt/instana/exit/ /opt/
+RUN ln -s /run/MQInstanaTracing/userconfiginstana.ini /etc/mqm/userconfiginstana.ini
+ENV LD_LIBRARY_PATH=/opt/MQInstanaTracing/lib64:${LD_LIBRARY_PATH}
+
+###############################################################################
+# Add the IBM MQ tracing user exit to MQ developer image
+###############################################################################
+FROM mq-dev-server AS mq-dev-server-instana
+COPY --chown=1001:root --from=instana-exit /opt/instana/exit/ /opt/
+RUN ln -s /run/MQInstanaTracing/userconfiginstana.ini /etc/mqm/userconfiginstana.ini
+ENV LD_LIBRARY_PATH=/opt/MQInstanaTracing/lib64:${LD_LIBRARY_PATH}

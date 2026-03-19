@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2019, 2025
+# © Copyright IBM Corporation 2019, 2026
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ if [ -z "$BUILD_INTERNAL_LEVEL" ] ; then
       if [[ "$ARCH" = "amd64" || "$ARCH" = "s390x" || "$ARCH" = "ppc64le" ]] ; then
           echo 'Building Production image...'
           get_archive_level MQ_ARCHIVE_REPOSITORY
-          make build-advancedserver
+          make build-advancedserver-instana
       fi
   fi
 else
@@ -74,6 +74,6 @@ else
   else
     echo 'Building Production image...'
     get_archive_level MQ_ARCHIVE_REPOSITORY
-    make build-advancedserver
+    make build-advancedserver-instana
   fi
 fi

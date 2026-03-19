@@ -31,11 +31,25 @@ If you have an MQ archive file with a different file name, you can specify a par
 MQ_ARCHIVE=mq-1.2.3.4.tar.gz MQ_VERSION=1.2.3.4 make build-advancedserver
 ```
 
+To build a production image with the IBM MQ tracing user exit.
+- Download the IBM MQ tracing user exit. See [IBM MQ tracing](https://www.ibm.com/docs/en/SSE1JP5_current/src/pages/ecosystem/ibmmq/mq_tracing.html) in the IBM Instana documentation.
+- Ensure the IBM MQ tracing user exit `tar.gz` file is in the `downloads` directory
+- Run `MQ_ARCHIVE_INSTANA=ibm-mq-tracing-exits_<ARCH>.tar.gz make build-advancedserver-instana`
+
+> To enable the IBM MQ tracing user exit, you must set `MQ_ENABLE_INSTANA_TRACING=true` when running the queue manager
+
 ## Building a developer image
 
 Run `make build-devserver`, which will download the latest version of MQ Advanced for Developers.  This is available on the `amd64` and `arm64` (Apple Silicon) architectures.
 
 You can use the environment variable `MQ_ARCHIVE_DEV` to specify an alternative local file to install from (which must be in the `downloads` directory).
+
+To build a developer image with the IBM MQ tracing user exit.
+- Download the IBM MQ tracing user exit. See [IBM MQ tracing](https://www.ibm.com/docs/en/SSE1JP5_current/src/pages/ecosystem/ibmmq/mq_tracing.html) in the IBM Instana documentation.
+- Ensure the IBM MQ tracing user exit `tar.gz` file is in the `downloads` directory
+- Run `MQ_ARCHIVE_INSTANA=ibm-mq-tracing-exits_<ARCH>.tar.gz make build-devserver-instana`
+
+> To enable the IBM MQ tracing user exit, you must set `MQ_ENABLE_INSTANA_TRACING=true` when running the queue manager
 
 ## Applying an iFix
 

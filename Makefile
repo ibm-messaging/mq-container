@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2017, 2025, 2026
+# © Copyright IBM Corporation 2017, 2026
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ RELEASE ?=
 MQ_ARCHIVE_REPOSITORY ?=
 # MQ_ARCHIVE_REPOSITORY_DEV is a remote repository from which to pull the MQ_ARCHIVE_DEV (if required)
 MQ_ARCHIVE_REPOSITORY_DEV ?=
+# MQ_ARCHIVE_REPOSITORY_INSTANA is a remote repository from which to pull the MQ_ARCHIVE_INSTANA (if required)
+MQ_ARCHIVE_REPOSITORY_INSTANA ?=
 # MQ_ARCHIVE_REPOSITORY_USER is the user for the remote repository (if required)
 MQ_ARCHIVE_REPOSITORY_USER ?=
 # MQ_ARCHIVE_REPOSITORY_CREDENTIAL is the password/API key for the remote repository (if required)
@@ -46,6 +48,8 @@ MQ_ARCHIVE ?= IBM_MQ_$(MQ_VERSION_VRM)_$(MQ_ARCHIVE_TYPE)_$(MQ_ARCHIVE_ARCH)_NOI
 # MQ_ARCHIVE_DEV is the name of the file, under the downloads directory, from which MQ Advanced
 # for Developers can be installed
 MQ_ARCHIVE_DEV ?= $(MQ_VERSION)-IBM-MQ-Advanced-for-Developers-Non-Install-$(MQ_ARCHIVE_DEV_TYPE)$(MQ_ARCHIVE_DEV_ARCH).tar.gz
+# MQ_ARCHIVE_INSTANA is the name of the file, under the downloads directory, that includes the IBM MQ tracing user exit
+MQ_ARCHIVE_INSTANA ?= $(INSTANA_VERSION)-ibm-mq-tracing-exits_$(MQ_ARCHIVE_INSTANA_ARCH).tar.gz
 # MQ_SDK_ARCHIVE specifies the archive to use for building the golang programs.  Defaults vary on developer or advanced.
 MQ_SDK_ARCHIVE ?= $(MQ_ARCHIVE_DEV_$(MQ_VERSION))
 # Options to `go test` for the Container tests
@@ -139,15 +143,19 @@ endif
 ifeq "$(ARCH)" "amd64"
 	MQ_ARCHIVE_ARCH:=X86-64
 	MQ_ARCHIVE_DEV_ARCH:=X64
+	MQ_ARCHIVE_INSTANA_ARCH:=xLinux_64bit
 else ifeq "$(ARCH)" "ppc64le"
 	MQ_ARCHIVE_ARCH:=PPC64LE
 	MQ_ARCHIVE_DEV_ARCH:=PPC64LE
+	MQ_ARCHIVE_INSTANA_ARCH:=pLinux_64bit
 else ifeq "$(ARCH)" "s390x"
 	MQ_ARCHIVE_ARCH:=S390X
 	MQ_ARCHIVE_DEV_ARCH:=S390X
+	MQ_ARCHIVE_INSTANA_ARCH:=zLinux_64bit
 else ifeq "$(ARCH)" "arm64"
 	MQ_ARCHIVE_ARCH:=ARM64
 	MQ_ARCHIVE_DEV_ARCH:=ARM64
+	MQ_ARCHIVE_INSTANA_ARCH:=not_available
 endif
 
 
@@ -167,8 +175,14 @@ test-all: build-devjmstest test-devserver test-advancedserver
 .PHONY: devserver
 devserver: build-devserver build-devjmstest test-devserver
 
+.PHONY: devserver-instana
+devserver-instana: build-devserver-instana build-devjmstest test-devserver
+
 .PHONY: advancedserver
 advancedserver: build-advancedserver test-advancedserver
+
+.PHONY: advancedserver-instana
+advancedserver-instana: build-advancedserver-instana test-advancedserver
 
 # Build incubating components
 .PHONY: incubating
@@ -196,6 +210,13 @@ else
 ifneq "$(MQ_ARCHIVE_REPOSITORY)" "$(EMPTY)"
 	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY)" --output downloads/$(MQ_ARCHIVE)
 endif
+endif
+
+downloads/$(MQ_ARCHIVE_INSTANA):
+	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ tracing user exit "$(INSTANA_VERSION)$(END)))
+	mkdir -p downloads
+ifneq "$(MQ_ARCHIVE_REPOSITORY_INSTANA)" "$(EMPTY)"
+	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_INSTANA)" --output downloads/$(MQ_ARCHIVE_INSTANA)
 endif
 
 .PHONY: downloads
@@ -280,6 +301,7 @@ define build-mq
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
 	  --build-arg IMAGE_TAG="$1:$2" \
 	  --build-arg MQ_ARCHIVE="downloads/$4" \
+	  --build-arg INSTANA_ARCHIVE="downloads/$5" \
 	  --label version=$(MQ_VERSION) \
 	  --label name=$1 \
 	  --label build-date=$(shell date +%Y-%m-%dT%H:%M:%S%z) \
@@ -291,7 +313,7 @@ define build-mq
 	  --platform=linux/$(ARCH) \
 	  $(IMAGE_FORMAT) \
 	  $(EXTRA_LABELS) \
-	  --target $5 \
+	  --target $6 \
 	  .
 endef
 
@@ -304,7 +326,12 @@ build-advancedserver-host: build-advancedserver
 .PHONY: build-advancedserver
 build-advancedserver: log-build-env downloads/$(MQ_ARCHIVE) command-version
 	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG)"$(END)))
-	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),mq-server)
+	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),,mq-server)
+
+.PHONY: build-advancedserver-instana
+build-advancedserver-instana: log-build-env downloads/$(MQ_ARCHIVE) downloads/$(MQ_ARCHIVE_INSTANA) command-version
+	$(info $(SPACER)$(shell printf $(TITLE)"Build $(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) with Instana Exit"$(END)))
+	$(call build-mq,$(MQ_IMAGE_ADVANCEDSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE),$(MQ_ARCHIVE_INSTANA),mq-server-instana)
 
 .PHONY: build-devserver-host
 build-devserver-host: build-devserver
@@ -312,7 +339,12 @@ build-devserver-host: build-devserver
 .PHONY: build-devserver
 build-devserver: log-build-env downloads/$(MQ_ARCHIVE_DEV) command-version
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG)"$(END)))
-	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),mq-dev-server)
+	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),,mq-dev-server)
+
+.PHONY: build-devserver-instana
+build-devserver-instana: log-build-env downloads/$(MQ_ARCHIVE_DEV) downloads/$(MQ_ARCHIVE_INSTANA) command-version
+	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_DEVSERVER):$(MQ_TAG) with Instana Exit"$(END)))
+	$(call build-mq,$(MQ_IMAGE_DEVSERVER),$(MQ_TAG),Dockerfile-server,$(MQ_ARCHIVE_DEV),$(MQ_ARCHIVE_INSTANA),mq-dev-server-instana)
 
 .PHONY: build-advancedserver-cover
 build-advancedserver-cover: command-version
@@ -320,12 +352,12 @@ build-advancedserver-cover: command-version
 
 .PHONY: build-explorer
 build-explorer: downloads/$(MQ_ARCHIVE_DEV)
-	$(call build-mq,mq-explorer,latest-$(ARCH),incubating/mq-explorer/Dockerfile,$(MQ_ARCHIVE_DEV),mq-explorer)
+	$(call build-mq,mq-explorer,latest-$(ARCH),incubating/mq-explorer/Dockerfile,$(MQ_ARCHIVE_DEV),,mq-explorer)
 
 .PHONY: build-sdk
 build-sdk: downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(shell printf $(TITLE)"Build $(MQ_IMAGE_SDK)"$(END)))
-	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),mq-sdk)
+	$(call build-mq,mq-sdk,$(MQ_TAG),incubating/mq-sdk/Dockerfile,$(MQ_SDK_ARCHIVE),,mq-sdk)
 
 ###############################################################################
 # Logging targets
@@ -337,9 +369,11 @@ log-build-vars:
 	@echo arch_go=$(arch_go)
 	@echo "ARCH=$(ARCH) (origin:$(origin ARCH))"
 	@echo MQ_VERSION="$(MQ_VERSION) (origin:$(origin MQ_VERSION))"
+	@echo INSTANA_VERSION="$(INSTANA_VERSION) (origin:$(origin INSTANA_VERSION))"
 	@echo MQ_ARCHIVE="$(MQ_ARCHIVE) (origin:$(origin MQ_ARCHIVE))"
 	@echo MQ_ARCHIVE_DEV_ARCH=$(MQ_ARCHIVE_DEV_ARCH)
 	@echo MQ_ARCHIVE_DEV=$(MQ_ARCHIVE_DEV)
+	@echo MQ_ARCHIVE_INSTANA="$(MQ_ARCHIVE_INSTANA) (origin:$(origin MQ_ARCHIVE_INSTANA))"
 	@echo MQ_IMAGE_DEVSERVER=$(MQ_IMAGE_DEVSERVER)
 	@echo MQ_IMAGE_ADVANCEDSERVER=$(MQ_IMAGE_ADVANCEDSERVER)
 	@echo COMMAND=$(COMMAND)
@@ -363,6 +397,10 @@ pull-mq-archive:
 .PHONY: pull-mq-archive-dev
 pull-mq-archive-dev:
 	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" --output downloads/$(MQ_ARCHIVE_DEV)
+
+.PHONY: pull-mq-archive-instana
+pull-mq-archive-instana:
+	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_INSTANA)" --output downloads/$(MQ_ARCHIVE_INSTANA)
 
 .PHONY: push-advancedserver
 push-advancedserver:

@@ -203,6 +203,36 @@ func doMain() error {
 		return err
 	}
 
+	// Create ephemeral volume for Instana Tracing
+	err = createVolume("/run/MQInstanaTracing")
+	if err != nil {
+		logTermination(err)
+		return err
+	}
+
+	enableInstanaTracing := os.Getenv("MQ_ENABLE_INSTANA_TRACING")
+
+	if enableInstanaTracing == "true" || enableInstanaTracing == "1" {
+		err = enableInstanaTracingFiles()
+		if err != nil {
+			logTermination(err)
+			return err
+		}
+		log.Println("Instana Tracing is enabled")
+	} else {
+		err := disableInstanaTracing()
+		if err != nil {
+			logTerminationf("Error disabling Instana Tracing: %v", err)
+			return err
+		}
+		err = removeTracingExit("MQInstanaTracingExit", name)
+		if err != nil {
+			logTerminationf("Error removing Instana Tracing exit from qm.ini: %v", err)
+			return err
+		}
+		log.Println("Instana Tracing is disabled")
+	}
+
 	// Initialise 15-tls.mqsc file on ephemeral volume
 	// #nosec G306 - its a read by owner/s group, and pose no harm.
 	err = os.WriteFile("/run/15-tls.mqsc", []byte(""), 0660)
