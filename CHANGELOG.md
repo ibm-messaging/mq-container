@@ -19,6 +19,7 @@
 
 * Updated to MQ version 9.4.4.0
 * Logs now consistently routed to stdout/stderr; logs to stdout will conform to the selected log format (MQ_LOGGING_CONSOLE_FORMAT), logs to stderr are unformatted errors
+* Updated to GSKit9, which now requires the `libicu` library; this is included in the MQ container image but must be added when building your own.
 
 ## 9.4.3.0 (2025-06)
 
