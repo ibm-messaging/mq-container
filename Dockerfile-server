@@ -228,7 +228,7 @@ RUN mkdir -p /opt/instana/exit/MQInstanaTracing/lib64 \
 FROM mq-server AS mq-server-instana
 COPY --chown=1001:root --from=instana-exit /opt/instana/exit/ /opt/
 RUN ln -s /run/MQInstanaTracing/userconfiginstana.ini /etc/mqm/userconfiginstana.ini
-ENV LD_LIBRARY_PATH=/opt/MQInstanaTracing/lib64:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=/opt/MQInstanaTracing/lib64
 
 ###############################################################################
 # Add the IBM MQ tracing user exit to MQ developer image
