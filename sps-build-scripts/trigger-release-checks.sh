@@ -23,6 +23,7 @@ if [[ -n "$PIPELINE_RUN_ID" && "$FEATURE_BUILD_OVERRIDE" != "true" ]]; then
   fi
 
   EVENT_SOURCE="$(get_env APP_REPO_NAME)"
+  BRANCH="$(get_env BRANCH)"
 
   if [[ -z "$EVENT_SOURCE" ]]; then
     echo "EVENT_SOURCE is not set. Release checks cannot be triggered. Exiting...."
@@ -37,5 +38,5 @@ if [[ -n "$PIPELINE_RUN_ID" && "$FEATURE_BUILD_OVERRIDE" != "true" ]]; then
   echo "Cloning release-checks repo..."
   git clone git@github.ibm.com:mq-cloudpak/release-checks.git "$REPO" && cd "$REPO"
 
-  go run scripts/sps_tekton.go "$EVENT_SOURCE"
+  go run scripts/sps_tekton.go "$EVENT_SOURCE" "$BRANCH"
 fi
