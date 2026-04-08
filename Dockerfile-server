@@ -12,24 +12,44 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=registry.access.redhat.com/ubi9/ubi-minimal
-ARG BASE_TAG=9.7-1771346502
-ARG BUILDER_IMAGE=registry.access.redhat.com/ubi9/go-toolset
-ARG BUILDER_TAG=1.25.7-1773016755
-ARG GO_WORKDIR=/opt/app-root/src/go/src/github.com/ibm-messaging/mq-container
+# Base image variant: the only official variant is "ubi".
+# See docs/base-variants.md for more information
+ARG BASE_VARIANT=ubi
+# List of extra packages to install on top of the base image
+ARG PACKAGES_TO_INSTALL
+
+# Base image to use when BASE_VARIANT=ubi
+ARG UBI_BASE_IMAGE=registry.access.redhat.com/ubi10/ubi-micro
+ARG UBI_BASE_TAG=10.1-1774544317
+# Image for the Go and C builds, as well as the MQ and UBI packaging build stages to use
+# Image needs `go`, `gcc` and `dnf`
+ARG UBI_BUILDER_IMAGE=registry.access.redhat.com/ubi10/go-toolset
+ARG UBI_BUILDER_TAG=1.25.8-1775574742
+
+ARG GO_WORKDIR=/opt/app-root/src/go
+# Directory in base image builder to copy
+ARG BASE_DIR=/opt/app-root/src/base
+# Archive file containing the MQ no-install version
 ARG MQ_ARCHIVE="downloads/10.0.0.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
+
+###############################################################################
+# Builder image - UBI variant
+###############################################################################
+FROM $UBI_BUILDER_IMAGE:$UBI_BUILDER_TAG AS builder-ubi
+ARG GO_WORKDIR
+WORKDIR ${GO_WORKDIR}
 
 ###############################################################################
 # Build stage to build Go code
 ###############################################################################
-FROM $BUILDER_IMAGE:$BUILDER_TAG as builder
+FROM builder-${BASE_VARIANT} as builder
 ARG IMAGE_REVISION="Not specified"
 ARG IMAGE_SOURCE="Not specified"
 ARG IMAGE_TAG="Not specified"
-ARG GO_WORKDIR
 ARG MQ_ARCHIVE
+ARG GO_WORKDIR
 USER 0
-WORKDIR $GO_WORKDIR/
+WORKDIR $GO_WORKDIR/mq-container
 ADD $MQ_ARCHIVE /opt/mqm
 ENV CGO_CFLAGS="-I/opt/mqm/inc/" \
   CGO_LDFLAGS_ALLOW="-Wl,-rpath.*" \
@@ -40,11 +60,13 @@ COPY internal/ ./internal
 COPY ha/ ./ha
 COPY pkg/ ./pkg
 COPY vendor/ ./vendor
-RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\" -X \"main.ImageTag=$IMAGE_TAG\"" ./cmd/runmqserver/ \
-  && go build ./cmd/chkmqready/ \
-  && go build ./cmd/chkmqhealthy/ \
-  && go build ./cmd/chkmqstarted/ \
-  && go build ./cmd/runmqdevserver/ \
+# Build the Go executables.  The `-s -w` flags remove debugging information to make
+# the resulting binaries smaller.
+RUN go build -ldflags "-s -w -X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"main.ImageRevision=$IMAGE_REVISION\" -X \"main.ImageSource=$IMAGE_SOURCE\" -X \"main.ImageTag=$IMAGE_TAG\"" ./cmd/runmqserver/ \
+  && go build -ldflags="-s -w" ./cmd/chkmqready/ \
+  && go build -ldflags="-s -w" ./cmd/chkmqhealthy/ \
+  && go build -ldflags="-s -w" ./cmd/chkmqstarted/ \
+  && go build -ldflags="-s -w" ./cmd/runmqdevserver/ \
   && chmod ug+x ./chkmq* ./runmq* \
   && go test -v ./cmd/runmqdevserver/... \
   && go test -v ./cmd/runmqserver/ \
@@ -56,11 +78,13 @@ RUN go build -ldflags "-X \"main.ImageCreated=$(date --iso-8601=seconds)\" -X \"
   && go vet ./cmd/... ./internal/...
 
 ###############################################################################
-# Build stage to reduce MQ packages included using genmqpkg
+# Build stage to reduce MQ packages included using genmqpkg.
+# Re-uses the builder image as a convenience - this stage just needs to run
+# a shell script, so could use almost any base image.
 ###############################################################################
-FROM $BASE_IMAGE:$BASE_TAG AS mq-redux
-ARG BASE_IMAGE
-ARG BASE_TAG
+FROM builder-${BASE_VARIANT} AS mq-redux
+ARG BUILDER_IMAGE
+ARG BUILDER_TAG
 ARG MQ_ARCHIVE
 WORKDIR /tmp/mq
 ENV genmqpkg_inc32=0 \
@@ -87,12 +111,55 @@ ENV genmqpkg_inc32=0 \
   genmqpkg_incweb=1
 ADD $MQ_ARCHIVE /opt/mqm-noinstall
 # Run genmqpkg to reduce the MQ packages included
-RUN /opt/mqm-noinstall/bin/genmqpkg.sh -b /opt/mqm-redux
+RUN /opt/mqm-noinstall/bin/genmqpkg.sh -b /opt/app-root/mqm-redux
+# Remove the doc directory from the MQ Java package
+RUN rm -rf /opt/app-root/mqm-redux/java/doc
+
+###############################################################################
+# Base image - UBI variant
+###############################################################################
+FROM $UBI_BASE_IMAGE:$UBI_BASE_TAG AS base
+
+###############################################################################
+# Base image builder stage for the UBI variant.
+# The ubi-micro image does not include a package manager, so this builder image 
+# is used to create the appropriate structure and add more packages.
+###############################################################################
+FROM $UBI_BUILDER_IMAGE:$UBI_BUILDER_TAG AS basebuilder-ubi
+ARG BASE_DIR
+USER 0
+ARG PACKAGES_TO_INSTALL="bash bc ca-certificates crypto-policies findutils gawk glibc-common grep libicu ncurses-libs procps-ng sed tar util-linux-core which zlib-ng-compat"
+RUN mkdir ${BASE_DIR}
+COPY --from=base / ${BASE_DIR}
+# Install the packages.  Disable all repos, and then re-enable just the UBI 
+# repositories - this is useful when running on a system with a RHEL 
+# subscription, to ensure that only the free UBI packages are used
+RUN dnf install \
+    --assumeyes \
+    --installroot ${BASE_DIR} \
+    --releasever 10 \
+    --disableplugin subscription-manager \
+    --disablerepo=* \
+    --enablerepo=ubi-* \
+    --setopt install_weak_deps=false \
+    --nodocs \
+    ${PACKAGES_TO_INSTALL} \
+  && dnf clean all --installroot ${BASE_DIR} \
+  && dnf list installed --installroot ${BASE_DIR} >> ${BASE_DIR}/packages.txt
+
+###############################################################################
+# Base image plus packages
+# Copy the base directory set up in the basebuilder-ubi stage
+###############################################################################
+FROM scratch AS base-plus-packages-ubi
+ARG BASE_DIR
+COPY --from=basebuilder-ubi ${BASE_DIR}/ .
 
 ###############################################################################
 # Main build stage, to build MQ image
 ###############################################################################
-FROM $BASE_IMAGE:$BASE_TAG AS mq-server
+FROM base-plus-packages-${BASE_VARIANT} AS mq-server
+ARG BUILD_TAG
 ARG MQ_URL
 ARG BASE_IMAGE
 ARG BASE_TAG
@@ -109,17 +176,44 @@ LABEL summary="IBM MQ Advanced Server" \
   io.k8s.description="Simplify, accelerate and facilitate the reliable exchange of data with a security-rich messaging solution — trusted by the world’s most successful enterprises" \
   base-image=$BASE_IMAGE \
   base-image-release=$BASE_TAG
-COPY --chown=1001:root --from=mq-redux /opt/mqm-redux/ /opt/mqm/
-COPY --chown=1001:root setup-image.sh /usr/local/bin/
-COPY --chown=1001:root install-mq-server-prereqs.sh /usr/local/bin/
+COPY --chown=1001:root --from=mq-redux /opt/app-root/mqm-redux/ /opt/mqm/
 RUN env \
-  && chmod u+x /usr/local/bin/install-*.sh \
-  && chmod u+x /usr/local/bin/setup-image.sh \
-  && install-mq-server-prereqs.sh \
-  && setup-image.sh \
+  # Accept the MQ license
+  && /opt/mqm/bin/mqlicense -accept \
+  # Optional: Update the command prompt with the MQ version
+  # $RPM && echo "export PS1=\"mq-$(dspmqver -b -f 2)# \"" > /etc/profile.d/custom-prompt.sh
+  # $UBUNTU && echo "mq-$(dspmqver -b -f 2)# " > /etc/debian_chroot
+  # Create the mount point for volumes, ensuring MQ has permissions to all directories
+  && install --directory --mode 2775 --owner 1001 --group root /mnt \
+  && install --directory --mode 2775 --owner 1001 --group root /mnt/mqm \
+  && install --directory --mode 2775 --owner 1001 --group root /mnt/mqm/data \
+  && install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-log \
+  && install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-log/log \
+  && install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-data \
+  && install --directory --mode 2775 --owner 1001 --group root /mnt/mqm-data/qmgrs \
+  && install --directory --mode 2775 --owner 1001 --group root /run \
+  && install --directory --mode 2775 --owner 1001 --group root /mnt/mqm/scratch \
+  && install --directory --mode 2775 --owner 1001 --group root /mnt/mqm/tmp \
+  # Create the directory for MQ configuration files
+  && install --directory --mode 2775 --owner 1001 --group root /etc/mqm \
+  # Create the directory for scratch volume 
+  && install --directory --mode 2775 --owner 1001 --group root /run/scratch \
+  # Create the directory for runmqserver files
+  && install --directory --mode 2775 --owner 1001 --group root /run/scratch/runmqserver \
+  # Create the directory for MQ runtime files
+  && install --directory --mode 2775 --owner 1001 --group root /run/scratch/mqm \
+  # Create a symlink for /var/mqm -> /mnt/mqm/data
+  && ln -s /mnt/mqm/data /var/mqm \
+  # Create a symlink for /run/runmqserver -> /run/scratch/runmqserver
+  && ln -s /run/scratch/runmqserver /run/runmqserver \
+  # Copy MQ Licenses into the correct location
+  && mkdir -p /licenses \
+  && cp /opt/mqm/licenses/*.txt /licenses/ \
+  # Update server.xml to include mqwebcontainer.xml & mqwebexternal.xml
+  && sed -i 's|<include location="mqwebuser.xml"/>|<include location="mqwebcontainer.xml"/>\n    <include location="mqwebexternal.xml"/>\n    <include location="mqwebuser.xml"/>|' /opt/mqm/samp/web/server.xml \
   && /opt/mqm/bin/security/amqpamcf
-COPY --chown=1001:root --from=builder $GO_WORKDIR/runmqserver /usr/local/bin/
-COPY --chown=1001:root --from=builder $GO_WORKDIR/chkmq* /usr/local/bin/
+COPY --chown=1001:root --from=builder $GO_WORKDIR/mq-container/runmqserver /usr/local/bin/
+COPY --chown=1001:root --from=builder $GO_WORKDIR/mq-container/chkmq* /usr/local/bin/
 COPY --chown=1001:root ha/*.ini.tpl /etc/mqm/
 # Copy web XML files
 COPY --chown=1001:root web /etc/mqm/web
@@ -155,7 +249,7 @@ ENTRYPOINT ["runmqserver"]
 ###############################################################################
 # Build stage to build C code for custom authorization service (developer-only)
 ###############################################################################
-# Use the Go toolset image, which already includes gcc and the MQ SDK
+# Use the earlier builder image, which has the MQ SDK added
 FROM builder as cbuilder
 USER 0
 # Install the Apache Portable Runtime code (used for simpleauth hash checking)
@@ -184,7 +278,7 @@ LABEL summary="IBM MQ Advanced for Developers Server" \
 USER 0
 COPY --from=cbuilder /opt/app-root/src/authservice/mqsimpleauth/build/mqsimpleauth.so /opt/mqm/lib64/
 COPY --chown=1001:root etc/mqm/qm-service-component.ini.default /etc/mqm/
-COPY --chown=1001:root --from=builder $GO_WORKDIR/runmqdevserver /usr/local/bin/
+COPY --chown=1001:root --from=builder $GO_WORKDIR/mq-container/runmqdevserver /usr/local/bin/
 # Copy template files
 COPY --chown=1001:root incubating/mqadvanced-server-dev/*.tpl /etc/mqm/
 # Copy web XML files for default developer configuration
@@ -208,7 +302,8 @@ ENTRYPOINT ["runmqdevserver"]
 ###############################################################################
 # Build stage to configure the IBM MQ tracing user exit
 ###############################################################################
-FROM $BASE_IMAGE:$BASE_TAG AS instana-exit
+FROM builder-${BASE_VARIANT} AS instana-exit
+USER 0
 ARG INSTANA_ARCHIVE
 ADD $INSTANA_ARCHIVE /opt/instana
 WORKDIR /opt/instana

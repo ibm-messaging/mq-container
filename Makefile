@@ -78,6 +78,7 @@ IMAGE_REGISTRY_DELIVERY_CREDENTIAL ?=
 LTS ?= false
 # VOLUME_MOUNT_OPTIONS is used when bind-mounting files from the "downloads" directory into the container.  By default, SELinux labels are automatically re-written, but this doesn't work on some filesystems with extended attributes (xattrs).  You can turn off the label re-writing by setting this variable to be blank.
 VOLUME_MOUNT_OPTIONS ?= :Z
+BASE_VARIANT ?= ubi
 
 # Set feature override variables to default values
 # FEATURE_BUILD_OVERRIDE and FEATURE_BUILD_OVERRIDE_NAMESPACE are set to True in the respective SPS triggers
@@ -297,6 +298,7 @@ define build-mq
 	$(COMMAND) build $(NETWORK) \
 	  --tag $1:$2 \
 	  --file $3 \
+	  --build-arg BASE_VARIANT="$(BASE_VARIANT)" \
 	  --build-arg IMAGE_REVISION="$(IMAGE_REVISION)" \
 	  --build-arg IMAGE_SOURCE="$(IMAGE_SOURCE)" \
 	  --build-arg IMAGE_TAG="$1:$2" \
