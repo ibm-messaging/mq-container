@@ -1116,3 +1116,14 @@ func setupMQEnableCleanTmpOnStartContainer(t *testing.T, cli ce.ContainerClient,
 	waitForReady(t, cli, id)
 	return id
 }
+
+func skipIfFIPSCryptoUnavailable(t *testing.T, cli ce.ContainerClient) {
+	arch, err := cli.ImageInspectWithFormat("{{.Architecture}}", imageName())
+	if err != nil {
+		t.Fatal(err)
+	}
+	arch = strings.TrimSpace(arch)
+	if arch == "arm64" {
+		t.Skipf("Skipping FIPS test on arm64 due to lack of FIPS cryptography")
+	}
+}

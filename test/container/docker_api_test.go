@@ -777,7 +777,7 @@ func TestSimpleMQIniMerge(t *testing.T) {
 	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
-	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
+	catIniFileCommand := "cat /var/mqm/qmgrs/qm1/qm.ini"
 	_, test := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
 	merged := strings.Contains(test, "LogSecondaryFiles=28")
 
@@ -820,7 +820,7 @@ func TestMultipleIniMerge(t *testing.T) {
 	cleanupAfterTest(t, cli, id, false)
 	waitForReady(t, cli, id)
 
-	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
+	catIniFileCommand := "cat /var/mqm/qmgrs/qm1/qm.ini"
 	_, test := execContainer(t, cli, id, "", []string{"bash", "-c", catIniFileCommand})
 
 	//checks that no duplicates are created by adding 2 ini files with the same line
@@ -873,7 +873,7 @@ func TestMQIniMergeOnTheSameVolumeButTwoContainers(t *testing.T) {
 	startContainer(t, cli, ctr1ID)
 	waitForReady(t, cli, ctr1ID)
 
-	catIniFileCommand := fmt.Sprintf("cat /var/mqm/qmgrs/qm1/qm.ini")
+	catIniFileCommand := "cat /var/mqm/qmgrs/qm1/qm.ini"
 	_, test := execContainer(t, cli, ctr1ID, "", []string{"bash", "-c", catIniFileCommand})
 	addedStanza := strings.Contains(test, "ApplicationTrace:\n   ApplName=amqsact*\n   Trace=OFF")
 
@@ -1223,10 +1223,14 @@ func TestVersioning(t *testing.T) {
 			total--
 			foundMQVersion = true
 			dataAr := strings.Split(line, " ")
+			if len(dataAr) == 0 {
+				t.Errorf("Failed to parse MQ version: no data found")
+				continue
+			}
 			data := dataAr[len(dataAr)-1]
 
 			// Verify MQ version
-			pattern := regexp.MustCompile("^\\d+\\.\\d+\\.\\d+\\.\\d+$")
+			pattern := regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+$`)
 			if !pattern.MatchString(data) {
 				t.Errorf("Failed to validate mq version (%v)", data)
 			}
@@ -1237,9 +1241,12 @@ func TestVersioning(t *testing.T) {
 			foundMQLevel = true
 			dataAr := strings.Split(line, " ")
 			data := dataAr[len(dataAr)-1]
-
+			if len(dataAr) == 0 {
+				t.Errorf("Failed to parse MQ version: no data found")
+				continue
+			}
 			// Verify MQ version
-			pattern := regexp.MustCompile("^p\\d{3,4}-.+$")
+			pattern := regexp.MustCompile(`^p\d{3,4}-.+$`)
 			if !pattern.MatchString(data) {
 				t.Errorf("Failed to validate mq level (%v)", data)
 			}
@@ -2167,7 +2174,6 @@ func TestRORFSVerifySymLinks(t *testing.T) {
 			"DEBUG=1",
 			"WLP_LOGGING_MESSAGE_FORMAT=JSON",
 			"MQ_ENABLE_EMBEDDED_WEB_SERVER_LOG=true",
-			"MQ_ENABLE_FIPS=true",
 		},
 		Image: imageName(),
 	}

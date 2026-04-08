@@ -414,6 +414,7 @@ func TestSSLFIPSYES(t *testing.T) {
 	t.Parallel()
 
 	cli := ce.NewContainerClient()
+	skipIfFIPSCryptoUnavailable(t, cli)
 
 	appPassword := "differentPassw0rd"
 	containerConfig := ce.ContainerConfig{
@@ -485,6 +486,7 @@ func TestDevSecureFIPSTrueWeb(t *testing.T) {
 	t.Parallel()
 
 	cli := ce.NewContainerClient()
+	skipIfFIPSCryptoUnavailable(t, cli)
 
 	const tlsPassPhrase string = "passw0rd"
 	qm := "qm1"
@@ -629,6 +631,7 @@ func TestSSLFIPSTrueNoCerts(t *testing.T) {
 	t.Parallel()
 
 	cli := ce.NewContainerClient()
+	skipIfFIPSCryptoUnavailable(t, cli)
 
 	appPassword := "differentPassw0rd"
 	containerConfig := ce.ContainerConfig{

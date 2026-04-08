@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021, 2023
+© Copyright IBM Corporation 2021, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -206,6 +206,7 @@ func TestNativeHASecureCipherSpec(t *testing.T) {
 // and replicas start as expected. This test uses FIPS compliant cipher.
 func TestNativeHASecureCipherSpecFIPS(t *testing.T) {
 	cli := ce.NewContainerClient()
+	skipIfFIPSCryptoUnavailable(t, cli)
 
 	version, err := cli.GetMQVersion(imageName())
 	if err != nil {
@@ -251,6 +252,7 @@ func TestNativeHASecureCipherSpecFIPS(t *testing.T) {
 // ensures the queue manger and replicas don't start as expected
 func TestNativeHASecureCipherSpecNonFIPSCipher(t *testing.T) {
 	cli := ce.NewContainerClient()
+	skipIfFIPSCryptoUnavailable(t, cli)
 
 	version, err := cli.GetMQVersion(imageName())
 	if err != nil {
