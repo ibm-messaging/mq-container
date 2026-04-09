@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018, 2022
+# © Copyright IBM Corporation 2018, 2026
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,26 +13,46 @@
 # limitations under the License.
 
 ###############################################################################
-# Application build environment (Maven)
+# JRE container, used by both the builder and runtime containers
 ###############################################################################
-FROM registry.access.redhat.com/ubi8/openjdk-8 as builder
+FROM registry.access.redhat.com/ubi10/ubi as jre
+RUN dnf install \
+    --assumeyes \
+    --releasever 10 \
+    --disableplugin subscription-manager \
+    --disablerepo=* \
+    --enablerepo=ubi-* \
+    --setopt install_weak_deps=false \
+    --nodocs \
+    java-25-openjdk-headless
+
+###############################################################################
+# Builder container, with Maven and JDK
+###############################################################################
+FROM jre AS builder
+RUN dnf install \
+    --assumeyes \
+    --releasever 10 \
+    --disableplugin subscription-manager \
+    --disablerepo=* \
+    --enablerepo=ubi-* \
+    --setopt install_weak_deps=false \
+    --nodocs \
+    maven-openjdk25
+WORKDIR /var/workspace
 COPY pom.xml ./
-#WORKDIR /usr/src/mymaven
-# Download dependencies separately, so Docker caches them
+# Download dependencies separately, so they are cached in their own layer
 RUN mvn dependency:go-offline install
 # Copy source
 COPY src ./src
 # Run the main build
 RUN mvn --offline install
-# Print a list of all the files (useful for debugging)
-RUN find ./
 
 ###############################################################################
 # Application runtime (JRE only, no build environment)
 ###############################################################################
-# OpenJDK is not technically supported with the MQ client, but is good enough for these tests
-FROM registry.access.redhat.com/ubi8/openjdk-8-runtime
-COPY --from=builder /home/jboss/target/*.jar /opt/app/
-COPY --from=builder /home/jboss/target/lib/*.jar /opt/app/
+FROM jre
+COPY --chown=1001:root --from=builder /var/workspace/target/*.jar /opt/app/
+COPY --chown=1001:root --from=builder /var/workspace/target/lib/*.jar /opt/app/
 USER 1001
-ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "--fail-if-no-tests", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]
+ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "execute", "--fail-if-no-tests", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]

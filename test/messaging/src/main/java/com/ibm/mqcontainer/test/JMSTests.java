@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2023
+© Copyright IBM Corporation 2018, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ class JMSTests {
     }
 
     @BeforeAll
-    private static void waitForQueueManager() {
+    static void waitForQueueManager() {
         for (int i = 0; i < 20; i++) {
             try {
                 Socket s = new Socket(ADDR, Integer.parseInt(PORT));
