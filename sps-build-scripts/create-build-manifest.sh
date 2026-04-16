@@ -84,6 +84,8 @@ yq write -i "$IMAGE_MANIFEST_FILE" metadata.buildUrl "$PIPELINE_RUN_URL"
 yq write -i "$IMAGE_MANIFEST_FILE" metadata.stage dev_ifix
 yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServer.name" ibm-mqadvanced-server
 yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServer.productionName" ibm-mqadvanced-server
+yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServer.productionRegistryNamespace" cp
+yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServer.productionRegistryHostname" cp.icr.io
 yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServer.productionTag" "$PRODUCTION_TAG"
 yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServer.tag" "$MQ_VERSION_TAG"
 yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServer.digests.amd64" "$MQ_IMAGE_ADVANCEDSERVER_AMD64_DIGEST"
@@ -94,6 +96,9 @@ yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibm
 if [ "$PROMOTE_DEVELOPER_IMAGE_IFIX" = true ]; then
     yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServerDev.name" ibm-mqadvanced-server-dev
     yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServerDev.productionName" mq
+    yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServerDev.productionRegistryNamespace" ibm-messaging
+    yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServerDev.productionRegistryHostname" icr.io
+    yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServerDev.includeNamespaceWithUseProductionName" true
     yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServerDev.productionTag" "$PRODUCTION_TAG"
     yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServerDev.tag" "$MQ_VERSION_TAG"
     yq write -i "$IMAGE_MANIFEST_FILE" "images.operands.mq.${MQ_TAG_REMOVED_DOT}.ibmMQAdvancedServerDev.digests.amd64" "$MQ_IMAGE_DEVSERVER_AMD64_DIGEST"
