@@ -42,7 +42,7 @@ const defaultMetricQMName = "qm1"
 
 // getMetrics returns the gathered metrics from the QueueManager metrics server
 // If rootCAs provided, uses HTTPS to communicate with the metrics server. If nil, assume HTTP metrics server
-func getMetrics(t *testing.T, port string, rootCAs *x509.CertPool) []mqmetric {
+func getMetrics(t *testing.T, port string, rootCAs *x509.CertPool, requireQS bool) []mqmetric {
 	isHTTPS := rootCAs != nil
 	scheme := "http"
 	if isHTTPS {
@@ -52,8 +52,19 @@ func getMetrics(t *testing.T, port string, rootCAs *x509.CertPool) []mqmetric {
 
 	req, _ := http.NewRequest(http.MethodGet, urlToUse, nil)
 
+	// If CurveID is empty, the default Go curve IDs are used
+	tlsCurveIDs := []tls.CurveID{}
+	if requireQS {
+		// For Go version 1.25, X25519MLKEM768 is the only quantum safe key exchange available.
+		tlsCurveIDs = append(tlsCurveIDs, tls.X25519MLKEM768)
+	}
+	tlsconfig := &tls.Config{
+		RootCAs:          rootCAs,
+		CurvePreferences: tlsCurveIDs,
+	}
+
 	client := &http.Client{
-		Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: rootCAs}},
+		Transport: &http.Transport{TLSClientConfig: tlsconfig},
 	}
 
 	resp, err := client.Do(req)

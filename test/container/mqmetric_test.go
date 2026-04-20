@@ -31,14 +31,17 @@ import (
 func TestGoldenPathMetrics(t *testing.T) {
 	t.Parallel()
 	t.Run("HTTP (insecure)", func(t *testing.T) {
-		runTestGoldenPathMetrics(t, false)
+		runTestGoldenPathMetrics(t, false, false)
 	})
 	t.Run("HTTPS", func(t *testing.T) {
-		runTestGoldenPathMetrics(t, true)
+		runTestGoldenPathMetrics(t, true, false)
+	})
+	t.Run("QuantumSafeHTTPS", func(t *testing.T) {
+		runTestGoldenPathMetrics(t, true, true)
 	})
 }
 
-func runTestGoldenPathMetrics(t *testing.T, isHTTPS bool) {
+func runTestGoldenPathMetrics(t *testing.T, isHTTPS, requireQS bool) {
 
 	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
 
@@ -83,11 +86,11 @@ func runTestGoldenPathMetrics(t *testing.T, isHTTPS bool) {
 	waitForMetricReady(t, port, caPool)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, caPool)
+	getMetrics(t, port, caPool, requireQS)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, caPool)
+	metrics := getMetrics(t, port, caPool, requireQS)
 	if len(metrics) <= 0 {
 		t.Error("Expected some metrics to be returned but had none...")
 	}
@@ -110,11 +113,11 @@ func TestMetricNames(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call
-	getMetrics(t, port, nil)
+	getMetrics(t, port, nil, false)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil)
+	metrics := getMetrics(t, port, nil, false)
 	names := metricNames()
 	if len(metrics) != len(names) {
 		t.Errorf("Expected %d metrics to be returned, received %d", len(names), len(metrics))
@@ -155,11 +158,11 @@ func TestMetricLabels(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call
-	getMetrics(t, port, nil)
+	getMetrics(t, port, nil, false)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil)
+	metrics := getMetrics(t, port, nil, false)
 	if len(metrics) <= 0 {
 		t.Error("Expected some metrics to be returned but had none")
 	}
@@ -203,17 +206,17 @@ func TestRapidFirePrometheus(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil)
+	getMetrics(t, port, nil, false)
 
 	// Rapid fire it then check we're still happy
 	for i := 0; i < 30; i++ {
-		getMetrics(t, port, nil)
+		getMetrics(t, port, nil, false)
 		time.Sleep(1 * time.Second)
 	}
 	time.Sleep(11 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil)
+	metrics := getMetrics(t, port, nil, false)
 	if len(metrics) <= 0 {
 		t.Error("Expected some metrics to be returned but had none")
 	}
@@ -237,12 +240,12 @@ func TestSlowPrometheus(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil)
+	getMetrics(t, port, nil, false)
 
 	// Send a request twice over a long period and check we're still happy
 	for i := 0; i < 2; i++ {
 		time.Sleep(30 * time.Second)
-		metrics := getMetrics(t, port, nil)
+		metrics := getMetrics(t, port, nil, false)
 		if len(metrics) <= 0 {
 			t.Error("Expected some metrics to be returned but had none")
 		}
@@ -268,11 +271,11 @@ func TestContainerRestart(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil)
+	getMetrics(t, port, nil, false)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil)
+	metrics := getMetrics(t, port, nil, false)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned before the restart but had none...")
 	}
@@ -290,11 +293,11 @@ func TestContainerRestart(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil)
+	getMetrics(t, port, nil, false)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics = getMetrics(t, port, nil)
+	metrics = getMetrics(t, port, nil, false)
 	if len(metrics) <= 0 {
 		t.Error("Expected some metrics to be returned after the restart but had none...")
 	}
@@ -319,11 +322,11 @@ func TestQMRestart(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil)
+	getMetrics(t, port, nil, false)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil)
+	metrics := getMetrics(t, port, nil, false)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned before the restart but had none...")
 	}
@@ -347,11 +350,11 @@ func TestQMRestart(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil)
+	getMetrics(t, port, nil, false)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics = getMetrics(t, port, nil)
+	metrics = getMetrics(t, port, nil, false)
 	if len(metrics) <= 0 {
 		t.Errorf("Expected some metrics to be returned after the restart but had none...")
 	}
@@ -375,11 +378,11 @@ func TestValidValues(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil)
+	getMetrics(t, port, nil, false)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil)
+	metrics := getMetrics(t, port, nil, false)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned but had none...")
 	}
@@ -411,11 +414,11 @@ func TestChangingValues(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil)
+	getMetrics(t, port, nil, false)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil)
+	metrics := getMetrics(t, port, nil, false)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned but had none...")
 	}
@@ -444,7 +447,7 @@ func TestChangingValues(t *testing.T) {
 
 	// Now actually get the metrics (after waiting for some to become available)
 	time.Sleep(25 * time.Second)
-	metrics = getMetrics(t, port, nil)
+	metrics = getMetrics(t, port, nil, false)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned but had none...")
 	}
