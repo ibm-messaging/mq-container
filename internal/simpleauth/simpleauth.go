@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2020, 2024
+© Copyright IBM Corporation 2020, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -64,8 +64,27 @@ func IsEnabled() bool {
 func CheckForPasswords(log *logger.Logger) error {
 	adminPassword, adminPwdSet := os.LookupEnv(MQ_ADMIN_PWD_ENV)
 	appPassword, appPwdSet := os.LookupEnv(MQ_APP_PWD_ENV)
+	
+	// Setting the Admin Password Block, where the precedence is first given to secrets, and if both secrets and environment variables are present, appropriate deprecation warning is logged
+	if _, err := os.Stat(MQ_ADMIN_USER_SECRET_PATH); err == nil {
+		// First check if the environment variable has also been set. If yes, print the deprecation message.
+		if adminPwdSet && len(strings.TrimSpace(adminPassword)) > 0 {
+				log.Printf("Environment variable MQ_ADMIN_PASSWORD and the file /run/secrets/mqAdminPassword are both present. MQ_ADMIN_PASSWORD is deprecated, will be ignored, and should be removed.")
+		}
 
-	if adminPwdSet && len(strings.TrimSpace(adminPassword)) > 0 {
+		// Continue with the mounted secrets taking precedence to set the Admin Password
+		encodedAdminSecret, err := readMQSecrets(MQ_ADMIN_USER_SECRET_PATH)
+		if err != nil {
+			return fmt.Errorf("encoding mqAdminPassword secret for web server failed with error %v", err)
+		}
+		
+		if len(encodedAdminSecret) > 0 {
+			err = os.Setenv(MQ_ADMIN_PWD_SECURE_ENV, encodedAdminSecret)
+			if err != nil {
+				return fmt.Errorf("setting encoded admin user password to environment variable failed with error %v", err)
+			}
+		}
+	} else if adminPwdSet && len(strings.TrimSpace(adminPassword)) > 0 { // Falling back to environment variables if secrets have not been mounted
 		adminPasswordSensitive := sensitive.New([]byte(adminPassword))
 		encodedAdminPassword, err := securityutility.EncodeSecrets(adminPasswordSensitive)
 		if err != nil {
@@ -76,22 +95,29 @@ func CheckForPasswords(log *logger.Logger) error {
 			return fmt.Errorf("setting encoded admin user password to environment variable failed with error %v", err)
 		}
 		log.Printf("Environment variable MQ_ADMIN_PASSWORD is deprecated, use secrets to set the passwords")
-	} else {
-		if _, err := os.Stat(MQ_ADMIN_USER_SECRET_PATH); err == nil {
-			encodedAdminSecret, err := readMQSecrets(MQ_ADMIN_USER_SECRET_PATH)
-			if err != nil {
-				return fmt.Errorf("encoding mqAdminPassword secret for web server failed with error %v", err)
-			}
-			if len(encodedAdminSecret) > 0 {
-				err = os.Setenv(MQ_ADMIN_PWD_SECURE_ENV, encodedAdminSecret)
-				if err != nil {
-					return fmt.Errorf("setting encoded admin user password to environment variable failed with error %v", err)
-				}
-			}
-		}
 	}
 
-	if appPwdSet && len(strings.TrimSpace(appPassword)) > 0 {
+	// Setting the App Password Block, where the precedence is first given to secrets, and if both secrets and environment variables are present, appropriate deprecation warning is logged
+	if _, err := os.Stat(MQ_APP_USER_SECRET_PATH); err == nil {
+		// First check if the environment variable has also been set. If yes, print the deprecation message.
+		if appPwdSet && len(strings.TrimSpace(appPassword)) > 0 {
+			log.Printf("Environment variable MQ_APP_PASSWORD and the file /run/secrets/mqAppPassword are both present. MQ_APP_PASSWORD is deprecated, will be ignored, and should be removed.")
+		}
+
+		// Continue with the mounted secrets taking precedence to set the App Password
+		encodedAppSecret, err := readMQSecrets(MQ_APP_USER_SECRET_PATH)
+		if err != nil {
+			return fmt.Errorf("encoding mqAppPassword secret for web server failed with error %v", err)
+
+		}
+		
+		if len(encodedAppSecret) > 0 {
+			err = os.Setenv(MQ_APP_PWD_SECURE_ENV, encodedAppSecret)
+			if err != nil {
+				return fmt.Errorf("setting encoded app user password to environment variable failed with error %v", err)
+			}
+		}
+	} else if appPwdSet && len(strings.TrimSpace(appPassword)) > 0 { // Falling back to environment variables if secrets not mounted
 		appPasswordSensitive := sensitive.New([]byte(appPassword))
 		encodedAppPassword, err := securityutility.EncodeSecrets(appPasswordSensitive)
 		if err != nil {
@@ -102,21 +128,8 @@ func CheckForPasswords(log *logger.Logger) error {
 			return fmt.Errorf("setting encoded app user password to environment variable failed with error %v", err)
 		}
 		log.Printf("Environment variable MQ_APP_PASSWORD is deprecated, use secrets to set the passwords")
-	} else {
-		// If environment variables are not set check if secrets were used to set the passwords
-		if _, err := os.Stat(MQ_APP_USER_SECRET_PATH); err == nil {
-			encodedAppSecret, err := readMQSecrets(MQ_APP_USER_SECRET_PATH)
-			if err != nil {
-				return fmt.Errorf("encoding mqAppPassword secret for web server failed with error %v", err)
-			}
-			if len(encodedAppSecret) > 0 {
-				err := os.Setenv(MQ_APP_PWD_SECURE_ENV, encodedAppSecret)
-				if err != nil {
-					return fmt.Errorf("setting encoded app user password to environment variable failed with error %v", err)
-				}
-			}
-		}
 	}
+
 	return nil
 }
 
