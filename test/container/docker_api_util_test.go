@@ -1123,7 +1123,7 @@ func skipIfFIPSCryptoUnavailable(t *testing.T, cli ce.ContainerClient) {
 		t.Fatal(err)
 	}
 	arch = strings.TrimSpace(arch)
-	if arch == "arm64" {
-		t.Skipf("Skipping FIPS test on arm64 due to lack of FIPS cryptography")
+	if arch == "arm64" || arch == "s390x" {
+		t.Skipf("Skipping FIPS test on %s due to lack of FIPS cryptography", arch)
 	}
 }
