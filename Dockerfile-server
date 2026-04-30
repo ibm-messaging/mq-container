@@ -177,6 +177,7 @@ LABEL summary="IBM MQ Advanced Server" \
   base-image=$BASE_IMAGE \
   base-image-release=$BASE_TAG
 COPY --chown=1001:root --from=mq-redux /opt/app-root/mqm-redux/ /opt/mqm/
+COPY --chown=1001:root scripts/security-utility.sh /usr/local/bin/
 RUN env \
   # Accept the MQ license
   && /opt/mqm/bin/mqlicense -accept \
@@ -209,6 +210,7 @@ RUN env \
   # Copy MQ Licenses into the correct location
   && mkdir -p /licenses \
   && cp /opt/mqm/licenses/*.txt /licenses/ \
+  && chmod u+x /usr/local/bin/security-utility.sh \
   # Update server.xml to include mqwebcontainer.xml & mqwebexternal.xml
   && sed -i 's|<include location="mqwebuser.xml"/>|<include location="mqwebcontainer.xml"/>\n    <include location="mqwebexternal.xml"/>\n    <include location="mqwebuser.xml"/>|' /opt/mqm/samp/web/server.xml \
   && /opt/mqm/bin/security/amqpamcf

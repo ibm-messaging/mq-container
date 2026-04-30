@@ -69,6 +69,11 @@ func TestIsEnabled(t *testing.T) {
 // 2. Expected log messages appear (or don't appear) based on the code path taken
 // Full end-to-end verification of secrets would require Docker integration tests
 func TestCheckForPasswords(t *testing.T) {
+	// Skip if securityUtility is not available
+	if !isSecurityUtilityAvailable() {
+		t.Skip("securityUtility not available, skipping TestCheckForPasswords tests")
+	}
+
 	t.Run("Admin password set via secret file", func(t *testing.T) {
 		var buf bytes.Buffer
 
@@ -412,4 +417,16 @@ func TestCheckForPasswords(t *testing.T) {
 			t.Errorf("expected error message to mention 256 character limit, got: %v", err)
 		}
 	})
+}
+
+// isSecurityUtilityAvailable checks if the security utility is available for testing.
+func isSecurityUtilityAvailable() bool {
+	// Check if both files exist
+	if _, err := os.Stat("/usr/local/bin/security-utility.sh"); err != nil {
+		return false
+	}
+	if _, err := os.Stat("/opt/mqm/web/bin/securityUtility"); err != nil {
+		return false
+	}
+	return true
 }

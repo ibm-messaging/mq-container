@@ -64,12 +64,12 @@ func IsEnabled() bool {
 func CheckForPasswords(log *logger.Logger) error {
 	adminPassword, adminPwdSet := os.LookupEnv(MQ_ADMIN_PWD_ENV)
 	appPassword, appPwdSet := os.LookupEnv(MQ_APP_PWD_ENV)
-	
+
 	// Setting the Admin Password Block, where the precedence is first given to secrets, and if both secrets and environment variables are present, appropriate deprecation warning is logged
 	if _, err := os.Stat(MQ_ADMIN_USER_SECRET_PATH); err == nil {
 		// First check if the environment variable has also been set. If yes, print the deprecation message.
 		if adminPwdSet && len(strings.TrimSpace(adminPassword)) > 0 {
-				log.Printf("Environment variable MQ_ADMIN_PASSWORD and the file /run/secrets/mqAdminPassword are both present. MQ_ADMIN_PASSWORD is deprecated, will be ignored, and should be removed.")
+			log.Printf("Environment variable MQ_ADMIN_PASSWORD and the file /run/secrets/mqAdminPassword are both present. MQ_ADMIN_PASSWORD is deprecated, will be ignored, and should be removed.")
 		}
 
 		// Continue with the mounted secrets taking precedence to set the Admin Password
@@ -77,7 +77,7 @@ func CheckForPasswords(log *logger.Logger) error {
 		if err != nil {
 			return fmt.Errorf("encoding mqAdminPassword secret for web server failed with error %v", err)
 		}
-		
+
 		if len(encodedAdminSecret) > 0 {
 			err = os.Setenv(MQ_ADMIN_PWD_SECURE_ENV, encodedAdminSecret)
 			if err != nil {
@@ -86,7 +86,7 @@ func CheckForPasswords(log *logger.Logger) error {
 		}
 	} else if adminPwdSet && len(strings.TrimSpace(adminPassword)) > 0 { // Falling back to environment variables if secrets have not been mounted
 		adminPasswordSensitive := sensitive.New([]byte(adminPassword))
-		encodedAdminPassword, err := securityutility.EncodeSecrets(adminPasswordSensitive)
+		encodedAdminPassword, err := securityutility.EncodeSecrets(adminPasswordSensitive, false)
 		if err != nil {
 			return fmt.Errorf("encoding Admin password for web server failed with error %v", err)
 		}
@@ -110,7 +110,7 @@ func CheckForPasswords(log *logger.Logger) error {
 			return fmt.Errorf("encoding mqAppPassword secret for web server failed with error %v", err)
 
 		}
-		
+
 		if len(encodedAppSecret) > 0 {
 			err = os.Setenv(MQ_APP_PWD_SECURE_ENV, encodedAppSecret)
 			if err != nil {
@@ -119,7 +119,7 @@ func CheckForPasswords(log *logger.Logger) error {
 		}
 	} else if appPwdSet && len(strings.TrimSpace(appPassword)) > 0 { // Falling back to environment variables if secrets not mounted
 		appPasswordSensitive := sensitive.New([]byte(appPassword))
-		encodedAppPassword, err := securityutility.EncodeSecrets(appPasswordSensitive)
+		encodedAppPassword, err := securityutility.EncodeSecrets(appPasswordSensitive, false)
 		if err != nil {
 			return fmt.Errorf("encoding App password for web server failed with error %v", err)
 		}
@@ -144,7 +144,7 @@ func readMQSecrets(secretName string) (string, error) {
 		err = fmt.Errorf("the length of the password cannot be more than 256 characters, length of the password was %v", passwordSensitive.Len())
 		return "", err
 	}
-	encodedPassword, err := securityutility.EncodeSecrets(passwordSensitive)
+	encodedPassword, err := securityutility.EncodeSecrets(passwordSensitive, false)
 	if err != nil {
 		return "", err
 	}
