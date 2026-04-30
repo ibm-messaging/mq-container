@@ -1,4 +1,4 @@
-# © Copyright IBM Corporation 2018, 2022
+# © Copyright IBM Corporation 2018, 2026
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,27 +12,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-###############################################################################
-# Application build environment (Maven)
-###############################################################################
-FROM registry.access.redhat.com/ubi8/openjdk-8 as builder
-COPY pom.xml ./
-#WORKDIR /usr/src/mymaven
-# Download dependencies separately, so Docker caches them
-RUN mvn dependency:go-offline install
-# Copy source
-COPY src ./src
-# Run the main build
-RUN mvn --offline install
-# Print a list of all the files (useful for debugging)
-RUN find ./
+ARG BUILD_DIR=/var/workspace
 
 ###############################################################################
-# Application runtime (JRE only, no build environment)
+# JRE container, used by both the builder and runtime containers
 ###############################################################################
-# OpenJDK is not technically supported with the MQ client, but is good enough for these tests
-FROM registry.access.redhat.com/ubi8/openjdk-8-runtime
-COPY --from=builder /home/jboss/target/*.jar /opt/app/
-COPY --from=builder /home/jboss/target/lib/*.jar /opt/app/
+FROM registry.access.redhat.com/ubi9/ubi as jre
+RUN dnf install \
+    --assumeyes \
+    --releasever 9 \
+    --disableplugin subscription-manager \
+    --disablerepo=* \
+    --enablerepo=ubi-* \
+    --setopt install_weak_deps=false \
+    --nodocs \
+    java-1.8.0-openjdk-headless
+
+###############################################################################
+# Builder container
+###############################################################################
+FROM jre AS builder
+ARG BUILD_DIR
+WORKDIR ${BUILD_DIR}
+RUN dnf install \
+    --assumeyes \
+    --releasever 9 \
+    --disableplugin subscription-manager \
+    --disablerepo=* \
+    --enablerepo=ubi-* \
+    --setopt install_weak_deps=false \
+    --nodocs \
+    java-1.8.0-openjdk-devel
+COPY downloads/com.ibm.mq.allclient.jar .
+COPY downloads/jms.jar .
+COPY downloads/org.json.jar .
+# Copy source
+COPY test/messaging/src ./src
+# Create output directory for compiled classes
+RUN mkdir -p ${BUILD_DIR}/classes
+# Compile Java files
+RUN javac -encoding UTF-8 -cp "${BUILD_DIR}/com.ibm.mq.allclient.jar:${BUILD_DIR}/jms.jar:${BUILD_DIR}/org.json.jar" \
+    -d ${BUILD_DIR}/classes \
+    $(find src/main/java -name "*.java")
+# Create JAR file
+RUN jar cf ${BUILD_DIR}/test-messaging.jar -C ${BUILD_DIR}/classes .
+
+###############################################################################
+# Application runtime
+###############################################################################
+FROM jre
+ARG BUILD_DIR
+COPY --chown=1001:root --from=builder ${BUILD_DIR}/test-messaging.jar /opt/app/
+COPY --chown=1001:root --from=builder ${BUILD_DIR}/com.ibm.mq.allclient.jar /opt/app/
+COPY --chown=1001:root --from=builder ${BUILD_DIR}/jms.jar /opt/app/
+COPY --chown=1001:root --from=builder ${BUILD_DIR}/org.json.jar /opt/app/
 USER 1001
-ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "--fail-if-no-tests", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]
+ENTRYPOINT ["java", "-classpath", "/opt/app/*", "com.ibm.mqcontainer.test.Main"]

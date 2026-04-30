@@ -224,9 +224,12 @@ test-advancedserver:
 	cd test/container && TEST_IMAGE=$(MQ_IMAGE_ADVANCEDSERVER):$(MQ_TAG) EXPECTED_LICENSE=Production DOCKER_API_VERSION=$(DOCKER_API_VERSION) COMMAND=$(COMMAND) go test -parallel $(NUM_CPU) -timeout $(TEST_TIMEOUT_CONTAINER) $(TEST_OPTS_CONTAINER)
 
 .PHONY: build-devjmstest
-build-devjmstest:
+build-devjmstest: log-build-env downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(SPACER)$(shell printf $(TITLE)"Build JMS tests for developer config"$(END)))
-	cd test/messaging && $(COMMAND) build $(NETWORK) --tag $(DEV_JMS_IMAGE) .
+	tar -C ./downloads --strip-components=2 -zxvf ./downloads/$(MQ_ARCHIVE_DEV) java/lib/jms.jar java/lib/com.ibm.mq.allclient.jar java/lib/org.json.jar
+	rm -f .dockerignore && echo ".git\ndownloads\n!downloads/*.jar" > .dockerignore
+	$(COMMAND) build $(NETWORK) --file test/messaging/Dockerfile --tag $(DEV_JMS_IMAGE) .
+	rm -f .dockerignore
 
 .PHONY: test-devserver
 test-devserver:
