@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019, 2024
+© Copyright IBM Corporation 2019, 2024, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -593,14 +593,14 @@ func addCertificatesToCMSKeystore(cmsKeystore *KeyStoreData) error {
 	return nil
 }
 
-// generateRandomPassword generates a random 12 character password from the characters a-z, A-Z, 0-9
+// generateRandomPassword generates a random 16 character password from the characters a-z, A-Z, 0-9
 func generateRandomPassword() *sensitive.Sensitive {
 	validChars := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 	validcharArray := []byte(validChars)
-	password := make([]byte, 12)
+	password := make([]byte, 16)
 	_, _ = rand.Read(password) // Errors are never returned from crypto/rand.Read()
 
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 16; i++ {
 		password[i] = validcharArray[int(password[i])%len(validcharArray)]
 	}
 

@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2019, 2023
+© Copyright IBM Corporation 2019, 2023, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,9 +38,29 @@ func ConfigureWebTLS(keyLabel string, log *logger.Logger, password *sensitive.Se
 		return nil
 	}
 
+	var initialKey *sensitive.Sensitive
+	key, err := os.ReadFile("/run/secrets/initial.key")
+	if err != nil {
+		log.Printf("WARNING: An initial key was not specified. To improve the security, supply an initial key by mounting a Secret to /run/secrets/initial.key")
+	} else {
+		initialKey = trimKey(key)
+		if initialKey == nil {
+			log.Printf("WARNING: An initial key was specified under /run/secrets/initial.key but did not contain any valid characters")
+		}
+	}
+	// Generate a random key to use, if the user did not provide a key, or the provided key was invalid.
+	if initialKey == nil {
+		initialKey = generateRandomPassword()
+	}
+
+	err = securityutility.GenerateLibertyAESKeyFile(initialKey)
+	if err != nil {
+		return err
+	}
+
 	tlsConfigLink := "/run/tls.xml"
 	tlsConfigTemplate := "/etc/mqm/web/installations/Installation1/servers/mqweb/tls.xml.tpl"
-	encryptedPassword, err := securityutility.EncodeSecrets(password)
+	encryptedPassword, err := securityutility.EncodeSecrets(password, true)
 	if err != nil {
 		log.Printf("Password encoding for Web Keystore failed with error %v", err)
 		// We couldn't encode the passwords so using an empty string as password
@@ -53,6 +73,50 @@ func ConfigureWebTLS(keyLabel string, log *logger.Logger, password *sensitive.Se
 	}
 
 	return nil
+}
+
+// trimKey will return the first contiguous set of valid characters from the provided AES initialization key. If the key contains no valid characters it returns nil.
+func trimKey(key []byte) *sensitive.Sensitive {
+	// Valid characters are anything that is not a new line, whitespace, or a null byte.
+	isValidChar := func(b byte) bool {
+		switch b {
+		case '\n', ' ', 0:
+			return false
+		default:
+			return true
+		}
+	}
+	startingMarker := 0
+	finalMarker := 0
+	// Find the start of the valid key
+	for startingMarker = 0; startingMarker < len(key); startingMarker++ {
+		if isValidChar(key[startingMarker]) {
+			break
+		}
+		// Zero out any initial invalid characters
+		key[startingMarker] = 0
+	}
+	// If there are no valid characters in the key return nil.
+	if startingMarker >= len(key) {
+		return nil
+	}
+
+	// Find the rest of the valid characters in the key
+	for finalMarker = startingMarker + 1; finalMarker < len(key); finalMarker++ {
+		if !isValidChar(key[finalMarker]) {
+			break
+		}
+	}
+	// Zero bytes after the final marker
+	for i := finalMarker; i < len(key); i++ {
+		key[i] = 0
+	}
+	// If the final and starting markers have no gap between them, the length of the valid key is 0 and it is invalid.
+	if (finalMarker - startingMarker) < 1 {
+		return nil
+	}
+	// Return the valid key from between the two markers
+	return sensitive.New(key[startingMarker:finalMarker])
 }
 
 // ConfigureWebKeyStore configures the Web Keystore
