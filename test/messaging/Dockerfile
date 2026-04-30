@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ARG BUILD_DIR=/var/workspace
+
 ###############################################################################
 # JRE container, used by both the builder and runtime containers
 ###############################################################################
@@ -27,9 +29,11 @@ RUN dnf install \
     java-25-openjdk-headless
 
 ###############################################################################
-# Builder container, with Maven and JDK
+# Builder container
 ###############################################################################
 FROM jre AS builder
+ARG BUILD_DIR
+WORKDIR ${BUILD_DIR}
 RUN dnf install \
     --assumeyes \
     --releasever 10 \
@@ -38,21 +42,29 @@ RUN dnf install \
     --enablerepo=ubi-* \
     --setopt install_weak_deps=false \
     --nodocs \
-    maven-openjdk25
-WORKDIR /var/workspace
-COPY pom.xml ./
-# Download dependencies separately, so they are cached in their own layer
-RUN mvn dependency:go-offline install
+    java-25-openjdk-devel
+COPY downloads/com.ibm.mq.allclient.jar .
+COPY downloads/jms.jar .
+COPY downloads/org.json.jar .
 # Copy source
-COPY src ./src
-# Run the main build
-RUN mvn --offline install
+COPY test/messaging/src ./src
+# Create output directory for compiled classes
+RUN mkdir -p ${BUILD_DIR}/classes
+# Compile Java files
+RUN javac -cp "${BUILD_DIR}/com.ibm.mq.allclient.jar:${BUILD_DIR}/jms.jar:${BUILD_DIR}/org.json.jar" \
+    -d ${BUILD_DIR}/classes \
+    $(find src/main/java -name "*.java")
+# Create JAR file
+RUN jar cf ${BUILD_DIR}/test-messaging.jar -C ${BUILD_DIR}/classes .
 
 ###############################################################################
-# Application runtime (JRE only, no build environment)
+# Application runtime
 ###############################################################################
 FROM jre
-COPY --chown=1001:root --from=builder /var/workspace/target/*.jar /opt/app/
-COPY --chown=1001:root --from=builder /var/workspace/target/lib/*.jar /opt/app/
+ARG BUILD_DIR
+COPY --chown=1001:root --from=builder ${BUILD_DIR}/test-messaging.jar /opt/app/
+COPY --chown=1001:root --from=builder ${BUILD_DIR}/com.ibm.mq.allclient.jar /opt/app/
+COPY --chown=1001:root --from=builder ${BUILD_DIR}/jms.jar /opt/app/
+COPY --chown=1001:root --from=builder ${BUILD_DIR}/org.json.jar /opt/app/
 USER 1001
-ENTRYPOINT ["java", "-classpath", "/opt/app/*", "org.junit.platform.console.ConsoleLauncher", "execute", "--fail-if-no-tests", "-p", "com.ibm.mqcontainer.test", "--details", "verbose"]
+ENTRYPOINT ["java", "-classpath", "/opt/app/*", "com.ibm.mqcontainer.test.Main"]

@@ -15,7 +15,7 @@ limitations under the License.
 */
 package com.ibm.mqcontainer.test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static com.ibm.mqcontainer.test.framework.Assertions.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -39,15 +39,15 @@ import com.ibm.mq.jms.MQQueue;
 import com.ibm.msg.client.wmq.WMQConstants;
 import com.ibm.msg.client.jms.DetailedJMSSecurityRuntimeException;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
+import com.ibm.mqcontainer.test.framework.AfterAll;
+import com.ibm.mqcontainer.test.framework.AfterEach;
+import com.ibm.mqcontainer.test.framework.BeforeAll;
+import com.ibm.mqcontainer.test.framework.BeforeEach;
+import com.ibm.mqcontainer.test.framework.Disabled;
+import com.ibm.mqcontainer.test.framework.Test;
+import com.ibm.mqcontainer.test.framework.TestInfo;
 
-class JMSTests {
+public class JMSTests {
     private static final Logger LOGGER = Logger.getLogger(JMSTests.class.getName());
     protected static final String ADDR = System.getenv("MQ_PORT_1414_TCP_ADDR");
     protected static final String USER = System.getenv("MQ_USERNAME");
