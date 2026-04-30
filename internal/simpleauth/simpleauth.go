@@ -67,7 +67,7 @@ func CheckForPasswords(log *logger.Logger) error {
 
 	if adminPwdSet && len(strings.TrimSpace(adminPassword)) > 0 {
 		adminPasswordSensitive := sensitive.New([]byte(adminPassword))
-		encodedAdminPassword, err := securityutility.EncodeSecrets(adminPasswordSensitive)
+		encodedAdminPassword, err := securityutility.EncodeSecrets(adminPasswordSensitive, false)
 		if err != nil {
 			return fmt.Errorf("encoding Admin password for web server failed with error %v", err)
 		}
@@ -93,7 +93,7 @@ func CheckForPasswords(log *logger.Logger) error {
 
 	if appPwdSet && len(strings.TrimSpace(appPassword)) > 0 {
 		appPasswordSensitive := sensitive.New([]byte(appPassword))
-		encodedAppPassword, err := securityutility.EncodeSecrets(appPasswordSensitive)
+		encodedAppPassword, err := securityutility.EncodeSecrets(appPasswordSensitive, false)
 		if err != nil {
 			return fmt.Errorf("encoding App password for web server failed with error %v", err)
 		}
@@ -131,7 +131,7 @@ func readMQSecrets(secretName string) (string, error) {
 		err = fmt.Errorf("the length of the password cannot be more than 256 characters, length of the password was %v", passwordSensitive.Len())
 		return "", err
 	}
-	encodedPassword, err := securityutility.EncodeSecrets(passwordSensitive)
+	encodedPassword, err := securityutility.EncodeSecrets(passwordSensitive, false)
 	if err != nil {
 		return "", err
 	}

@@ -112,9 +112,11 @@ LABEL summary="IBM MQ Advanced Server" \
 COPY --chown=1001:root --from=mq-redux /opt/mqm-redux/ /opt/mqm/
 COPY --chown=1001:root setup-image.sh /usr/local/bin/
 COPY --chown=1001:root install-mq-server-prereqs.sh /usr/local/bin/
+COPY --chown=1001:root scripts/security-utility.sh /usr/local/bin/
 RUN env \
   && chmod u+x /usr/local/bin/install-*.sh \
   && chmod u+x /usr/local/bin/setup-image.sh \
+  && chmod u+x /usr/local/bin/security-utility.sh \
   && install-mq-server-prereqs.sh \
   && setup-image.sh \
   && /opt/mqm/bin/security/amqpamcf
