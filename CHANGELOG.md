@@ -5,6 +5,7 @@
 * Updated to MQ version 10.0.0.0
 * Added option to include version 3.8.0 (2026.1.3) of the IBM MQ tracing user exit. See [IBM MQ tracing](https://www.ibm.com/docs/en/SSE1JP5_current/src/pages/ecosystem/ibmmq/mq_tracing.html) in the IBM Instana documentation.
 * Uses `ubi-micro` image instead of `ubi-minimal`.  This requires additional build stages.  Removes the `microdnf` and `rpm` commands, along with a number of other unnecessary programs.  This helps make the image smaller, and reduce the number of security vulnerabilities.
+* Use Go cryptography provider for FIPS, instead of OpenSSL.  This applies only to the metrics HTTPS server.
 
 ## 9.4.5.0-r2 (2026-03)
 * New environment variable: MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE
