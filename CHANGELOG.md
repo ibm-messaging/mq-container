@@ -1,4 +1,8 @@
 # Change log
+## 9.4.0.21-r1 (2026-05)
+
+* Updated to MQ version 9.4.0.21
+
 ## 9.4.0.20-r1 (2026-03)
 
 * Updated to MQ version 9.4.0.20
