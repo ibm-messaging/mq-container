@@ -22,10 +22,10 @@
 set -e
 
 # Source the MQ environment (sets up MQ_INSTALLATION_PATH, PATH, etc.)
-. setmqenv -s
+source setmqenv -s || true
 
 # Start the MQ web server component
-/opt/mqm/web/bin/server
+/opt/mqm/web/bin/server || true
 
 # Execute securityUtility with all arguments passed as parameters
 # The "$@" ensures each argument is properly quoted and passed individually
