@@ -47,11 +47,11 @@ func ConfigureWebTLS(keyLabel, webKeystore string, p12Truststore KeyStoreData, l
 	var initialKey *sensitive.Sensitive
 	key, err := os.ReadFile("/run/secrets/initial.key")
 	if err != nil {
-		log.Printf("WARNING: An initial key was not specified. To improve the security, supply an initial key by mounting a Secret to /run/secrets/initial.key")
+		log.Printf("No initial key specified at /run/secrets/initial.key. Generating a random initial key")
 	} else {
 		initialKey = trimKey(key)
 		if initialKey == nil {
-			log.Printf("WARNING: An initial key was specified under /run/secrets/initial.key but did not contain any valid characters")
+			log.Printf("WARNING: An initial key was specified under /run/secrets/initial.key but did not contain any valid character. Generating a random initial key")
 		}
 	}
 	// Generate a random key to use, if the user did not provide a key, or the provided key was invalid.
