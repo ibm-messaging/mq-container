@@ -107,6 +107,7 @@ func goldenPath(t *testing.T, metrics bool) {
 		testLogFilePages(t, cli, id, "qm1", "4096")
 	})
 	validateLocale(t, cli, id, "en_US.utf8")
+	validateCCSID(t, cli, id, "1208")
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
@@ -2520,5 +2521,6 @@ func TestDifferentLanguage(t *testing.T) {
 		}
 	})
 	validateLocale(t, cli, id, "de_DE.utf8")
+	validateCCSID(t, cli, id, "1208")
 	stopContainer(t, cli, id)
 }

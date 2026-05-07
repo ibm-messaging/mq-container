@@ -1139,3 +1139,16 @@ func validateLocale(t *testing.T, cli ce.ContainerClient, id string, locale stri
 	})
 
 }
+
+// validateCCSID checks that the CCSID of the queue manager is correct
+func validateCCSID(t *testing.T, cli ce.ContainerClient, id string, ccsid string) {
+	t.Run("Validate default locale", func(t *testing.T) {
+		_, out := execContainer(t, cli, id, "", []string{"bash", "-c", "printf 'display qmgr ccsid' | runmqsc"})
+		t.Logf("Discovered queue manager CCSID=%v", out)
+		expected := "CCSID(1208)"
+		if !strings.Contains(out, expected) {
+			t.Errorf("Expected to find queue manager CCSID of %v; got: %v", expected, out)
+		}
+	})
+
+}
