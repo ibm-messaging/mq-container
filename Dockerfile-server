@@ -129,7 +129,7 @@ FROM $UBI_BASE_IMAGE:$UBI_BASE_TAG AS base
 FROM $UBI_BUILDER_IMAGE:$UBI_BUILDER_TAG AS basebuilder-ubi
 ARG BASE_DIR
 USER 0
-ARG PACKAGES_TO_INSTALL="bash bc ca-certificates crypto-policies findutils gawk glibc-common grep libicu ncurses-libs procps-ng sed tar util-linux-core which zlib-ng-compat"
+ARG PACKAGES_TO_INSTALL="bash bc ca-certificates crypto-policies findutils gawk glibc-common grep libicu ncurses-libs openssl-libs procps-ng sed tar util-linux-core which zlib-ng-compat"
 RUN mkdir ${BASE_DIR}
 COPY --from=base / ${BASE_DIR}
 # Install the packages.  Disable all repos, and then re-enable just the UBI 

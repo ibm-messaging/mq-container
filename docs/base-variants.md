@@ -38,7 +38,7 @@ ENV PATH=$PATH:/usr/lib/go-1.25/bin/
 
 FROM $UBUNTU_BASE_IMAGE:$UBUNTU_BASE_TAG AS base-plus-packages-ubuntu
 ARG BASE_DIR
-ARG PACKAGES_TO_INSTALL="bash bc ca-certificates coreutils curl debianutils findutils gawk grep language-pack-en libc-bin mount procps sed tar util-linux libicu-dev"
+ARG PACKAGES_TO_INSTALL="bash bc ca-certificates coreutils curl debianutils findutils gawk grep language-pack-en libc-bin mount openssl procps sed tar util-linux libicu-dev"
 RUN apt-get update -y \
   && apt-get install \
     -y \
@@ -69,7 +69,7 @@ WORKDIR ${GO_WORKDIR}
 
 FROM $SLES_BASE_IMAGE:$SLES_BASE_TAG AS base-plus-packages-sles
 ARG BASE_DIR
-ARG PACKAGES_TO_INSTALL="bash bc ca-certificates findutils gawk glibc grep procps sed tar util-linux which libicu"
+ARG PACKAGES_TO_INSTALL="bash bc ca-certificates findutils gawk glibc grep openssl procps sed tar util-linux which libicu"
 RUN zypper install \
     --no-confirm \
     --no-recommends \
