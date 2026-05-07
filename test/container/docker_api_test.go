@@ -106,6 +106,7 @@ func goldenPath(t *testing.T, metrics bool) {
 	t.Run("Validate Default LogFilePages", func(t *testing.T) {
 		testLogFilePages(t, cli, id, "qm1", "4096")
 	})
+	validateLocale(t, cli, id, "en_US.utf8")
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
@@ -2496,4 +2497,28 @@ func TestSoftFileLimitIncreaseEnabled(t *testing.T) {
 			t.Errorf("Expected soft limit for PID %s to equal the hard limit (%s), got soft=%s", pid, hardLimit, softLimit)
 		}
 	}
+}
+
+// TestDifferentLanguage runs the container with German language enabled, and ensures
+// that log messages are printed correctly.
+func TestDifferentLanguage(t *testing.T) {
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+	containerConfig := ce.ContainerConfig{
+		Env: []string{"LICENSE=accept", "LANG=de_DE.utf8", "MQ_ENABLE_EMBEDDED_WEB_SERVER=true"},
+	}
+	id := runContainer(t, cli, &containerConfig)
+	cleanupAfterTest(t, cli, id, false)
+	waitForReady(t, cli, id)
+	waitForWebConsoleReady(t, cli, id)
+	// Validate the web messages specifically, because Liberty logs require
+	// the glibc locales to be installed before they are printed correctly
+	t.Run("Validate language of web log message", func(t *testing.T) {
+		jsonLogs := inspectLogs(t, cli, id)
+		expected := "CWWKE0001I: Der Server mqweb wurde gestartet"
+		if !strings.Contains(jsonLogs, expected) {
+			t.Errorf("Expected to find web server start message in German (%s)", expected)
+		}
+	})
+	validateLocale(t, cli, id, "de_DE.utf8")
+	stopContainer(t, cli, id)
 }

@@ -149,12 +149,50 @@ RUN dnf install \
   && dnf list installed --installroot ${BASE_DIR} >> ${BASE_DIR}/packages.txt
 
 ###############################################################################
+# Locale builder stage for the UBI variant.
+# UBI does not allow the installation of individual locale packages, so this 
+# stage uses the glibc locale source to create a new locale archive.
+###############################################################################
+FROM $UBI_BUILDER_IMAGE:$UBI_BUILDER_TAG AS localebuilder-ubi
+USER 0
+RUN dnf install \
+    --assumeyes \
+    --releasever 10 \
+    --disableplugin subscription-manager \
+    --disablerepo=* \
+    --enablerepo=ubi-* \
+    --setopt install_weak_deps=false \
+    --nodocs \
+    glibc-locale-source gzip glibc-all-langpacks
+# Create the locales
+RUN rm /usr/lib/locale/locale-archive* \
+  && localedef -i C -f UTF-8 C.utf8 \
+  && localedef -i cs_CZ -f UTF-8 cs_CZ.utf8 \
+  && localedef -i de_DE -f UTF-8 de_DE.utf8 \
+  && localedef -i en_US -f UTF-8 en_US.utf8 \
+  && localedef -i es_ES -f UTF-8 es_ES.utf8 \
+  && localedef -i hu_HU -f UTF-8 hu_HU.utf8 \
+  && localedef -i it_IT -f UTF-8 it_IT.utf8 \
+  && localedef -i ja_JP -f UTF-8 ja_JP.utf8 \
+  && localedef -i ko_KR -f UTF-8 ko_KR.utf8 \
+  && localedef -i pl_PL -f UTF-8 pl_PL.utf8 \
+  && localedef -i zh_CN -f UTF-8 zh_CN.utf8 \
+  && localedef -i zh_TW -f UTF-8 zh_TW.utf8
+# Copy the LC_MESSAGES files
+RUN mkdir -p /usr/share/locale-build \
+  && for lang in cs de es hu it ja ko pl zh_CN zh_TW; do cp -p -R /usr/share/locale/$lang /usr/share/locale-build/$lang/; done
+
+###############################################################################
 # Base image plus packages
 # Copy the base directory set up in the basebuilder-ubi stage
 ###############################################################################
 FROM scratch AS base-plus-packages-ubi
 ARG BASE_DIR
 COPY --from=basebuilder-ubi ${BASE_DIR}/ .
+# Replace locales and messages with the ones from the locale builder stage
+RUN rm -rf /usr/lib/locale/*
+COPY --from=localebuilder-ubi /usr/share/locale-build /usr/share/locale/ 
+COPY --from=localebuilder-ubi /usr/lib/locale/locale-archive /usr/lib/locale/locale-archive
 
 ###############################################################################
 # Main build stage, to build MQ image
@@ -238,7 +276,7 @@ RUN touch /run/termination-log \
 EXPOSE 1414 9157 9415 9443
 ENV MQ_OVERRIDE_DATA_PATH=/mnt/mqm/data MQ_OVERRIDE_INSTALLATION_NAME=Installation1 MQ_USER_NAME="mqm" PATH="${PATH}:/opt/mqm/bin"
 ENV MQ_GRACE_PERIOD=30
-ENV LANG=C AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1
+ENV LANG=en_US.utf8 AMQ_DIAGNOSTIC_MSG_SEVERITY=1 AMQ_ADDITIONAL_JSON_LOG=1
 ENV MQ_LOGGING_CONSOLE_EXCLUDE_ID=AMQ5041I,AMQ5052I,AMQ5051I,AMQ5037I,AMQ5975I
 ENV WLP_LOGGING_MESSAGE_FORMAT=json
 ENV MQ_ENABLE_CLEAN_TMP_ON_START=true

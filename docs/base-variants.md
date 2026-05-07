@@ -38,7 +38,7 @@ ENV PATH=$PATH:/usr/lib/go-1.25/bin/
 
 FROM $UBUNTU_BASE_IMAGE:$UBUNTU_BASE_TAG AS base-plus-packages-ubuntu
 ARG BASE_DIR
-ARG PACKAGES_TO_INSTALL="bash bc ca-certificates coreutils curl debianutils findutils gawk grep libc-bin mount procps sed tar util-linux libicu-dev"
+ARG PACKAGES_TO_INSTALL="bash bc ca-certificates coreutils curl debianutils findutils gawk grep language-pack-en libc-bin mount procps sed tar util-linux libicu-dev"
 RUN apt-get update -y \
   && apt-get install \
     -y \

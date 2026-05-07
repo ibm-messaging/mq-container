@@ -1127,3 +1127,15 @@ func skipIfFIPSCryptoUnavailable(t *testing.T, cli ce.ContainerClient) {
 		t.Skipf("Skipping FIPS test on %s due to lack of FIPS cryptography", arch)
 	}
 }
+
+// validateLocale checks that the container is running the specified locale
+func validateLocale(t *testing.T, cli ce.ContainerClient, id string, locale string) {
+	t.Run("Validate default locale", func(t *testing.T) {
+		_, out := execContainer(t, cli, id, "", []string{"locale"})
+		expected := fmt.Sprintf("LANG=%s", locale)
+		if !strings.Contains(out, expected) {
+			t.Errorf("Expected to find %v in output from locale; got:\n%v\n", expected, out)
+		}
+	})
+
+}
