@@ -2,6 +2,7 @@
 ## 9.4.0.21-r1 (2026-05)
 
 * Updated to MQ version 9.4.0.21
+* Generate initial key for Liberty AES encryption. An initial key can also be passed in using a Secret.
 
 ## 9.4.0.20-r1 (2026-03)
 
