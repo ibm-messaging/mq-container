@@ -3,6 +3,7 @@
 ## 9.4.5.1 (2026-05)
 
 * Updated to MQ version 9.4.5.1
+* Generate initial key for Liberty AES encryption. An initial key can also be passed in using a Secret
 
 ## 9.4.5.0-r2 (2026-03)
 * New environment variable: MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE
