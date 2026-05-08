@@ -79,6 +79,8 @@ func EncodeSecrets(secret *sensitive.Sensitive, useAES bool) (string, error) {
 
 // GenerateLibertyAESKeyFile generates the AES key file for Liberty from the initialKey.
 // The key file is created at /dev/shm/liberty-aes-key.xml.
+// If the file already exists (e.g., from a previous container run in the same pod),
+// it will be removed before generating a new one.
 func GenerateLibertyAESKeyFile(initialKey *sensitive.Sensitive) error {
 	if err := validateSecurityUtility(); err != nil {
 		return err
@@ -90,6 +92,14 @@ func GenerateLibertyAESKeyFile(initialKey *sensitive.Sensitive) error {
 
 	if initialKey.Len() > maxSecretLength {
 		return fmt.Errorf("length of initialKey is greater than the maximum length of %d characters, actual length is %d", maxSecretLength, initialKey.Len())
+	}
+
+	// Remove existing AES key file if it exists (e.g., from a previous container run)
+	// This handles the case where /dev/shm is shared at pod level and persists across container restarts
+	if _, err := os.Stat(aesKeyFile); err == nil {
+		if err := os.Remove(aesKeyFile); err != nil {
+			return fmt.Errorf("failed to remove existing AES key file at %s: %w", aesKeyFile, err)
+		}
 	}
 
 	// Build the --key= argument with the secret

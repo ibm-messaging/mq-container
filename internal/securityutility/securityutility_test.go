@@ -388,4 +388,53 @@ func TestAESKeyFileCreation(t *testing.T) {
 		// Clean up
 		os.Remove(aesKeyFile)
 	})
+
+	t.Run("Regenerate AES key file when it already exists", func(t *testing.T) {
+		// Skip if securityUtility is not available
+		if err := validateSecurityUtility(); err != nil {
+			t.Skip("securityUtility not available, skipping AES key file regeneration test")
+		}
+
+		// Clean up any existing file first
+		os.Remove(aesKeyFile)
+
+		// Generate initial key file
+		key1 := make([]byte, 32)
+		for i := range key1 {
+			key1[i] = 'a'
+		}
+		k1 := sensitive.New(key1)
+
+		err := GenerateLibertyAESKeyFile(k1)
+		if err != nil {
+			t.Fatalf("GenerateLibertyAESKeyFile() first generation failed: %v", err)
+		}
+
+		// Verify file exists
+		if _, statErr := os.Stat(aesKeyFile); statErr != nil {
+			t.Fatalf("First AES key file was not created: %v", statErr)
+		}
+
+		// Now try to regenerate with a different key (simulating container restart)
+		key2 := make([]byte, 32)
+		for i := range key2 {
+			key2[i] = 'b'
+		}
+		k2 := sensitive.New(key2)
+
+		err = GenerateLibertyAESKeyFile(k2)
+		if err != nil {
+			t.Fatalf("GenerateLibertyAESKeyFile() regeneration failed: %v", err)
+		}
+
+		// Verify file still exists after regeneration
+		if _, statErr := os.Stat(aesKeyFile); statErr != nil {
+			t.Errorf("AES key file was not recreated after regeneration: %v", statErr)
+		} else {
+			t.Log("AES key file successfully regenerated when it already existed")
+		}
+
+		// Clean up
+		os.Remove(aesKeyFile)
+	})
 }
