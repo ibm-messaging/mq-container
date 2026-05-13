@@ -346,3 +346,147 @@ func TestNativeHAFailoverWithRoRFs(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// TestNativeHaProbeLoggingGoldenPath tests probe logging in Native HA configuration.
+// Verifies first successful probe is logged on all three instances (active and replicas), and SIGTERM summary is generated on the active instance.
+func TestNativeHaProbeLoggingGoldenPath(t *testing.T) {
+	cli := ce.NewContainerClient()
+
+	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
+	qmReplicaIds := [3]string{}
+	qmVolumes := []string{}
+	// Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	// If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
+	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
+		vol := createVolume(t, cli, containerNames[i])
+		cleanupVolume(t, cli, vol)
+		qmVolumes = append(qmVolumes, vol)
+		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
+		hostConfig := getHostConfig(t, 1, "", "", vol, "", "", false)
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+		networkConfig := getNativeHANetworkConfig("host")
+		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkConfig, containerNames[i])
+		cleanupAfterTest(t, cli, ctr, false)
+		qmReplicaIds[i] = ctr
+	}
+
+	waitForReadyHA(t, cli, qmReplicaIds)
+
+	// Execute chkmqhealthy on all three instances to trigger first pass logging
+	for _, id := range qmReplicaIds {
+		// Execute the chkmqhealthy multiple times
+		for i := 1; i <= 3; i++ {
+			rc, _ := execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+			if rc != 0 {
+				t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+			}
+		}
+	}
+
+	// Verify first successful liveness probe was logged once only.
+	// Additional identical successful probes should be suppressed by deduplication.
+	for _, id := range qmReplicaIds {
+		containerLogs := inspectLogs(t, cli, id)
+
+		passedCount := strings.Count(containerLogs, "Liveness Probe Passed")
+		if passedCount != 1 {
+			t.Errorf("Expected exactly one liveness probe pass log due to deduplication, got %d", passedCount)
+		}
+	}
+
+	haStatus, err := getActiveReplicaInstances(t, cli, qmReplicaIds)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Kill the active replica by sending SIGTERM
+	killContainer(t, cli, haStatus.Active, "SIGTERM")
+
+	// Verify the active replica has the probe summary logged
+	containerLogs := inspectLogs(t, cli, haStatus.Active)
+
+	if !strings.Contains(containerLogs, "----- Start Liveness Probe Summary -----") {
+		t.Errorf("Expected liveness probe summary at SIGTERM")
+	}
+}
+
+// TestNativeHALivenessProbeLoggingFailureRecovery tests liveness probe logging deduplication on the active Native HA instance.
+// Verifies pass-fail-fail-pass pattern logging and SIGTERM summary generation.
+func TestNativeHaLivenessProbeLoggingFailureRecovery(t *testing.T) {
+	cli := ce.NewContainerClient()
+
+	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
+	qmReplicaIds := [3]string{}
+	qmVolumes := []string{}
+	// Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	// If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
+	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
+		vol := createVolume(t, cli, containerNames[i])
+		cleanupVolume(t, cli, vol)
+		qmVolumes = append(qmVolumes, vol)
+		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
+		hostConfig := getHostConfig(t, 1, "", "", vol, "", "", false)
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+		networkConfig := getNativeHANetworkConfig("host")
+		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkConfig, containerNames[i])
+		cleanupAfterTest(t, cli, ctr, false)
+		qmReplicaIds[i] = ctr
+	}
+
+	waitForReadyHA(t, cli, qmReplicaIds)
+
+	haStatus, err := getActiveReplicaInstances(t, cli, qmReplicaIds)
+	if err != nil {
+		t.Fatal(err)
+	}
+	qmActiveReplicaId := haStatus.Active
+
+	// First success
+	rc, _ := execContainer(t, cli, qmActiveReplicaId, "", []string{"chkmqhealthy"})
+	if rc != 0 {
+		t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+	}
+
+	// Stop the QueueManager
+	execContainer(t, cli, qmActiveReplicaId, "", []string{"endmqm", "-i", "QM1"})
+	time.Sleep(2 * time.Second)
+
+	// Execute the chkmqhealthy command, it will now fail
+	rc, _ = execContainer(t, cli, qmActiveReplicaId, "", []string{"chkmqhealthy"})
+	if rc == 0 {
+		t.Errorf("Expected liveness probe to fail")
+	}
+
+	rc, _ = execContainer(t, cli, qmActiveReplicaId, "", []string{"chkmqhealthy"})
+	if rc == 0 {
+		t.Errorf("Expected liveness probe to fail")
+	}
+
+	// Start the QueueManager
+	execContainer(t, cli, qmActiveReplicaId, "", []string{"strmqm", "QM1"})
+	waitForReadyHA(t, cli, qmReplicaIds)
+
+	// Execute the chkmqhealthy command
+	rc, _ = execContainer(t, cli, qmActiveReplicaId, "", []string{"chkmqhealthy"})
+	if rc != 0 {
+		t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+	}
+
+	containerLogs := inspectLogs(t, cli, qmActiveReplicaId)
+
+	// Verify: 1st pass, 2 fails, recovery pass all logged
+	passedRuntimeLogCount := strings.Count(containerLogs, "Liveness Probe Passed")
+	failedRuntimeLogCount := strings.Count(containerLogs, "Liveness Probe Failed")
+
+	if passedRuntimeLogCount != 2 {
+		t.Errorf("Expected 2 liveness probe pass logs (first + recovery), got %d", passedRuntimeLogCount)
+	}
+
+	if failedRuntimeLogCount != 2 {
+		t.Errorf("Expected 2 liveness probe failure logs, got %d", passedRuntimeLogCount)
+	}
+}

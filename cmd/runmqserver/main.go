@@ -30,6 +30,7 @@ import (
 	"github.com/ibm-messaging/mq-container/internal/fips"
 	"github.com/ibm-messaging/mq-container/internal/ha"
 	"github.com/ibm-messaging/mq-container/internal/metrics"
+	"github.com/ibm-messaging/mq-container/internal/probes"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/internal/simpleauth"
 	"github.com/ibm-messaging/mq-container/internal/tls"
@@ -106,8 +107,17 @@ func doMain() error {
 			markStartupComplete()
 		}
 	}()
+
+	isProbeLoggingEnabled := checkLogSourceForMirroring("probes")
+
+	var probeLoggingState *probes.ProbeLoggingState
+
+	if isProbeLoggingEnabled {
+		probeLoggingState = probes.NewProbeState()
+	}
+
 	// Start signal handler
-	signalControl := signalHandler(name, startupCtx)
+	signalControl := signalHandler(name, startupCtx, probeLoggingState)
 	// Enable diagnostic collecting on failure
 	collectDiagOnFail = true
 
@@ -453,6 +463,23 @@ func doMain() error {
 		return err
 	}
 
+	// Setup Probes
+	var probeLoggingSocket *probes.ProbeLoggingSocket
+
+	probeLoggingSocketCtx, probeLoggingSocketCtxCancel := context.WithCancel(context.Background())
+	defer probeLoggingSocketCtxCancel()
+
+	if isProbeLoggingEnabled {
+
+		probeLoggingSocket = probes.NewProbeLoggingSocket(name, getLogFormat(), probeLoggingState, log)
+
+		err = probeLoggingSocket.Start(probeLoggingSocketCtx)
+		if err != nil {
+			log.Errorf("Probe logging socket initialization failed: %v. Probe logging feature will not be available.", err.Error())
+		}
+
+	}
+
 	//If the queue manager has started successfully, reflect mqsc logs when enabled
 	if checkLogSourceForMirroring("mqsc") {
 		_, err = mirrorMQSCLogs(ctx, &wg, name, mf)
@@ -493,8 +520,15 @@ func doMain() error {
 		logTermination(err)
 		return err
 	}
+
 	// Wait for terminate signal
 	<-signalControl
+
+	if isProbeLoggingEnabled {
+		probeLoggingSocketCtxCancel()
+		probeLoggingSocket.Wait()
+	}
+
 	return nil
 }
 

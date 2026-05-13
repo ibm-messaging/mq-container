@@ -2500,6 +2500,133 @@ func TestSoftFileLimitIncreaseEnabled(t *testing.T) {
 	}
 }
 
+// TestLivenessProbeLoggingGoldenPath tests liveness probe logging when multiple successful probes execute before SIGTERM.
+// Verifies first probe is logged and SIGTERM summary contains previous probe executions.
+func TestLivenessProbeLoggingGoldenPath(t *testing.T) {
+	t.Parallel()
+
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+		},
+	}
+
+	id := runContainer(t, cli, &containerConfig)
+	cleanupAfterTest(t, cli, id, false)
+	waitForReady(t, cli, id)
+
+	// Execute the chkmqhealthy multiple times
+	rc, _ := execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+	if rc != 0 {
+		t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+	}
+
+	rc, _ = execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+	if rc != 0 {
+		t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+	}
+
+	rc, _ = execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+	if rc != 0 {
+		t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+	}
+
+	containerLogs := inspectLogs(t, cli, id)
+
+	// Verify first successful liveness probe was logged once only.
+	// Additional identical successful probes should be suppressed by deduplication.
+	passedLogCount := strings.Count(containerLogs, "Liveness Probe Passed")
+
+	if passedLogCount != 1 {
+		t.Errorf("Expected exactly one liveness probe pass log due to deduplication, got %d", passedLogCount)
+	}
+
+	// Kill the container by sending SIGTERM
+	killContainer(t, cli, id, "SIGTERM")
+
+	containerLogs = inspectLogs(t, cli, id)
+
+	// Verify if SIGTERM summary present
+	if !strings.Contains(containerLogs, "----- Start Liveness Probe Summary -----") {
+		t.Errorf("Expected liveness probe summary at SIGTERM")
+	}
+
+	// verify if liveness probe runs are there in the SIGTERM summary
+	if !strings.Contains(containerLogs, "Previous Run") {
+		t.Error("Expected previous liveness probe runs in the SIGTEMR summary")
+	}
+}
+
+// TestLivenessProbeLoggingFailureRecovery tests liveness probe logging deduplication logic when probes transition from pass to fail to pass.
+// Verifies first success, all failures, and recovery success are logged.
+func TestLivenessProbeLoggingFailureRecovery(t *testing.T) {
+	t.Parallel()
+
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+
+	containerConfig := ce.ContainerConfig{
+		Env: []string{
+			"LICENSE=accept",
+			"MQ_QMGR_NAME=qm1",
+		},
+	}
+
+	id := runContainer(t, cli, &containerConfig)
+	cleanupAfterTest(t, cli, id, false)
+	waitForReady(t, cli, id)
+
+	// Execute the chkmqhealthy command
+	rc, _ := execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+	if rc != 0 {
+		t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+	}
+
+	// Stop the QueueManager
+	rc, _ = execContainer(t, cli, id, "", []string{"endmqm", "-i", "qm1"})
+	if rc != 0 {
+		t.Errorf("Expected queuemanager qm1 to end with rc=0, got rc=%d", rc)
+	}
+	time.Sleep(2 * time.Second)
+
+	// Execute the chkmqhealthy command, it will now fail
+	rc, _ = execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+	if rc == 0 {
+		t.Errorf("Expected liveness probe to fail")
+	}
+
+	rc, _ = execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+	if rc == 0 {
+		t.Errorf("Expected liveness probe to fail")
+	}
+
+	// Start the QueueManager
+	execContainer(t, cli, id, "", []string{"strmqm", "qm1"})
+	waitForReady(t, cli, id)
+
+	// Execute the chkmqhealthy command
+	rc, _ = execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+	if rc != 0 {
+		t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+	}
+
+	containerLogs := inspectLogs(t, cli, id)
+
+	// Verify: 1st pass, 2 fails, recovery pass all logged
+	passedRuntimeLogCount := strings.Count(containerLogs, "Liveness Probe Passed")
+	failedRuntimeLogCount := strings.Count(containerLogs, "Liveness Probe Failed")
+
+	if passedRuntimeLogCount != 2 {
+		t.Errorf("Expected 2 liveness probe pass logs (first + recovery), got %d", passedRuntimeLogCount)
+	}
+
+	if failedRuntimeLogCount != 2 {
+		t.Errorf("Expected 2 liveness probe failure logs, got %d", passedRuntimeLogCount)
+	}
+}
+
 // TestDifferentLanguage runs the container with German language enabled, and ensures
 // that log messages are printed correctly.
 func TestDifferentLanguage(t *testing.T) {

@@ -22,6 +22,7 @@ import (
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/metrics"
+	"github.com/ibm-messaging/mq-container/internal/probes"
 	"golang.org/x/sys/unix"
 )
 
@@ -30,7 +31,7 @@ const (
 	reapNow      = iota
 )
 
-func signalHandler(qmgr string, startupCtx context.Context) chan int {
+func signalHandler(qmgr string, startupCtx context.Context, probeLoggingState *probes.ProbeLoggingState) chan int {
 	control := make(chan int)
 	// Use separate channels for the signals, to avoid SIGCHLD signals swamping
 	// the buffer, and preventing other signals.
@@ -64,6 +65,9 @@ func signalHandler(qmgr string, startupCtx context.Context) chan int {
 					continue
 				}
 				log.Printf("Signal received: %v", sig)
+
+				probes.WriteProbeSummary(probeLoggingState, log)
+
 				signal.Stop(stopSignals)
 				stopTriggered = true
 

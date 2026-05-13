@@ -82,33 +82,42 @@ func TestFormatBasic(t *testing.T) {
 
 // This test covers for functions isLogConsoleSourceValid() & checkLogSourceForMirroring()
 var mqLogSourcesTests = []struct {
-	testNum     int
-	logsrc      string
-	exptValid   bool
-	exptQmgrSrc bool
-	exptWebSrc  bool
-	exptMqscSrc bool
+	testNum      int
+	logsrc       string
+	exptValid    bool
+	exptQmgrSrc  bool
+	exptWebSrc   bool
+	exptMqscSrc  bool
+	exptProbeSrc bool
 }{
-	{1, "qmgr,web", true, true, true, false},
-	{2, "qmgr", true, true, false, false},
-	{3, "web,qmgr", true, true, true, false},
-	{4, "web", true, false, true, false},
-	{5, " ", true, true, true, false},
-	{6, "QMGR,WEB", true, true, true, false},
-	{7, "qmgr,     ", true, true, false, false},
-	{8, "qmgr   ,    web", true, true, true, false},
-	{9, "qmgr,dummy", false, true, false, false},
-	{10, "fake,dummy", false, false, false, false},
-	{11, "qmgr,fake,dummy", false, true, false, false},
-	{12, "fake,dummy,web", false, false, true, false},
-	{13, "true", false, false, false, false},
-	{14, "false", false, false, false, false},
-	{15, "", true, true, true, false},
-	{16, "mqsc", true, false, false, true},
-	{17, "MQSC", true, false, false, true},
-	{18, "qmgr,mqsc", true, true, false, true},
-	{19, "web,mqsc", true, false, true, true},
-	{20, "qmgr,web,mqsc", true, true, true, true},
+	{1, "qmgr,web", true, true, true, false, false},
+	{2, "qmgr", true, true, false, false, false},
+	{3, "web,qmgr", true, true, true, false, false},
+	{4, "web", true, false, true, false, false},
+	{5, " ", true, true, true, false, true},
+	{6, "QMGR,WEB", true, true, true, false, false},
+	{7, "qmgr,     ", true, true, false, false, false},
+	{8, "qmgr   ,    web", true, true, true, false, false},
+	{9, "qmgr,dummy", false, true, false, false, false},
+	{10, "fake,dummy", false, false, false, false, false},
+	{11, "qmgr,fake,dummy", false, true, false, false, false},
+	{12, "fake,dummy,web", false, false, true, false, false},
+	{13, "true", false, false, false, false, false},
+	{14, "false", false, false, false, false, false},
+	{15, "", true, true, true, false, true},
+	{16, "mqsc", true, false, false, true, false},
+	{17, "MQSC", true, false, false, true, false},
+	{18, "qmgr,mqsc", true, true, false, true, false},
+	{19, "web,mqsc", true, false, true, true, false},
+	{20, "qmgr,web,mqsc", true, true, true, true, false},
+	{21, "probes", true, false, false, false, true},
+	{22, "qmgr,probes", true, true, false, false, true},
+	{23, "web,probes", true, false, true, false, true},
+	{24, "mqsc,probes", true, false, false, true, true},
+	{25, "qmgr,web,mqsc,probes", true, true, true, true, true},
+	{26, "PROBES", true, false, false, false, true},
+	{27, "qmgr, probes", true, true, false, false, true},
+	{28, "probes,dummy", false, false, false, false, true},
 }
 
 func TestLoggingConsoleSourceInputs(t *testing.T) {
@@ -132,6 +141,10 @@ func TestLoggingConsoleSourceInputs(t *testing.T) {
 		isLogSrcMqsc := checkLogSourceForMirroring("mqsc")
 		if isLogSrcMqsc != mqlogsrctest.exptMqscSrc {
 			t.Errorf("Expected return value from checkLogSourceForMirroring() is %v for MQ_LOGGING_CONSOLE_SOURCE='%v', got %v\n", mqlogsrctest.exptMqscSrc, mqlogsrctest.logsrc, isLogSrcMqsc)
+		}
+		isLogSrcProbes := checkLogSourceForMirroring("probes")
+		if isLogSrcProbes != mqlogsrctest.exptProbeSrc {
+			t.Errorf("Expected return value from checkLogSourceForMirroring(probes) is %v for MQ_LOGGING_CONSOLE_SOURCE='%v', got %v\n", mqlogsrctest.exptProbeSrc, mqlogsrctest.logsrc, isLogSrcProbes)
 		}
 	}
 }

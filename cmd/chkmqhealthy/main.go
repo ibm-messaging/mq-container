@@ -24,15 +24,19 @@ import (
 	"os/exec"
 	"os/signal"
 	"strings"
+	"time"
 
+	"github.com/ibm-messaging/mq-container/internal/probes"
 	"github.com/ibm-messaging/mq-container/pkg/name"
 )
 
-func queueManagerHealthy(ctx context.Context) (bool, error) {
+func queueManagerHealthy(ctx context.Context) (bool, string, error) {
+
 	name, err := name.GetQueueManagerName()
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
+
 	// Specify the queue manager name, just in case someone's created a second queue manager
 	// #nosec G204
 	cmd := exec.CommandContext(ctx, "dspmq", "-n", "-m", name)
@@ -41,8 +45,9 @@ func queueManagerHealthy(ctx context.Context) (bool, error) {
 	fmt.Printf("%s", out)
 	if err != nil {
 		fmt.Println(err)
-		return false, err
+		return false, "", err
 	}
+
 	readyStrings := []string{
 		"(RUNNING)",
 		"(RUNNING AS STANDBY)",
@@ -52,23 +57,40 @@ func queueManagerHealthy(ctx context.Context) (bool, error) {
 	}
 	for _, checkString := range readyStrings {
 		if strings.Contains(string(out), checkString) {
-			return true, nil
+			return true, string(out), nil
 		}
 	}
-	return false, nil
+
+	return false, string(out), nil
 }
 
 func doMain() int {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
 
-	healthy, err := queueManagerHealthy(ctx)
+	isProbeLoggingEnabled := probes.IsProbeLoggingEnabled(probes.LivenessProbe)
+	var probeLoggingExecution *probes.ProbeLoggingExecution
+
+	if isProbeLoggingEnabled {
+		probeStartTime := time.Now()
+		probeLoggingExecution = probes.InitializeProbeLoggingExecution(probes.LivenessProbe, probeStartTime, probes.ProbeIncomplete)
+	}
+
+	healthy, out, err := queueManagerHealthy(ctx)
+
+	if isProbeLoggingEnabled && probeLoggingExecution != nil {
+		probeEndTime := time.Now()
+		probeLoggingExecution.LogLivenessProbeMessage(probeEndTime, healthy, out, err)
+	}
+
 	if err != nil {
 		return 2
 	}
+
 	if !healthy {
 		return 1
 	}
+
 	return 0
 }
 

@@ -267,3 +267,131 @@ func TestRoRFsMultiInstanceContainerStop(t *testing.T) {
 		}
 	}
 }
+
+// TestMultiInstanceProbeLoggingGoldenPath tests probe logging in Multi-Instance configuration.
+// Verifies first successful probe is logged on both instances (active and standby), and SIGTERM summary is generated on the active instance.
+func TestMultiInstanceProbeLoggingGoldenPath(t *testing.T) {
+	cli := ce.NewContainerClient()
+	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, volume := range volumes {
+		cleanupVolume(t, cli, volume)
+	}
+
+	cleanupAfterTest(t, cli, qm1aId, false)
+	cleanupAfterTest(t, cli, qm1bId, false)
+
+	waitForReady(t, cli, qm1aId)
+	waitForReady(t, cli, qm1bId)
+
+	// Execute chkmqhealthy on both instances
+	qmIds := []string{qm1aId, qm1bId}
+
+	for _, id := range qmIds {
+		// Execute the chkmqhealthy multiple times
+		for i := 1; i <= 3; i++ {
+			rc, _ := execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+			if rc != 0 {
+				t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+			}
+		}
+	}
+
+	// Verify first successful liveness probe was logged once only.
+	// Additional identical successful probes should be suppressed by deduplication.
+	for _, id := range qmIds {
+		containerLogs := inspectLogs(t, cli, id)
+
+		passedCount := strings.Count(containerLogs, "Liveness Probe Passed")
+		if passedCount != 1 {
+			t.Errorf("Expected exactly one liveness probe pass log due to deduplication, got %d", passedCount)
+		}
+	}
+
+	// Get the active instance
+	err, active, _ := getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Kill active with SIGTERM
+	killContainer(t, cli, active, "SIGTERM")
+
+	// Verify probe summary in active logs
+	containerLogs := inspectLogs(t, cli, active)
+
+	if !strings.Contains(containerLogs, "----- Start Liveness Probe Summary -----") {
+		t.Errorf("Expected liveness probe summary at SIGTERM")
+	}
+}
+
+// TestMultiInstanceLivenessProbeLoggingFailureRecovery tests liveness probe logging deduplication on the active Multi-Instance queue manager.
+// Verifies pass-fail-fail-pass pattern logging and SIGTERM summary generation.
+func TestMultiInstanceLivenessProbeLoggingFailureRecovery(t *testing.T) {
+	cli := ce.NewContainerClient()
+	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, volume := range volumes {
+		cleanupVolume(t, cli, volume)
+	}
+
+	cleanupAfterTest(t, cli, qm1aId, false)
+	cleanupAfterTest(t, cli, qm1bId, false)
+
+	waitForReady(t, cli, qm1aId)
+	waitForReady(t, cli, qm1bId)
+
+	err, active, _ := getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// First success
+	rc, _ := execContainer(t, cli, active, "", []string{"chkmqhealthy"})
+	if rc != 0 {
+		t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+	}
+
+	// Stop the QueueManager
+	execContainer(t, cli, active, "", []string{"endmqm", "-i", "QM1"})
+	time.Sleep(2 * time.Second)
+
+	// Execute the chkmqhealthy command, it will now fail
+	rc, _ = execContainer(t, cli, active, "", []string{"chkmqhealthy"})
+	if rc == 0 {
+		t.Errorf("Expected liveness probe to fail")
+	}
+
+	rc, _ = execContainer(t, cli, active, "", []string{"chkmqhealthy"})
+	if rc == 0 {
+		t.Errorf("Expected liveness probe to fail")
+	}
+
+	// Start the QueueManager
+	execContainer(t, cli, active, "", []string{"strmqm", "QM1"})
+	waitForReady(t, cli, active)
+
+	// Execute the chkmqhealthy command
+	rc, _ = execContainer(t, cli, active, "", []string{"chkmqhealthy"})
+	if rc != 0 {
+		t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
+	}
+
+	containerLogs := inspectLogs(t, cli, active)
+
+	// Verify: 1st pass, 2 fails, recovery pass all logged
+	passedRuntimeLogCount := strings.Count(containerLogs, "Liveness Probe Passed")
+	failedRuntimeLogCount := strings.Count(containerLogs, "Liveness Probe Failed")
+
+	if passedRuntimeLogCount != 2 {
+		t.Errorf("Expected 2 liveness probe pass logs (first + recovery), got %d", passedRuntimeLogCount)
+	}
+
+	if failedRuntimeLogCount != 2 {
+		t.Errorf("Expected 2 liveness probe failure logs, got %d", passedRuntimeLogCount)
+	}
+}

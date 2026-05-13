@@ -536,7 +536,7 @@ func isLogConsoleSourceValid() bool {
 	for _, src := range logConsoleSource {
 		switch strings.TrimSpace(src) {
 		//If it is a permitted value, it is valid. Keep it as true, but dont return it. We may encounter something junk soon
-		case "qmgr", "web", "mqsc", "":
+		case "qmgr", "web", "mqsc", "probes", "":
 			retValue = true
 		//If invalid entry arrives in-between/anywhere, just return false, there is no turning back
 		default:
@@ -553,7 +553,7 @@ func checkLogSourceForMirroring(source string) bool {
 
 	//Nothing set, this is when we mirror both qmgr & web
 	if logsrcs == "" {
-		if source == "qmgr" || source == "web" {
+		if source == "qmgr" || source == "web" || source == "probes" {
 			return true
 		} else {
 			return false
@@ -583,6 +583,10 @@ func checkLogSourceForMirroring(source string) bool {
 		case "mqsc":
 			//If value of input parameter is mqsc and it exists in environment variable, mirror mqsc logs
 			if source == "mqsc" {
+				return true
+			}
+		case "probes":
+			if source == "probes" {
 				return true
 			}
 		}
