@@ -104,6 +104,76 @@ var writeProbeSummaryTests = []struct {
 			"Note: Duration measures chkmqhealthy execution time",
 			"----- End Liveness Probe Summary -----",
 		}, false,
+	}, {
+		5,
+		&ProbeLoggingState{
+			LivenessProbeLoggingState: &LivenessProbeLoggingState{
+				CurrentRun: nil,
+			},
+			StartupProbeLoggingState: &StartupProbeLoggingState{
+				CurrentRun: &ProbeLoggingExecution{
+					ProbeType:    StartupProbe,
+					Status:       ProbeFailed,
+					LogMessage:   "Startup Probe Failed: QueueManager is not started",
+					LogLevel:     ERROR,
+					AttemptCount: 24,
+				},
+			},
+		},
+		[]string{
+			"----- Start Startup Probe Summary -----",
+			"Last State: Failed (Attempts=24 Details=Startup Probe Failed: QueueManager is not started)",
+			"----- End Startup Probe Summary -----",
+		}, false,
+	}, {
+		6,
+		&ProbeLoggingState{
+			LivenessProbeLoggingState: &LivenessProbeLoggingState{
+				CurrentRun: nil,
+			},
+			StartupProbeLoggingState: &StartupProbeLoggingState{
+				CurrentRun: &ProbeLoggingExecution{
+					ProbeType:    StartupProbe,
+					Status:       ProbeIncomplete,
+					AttemptCount: 12,
+				},
+			},
+		},
+		[]string{
+			"----- Start Startup Probe Summary -----",
+			"Last State: Incomplete (Attempts=12)",
+			"----- End Startup Probe Summary -----",
+		}, false,
+	},
+	{
+		7,
+		&ProbeLoggingState{
+			LivenessProbeLoggingState: &LivenessProbeLoggingState{
+				CurrentRun: &ProbeLoggingExecution{
+					ProbeType:  LivenessProbe,
+					StartTime:  timePtr(testStartTime),
+					EndTime:    timePtr(testEndTime),
+					Status:     ProbePassed,
+					Duration:   int64Ptr(25),
+					LogMessage: "Liveness Probe Passed",
+					LogLevel:   INFO,
+				},
+			},
+			StartupProbeLoggingState: &StartupProbeLoggingState{
+				CurrentRun: &ProbeLoggingExecution{
+					ProbeType:    StartupProbe,
+					Status:       ProbePassed,
+					LogMessage:   "Startup Probe Passed",
+					LogLevel:     INFO,
+					AttemptCount: 10,
+				},
+			},
+		},
+		[]string{
+			"----- Start Liveness Probe Summary -----",
+			"Last Run: Passed",
+			"----- End Liveness Probe Summary -----",
+		}, false,
 	},
 }
 
@@ -126,6 +196,18 @@ func TestWriteProbeSummary(t *testing.T) {
 			if !strings.Contains(output, expected) {
 				t.Errorf("WriteProbeSummary() : Test%v\nExpected output to contain:\t%v\nGot:\t\t\t%v", test.testNum, expected, output)
 			}
+		}
+
+		livenessStarted := test.state != nil &&
+			test.state.LivenessProbeLoggingState != nil &&
+			test.state.LivenessProbeLoggingState.CurrentRun != nil
+
+		startupStatePresent := test.state != nil &&
+			test.state.StartupProbeLoggingState != nil &&
+			test.state.StartupProbeLoggingState.CurrentRun != nil
+
+		if livenessStarted && startupStatePresent && strings.Contains(output, "Startup Probe Summary") {
+			t.Errorf("WriteProbeSummary() : Test%v\nExpected startup summary to be suppressed when liveness has started\nGot:\t%v", test.testNum, output)
 		}
 
 	}
@@ -204,16 +286,18 @@ func TestFormatDurationForSummaryElapsed(t *testing.T) {
 
 // Test values - Probe summary
 var formatProbeSummaryTests = []struct {
-	testNum  int
-	prefix   string
-	probe    *ProbeLoggingExecution
-	expected string
+	testNum   int
+	prefix    string
+	probe     *ProbeLoggingExecution
+	probeType ProbeType
+	expected  string
 }{
-	{1, "Last Run", nil, ""},
+	{1, "Last Run", nil, LivenessProbe, ""},
 	{
 		2,
 		"Last Run",
 		&ProbeLoggingExecution{ProbeType: LivenessProbe, StartTime: timePtr(testStartTime), Status: ProbeIncomplete, Duration: int64Ptr(5131)},
+		LivenessProbe,
 		"Last Run: Incomplete (Started=2026-04-28T08:00:00Z Duration=5131ms)",
 	},
 	{
@@ -228,6 +312,7 @@ var formatProbeSummaryTests = []struct {
 			LogMessage: " Liveness Probe Passed: Output: QMNAME(testQM) STATUS(RUNNING) ",
 			LogLevel:   INFO,
 		},
+		LivenessProbe,
 		"Previous Run 1: Passed (Started=2026-04-28T08:00:00Z Completed=2026-04-28T08:00:00Z Duration=25ms Details=Liveness Probe Passed: Output: QMNAME(testQM) STATUS(RUNNING))",
 	},
 	{
@@ -242,19 +327,43 @@ var formatProbeSummaryTests = []struct {
 			LogMessage: "Liveness Probe Failed: chkmqhealthy error",
 			LogLevel:   ERROR,
 		},
+		LivenessProbe,
 		"Previous Run 2: Failed (Started=2026-04-28T08:00:00Z Completed=2026-04-28T08:00:00Z Duration=20ms Details=Liveness Probe Failed: chkmqhealthy error)",
 	},
 	{
 		5,
 		"Last Run",
 		&ProbeLoggingExecution{ProbeType: LivenessProbe, Status: ProbeIncomplete, Duration: int64Ptr(5213)},
+		LivenessProbe,
 		"Last Run: Incomplete (Started=N/A Duration=5213ms)",
 	},
 	{
 		6,
 		"Previous Run 1",
 		&ProbeLoggingExecution{ProbeType: LivenessProbe, StartTime: timePtr(testStartTime), EndTime: nil, Status: ProbePassed, Duration: nil, LogMessage: "", LogLevel: INFO},
+		LivenessProbe,
 		"Previous Run 1: Passed (Started=2026-04-28T08:00:00Z Completed=N/A Duration=N/A Details=)",
+	},
+	{
+		7,
+		"Last Run",
+		&ProbeLoggingExecution{ProbeType: StartupProbe, Status: ProbeIncomplete, AttemptCount: 24},
+		StartupProbe,
+		"Last Run: Incomplete (Attempts=24)",
+	},
+	{
+		8,
+		"Last State",
+		&ProbeLoggingExecution{ProbeType: StartupProbe, Status: ProbeFailed, AttemptCount: 24, LogMessage: " Startup Probe Failed: QueueManager is not started "},
+		StartupProbe,
+		"Last State: Failed (Attempts=24 Details=Startup Probe Failed: QueueManager is not started)",
+	},
+	{
+		9,
+		"Last Run",
+		&ProbeLoggingExecution{ProbeType: StartupProbe, Status: ProbePassed, AttemptCount: 5, LogMessage: " Startup Probe Passed: QueueManager started successfully "},
+		StartupProbe,
+		"Last Run: Passed (Attempts=5 Details=Startup Probe Passed: QueueManager started successfully)",
 	},
 }
 
@@ -262,7 +371,7 @@ var formatProbeSummaryTests = []struct {
 // passed, failed, and missing-field probe execution entries.
 func TestFormatProbeSummary(t *testing.T) {
 	for _, test := range formatProbeSummaryTests {
-		result := formatProbeSummary(test.prefix, test.probe)
+		result := formatProbeSummary(test.prefix, test.probe, test.probeType)
 
 		if result != test.expected {
 			t.Errorf("formatProbeSummary() : Test%v\nExpected:\t%v\nGot:\t\t%v",

@@ -30,6 +30,7 @@ import (
 
 var (
 	LivenessProbeSockPath = "/run/liveness-probe.sock"
+	StartupProbeSockPath  = "/run/startup-probe.sock"
 )
 
 type LogLevel int
@@ -43,6 +44,7 @@ type ProbeType string
 
 const (
 	LivenessProbe ProbeType = "LIVENESS"
+	StartupProbe  ProbeType = "STARTUP"
 )
 
 type ProbeLoggingSocket struct {
@@ -55,14 +57,16 @@ type ProbeLoggingSocket struct {
 }
 
 // NewProbeLoggingSocket creates a ProbeLoggingSocket instance.
-//   - initializes socket paths, logger, and probe logging state
-//   - maintains last logged message for deduplication
+//   - initializes probe socket paths, logger, and probe logging state
+//   - maintains last logged messages for probe log deduplication
 func NewProbeLoggingSocket(name, logFormat string, probeState *ProbeLoggingState, log *logger.Logger) *ProbeLoggingSocket {
+
 	return &ProbeLoggingSocket{
 		logger:  log,
 		lastLog: make(map[string]string),
 		sockets: []string{
 			LivenessProbeSockPath,
+			StartupProbeSockPath,
 		},
 		probeLoggingState: probeState,
 	}
@@ -150,6 +154,8 @@ func (ps *ProbeLoggingSocket) handleConnection(connection net.Conn, socketPath s
 
 		if probeLoggingExecution.ProbeType == LivenessProbe {
 			ps.handleLivenessProbe(probeLoggingExecution, socketPath)
+		} else if probeLoggingExecution.ProbeType == StartupProbe {
+			ps.handleStartupProbe(probeLoggingExecution, socketPath)
 		}
 	}
 }
@@ -198,17 +204,77 @@ func (ps *ProbeLoggingSocket) handleLivenessProbe(probeLoggingExecution *ProbeLo
 	}
 }
 
-// dedupLog emits probe logs with INFO-level deduplication.
-//   - suppresses repeated INFO messages for liveness probes
-//   - always logs ERROR messages
+// handleStartupProbe updates startup probe state based on incoming events.
+//   - INCOMPLETE events increment the startup probe attempt count
+//   - PASSED/FAILED events finalize the current startup probe state
+func (ps *ProbeLoggingSocket) handleStartupProbe(probeLoggingExecution *ProbeLoggingExecution, socketPath string) {
+	if probeLoggingExecution == nil {
+		return
+	}
+
+	state := ps.probeLoggingState.StartupProbeLoggingState
+	if state == nil {
+		return
+	}
+
+	switch probeLoggingExecution.Status {
+	case ProbeIncomplete:
+		attemptCount := 1
+		if state.CurrentRun != nil {
+			attemptCount = state.CurrentRun.AttemptCount + 1
+		}
+		probeLoggingExecution.AttemptCount = attemptCount
+		state.CurrentRun = probeLoggingExecution
+	case ProbeFailed, ProbePassed:
+		if state.CurrentRun != nil {
+			probeLoggingExecution.AttemptCount = state.CurrentRun.AttemptCount
+		}
+		state.CurrentRun = probeLoggingExecution
+
+		ps.dedupLog(socketPath, state.CurrentRun.LogLevel.getLogLevel(), state.CurrentRun.LogMessage, state.CurrentRun.ProbeType.getProbeType())
+	}
+}
+
+// dedupLog emits probe logs with probe-specific INFO-level deduplication.
+//   - liveness probes suppress repeated INFO messages and always emit ERROR messages
+//   - startup probes suppress repeated INFO messages and suppress all ERROR messages during runtime
 func (ps *ProbeLoggingSocket) dedupLog(socketPath, logLevel, logMessage string, probeType string) {
 	ps.lock.Lock()
 	defer ps.lock.Unlock()
 
-	if probeType == LivenessProbe.getProbeType() && logLevel == INFO.getLogLevel() {
-		if ps.lastLog[socketPath] == logMessage {
-			return
-		}
+	if probeType == StartupProbe.getProbeType() {
+		ps.startupProbeDedupLogHelper(logLevel, socketPath, logMessage)
+	} else if probeType == LivenessProbe.getProbeType() {
+		ps.livenessProbeDedupLogHelper(logLevel, socketPath, logMessage)
+	}
+}
+
+// startupProbeDedupLogHelper emits startup probe logs with INFO-level deduplication.
+//   - suppresses repeated INFO messages
+//   - suppresses startup probe ERROR logs during runtime
+func (ps *ProbeLoggingSocket) startupProbeDedupLogHelper(logLevel, socketPath, logMessage string) {
+
+	// we will not be logging startup probe errors
+	if logLevel == ERROR.getLogLevel() {
+		return
+	}
+
+	if ps.lastLog[socketPath] == logMessage {
+		return
+	}
+
+	ps.lastLog[socketPath] = logMessage
+
+	ps.logger.Printf("%s", logMessage)
+}
+
+// livenessProbeDedupLogHelper emits liveness probe logs with INFO-level deduplication.
+//   - suppresses repeated INFO messages
+//   - always emits ERROR messages
+func (ps *ProbeLoggingSocket) livenessProbeDedupLogHelper(logLevel, socketPath, logMessage string) {
+
+	if logLevel == INFO.getLogLevel() && ps.lastLog[socketPath] == logMessage {
+		return
 	}
 
 	ps.lastLog[socketPath] = logMessage
@@ -240,6 +306,8 @@ func (p ProbeType) getProbeType() string {
 	switch p {
 	case LivenessProbe:
 		return "LIVENESS"
+	case StartupProbe:
+		return "STARTUP"
 	}
 	return ""
 }

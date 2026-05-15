@@ -34,13 +34,14 @@ const (
 )
 
 type ProbeLoggingExecution struct {
-	ProbeType  ProbeType   `json:"probeType"`
-	StartTime  *time.Time  `json:"startTime,omitempty"`
-	EndTime    *time.Time  `json:"endTime,omitempty"`
-	Status     ProbeStatus `json:"status"`
-	Duration   *int64      `json:"duration,omitempty"`
-	LogMessage string      `json:"logMessage,omitempty"`
-	LogLevel   LogLevel    `json:"logLevel,omitempty"`
+	ProbeType    ProbeType   `json:"probeType"`
+	StartTime    *time.Time  `json:"startTime,omitempty"`
+	EndTime      *time.Time  `json:"endTime,omitempty"`
+	Status       ProbeStatus `json:"status"`
+	Duration     *int64      `json:"duration,omitempty"`
+	LogMessage   string      `json:"logMessage,omitempty"`
+	LogLevel     LogLevel    `json:"logLevel,omitempty"`
+	AttemptCount int         `json:"attemptCount,omitempty"`
 }
 
 type LivenessProbeLoggingState struct {
@@ -48,18 +49,26 @@ type LivenessProbeLoggingState struct {
 	PreviousRuns [2]ProbeLoggingExecution
 }
 
+type StartupProbeLoggingState struct {
+	CurrentRun *ProbeLoggingExecution
+}
+
 type ProbeLoggingState struct {
 	LivenessProbeLoggingState *LivenessProbeLoggingState
+	StartupProbeLoggingState  *StartupProbeLoggingState
 }
 
 // NewProbeState initializes and returns an empty ProbeLoggingState.
-//   - Liveness probe state is initialized with no current run
-//   - Previous runs are maintained as a fixed-size history (last two runs)
+//   - liveness probe state maintains the current run and up to two previous runs
+//   - startup probe state maintains the latest startup probe execution state
 func NewProbeState() *ProbeLoggingState {
 	return &ProbeLoggingState{
 		LivenessProbeLoggingState: &LivenessProbeLoggingState{
 			CurrentRun:   nil,
 			PreviousRuns: [2]ProbeLoggingExecution{},
+		},
+		StartupProbeLoggingState: &StartupProbeLoggingState{
+			CurrentRun: nil,
 		},
 	}
 }
@@ -74,13 +83,18 @@ func IsProbeLoggingEnabled(probeType ProbeType) bool {
 			return false
 		}
 		return true
+	case StartupProbe:
+		if _, err := os.Stat(StartupProbeSockPath); err != nil {
+			return false
+		}
+		return true
 	default:
 		return false
 	}
 }
 
 // InitializeProbeLoggingExecution creates a new ProbeLoggingExecution for a probe start event.
-//   - immediately emits the INCOMPLETE event for liveness probes
+//   - immediately emits the INCOMPLETE event to the corresponding probe socket
 func InitializeProbeLoggingExecution(probeType ProbeType, probeStartTime time.Time, probeStatus ProbeStatus) *ProbeLoggingExecution {
 	probeLoggingExecution := &ProbeLoggingExecution{
 		ProbeType: probeType,
@@ -90,6 +104,8 @@ func InitializeProbeLoggingExecution(probeType ProbeType, probeStartTime time.Ti
 
 	if probeType == LivenessProbe {
 		SendProbeLoggingExecution(probeLoggingExecution, LivenessProbeSockPath)
+	} else if probeType == StartupProbe {
+		SendProbeLoggingExecution(probeLoggingExecution, StartupProbeSockPath)
 	}
 
 	return probeLoggingExecution
@@ -149,19 +165,6 @@ func (pe *ProbeLoggingExecution) logLivenessProbeMessageHelper(probeEndTime time
 
 }
 
-func (ps ProbeStatus) getProbeStatus() string {
-	switch ps {
-	case ProbeIncomplete:
-		return "Incomplete"
-	case ProbePassed:
-		return "Passed"
-	case ProbeFailed:
-		return "Failed"
-	default:
-		return "Unknown"
-	}
-}
-
 // buildLivenessProbeOutputMessage formats chkmqhealthy output for logging
 //   - trims whitespace
 //   - returns empty string if no output is present
@@ -193,4 +196,67 @@ func buildLivenessProbeSuccessMessage(details string) string {
 		return "Liveness Probe Passed"
 	}
 	return fmt.Sprintf("Liveness Probe Passed: %s", details)
+}
+
+// LogStartupProbeMessage finalizes a startup probe execution.
+//   - determines probe outcome (PASSED / FAILED)
+//   - builds the appropriate log message and emits the completed probe execution
+func (pe *ProbeLoggingExecution) LogStartupProbeMessage(started bool, err error) {
+
+	if err != nil {
+		pe.logStartupProbeMessageHelper(
+			ProbeFailed,
+			buildStartupProbeFailureMessage(err.Error()),
+			ERROR,
+		)
+		return
+	}
+
+	if !started {
+		pe.logStartupProbeMessageHelper(
+			ProbeFailed,
+			buildStartupProbeFailureMessage("QueueManager is not started"),
+			ERROR,
+		)
+		return
+	}
+
+	pe.logStartupProbeMessageHelper(
+		ProbePassed,
+		buildStartupProbeSuccessMessage("QueueManager started successfully"),
+		INFO,
+	)
+
+}
+
+// logStartupProbeMessageHelper updates startup probe execution fields and emits the log
+func (pe *ProbeLoggingExecution) logStartupProbeMessageHelper(status ProbeStatus, message string, logLevel LogLevel) {
+	pe.Status = status
+	pe.LogMessage = message
+	pe.LogLevel = logLevel
+
+	SendProbeLoggingExecution(pe, StartupProbeSockPath)
+}
+
+// buildStartupProbeFailureMessage constructs a startup probe failure log message.
+func buildStartupProbeFailureMessage(reason string) string {
+	return fmt.Sprintf("Startup Probe Failed: %s", reason)
+}
+
+// buildStartupProbeSuccessMessage constructs a startup probe success log message.
+func buildStartupProbeSuccessMessage(reason string) string {
+	return fmt.Sprintf("Startup Probe Passed: %s", reason)
+}
+
+func (ps ProbeStatus) getProbeStatus() string {
+	switch ps {
+	case ProbeIncomplete:
+		return "Incomplete"
+	case ProbePassed:
+		return "Passed"
+	case ProbeFailed:
+		return "Failed"
+	default:
+		return "Unknown"
+	}
 }

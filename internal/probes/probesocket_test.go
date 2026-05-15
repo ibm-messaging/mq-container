@@ -51,14 +51,13 @@ func newTestSocket(t *testing.T) (*ProbeLoggingSocket, *bytes.Buffer) {
 
 // TestNewProbeLoggingSocket verifies socket configuration initialization.
 func TestNewProbeLoggingSocket(t *testing.T) {
-
 	state := NewProbeState()
 	log, _ := newTestLogger(t)
 
 	socket := NewProbeLoggingSocket("testQM", "", state, log)
 
 	if socket == nil {
-		t.Fatal("expected ProbeLoggingSocket to be initialized")
+		t.Fatalf("expected ProbeLoggingSocket to be initialized")
 	}
 
 	if socket.logger != log {
@@ -73,8 +72,16 @@ func TestNewProbeLoggingSocket(t *testing.T) {
 		t.Errorf("expected lastLog map to be initialized")
 	}
 
-	if len(socket.sockets) == 0 || socket.sockets[0] != LivenessProbeSockPath {
-		t.Errorf("expected liveness socket path, got %+v", socket.sockets)
+	expectedSockets := []string{LivenessProbeSockPath, StartupProbeSockPath}
+
+	if len(socket.sockets) != len(expectedSockets) {
+		t.Errorf("expected socket paths %+v, got %+v", expectedSockets, socket.sockets)
+	}
+
+	for i, expectedSocket := range expectedSockets {
+		if socket.sockets[i] != expectedSocket {
+			t.Errorf("expected socket [%d] to be %s, got %s", i, expectedSocket, socket.sockets[i])
+		}
 	}
 }
 
@@ -190,10 +197,107 @@ func TestHandleLivenessProbeNil(t *testing.T) {
 	}
 }
 
+// Test Values - Startup probe test
+var handleStartupProbeTests = []struct {
+	testNum              int
+	events               []*ProbeLoggingExecution
+	expectedProbeStatus  ProbeStatus
+	expectedAttemptCount int
+	expectedLogMessage   string
+}{
+	{1,
+		[]*ProbeLoggingExecution{
+			{ProbeType: StartupProbe, StartTime: timePtr(testStartTime), Status: ProbeIncomplete},
+			{ProbeType: StartupProbe, Status: ProbeFailed, LogMessage: "Startup Probe Failed: QueueManager is not started", LogLevel: ERROR},
+		},
+		ProbeFailed,
+		1,
+		"Startup Probe Failed: QueueManager is not started",
+	},
+	{
+		2,
+		[]*ProbeLoggingExecution{
+			{ProbeType: StartupProbe, StartTime: timePtr(testStartTime), Status: ProbeIncomplete},
+			{ProbeType: StartupProbe, Status: ProbePassed, LogMessage: "Startup Probe Passed: QueueManager started successfully", LogLevel: INFO},
+		},
+		ProbePassed,
+		1,
+		"Startup Probe Passed: QueueManager started successfully",
+	},
+	{
+		3,
+		[]*ProbeLoggingExecution{
+			{ProbeType: StartupProbe, StartTime: timePtr(testStartTime), Status: ProbeIncomplete},
+			{ProbeType: StartupProbe, Status: ProbeFailed, LogMessage: "failed1", LogLevel: ERROR},
+			{ProbeType: StartupProbe, StartTime: timePtr(testStartTime.Add(10 * time.Second)), Status: ProbeIncomplete},
+			{ProbeType: StartupProbe, Status: ProbeFailed, LogMessage: "failed2", LogLevel: ERROR},
+			{ProbeType: StartupProbe, StartTime: timePtr(testStartTime.Add(20 * time.Second)), Status: ProbeIncomplete},
+			{ProbeType: StartupProbe, Status: ProbePassed, LogMessage: "passed", LogLevel: INFO},
+		},
+		ProbePassed,
+		3,
+		"passed",
+	},
+}
+
+// TestHandleStartupProbe verifies state transitions for incomplete,
+// completed, failed, and attempt-count startup probe events.
+func TestHandleStartupProbe(t *testing.T) {
+
+	for _, test := range handleStartupProbeTests {
+		socket, _ := newTestSocket(t)
+
+		for _, event := range test.events {
+			socket.handleStartupProbe(event, StartupProbeSockPath)
+		}
+
+		state := socket.probeLoggingState.StartupProbeLoggingState
+
+		if state.CurrentRun == nil || state.CurrentRun.Status != test.expectedProbeStatus {
+			t.Errorf("handleStartupProbe() : Test%v\nExpected current status:\t%v\nGot:\t\t%v", test.testNum, test.expectedProbeStatus, state.CurrentRun)
+		}
+
+		if state.CurrentRun.AttemptCount != test.expectedAttemptCount {
+			t.Errorf("handleStartupProbe() : Test%v\nExpected attempt count:\t%v\nGot:\t\t%v", test.testNum, test.expectedAttemptCount, state.CurrentRun.AttemptCount)
+		}
+
+		if state.CurrentRun.LogMessage != test.expectedLogMessage {
+			t.Errorf("handleStartupProbe() : Test%v\nExpected current log:\t%v\nGot:\t\t%v", test.testNum, test.expectedLogMessage, state.CurrentRun.LogMessage)
+		}
+	}
+}
+
+// TestHandleStartupProbeNil verifies that nil startup probe execution and nil
+// startup state are ignored safely.
+func TestHandleStartupProbeNil(t *testing.T) {
+	socket, _ := newTestSocket(t)
+
+	socket.handleStartupProbe(nil, StartupProbeSockPath)
+
+	state := socket.probeLoggingState.StartupProbeLoggingState
+
+	if state.CurrentRun != nil {
+		t.Errorf("Expected CurrentRun to remain nil for nil input, got: %v", state.CurrentRun)
+	}
+
+	socket.probeLoggingState.StartupProbeLoggingState = nil
+
+	socket.handleStartupProbe(&ProbeLoggingExecution{
+		ProbeType: StartupProbe,
+		Status:    ProbeIncomplete,
+	}, StartupProbeSockPath)
+
+	if socket.probeLoggingState.StartupProbeLoggingState != nil {
+		t.Errorf("Expected StartupProbeLoggingState to remain nil, got: %+v", socket.probeLoggingState.StartupProbeLoggingState)
+	}
+}
+
 // Test values - Dedup log messages
 var dedupLogTests = []struct {
-	testNum int
-	entries []struct {
+	testNum    int
+	probeType  string
+	socketPath string
+	entries    []struct {
 		level   string
 		message string
 	}
@@ -202,6 +306,8 @@ var dedupLogTests = []struct {
 }{
 	{
 		1,
+		LivenessProbe.getProbeType(),
+		LivenessProbeSockPath,
 		[]struct {
 			level   string
 			message string
@@ -214,6 +320,8 @@ var dedupLogTests = []struct {
 	},
 	{
 		2,
+		LivenessProbe.getProbeType(),
+		LivenessProbeSockPath,
 		[]struct {
 			level   string
 			message string
@@ -226,6 +334,8 @@ var dedupLogTests = []struct {
 	},
 	{
 		3,
+		LivenessProbe.getProbeType(),
+		LivenessProbeSockPath,
 		[]struct {
 			level   string
 			message string
@@ -238,6 +348,49 @@ var dedupLogTests = []struct {
 		2,
 		1,
 	},
+	{
+		4,
+		StartupProbe.getProbeType(),
+		StartupProbeSockPath,
+		[]struct {
+			level   string
+			message string
+		}{
+			{INFO.getLogLevel(), "pass"},
+			{INFO.getLogLevel(), "pass"},
+		},
+		1,
+		0,
+	}, {
+		5,
+		StartupProbe.getProbeType(),
+		StartupProbeSockPath,
+		[]struct {
+			level   string
+			message string
+		}{
+			{ERROR.getLogLevel(), "failure"},
+			{ERROR.getLogLevel(), "failure"},
+		},
+		0,
+		0,
+	},
+	{
+		6,
+		StartupProbe.getProbeType(),
+		StartupProbeSockPath,
+		[]struct {
+			level   string
+			message string
+		}{
+			{ERROR.getLogLevel(), "failure"},
+			{ERROR.getLogLevel(), "failure"},
+			{INFO.getLogLevel(), "pass"},
+			{INFO.getLogLevel(), "pass"},
+		},
+		1,
+		0,
+	},
 }
 
 // TestDedupLog verifies INFO deduplication, ERROR logging,
@@ -247,7 +400,7 @@ func TestDedupLog(t *testing.T) {
 		socket, logs := newTestSocket(t)
 
 		for _, entry := range test.entries {
-			socket.dedupLog(LivenessProbeSockPath, entry.level, entry.message, LivenessProbe.getProbeType())
+			socket.dedupLog(test.socketPath, entry.level, entry.message, test.probeType)
 		}
 
 		passCount := strings.Count(logs.String(), "pass")
@@ -295,7 +448,8 @@ var getProbeTypeTests = []struct {
 	expected string
 }{
 	{1, LivenessProbe, "LIVENESS"},
-	{2, ProbeType("UNKNOWN"), ""},
+	{2, StartupProbe, "STARTUP"},
+	{3, ProbeType("UNKNOWN"), ""},
 }
 
 // TestGetProbeType verifies probe type string mapping.

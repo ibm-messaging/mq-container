@@ -43,6 +43,14 @@ func TestNewProbeState(t *testing.T) {
 		state.LivenessProbeLoggingState.PreviousRuns[1].StartTime != nil {
 		t.Errorf("expected PrevioisRuns to be empty, got %+v", state.LivenessProbeLoggingState.PreviousRuns)
 	}
+
+	if state.StartupProbeLoggingState == nil {
+		t.Fatal("expected StartupProbeLoggingState to be initialized")
+	}
+
+	if state.StartupProbeLoggingState.CurrentRun != nil {
+		t.Errorf("expected StartupProbeLoggingState.CurrentRun to be nil, got %+v", state.StartupProbeLoggingState.CurrentRun)
+	}
 }
 
 // Test values - Probe logging enablement
@@ -54,7 +62,9 @@ var isProbeLoggingEnabledTests = []struct {
 }{
 	{1, LivenessProbe, true, true},
 	{2, LivenessProbe, false, false},
-	{3, ProbeType("UNKNOWN"), true, false},
+	{3, StartupProbe, true, true},
+	{4, StartupProbe, false, false},
+	{5, ProbeType("UNKNOWN"), true, false},
 }
 
 // TestIsProbeLoggingEnabled verifies probe logging enablement based on
@@ -75,6 +85,15 @@ func TestIsProbeLoggingEnabled(t *testing.T) {
 
 			defer func() {
 				LivenessProbeSockPath = originalPath
+			}()
+
+		case StartupProbe:
+			originalPath := StartupProbeSockPath
+			sockPath = filepath.Join(tempDir, "startup.sock")
+			StartupProbeSockPath = sockPath
+
+			defer func() {
+				StartupProbeSockPath = originalPath
 			}()
 		}
 
@@ -105,7 +124,8 @@ var initializeProbeLoggingExecutionTests = []struct {
 	expectedProbeStatus ProbeStatus
 }{
 	{1, LivenessProbe, ProbeIncomplete, LivenessProbe, ProbeIncomplete},
-	{2, ProbeType("UNKNOWN"), ProbeIncomplete, ProbeType("UNKNOWN"), ProbeIncomplete},
+	{2, StartupProbe, ProbeIncomplete, StartupProbe, ProbeIncomplete},
+	{3, ProbeType("UNKNOWN"), ProbeIncomplete, ProbeType("UNKNOWN"), ProbeIncomplete},
 }
 
 // TestInitializeProbeLoggingExecution verifies initial probe execution metadata.
@@ -304,6 +324,129 @@ func TestBuildLivenessProbeSuccessMessage(t *testing.T) {
 
 		if result != test.expected {
 			t.Errorf("BuildLivenessProbeSuccessMessage() : Test%v\nExpected:\t%v\nGot:\t\t%v",
+				test.testNum, test.expected, result)
+		}
+	}
+}
+
+// Test values - Startup probe completion
+var logStartupProbeMessageTests = []struct {
+	testNum             int
+	started             bool
+	err                 error
+	expectedProbeStatus ProbeStatus
+	expectedLogLevel    LogLevel
+	expectedLog         string
+}{
+	{1, true, nil, ProbePassed, INFO, "Startup Probe Passed: QueueManager started successfully"},
+	{2, false, nil, ProbeFailed, ERROR, "Startup Probe Failed: QueueManager is not started"},
+	{3, false, errors.New("startup probe error"), ProbeFailed, ERROR, "Startup Probe Failed: startup probe error"},
+}
+
+// TestLogStartupProbeMessage verifies completion handling for passed,
+// not-started, and error startup probe outcomes.
+func TestLogStartupProbeMessage(t *testing.T) {
+	for _, test := range logStartupProbeMessageTests {
+
+		execution := &ProbeLoggingExecution{
+			ProbeType: StartupProbe,
+			StartTime: timePtr(testStartTime),
+			Status:    ProbeIncomplete,
+		}
+
+		execution.LogStartupProbeMessage(test.started, test.err)
+
+		if execution.Status != test.expectedProbeStatus {
+			t.Errorf("LogStartupProbeMessage() : Test%v\nExpected status:\t%v\nGot:\t\t%v", test.testNum, test.expectedProbeStatus, execution.Status)
+		}
+
+		if execution.LogLevel != test.expectedLogLevel {
+			t.Errorf("LogStartupProbeMessage() : Test%v\nExpected log level:\t%v\nGot:\t\t%v", test.testNum, test.expectedLogLevel, execution.LogLevel)
+		}
+
+		if execution.LogMessage != test.expectedLog {
+			t.Errorf("LogStartupProbeMessage() : Test%v\nExpected log:\t%v\nGot:\t\t%v", test.testNum, test.expectedLog, execution.LogMessage)
+		}
+	}
+}
+
+// Test values - Startup probe helper update
+var logStartupProbeMessageHelperTests = []struct {
+	testNum             int
+	status              ProbeStatus
+	message             string
+	logLevel            LogLevel
+	expectedProbeStatus ProbeStatus
+	expectedLogMessage  string
+	expectedLevel       LogLevel
+}{
+	{1, ProbePassed, "passed", INFO, ProbePassed, "passed", INFO},
+	{2, ProbeFailed, "failed", ERROR, ProbeFailed, "failed", ERROR},
+}
+
+// TestLogStartupProbeMessageHelper verifies direct startup probe field updates before socket emission.
+func TestLogStartupProbeMessageHelper(t *testing.T) {
+	for _, test := range logStartupProbeMessageHelperTests {
+
+		execution := &ProbeLoggingExecution{
+			ProbeType: StartupProbe,
+			StartTime: timePtr(testStartTime),
+			Status:    ProbeIncomplete,
+		}
+
+		execution.logStartupProbeMessageHelper(test.status, test.message, test.logLevel)
+
+		if execution.Status != test.expectedProbeStatus {
+			t.Errorf("logStartupProbeMessageHelper() : Test%v\nExpected status:\t%v\nGot:\t\t%v", test.testNum, test.expectedProbeStatus, execution.Status)
+		}
+
+		if execution.LogMessage != test.expectedLogMessage {
+			t.Errorf("logStartupProbeMessageHelper() : Test%v\nExpected log:\t%v\nGot:\t\t%v", test.testNum, test.expectedLogMessage, execution.LogMessage)
+		}
+
+		if execution.LogLevel != test.expectedLevel {
+			t.Errorf("logStartupProbeMessageHelper() : Test%v\nExpected log level:\t%v\nGot:\t\t%v", test.testNum, test.expectedLevel, execution.LogLevel)
+		}
+	}
+}
+
+// Test values - Startup probe failure messages
+var buildStartupProbeFailureMessageTests = []struct {
+	testNum  int
+	reason   string
+	expected string
+}{
+	{1, "QueueManager is not started", "Startup Probe Failed: QueueManager is not started"},
+	{2, "startup probe error", "Startup Probe Failed: startup probe error"},
+}
+
+// TestBuildStartupProbeFailureMessage verifies startup failure log formatting.
+func TestBuildStartupProbeFailureMessage(t *testing.T) {
+	for _, test := range buildStartupProbeFailureMessageTests {
+		result := buildStartupProbeFailureMessage(test.reason)
+
+		if result != test.expected {
+			t.Errorf("BuildStartupProbeFailureMessage() : Test%v\nExpected:\t%v\nGot:\t\t%v", test.testNum, test.expected, result)
+		}
+	}
+}
+
+// Test values - Startup probe success messages
+var buildStartupProbeSuccessMessageTests = []struct {
+	testNum  int
+	reason   string
+	expected string
+}{
+	{1, "QueueManager started successfully", "Startup Probe Passed: QueueManager started successfully"},
+}
+
+// TestBuildStartupProbeSuccessMessage verifies startup success log formatting.
+func TestBuildStartupProbeSuccessMessage(t *testing.T) {
+	for _, test := range buildStartupProbeSuccessMessageTests {
+		result := buildStartupProbeSuccessMessage(test.reason)
+
+		if result != test.expected {
+			t.Errorf("BuildStartupProbeSuccessMessage() : Test%v\nExpected:\t%v\nGot:\t\t%v",
 				test.testNum, test.expected, result)
 		}
 	}

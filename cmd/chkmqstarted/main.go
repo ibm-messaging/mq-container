@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ibm-messaging/mq-container/internal/probes"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/pkg/name"
 )
@@ -152,7 +153,19 @@ func doMain() int {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
 
+	var probeLoggingExection *probes.ProbeLoggingExecution
+	isProbeLoggingEnabled := probes.IsProbeLoggingEnabled(probes.StartupProbe)
+
+	if isProbeLoggingEnabled {
+		probeLoggingExection = probes.InitializeProbeLoggingExecution(probes.StartupProbe, time.Now(), probes.ProbeIncomplete)
+	}
+
 	started, err := queueManagerStarted(ctx)
+
+	if isProbeLoggingEnabled && probeLoggingExection != nil {
+		probeLoggingExection.LogStartupProbeMessage(started, err)
+	}
+
 	if err != nil {
 		return 2
 	}

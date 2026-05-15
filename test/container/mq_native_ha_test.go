@@ -374,10 +374,25 @@ func TestNativeHaProbeLoggingGoldenPath(t *testing.T) {
 
 	waitForReadyHA(t, cli, qmReplicaIds)
 
-	// Execute chkmqhealthy on all three instances to trigger first pass logging
+	haStatus, err := getActiveReplicaInstances(t, cli, qmReplicaIds)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Execute chkmqstarted and chkmqhealthy on all three instances to trigger first pass logging
 	for _, id := range qmReplicaIds {
-		// Execute the chkmqhealthy multiple times
+		// Execute the chkmqstarted and chkmqhealthy multiple times
 		for i := 1; i <= 3; i++ {
+
+			// Only check startup on the active instance here. waitForReadyHA() returns once a single Native HA instance has successfully started, but replicas may
+			// still be progressing through recovery, log replay, or the in-sync timeout path used by chkmqstarted(), which can legitimately return non-zero.
+			if id == haStatus.Active {
+				rc, _ := execContainer(t, cli, id, "", []string{"chkmqstarted"})
+				if rc != 0 {
+					t.Errorf("Expected startup probe to pass with rc=0, got rc=%d", rc)
+				}
+			}
+
 			rc, _ := execContainer(t, cli, id, "", []string{"chkmqhealthy"})
 			if rc != 0 {
 				t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
@@ -385,20 +400,24 @@ func TestNativeHaProbeLoggingGoldenPath(t *testing.T) {
 		}
 	}
 
-	// Verify first successful liveness probe was logged once only.
+	// Verify first successful startup probe and liveness probe were logged once only.
 	// Additional identical successful probes should be suppressed by deduplication.
 	for _, id := range qmReplicaIds {
 		containerLogs := inspectLogs(t, cli, id)
 
-		passedCount := strings.Count(containerLogs, "Liveness Probe Passed")
-		if passedCount != 1 {
-			t.Errorf("Expected exactly one liveness probe pass log due to deduplication, got %d", passedCount)
+		// Only check startup on the active instance here. waitForReadyHA() returns once a single Native HA instance has successfully started, but replicas may
+		// still be progressing through recovery, log replay, or the in-sync timeout path used by chkmqstarted(), which can legitimately return non-zero.
+		if id == haStatus.Active {
+			startupPassedCount := strings.Count(containerLogs, "Startup Probe Passed")
+			if startupPassedCount != 1 {
+				t.Errorf("Expected exactly one startup probe pass log due to deduplication, got %d", startupPassedCount)
+			}
 		}
-	}
 
-	haStatus, err := getActiveReplicaInstances(t, cli, qmReplicaIds)
-	if err != nil {
-		t.Fatal(err)
+		livenessPassedCount := strings.Count(containerLogs, "Liveness Probe Passed")
+		if livenessPassedCount != 1 {
+			t.Errorf("Expected exactly one liveness probe pass log due to deduplication, got %d", livenessPassedCount)
+		}
 	}
 
 	// Kill the active replica by sending SIGTERM
@@ -406,6 +425,11 @@ func TestNativeHaProbeLoggingGoldenPath(t *testing.T) {
 
 	// Verify the active replica has the probe summary logged
 	containerLogs := inspectLogs(t, cli, haStatus.Active)
+
+	// Since the liveness probe has been executed, startup probe summary should not be logged
+	if strings.Contains(containerLogs, "----- Start Startup Probe Summary -----") {
+		t.Errorf("Startup probe summary logged at SIGTERM, even when liveness probe has been executed")
+	}
 
 	if !strings.Contains(containerLogs, "----- Start Liveness Probe Summary -----") {
 		t.Errorf("Expected liveness probe summary at SIGTERM")
@@ -489,4 +513,68 @@ func TestNativeHaLivenessProbeLoggingFailureRecovery(t *testing.T) {
 	if failedRuntimeLogCount != 2 {
 		t.Errorf("Expected 2 liveness probe failure logs, got %d", passedRuntimeLogCount)
 	}
+}
+
+// TestNativeHaStartupProbeLoggingSummaryOnSigterm tests that when the startup probe
+// has not passed, SIGTERM logs the startup probe summary with the correct attempt count.
+func TestNativeHaStartupProbeLoggingOnSigterm(t *testing.T) {
+	cli := ce.NewContainerClient()
+
+	containerNames := [3]string{"QM1_1", "QM1_2", "QM1_3"}
+	qmReplicaIds := [3]string{}
+	qmVolumes := []string{}
+	// Each native HA qmgr instance is exposed on subsequent ports on the host starting with basePort
+	// If the qmgr exposes more than one port (tests do not do this currently) then they are offset by +50
+	basePort := 14551
+	for i := 0; i <= 2; i++ {
+		nhaPort := basePort + i
+		vol := createVolume(t, cli, containerNames[i])
+		cleanupVolume(t, cli, vol)
+		qmVolumes = append(qmVolumes, vol)
+		containerConfig := getNativeHAContainerConfig(containerNames[i], containerNames, basePort)
+		hostConfig := getHostConfig(t, 1, "", "", vol, "", "", false)
+		hostConfig = populateNativeHAPortBindings([]int{9414}, nhaPort, hostConfig)
+		networkConfig := getNativeHANetworkConfig("host")
+		ctr := runContainerWithAllConfig(t, cli, &containerConfig, &hostConfig, &networkConfig, containerNames[i])
+		cleanupAfterTest(t, cli, ctr, false)
+		qmReplicaIds[i] = ctr
+	}
+
+	waitForReadyHA(t, cli, qmReplicaIds)
+
+	haStatus, err := getActiveReplicaInstances(t, cli, qmReplicaIds)
+	if err != nil {
+		t.Fatal(err)
+	}
+	qmActiveReplicaId := haStatus.Active
+
+	// Stop the QueueManager
+	execContainer(t, cli, qmActiveReplicaId, "", []string{"endmqm", "-i", "QM1"})
+	time.Sleep(2 * time.Second)
+
+	// Execute the chkmqstarted command multiple times
+	for i := 1; i <= 5; i++ {
+		rc, _ := execContainer(t, cli, qmActiveReplicaId, "", []string{"chkmqstarted"})
+		if rc == 0 {
+			t.Errorf("Expected startup probe to fail on attempt %d", i)
+		}
+	}
+
+	// Kill the active replica by sending SIGTERM
+	killContainer(t, cli, qmActiveReplicaId, "SIGTERM")
+
+	containerLogs := inspectLogs(t, cli, qmActiveReplicaId)
+
+	if !strings.Contains(containerLogs, "----- Start Startup Probe Summary -----") {
+		t.Errorf("Expected startup probe summary at SIGTERM")
+	}
+
+	if strings.Contains(containerLogs, "----- Start Liveness Probe Summary -----") {
+		t.Errorf("Did not expect liveness probe summary at SIGTERM when liveness probe has not been executed")
+	}
+
+	if !strings.Contains(containerLogs, "Last State: Failed") {
+		t.Errorf("Expected startup probe summary to show failed last run, logs were: %s", containerLogs)
+	}
+
 }

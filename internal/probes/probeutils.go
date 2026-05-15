@@ -25,32 +25,47 @@ import (
 )
 
 // WriteProbeSummary logs the probe execution summary.
-//   - for liveness probe includes current run and up to two previous runs
+//   - liveness summary includes the current run and up to two previous runs
+//   - startup summary includes the latest startup probe state when liveness has not started
 func WriteProbeSummary(probeLoggingState *ProbeLoggingState, log *logger.Logger) {
-	if probeLoggingState != nil && probeLoggingState.LivenessProbeLoggingState != nil {
-		livenessState := probeLoggingState.LivenessProbeLoggingState
+	if probeLoggingState != nil {
 
-		log.Println("----- Start Liveness Probe Summary -----")
+		// prefer liveness probe summary once liveness probe has started; otherwise fall back to startup probe summary
+		if probeLoggingState.LivenessProbeLoggingState != nil && probeLoggingState.LivenessProbeLoggingState.CurrentRun != nil {
+			livenessState := probeLoggingState.LivenessProbeLoggingState
 
-		if livenessState.CurrentRun != nil {
-			log.Printf("%s", formatProbeSummary("Last Run", livenessState.CurrentRun))
-		}
+			log.Println("----- Start Liveness Probe Summary -----")
 
-		for i, probeHistory := range livenessState.PreviousRuns {
-			if probeHistory.StartTime != nil {
-				history := probeHistory
-				log.Printf("%s", formatProbeSummary(fmt.Sprintf("Previous Run %d", i+1), &history))
+			if livenessState.CurrentRun != nil {
+				log.Printf("%s", formatProbeSummary("Last Run", livenessState.CurrentRun, LivenessProbe))
 			}
+
+			for i, probeHistory := range livenessState.PreviousRuns {
+				if probeHistory.StartTime != nil {
+					history := probeHistory
+					log.Printf("%s", formatProbeSummary(fmt.Sprintf("Previous Run %d", i+1), &history, LivenessProbe))
+				}
+			}
+
+			log.Println("Note: Duration measures chkmqhealthy execution time and excludes Kubernetes probe scheduling overhead")
+
+			log.Println("----- End Liveness Probe Summary -----")
+		} else if probeLoggingState.StartupProbeLoggingState != nil && probeLoggingState.StartupProbeLoggingState.CurrentRun != nil {
+			startupState := probeLoggingState.StartupProbeLoggingState
+
+			log.Println("----- Start Startup Probe Summary -----")
+
+			if startupState.CurrentRun != nil {
+				log.Printf("%s", formatProbeSummary("Last State", startupState.CurrentRun, StartupProbe))
+			}
+
+			log.Println("----- End Startup Probe Summary -----")
 		}
-
-		log.Println("Note: Duration measures chkmqhealthy execution time and excludes Kubernetes probe scheduling overhead")
-
-		log.Println("----- End Liveness Probe Summary -----")
 	}
 }
 
 // formatProbeSummary formats a single probe execution entry for summary output.
-func formatProbeSummary(prefix string, probeLoggingExecution *ProbeLoggingExecution) string {
+func formatProbeSummary(prefix string, probeLoggingExecution *ProbeLoggingExecution, probeType ProbeType) string {
 	if probeLoggingExecution == nil {
 		return ""
 	}
@@ -58,15 +73,33 @@ func formatProbeSummary(prefix string, probeLoggingExecution *ProbeLoggingExecut
 	status := probeLoggingExecution.Status.getProbeStatus()
 
 	if probeLoggingExecution.Status == ProbeIncomplete {
-		return fmt.Sprintf(
-			"%s: %s (Started=%s Duration=%s)",
-			prefix,
-			status,
-			timePtrToString(probeLoggingExecution.StartTime),
-			formatDurationForSummary(probeLoggingExecution.Duration, probeLoggingExecution.StartTime, probeLoggingExecution.Status),
-		)
+		if probeType == StartupProbe {
+			return fmt.Sprintf(
+				"%s: %s (Attempts=%d)",
+				prefix,
+				status,
+				probeLoggingExecution.AttemptCount,
+			)
+		} else if probeType == LivenessProbe {
+			return fmt.Sprintf(
+				"%s: %s (Started=%s Duration=%s)",
+				prefix,
+				status,
+				timePtrToString(probeLoggingExecution.StartTime),
+				formatDurationForSummary(probeLoggingExecution.Duration, probeLoggingExecution.StartTime, probeLoggingExecution.Status),
+			)
+		}
 	}
 
+	if probeType == StartupProbe {
+		return fmt.Sprintf(
+			"%s: %s (Attempts=%d Details=%s)",
+			prefix,
+			status,
+			probeLoggingExecution.AttemptCount,
+			strings.TrimSpace(probeLoggingExecution.LogMessage),
+		)
+	}
 	return fmt.Sprintf(
 		"%s: %s (Started=%s Completed=%s Duration=%s Details=%s)",
 		prefix,

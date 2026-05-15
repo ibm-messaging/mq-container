@@ -286,27 +286,38 @@ func TestMultiInstanceProbeLoggingGoldenPath(t *testing.T) {
 	waitForReady(t, cli, qm1aId)
 	waitForReady(t, cli, qm1bId)
 
-	// Execute chkmqhealthy on both instances
+	// Execute chkmqready and chkmqhealthy on both instances
 	qmIds := []string{qm1aId, qm1bId}
 
 	for _, id := range qmIds {
-		// Execute the chkmqhealthy multiple times
+		// Execute chkmqready and chkmqhealthy multiple times
 		for i := 1; i <= 3; i++ {
-			rc, _ := execContainer(t, cli, id, "", []string{"chkmqhealthy"})
+
+			rc, _ := execContainer(t, cli, id, "", []string{"chkmqstarted"})
+			if rc != 0 {
+				t.Errorf("Expected startup probe to pass with rc=0, got rc=%d", rc)
+			}
+
+			rc, _ = execContainer(t, cli, id, "", []string{"chkmqhealthy"})
 			if rc != 0 {
 				t.Errorf("Expected liveness probe to pass with rc=0, got rc=%d", rc)
 			}
 		}
 	}
 
-	// Verify first successful liveness probe was logged once only.
+	// Verify first successful startup probe and liveness probe were logged once only.
 	// Additional identical successful probes should be suppressed by deduplication.
 	for _, id := range qmIds {
 		containerLogs := inspectLogs(t, cli, id)
 
-		passedCount := strings.Count(containerLogs, "Liveness Probe Passed")
-		if passedCount != 1 {
-			t.Errorf("Expected exactly one liveness probe pass log due to deduplication, got %d", passedCount)
+		startupPassedCount := strings.Count(containerLogs, "Startup Probe Passed")
+		if startupPassedCount != 1 {
+			t.Errorf("Expected exactly one startup probe pass log due to deduplication, got %d", startupPassedCount)
+		}
+
+		livenessPassedCount := strings.Count(containerLogs, "Liveness Probe Passed")
+		if livenessPassedCount != 1 {
+			t.Errorf("Expected exactly one liveness probe pass log due to deduplication, got %d", livenessPassedCount)
 		}
 	}
 
@@ -321,6 +332,11 @@ func TestMultiInstanceProbeLoggingGoldenPath(t *testing.T) {
 
 	// Verify probe summary in active logs
 	containerLogs := inspectLogs(t, cli, active)
+
+	// Since the liveness probe has been executed, startup probe summary should not be logged
+	if strings.Contains(containerLogs, "----- Start Startup Probe Summary -----") {
+		t.Errorf("Startup probe summary logged at SIGTERM, even when liveness probe has been executed")
+	}
 
 	if !strings.Contains(containerLogs, "----- Start Liveness Probe Summary -----") {
 		t.Errorf("Expected liveness probe summary at SIGTERM")
@@ -393,5 +409,58 @@ func TestMultiInstanceLivenessProbeLoggingFailureRecovery(t *testing.T) {
 
 	if failedRuntimeLogCount != 2 {
 		t.Errorf("Expected 2 liveness probe failure logs, got %d", passedRuntimeLogCount)
+	}
+}
+
+// TestMultiinstanceStartupProbeLoggingOnSigterm verifies that when only the
+// startup probe has executed, the startup probe summary is logged on SIGTERM.
+func TestMultiinstanceStartupProbeLoggingOnSigterm(t *testing.T) {
+	cli := ce.NewContainerClient()
+	err, qm1aId, qm1bId, volumes := configureMultiInstance(t, cli, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, volume := range volumes {
+		cleanupVolume(t, cli, volume)
+	}
+
+	cleanupAfterTest(t, cli, qm1aId, false)
+	cleanupAfterTest(t, cli, qm1bId, false)
+
+	waitForReady(t, cli, qm1aId)
+	waitForReady(t, cli, qm1bId)
+
+	err, active, _ := getActiveStandbyQueueManager(t, cli, qm1aId, qm1bId)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Stop thre QueueManager
+	execContainer(t, cli, active, "", []string{"endmqm", "-i", "QM1"})
+	time.Sleep(2 * time.Second)
+
+	// Execute the chkmqstarted command multiple times
+	for i := 1; i <= 5; i++ {
+		rc, _ := execContainer(t, cli, active, "", []string{"chkmqstarted"})
+		if rc == 0 {
+			t.Errorf("Expected startup probe to fail on attempt %d", i)
+		}
+	}
+
+	// Kill active with SIGTERM
+	killContainer(t, cli, active, "SIGTERM")
+
+	containerLogs := inspectLogs(t, cli, active)
+
+	if !strings.Contains(containerLogs, "----- Start Startup Probe Summary -----") {
+		t.Errorf("Expected startup probe summary at SIGTERM")
+	}
+
+	if strings.Contains(containerLogs, "----- Start Liveness Probe Summary -----") {
+		t.Errorf("Did not expect liveness probe summary at SIGTERM when liveness probe has not been executed")
+	}
+
+	if !strings.Contains(containerLogs, "Last State: Failed") {
+		t.Errorf("Expected startup probe summary to show failed last run, logs were: %s", containerLogs)
 	}
 }
