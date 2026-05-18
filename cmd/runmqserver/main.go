@@ -393,6 +393,23 @@ func doMain() error {
 		}
 	}
 
+	// Setup Probes
+	var probeLoggingSocket *probes.ProbeLoggingSocket
+
+	probeLoggingSocketCtx, probeLoggingSocketCtxCancel := context.WithCancel(context.Background())
+	defer probeLoggingSocketCtxCancel()
+
+	if isProbeLoggingEnabled {
+
+		probeLoggingSocket = probes.NewProbeLoggingSocket(name, getLogFormat(), probeLoggingState, log)
+
+		err = probeLoggingSocket.Start(probeLoggingSocketCtx)
+		if err != nil {
+			log.Errorf("Probe logging socket initialization failed: %v. Probe logging feature will not be available.", err.Error())
+		}
+
+	}
+
 	newQM, err := createQueueManager(name, *devFlag)
 	if err != nil {
 		logTermination(err)
@@ -461,23 +478,6 @@ func doMain() error {
 	if err != nil {
 		logTermination(err)
 		return err
-	}
-
-	// Setup Probes
-	var probeLoggingSocket *probes.ProbeLoggingSocket
-
-	probeLoggingSocketCtx, probeLoggingSocketCtxCancel := context.WithCancel(context.Background())
-	defer probeLoggingSocketCtxCancel()
-
-	if isProbeLoggingEnabled {
-
-		probeLoggingSocket = probes.NewProbeLoggingSocket(name, getLogFormat(), probeLoggingState, log)
-
-		err = probeLoggingSocket.Start(probeLoggingSocketCtx)
-		if err != nil {
-			log.Errorf("Probe logging socket initialization failed: %v. Probe logging feature will not be available.", err.Error())
-		}
-
 	}
 
 	//If the queue manager has started successfully, reflect mqsc logs when enabled
