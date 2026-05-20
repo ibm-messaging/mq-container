@@ -9,6 +9,7 @@
 * Uses `en_US.utf8` as the default locale instead of `C`.  This will cause _new_ queue managers to use CCSID 1208 (UTF-8), instead of 819 (ISO 8859-1).
 * Adds language packs for other languages supported by MQ.  For example, setting the environment variable `LANG=de_DE.utf8` will cause the container to use the German language.
 * Generate initial key for Liberty AES encryption. An initial key can also be passed in using a Secret.
+* Added probe logging to capture Kubernetes liveness and startup probe execution events, with summary reporting on container shutdown.
 
 ## 9.4.5.0-r2 (2026-03)
 * New environment variable: MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE
