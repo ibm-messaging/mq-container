@@ -270,6 +270,47 @@ func TestNoVolumeWithRestart(t *testing.T) {
 	waitForReady(t, cli, id)
 }
 
+// TestContainerRestartAlways validates that a container with "--restart=always" can be successfully restarted
+func TestContainerRestartAlways(t *testing.T) {
+	t.Parallel()
+
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+	containerConfig := ce.ContainerConfig{
+		Env: []string{"LICENSE=accept", "MQ_QMGR_NAME=qm1", "MQ_ENABLE_EMBEDDED_WEB_SERVER=true"},
+	}
+
+	// Create host config with "--restart=always"
+	hostConfig := getDefaultHostConfig(t, cli)
+	hostConfig.RestartPolicy = "always"
+
+	id := runContainerWithHostConfig(t, cli, &containerConfig, hostConfig)
+	cleanupAfterTest(t, cli, id, false)
+	waitForReady(t, cli, id)
+
+	// Force a restart of the container with a KILL signal on PID 1
+	execContainer(t, cli, id, "", []string{"bash", "-c", "kill 1"})
+
+	// Wait until the container has restarted
+	var err error
+	restartCount := "0"
+	for range 5 {
+		restartCount, err = cli.ContainerInspectWithFormat("{{.RestartCount}}", id)
+		if err != nil {
+			t.Logf("Failed to get restart count for container [%v]", err)
+		} else if restartCount == "1" {
+			break
+		}
+		t.Log("Waiting for container to restart - sleep 1 second")
+		time.Sleep(1 * time.Second)
+	}
+	if restartCount != "1" {
+		t.Fatal("Error: container failed to restart within expected time")
+	}
+
+	// Validate that the container restarts successfully
+	waitForReady(t, cli, id)
+}
+
 // TestVolumeRequiresRoot tests the case where only the root user can write
 // to the persistent volume.  In this case, an "init container" is needed,
 // where `runmqserver -i` is run to initialize the storage.  Then the

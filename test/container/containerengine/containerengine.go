@@ -122,6 +122,7 @@ var argSecurityOptions = "--security-opt"
 var argSignal = "--signal"
 var argReadOnlyRootfs = "--read-only"
 var argUlimit = "--ulimit"
+var argRestart = "--restart"
 
 // generic
 var toolVersion = "version"
@@ -168,6 +169,7 @@ type ContainerHostConfig struct {
 	SecurityOpt    []string
 	ReadOnlyRootfs bool     // Readonly root file system
 	Ulimits        []Ulimit // Ulimit options
+	RestartPolicy  string   // Restart policy (e.g., "always", "on-failure", "no")
 }
 
 // Ulimit represents a ulimit setting
@@ -721,6 +723,10 @@ func getHostConfigArgs(args []string, hostConfig *ContainerHostConfig) []string 
 			ulimitStr := fmt.Sprintf("%s=%d:%d", ulimit.Name, ulimit.Soft, ulimit.Hard)
 			args = append(args, []string{argUlimit, ulimitStr}...)
 		}
+	}
+	// Add restart policy
+	if hostConfig.RestartPolicy != "" {
+		args = append(args, []string{argRestart, hostConfig.RestartPolicy}...)
 	}
 
 	return args
