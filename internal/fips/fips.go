@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2023
+© Copyright IBM Corporation 2023, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package fips
 
 import (
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/ibm-messaging/mq-container/internal/command"
@@ -27,8 +28,9 @@ var (
 	FIPSEnabledType int
 )
 
-// FIPS has been turned off either because OS is not FIPS enabled or
-// MQ_ENABLE_FIPS environment variable is set to "false"
+// FIPS has been turned off either because OS is not FIPS enabled,
+// MQ_ENABLE_FIPS environment variable is set to "false" or the
+// platform is not supported.
 const FIPS_ENABLED_OFF = 0
 
 // FIPS is turned ON
@@ -72,10 +74,21 @@ func ProcessFIPSType(logs *logger.Logger) {
 		} else {
 			// We don't recognise the value specified. Log a warning and carry on.
 			if logs != nil {
-				logs.Printf("Invalid value '%s' was specified for MQ_ENABLE_FIPS. The value has been ignored.\n", fipsOverride)
+				logs.Printf("Invalid value '%s' was specified for MQ_ENABLE_FIPS. The value has been ignored.", fipsOverride)
 			}
 		}
 	}
+
+	// Always set FIPSEnabledType = FIPS_ENABLED_OFF when running on s390x or
+	// arm64 and log a warning
+	arch := runtime.GOARCH
+	if IsFIPSEnabled() && (arch == "s390x" || arch == "arm64") {
+		FIPSEnabledType = FIPS_ENABLED_OFF
+		if logs != nil {
+			logs.Printf("Warning: FIPS mode was requested but is unavailable on the %s architecture.", arch)
+		}
+	}
+
 }
 
 func IsFIPSEnabled() bool {
