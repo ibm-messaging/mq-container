@@ -29,14 +29,7 @@ endif
 ifeq "$(PIPELINE_NAMESPACE)" "ci"
 	PIPELINE_PULL_REQUEST=false
 endif
-else
-# sps: If TRAVIS has a value then the build is running on travis
-	PIPELINE_BRANCH=$(TRAVIS_BRANCH)
-	PIPELINE_PULL_REQUEST=$(TRAVIS_PULL_REQUEST)
-	BUILD_DIRECTORY=$(TRAVIS_BUILD_DIR)
-	BUILD_SCRIPTS_PATH=travis-build-scripts
 endif
-
 
 IMAGE_REGISTRY_DELIVERY_NAMESPACE:=$(IMAGE_REGISTRY_DELIVERY_NAMESPACE)/$(IMAGE_REGISTRY_DELIVERY_REPO_PREFIX)
 
@@ -85,18 +78,18 @@ ifeq "$(GIT_COMMIT)" "$(EMPTY)"
 endif
 
 #sps: Use the new variable PIPELINE_PULL_REQUEST
-ifeq ($(shell ( [ ! -z $(TRAVIS) ] || [ ! -z $(PIPELINE_RUN_ID) ] ) && [ "$(PIPELINE_PULL_REQUEST)" = "false" ] && [ "$(PIPELINE_BRANCH)" = "$(MAIN_BRANCH)" ] && echo true), true)
+ifeq ($(shell [ ! -z $(PIPELINE_RUN_ID) ] && [ "$(PIPELINE_PULL_REQUEST)" = "false" ] && [ "$(PIPELINE_BRANCH)" = "$(MAIN_BRANCH)" ] && echo true), true)
 	MQ_MANIFEST_TAG_SUFFIX=.$(TIMESTAMPFLAT).$(GIT_COMMIT)
 endif
 
 #sps: Use the new variable PIPELINE_PULL_REQUEST
-ifeq ($(shell ( [ ! -z $(TRAVIS) ] || [ ! -z $(PIPELINE_RUN_ID) ] ) && [ "$(PIPELINE_PULL_REQUEST)" = "false" ] && echo "$(PIPELINE_BRANCH)" | grep -q '^ifix-' && echo true), true)
+ifeq ($(shell [ ! -z $(PIPELINE_RUN_ID) ] && [ "$(PIPELINE_PULL_REQUEST)" = "false" ] && echo "$(PIPELINE_BRANCH)" | grep -q '^ifix-' && echo true), true)
 	MQ_MANIFEST_TAG_SUFFIX=-$(APAR_NUMBER)-$(FIX_NUMBER).$(TIMESTAMPFLAT).$(GIT_COMMIT)
 endif
 
 #sps: Update the TRAVIS_BUILD_DIR variable to use BUILD_DIRECTORY
 PATH_TO_MQ_TAG_CACHE=$(BUILD_DIRECTORY)/.tagcache
-ifneq ($(strip $(TRAVIS))$(strip $(PIPELINE_RUN_ID)),)
+ifneq ($(strip $(PIPELINE_RUN_ID)),)
 ifneq ("$(wildcard $(PATH_TO_MQ_TAG_CACHE))","")
 include $(PATH_TO_MQ_TAG_CACHE)
 endif
