@@ -1,4 +1,9 @@
 # Change log
+
+## 9.4.0.21-r2 (2026-06)
+
+* Updated MQ Advanced for Developers image to prioritize secrets over env vars for **app** and **admin** user credentials.
+
 ## 9.4.0.21-r1 (2026-05)
 
 * Updated to MQ version 9.4.0.21
