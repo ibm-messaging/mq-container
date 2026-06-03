@@ -6,7 +6,7 @@
 * Added option to include version 3.8.0 (2026.1.3) of the IBM MQ tracing user exit. See [IBM MQ tracing](https://www.ibm.com/docs/en/SSE1JP5_current/src/pages/ecosystem/ibmmq/mq_tracing.html) in the IBM Instana documentation.
 * Uses `ubi-micro` image instead of `ubi-minimal`.  This requires additional build stages.  Removes the `microdnf` and `rpm` commands, along with a number of other unnecessary programs.  This helps make the image smaller, and reduce the number of security vulnerabilities.
 * Use Go cryptography provider for FIPS, instead of OpenSSL.  This applies only to the metrics HTTPS server.
-* Uses `en_US.utf8` as the default locale instead of `C`.  This will cause _new_ queue managers to use CCSID 1208 (UTF-8), instead of 819 (ISO 8859-1).
+* Uses `C.utf8` as the default locale instead of `C`.  This will cause _new_ queue managers to use CCSID 1208 (UTF-8), instead of 819 (ISO 8859-1).
 * Adds language packs for other languages supported by MQ.  For example, setting the environment variable `LANG=de_DE.utf8` will cause the container to use the German language.
 * Generate initial key for Liberty AES encryption. An initial key can also be passed in using a Secret.
 * Added probe logging to capture Kubernetes liveness and startup probe execution events, with summary reporting on container shutdown.
