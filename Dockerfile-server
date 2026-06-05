@@ -60,6 +60,8 @@ COPY internal/ ./internal
 COPY ha/ ./ha
 COPY pkg/ ./pkg
 COPY vendor/ ./vendor
+COPY --chown=1001:root scripts/security-utility.sh /usr/local/bin/
+RUN env chmod u+x /usr/local/bin/security-utility.sh 
 # Build the Go executables
 #   - The `-s -w` flags remove debugging information to make the resulting binaries smaller.
 #   - The `-tags no_openssl` prevents the use of Red Hat OpenSSL, so the built-in Go crypto will be used.
