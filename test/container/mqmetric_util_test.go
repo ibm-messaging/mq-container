@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2025
+© Copyright IBM Corporation 2018, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,9 +40,27 @@ const defaultMetricPort = 9157
 const defaultMQNamespace = "ibmmq"
 const defaultMetricQMName = "qm1"
 
+// nonQuantumSafeCurves returns only non-quantum-safe key exchange algorithms for testing
+func nonQuantumSafeCurves() []tls.CurveID {
+	return []tls.CurveID{
+		tls.CurveP256,
+		tls.CurveP384,
+		tls.CurveP521,
+		tls.X25519,
+	}
+}
+
 // getMetrics returns the gathered metrics from the QueueManager metrics server
 // If rootCAs provided, uses HTTPS to communicate with the metrics server. If nil, assume HTTP metrics server
-func getMetrics(t *testing.T, port string, rootCAs *x509.CertPool, requireQS bool) []mqmetric {
+func getMetrics(t *testing.T, port string, rootCAs *x509.CertPool, tlsCurveIDs []tls.CurveID) []mqmetric {
+	metrics, err := getMetricsWithError(t, port, rootCAs, tlsCurveIDs)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	return metrics
+}
+
+func getMetricsWithError(t *testing.T, port string, rootCAs *x509.CertPool, tlsCurveIDs []tls.CurveID) ([]mqmetric, error) {
 	isHTTPS := rootCAs != nil
 	scheme := "http"
 	if isHTTPS {
@@ -52,12 +70,7 @@ func getMetrics(t *testing.T, port string, rootCAs *x509.CertPool, requireQS boo
 
 	req, _ := http.NewRequest(http.MethodGet, urlToUse, nil)
 
-	// If CurveID is empty, the default Go curve IDs are used
-	tlsCurveIDs := []tls.CurveID{}
-	if requireQS {
-		// For Go version 1.25, X25519MLKEM768 is the only quantum safe key exchange available.
-		tlsCurveIDs = append(tlsCurveIDs, tls.X25519MLKEM768)
-	}
+	// If tlsCurveIDs is nil, the default Go curve IDs are used (which includes quantum-safe options)
 	tlsconfig := &tls.Config{
 		RootCAs:          rootCAs,
 		CurvePreferences: tlsCurveIDs,
@@ -69,16 +82,14 @@ func getMetrics(t *testing.T, port string, rootCAs *x509.CertPool, requireQS boo
 
 	resp, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Error from HTTP GET for metrics: %v", err)
-		return nil
+		return nil, fmt.Errorf("Error from HTTP GET for metrics: %w", err)
 	}
 	defer resp.Body.Close()
 	metricsRaw, err := io.ReadAll(resp.Body)
 	if err != nil {
-		t.Fatalf("Error reading metrics data: %v", err)
-		return nil
+		return nil, fmt.Errorf("Error reading metrics data: %w", err)
 	}
-	return convertRawMetricToMap(t, string(metricsRaw))
+	return convertRawMetricToMap(t, string(metricsRaw)), nil
 }
 
 // Also filters out all non "ibmmq" metrics

@@ -12,6 +12,8 @@
 * Adds language packs for other languages supported by MQ.  For example, setting the environment variable `LANG=de_DE.utf8` will cause the container to use the German language.
 * Generate initial key for Liberty AES encryption. An initial key can also be passed in using a Secret.
 * Added probe logging to capture Kubernetes liveness and startup probe execution events, with summary reporting on container shutdown.
+* Updated the minimum TLS version for the queue manager metrics server to 1.3.
+* Added MQ_METRICS_REQUIRE_QUANTUM_SAFE environment variable.  If set to true, this configures the metrics server to only accept quantum safe TLS connections.
 
 ## 9.4.5.0-r2 (2026-03)
 * New environment variable: MQ_ENABLE_SOFT_FILE_LIMIT_INCREASE

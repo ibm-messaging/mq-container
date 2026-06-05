@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2025
+© Copyright IBM Corporation 2018, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,6 +44,16 @@ const (
 	auditLogMaxBytes       = 4 * 1024 * 1024
 	auditLogNumFiles       = 3
 )
+
+// quantumSafeCurvePreferences returns the list of quantum-safe key exchange algorithms
+// to use when MQ_METRICS_REQUIRE_QUANTUM_SAFE is enabled
+func quantumSafeCurvePreferences() []tls.CurveID {
+	return []tls.CurveID{
+		tls.X25519MLKEM768,
+		tls.SecP256r1MLKEM768,
+		tls.SecP384r1MLKEM1024,
+	}
+}
 
 var (
 	metricsEnabled = false
@@ -125,7 +135,7 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 			return fmt.Errorf("failed to set up TLS certificate monitor: %w", err)
 		}
 		tlsConfig := tls.Config{
-			MinVersion: tls.VersionTLS12,
+			MinVersion: tls.VersionTLS13,
 			GetCertificate: func(chi *tls.ClientHelloInfo) (*tls.Certificate, error) {
 				cert := tlsWatcher.latestCert()
 				if cert == nil {
@@ -133,6 +143,17 @@ func startMetricsGathering(qmName string, log *logger.Logger) error {
 				}
 				return cert, nil
 			},
+		}
+		// Add quantum-safe key exchange if required
+		quantumSafeValue, quantumSafeSet := os.LookupEnv("MQ_METRICS_REQUIRE_QUANTUM_SAFE")
+		if quantumSafeSet {
+			if strings.EqualFold(quantumSafeValue, "true") || strings.EqualFold(quantumSafeValue, "1") {
+				tlsConfig.CurvePreferences = quantumSafeCurvePreferences()
+				log.Println("Metrics server configured to require quantum-safe key exchange")
+			} else if !strings.EqualFold(quantumSafeValue, "false") && !strings.EqualFold(quantumSafeValue, "0") {
+				// Invalid value - log warning and continue with default behavior (not requiring quantum-safe)
+				log.Printf("Invalid value '%s' was specified for MQ_METRICS_REQUIRE_QUANTUM_SAFE. Valid values are 'true', '1', 'false', or '0'. The metrics server will not require quantum-safe key exchange", quantumSafeValue)
+			}
 		}
 		metricsServer.TLSConfig = &tlsConfig
 	}

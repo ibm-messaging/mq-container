@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2023
+© Copyright IBM Corporation 2018, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,17 +16,29 @@ limitations under the License.
 package main
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	metricstest "github.com/ibm-messaging/mq-container/internal/metrics/test"
 	ce "github.com/ibm-messaging/mq-container/test/container/containerengine"
 )
+
+// This list should be equal to metrics.quantumSafeCurvePreferences.
+// It has not been imported because metrics includes C code which doesn't compile for the test build.
+func quantumSafeCurvePreferences() []tls.CurveID {
+	return []tls.CurveID{
+		tls.X25519MLKEM768,
+		tls.SecP256r1MLKEM768,
+		tls.SecP384r1MLKEM1024,
+	}
+}
 
 func TestGoldenPathMetrics(t *testing.T) {
 	t.Parallel()
@@ -85,15 +97,126 @@ func runTestGoldenPathMetrics(t *testing.T, isHTTPS, requireQS bool) {
 	// Now the container is ready we prod the prometheus endpoint until it's up.
 	waitForMetricReady(t, port, caPool)
 
+	// Determine which curves to use - nil means use Go defaults (includes quantum-safe)
+	var curves []tls.CurveID
+	if requireQS {
+		curves = quantumSafeCurvePreferences()
+	}
+
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, caPool, requireQS)
+	getMetrics(t, port, caPool, curves)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, caPool, requireQS)
-	if len(metrics) <= 0 {
+	metricsData := getMetrics(t, port, caPool, curves)
+	if len(metricsData) <= 0 {
 		t.Error("Expected some metrics to be returned but had none...")
 	}
+	// Stop the container cleanly
+	stopContainer(t, cli, id)
+}
+
+func TestQuantumSafeKeyExchange(t *testing.T) {
+	t.Parallel()
+
+	t.Run("NoRequireQS_ClientPQC_OK", func(t *testing.T) {
+		runTestQuantumSafeKeyExchange(t, false, quantumSafeCurvePreferences(), true)
+	})
+
+	t.Run("NoRequireQS_ClientNonPQC_OK", func(t *testing.T) {
+		runTestQuantumSafeKeyExchange(t, false, nonQuantumSafeCurves(), true)
+	})
+
+	t.Run("RequireQS_ClientPQC_OK", func(t *testing.T) {
+		// Test each quantum-safe curve individually to ensure all are supported
+		for _, curve := range quantumSafeCurvePreferences() {
+			curveName := fmt.Sprintf("Curve_%d", curve)
+			t.Run(curveName, func(t *testing.T) {
+				runTestQuantumSafeKeyExchange(t, true, []tls.CurveID{curve}, true)
+			})
+		}
+	})
+
+	t.Run("RequireQS_ClientNonPQC_Reject", func(t *testing.T) {
+		runTestQuantumSafeKeyExchange(t, true, nonQuantumSafeCurves(), false)
+	})
+}
+
+func runTestQuantumSafeKeyExchange(t *testing.T, requireQSServer bool, clientCurves []tls.CurveID, expectSuccess bool) {
+	cli := ce.NewContainerClient(ce.WithTestCommandLogger(t))
+
+	containerOptions := []hostContainerConfigOption{
+		withPorts(defaultMetricPort),
+	}
+
+	// Setup HTTPS with certificates
+	t.Logf("Mount tls files for HTTPS metrics into container")
+	certDir, err := os.MkdirTemp(os.TempDir(), "testQuantumSafeKeyExchange_*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(certDir)
+	err = os.Chmod(certDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to chmod temp dir: %v", err)
+	}
+
+	caCert, srvCerts, srvKeys, err := metricstest.GenerateTestKeys(1, "localhost")
+	if err != nil {
+		t.Fatalf("Failed to generate test keys: %v", err)
+	}
+
+	caPool := metricstest.MakeCACertPool(caCert)
+	metricstest.WriteCertsToDir(caCert, srvCerts[0], srvKeys[0], certDir, false)
+
+	containerOptions = append(containerOptions, withBindMounts(certDir+":/etc/mqm/metrics/pki/keys"))
+
+	// Configure container with MQ_METRICS_REQUIRE_QUANTUM_SAFE if needed
+	containerConfig := metricsContainerConfig()
+	if requireQSServer {
+		containerConfig.Env = append(containerConfig.Env, "MQ_METRICS_REQUIRE_QUANTUM_SAFE=true")
+	}
+
+	id := runContainer(t, cli, containerConfig, containerOptions...)
+	cleanupAfterTest(t, cli, id, false)
+
+	port, err := cli.GetContainerPort(id, defaultMetricPort)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Wait for metrics to be ready
+	waitForMetricReady(t, port, caPool)
+
+	// Call once as mq_prometheus 'ignores' the first call
+	_, err = getMetricsWithError(t, port, caPool, clientCurves)
+	if !expectSuccess {
+		// We expect this to fail
+		if err == nil {
+			t.Fatal("Expected TLS handshake to fail when server requires quantum-safe but client doesn't support it")
+		}
+		// Verify it's a TLS-related error
+		if !strings.Contains(err.Error(), "tls") && !strings.Contains(err.Error(), "handshake") {
+			t.Logf("Got error (expected): %v", err)
+		}
+		// Stop the container cleanly
+		stopContainer(t, cli, id)
+		return
+	}
+
+	// Success case - continue with metrics validation
+	if err != nil {
+		t.Fatalf("Unexpected error getting metrics: %v", err)
+	}
+
+	time.Sleep(15 * time.Second)
+
+	// Now actually get the metrics
+	metricsData := getMetrics(t, port, caPool, clientCurves)
+	if len(metricsData) <= 0 {
+		t.Error("Expected metrics to be returned but had none")
+	}
+
 	// Stop the container cleanly
 	stopContainer(t, cli, id)
 }
@@ -113,11 +236,11 @@ func TestMetricNames(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call
-	getMetrics(t, port, nil, false)
+	getMetrics(t, port, nil, nil)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil, false)
+	metrics := getMetrics(t, port, nil, nil)
 	names := metricNames()
 	if len(metrics) != len(names) {
 		t.Errorf("Expected %d metrics to be returned, received %d", len(names), len(metrics))
@@ -158,11 +281,11 @@ func TestMetricLabels(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call
-	getMetrics(t, port, nil, false)
+	getMetrics(t, port, nil, nil)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil, false)
+	metrics := getMetrics(t, port, nil, nil)
 	if len(metrics) <= 0 {
 		t.Error("Expected some metrics to be returned but had none")
 	}
@@ -206,17 +329,17 @@ func TestRapidFirePrometheus(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil, false)
+	getMetrics(t, port, nil, nil)
 
 	// Rapid fire it then check we're still happy
 	for i := 0; i < 30; i++ {
-		getMetrics(t, port, nil, false)
+		getMetrics(t, port, nil, nil)
 		time.Sleep(1 * time.Second)
 	}
 	time.Sleep(11 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil, false)
+	metrics := getMetrics(t, port, nil, nil)
 	if len(metrics) <= 0 {
 		t.Error("Expected some metrics to be returned but had none")
 	}
@@ -240,12 +363,12 @@ func TestSlowPrometheus(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil, false)
+	getMetrics(t, port, nil, nil)
 
 	// Send a request twice over a long period and check we're still happy
 	for i := 0; i < 2; i++ {
 		time.Sleep(30 * time.Second)
-		metrics := getMetrics(t, port, nil, false)
+		metrics := getMetrics(t, port, nil, nil)
 		if len(metrics) <= 0 {
 			t.Error("Expected some metrics to be returned but had none")
 		}
@@ -271,11 +394,11 @@ func TestContainerRestart(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil, false)
+	getMetrics(t, port, nil, nil)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil, false)
+	metrics := getMetrics(t, port, nil, nil)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned before the restart but had none...")
 	}
@@ -293,11 +416,11 @@ func TestContainerRestart(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil, false)
+	getMetrics(t, port, nil, nil)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics = getMetrics(t, port, nil, false)
+	metrics = getMetrics(t, port, nil, nil)
 	if len(metrics) <= 0 {
 		t.Error("Expected some metrics to be returned after the restart but had none...")
 	}
@@ -322,11 +445,11 @@ func TestQMRestart(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil, false)
+	getMetrics(t, port, nil, nil)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil, false)
+	metrics := getMetrics(t, port, nil, nil)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned before the restart but had none...")
 	}
@@ -350,11 +473,11 @@ func TestQMRestart(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil, false)
+	getMetrics(t, port, nil, nil)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics = getMetrics(t, port, nil, false)
+	metrics = getMetrics(t, port, nil, nil)
 	if len(metrics) <= 0 {
 		t.Errorf("Expected some metrics to be returned after the restart but had none...")
 	}
@@ -378,11 +501,11 @@ func TestValidValues(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil, false)
+	getMetrics(t, port, nil, nil)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil, false)
+	metrics := getMetrics(t, port, nil, nil)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned but had none...")
 	}
@@ -414,11 +537,11 @@ func TestChangingValues(t *testing.T) {
 	waitForMetricReady(t, port, nil)
 
 	// Call once as mq_prometheus 'ignores' the first call and will not return any metrics
-	getMetrics(t, port, nil, false)
+	getMetrics(t, port, nil, nil)
 	time.Sleep(15 * time.Second)
 
 	// Now actually get the metrics (after waiting for some to become available)
-	metrics := getMetrics(t, port, nil, false)
+	metrics := getMetrics(t, port, nil, nil)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned but had none...")
 	}
@@ -447,7 +570,7 @@ func TestChangingValues(t *testing.T) {
 
 	// Now actually get the metrics (after waiting for some to become available)
 	time.Sleep(25 * time.Second)
-	metrics = getMetrics(t, port, nil, false)
+	metrics = getMetrics(t, port, nil, nil)
 	if len(metrics) <= 0 {
 		t.Fatal("Expected some metrics to be returned but had none...")
 	}
