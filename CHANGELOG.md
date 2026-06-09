@@ -2,6 +2,7 @@
 
 ## 9.4.0.21-r2 (2026-06)
 
+* Fixed upgrade issue [DT472893](https://www.ibm.com/mysupport/s/defect/aCIgJ000000EjDN/dt472893) by refreshing the WebSphere Liberty 'ltpa.keys' file. To prevent your existing 'ltpa.keys' file being deleted (on upgrade to this MQ version) you must set environment variable `AMQ_ENABLE_DT472893_REGENERATE_LTPA_KEYS=false`
 * Updated MQ Advanced for Developers image to prioritize secrets over env vars for **app** and **admin** user credentials.
 
 ## 9.4.0.21-r1 (2026-05)
