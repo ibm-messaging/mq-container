@@ -3,6 +3,7 @@
 ## 10.0.0.0 (2026-06)
 
 * Updated to MQ version 10.0.0.0
+* Fixed upgrade issue [DT472893](https://www.ibm.com/mysupport/s/defect/aCIgJ000000EjDN/dt472893) by refreshing the WebSphere Liberty 'ltpa.keys' file. To prevent your existing 'ltpa.keys' file being deleted (on upgrade to this MQ version) you must set environment variable `AMQ_ENABLE_DT472893_REGENERATE_LTPA_KEYS=false`
 * Added option to include version 3.8.0 (2026.1.3) of the IBM MQ tracing user exit. See [IBM MQ tracing](https://www.ibm.com/docs/en/SSE1JP5_current/src/pages/ecosystem/ibmmq/mq_tracing.html) in the IBM Instana documentation.
 * Uses `ubi-micro` image instead of `ubi-minimal`.  This requires additional build stages.  Removes the `microdnf` and `rpm` commands, along with a number of other unnecessary programs.  This helps make the image smaller, and reduce the number of security vulnerabilities.
 * Use Go cryptography provider for FIPS, instead of OpenSSL.  This applies only to the metrics HTTPS server.
