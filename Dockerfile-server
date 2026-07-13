@@ -30,7 +30,7 @@ ARG GO_WORKDIR=/opt/app-root/src/go
 # Directory in base image builder to copy
 ARG BASE_DIR=/opt/app-root/src/base
 # Archive file containing the MQ no-install version
-ARG MQ_ARCHIVE="downloads/10.0.0.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
+ARG MQ_ARCHIVE="downloads/10.0.1.0-IBM-MQ-Advanced-for-Developers-Non-Install-LinuxX64.tar.gz"
 
 ###############################################################################
 # Builder image - UBI variant
