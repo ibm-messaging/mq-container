@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2017, 2024
+© Copyright IBM Corporation 2017, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,8 +24,18 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/ibm-messaging/mq-container/internal/metadata"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/pkg/name"
+)
+
+// return codes for failure modes of the probe
+const (
+	rcQMReady             = 0
+	rcQMNotReady          = 1
+	rcSendQMStatusFailure = 2
+	rcQMNotReadyIsStandby = 10
+	rcQMNotReadyIsReplica = 20
 )
 
 func doMain() int {
@@ -35,19 +45,20 @@ func doMain() int {
 	// Check if runmqserver has indicated that it's finished configuration
 	r, err := ready.Check()
 	if !r || err != nil {
-		return 1
+		return rcQMNotReady
 	}
 	name, err := name.GetQueueManagerName()
 	if err != nil {
 		fmt.Println(err)
-		return 1
+		return rcQMNotReady
 	}
 
 	// Check if the queue manager has a running listener
 	status, err := ready.Status(ctx, name)
 	if err != nil {
-		return 1
+		return rcQMNotReady
 	}
+
 	switch status {
 	case ready.StatusActiveQM:
 		portOpen, err := checkPort("127.0.0.1:1414")
@@ -55,21 +66,60 @@ func doMain() int {
 			fmt.Println(err)
 		}
 		if !portOpen {
-			return 1
+			return rcQMNotReady
 		}
-		return 0
+
+		// If the metadata sidecar cannot be reached do not fail the probe.
+		// Active QueueManagers should always report ready as they may be correctly labelled for routing.
+		_ = sendQMStatusIfRequired(ctx, status)
+
+		return rcQMReady
 	case ready.StatusRecoveryQM:
 		fmt.Printf("Detected queue manager running as recovery leader")
-		return 0
+
+		// If the metadata sidecar cannot be reached do not fail the probe.
+		// Recovery Leader QueueManagers should always report ready as they may be correctly labelled for routing.
+		_ = sendQMStatusIfRequired(ctx, status)
+
+		return rcQMReady
 	case ready.StatusStandbyQM:
 		fmt.Printf("Detected queue manager running in standby mode")
-		return 10
+
+		err = sendQMStatusIfRequired(ctx, status)
+		if err != nil {
+			return rcSendQMStatusFailure
+		}
+
+		if readyReplicasEnabled() {
+			return rcQMReady
+		}
+		return rcQMNotReadyIsStandby
 	case ready.StatusReplicaQM:
 		fmt.Printf("Detected queue manager running in replica mode")
-		return 20
+
+		err = sendQMStatusIfRequired(ctx, status)
+		if err != nil {
+			return rcSendQMStatusFailure
+		}
+
+		if readyReplicasEnabled() {
+			return rcQMReady
+		}
+		return rcQMNotReadyIsReplica
 	default:
-		return 1
+		return rcQMNotReady
 	}
+}
+
+func sendQMStatusIfRequired(ctx context.Context, status ready.QMStatus) error {
+	if !readyReplicasEnabled() {
+		return nil
+	}
+	return metadata.SendQMStatus(ctx, status)
+}
+
+func readyReplicasEnabled() bool {
+	return os.Getenv("MQ_ENABLE_READY_REPLICAS") == "true"
 }
 
 func main() {

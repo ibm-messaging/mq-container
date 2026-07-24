@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2021, 2024
+© Copyright IBM Corporation 2021, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,9 +27,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ibm-messaging/mq-container/internal/metadata"
 	"github.com/ibm-messaging/mq-container/internal/probes"
 	"github.com/ibm-messaging/mq-container/internal/ready"
 	"github.com/ibm-messaging/mq-container/pkg/name"
+)
+
+const (
+	rcQMStarted            = 0
+	rcQMNotStarted         = 1
+	rcQMCheckStartedError  = 2
+	rcMetadataSidecarError = 3
 )
 
 func queueManagerStarted(ctx context.Context) (bool, error) {
@@ -105,7 +113,7 @@ func queueManagerStarted(ctx context.Context) (bool, error) {
 // isInSyncWithReplicas returns the in-sync status for a Native-HA queue manager instance
 func isInSyncWithReplicas(ctx context.Context, name string, readyStrings []string) (bool, bool, error) {
 
-	// #nosec G204
+	// #nosec G204 - command is fixed, name is a validated queue manager name
 	cmd := exec.CommandContext(ctx, "dspmq", "-n", "-o", "nativeha", "-m", name)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -154,6 +162,10 @@ func doMain() int {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
 
+	if os.Getenv("MQ_ENABLE_READY_REPLICAS") == "true" {
+		_ = metadata.SendQMStatus(ctx, ready.StatusStarting)
+	}
+
 	var probeLoggingExection *probes.ProbeLoggingExecution
 	isProbeLoggingEnabled := probes.IsProbeLoggingEnabled(probes.StartupProbe)
 
@@ -161,19 +173,31 @@ func doMain() int {
 		probeLoggingExection = probes.InitializeProbeLoggingExecution(probes.StartupProbe, time.Now(), probes.ProbeIncomplete)
 	}
 
-	started, err := queueManagerStarted(ctx)
-
-	if isProbeLoggingEnabled && probeLoggingExection != nil {
-		probeLoggingExection.LogStartupProbeMessage(started, err)
+	logExit := func(started bool, err error, rc int) int {
+		if isProbeLoggingEnabled && probeLoggingExection != nil {
+			probeLoggingExection.LogStartupProbeMessage(started, err)
+		}
+		return rc
 	}
 
+	qmStarted, err := queueManagerStarted(ctx)
 	if err != nil {
-		return 2
+		return logExit(qmStarted, err, rcQMCheckStartedError)
 	}
-	if !started {
-		return 1
+	if !qmStarted {
+		return logExit(qmStarted, err, rcQMNotStarted)
 	}
-	return 0
+
+	// If the QueueManager has started successfully, check if the metadataserver is healthy when ready replicas are enabled.
+	if os.Getenv("MQ_ENABLE_READY_REPLICAS") == "true" {
+		err = metadata.CheckReadyStatus(ctx)
+		// If the sidecar is unhealthy, or health cannot be determined then fail the startup probe.
+		if err != nil {
+			return logExit(false, err, rcMetadataSidecarError)
+		}
+	}
+
+	return logExit(true, nil, rcQMStarted)
 }
 
 func main() {

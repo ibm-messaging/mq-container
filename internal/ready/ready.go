@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2024
+© Copyright IBM Corporation 2018, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ func Status(ctx context.Context, name string) (QMStatus, error) {
 		return StatusStandbyQM, nil
 	}
 	if strings.Contains(string(out), "(REPLICA)") {
-		return StatusStandbyQM, nil
+		return StatusReplicaQM, nil
 	}
 	if strings.Contains(string(out), "(RECOVERY GROUP LEADER)") {
 		return StatusRecoveryQM, nil
@@ -151,6 +151,9 @@ const (
 	StatusStandbyQM
 	StatusReplicaQM
 	StatusRecoveryQM
+	StatusStarting
+
+	StatusMaxValue // Always last entry - all valid status values are less than this
 )
 
 // ActiveQM returns true if the queue manager is running in active mode

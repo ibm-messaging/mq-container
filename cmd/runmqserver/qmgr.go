@@ -189,7 +189,7 @@ func stopQueueManager(name string) error {
 		return err
 	}
 	qmGracePeriodStr := strconv.Itoa(qmGracePeriod)
-	isStandby := status.StandbyQM()
+	isStandby := status.StandbyQM() || status.ReplicaQM()
 	args := []string{"-w", "-r", "-tp", qmGracePeriodStr, name}
 	if os.Getenv("MQ_MULTI_INSTANCE") == "true" {
 		if isStandby {

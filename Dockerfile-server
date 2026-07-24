@@ -61,7 +61,7 @@ COPY ha/ ./ha
 COPY pkg/ ./pkg
 COPY vendor/ ./vendor
 COPY --chown=1001:root scripts/security-utility.sh /usr/local/bin/
-RUN env chmod u+x /usr/local/bin/security-utility.sh 
+RUN env chmod u+x /usr/local/bin/security-utility.sh
 # Build the Go executables
 #   - The `-s -w` flags remove debugging information to make the resulting binaries smaller.
 #   - The `-tags no_openssl` prevents the use of Red Hat OpenSSL, so the built-in Go crypto will be used.
@@ -70,12 +70,20 @@ RUN go build -tags no_openssl -ldflags "-s -w -X \"main.ImageCreated=$(date --is
   && go build -tags no_openssl -ldflags="-s -w" ./cmd/chkmqhealthy/ \
   && go build -tags no_openssl -ldflags="-s -w" ./cmd/chkmqstarted/ \
   && go build -tags no_openssl -ldflags="-s -w" ./cmd/runmqdevserver/ \
+  && go build -tags no_openssl -ldflags="-s -w" ./cmd/chkmetadataready/ \
+  && go build -tags no_openssl -ldflags="-s -w" ./cmd/chkmetadatahealthy/ \
+  && go build -tags no_openssl -ldflags="-s -w" ./cmd/chkmetadatastarted/ \
+  && go build -tags no_openssl -ldflags="-s -w" ./cmd/runmetadataserver/ \
   && chmod ug+x ./chkmq* ./runmq* \
   && go test -v ./cmd/runmqdevserver/... \
   && go test -v ./cmd/runmqserver/ \
+  && go test -v ./cmd/runmetadataserver/ \
   && go test -v ./cmd/chkmqready/ \
   && go test -v ./cmd/chkmqhealthy/ \
   && go test -v ./cmd/chkmqstarted/ \
+  && go test -v ./cmd/chkmetadataready/ \
+  && go test -v ./cmd/chkmetadatahealthy/ \
+  && go test -v ./cmd/chkmetadatastarted/ \
   && go test -v ./pkg/... \
   && go test -v ./internal/... \
   && go vet ./cmd/... ./internal/...
@@ -125,7 +133,7 @@ FROM $UBI_BASE_IMAGE:$UBI_BASE_TAG AS base
 
 ###############################################################################
 # Base image builder stage for the UBI variant.
-# The ubi-micro image does not include a package manager, so this builder image 
+# The ubi-micro image does not include a package manager, so this builder image
 # is used to create the appropriate structure and add more packages.
 ###############################################################################
 FROM $UBI_BUILDER_IMAGE:$UBI_BUILDER_TAG AS basebuilder-ubi
@@ -134,8 +142,8 @@ USER 0
 ARG PACKAGES_TO_INSTALL="bash bc ca-certificates crypto-policies findutils gawk glibc-common grep libicu ncurses-libs openssl-libs procps-ng sed tar util-linux-core which zlib-ng-compat"
 RUN mkdir ${BASE_DIR}
 COPY --from=base / ${BASE_DIR}
-# Install the packages.  Disable all repos, and then re-enable just the UBI 
-# repositories - this is useful when running on a system with a RHEL 
+# Install the packages.  Disable all repos, and then re-enable just the UBI
+# repositories - this is useful when running on a system with a RHEL
 # subscription, to ensure that only the free UBI packages are used
 RUN dnf install \
     --assumeyes \
@@ -152,7 +160,7 @@ RUN dnf install \
 
 ###############################################################################
 # Locale builder stage for the UBI variant.
-# UBI does not allow the installation of individual locale packages, so this 
+# UBI does not allow the installation of individual locale packages, so this
 # stage uses the glibc locale source to create a new locale archive.
 ###############################################################################
 FROM $UBI_BUILDER_IMAGE:$UBI_BUILDER_TAG AS localebuilder-ubi
@@ -193,7 +201,7 @@ ARG BASE_DIR
 COPY --from=basebuilder-ubi ${BASE_DIR}/ .
 # Replace locales and messages with the ones from the locale builder stage
 RUN rm -rf /usr/lib/locale/*
-COPY --from=localebuilder-ubi /usr/share/locale-build /usr/share/locale/ 
+COPY --from=localebuilder-ubi /usr/share/locale-build /usr/share/locale/
 COPY --from=localebuilder-ubi /usr/lib/locale/locale-archive /usr/lib/locale/locale-archive
 
 ###############################################################################
@@ -238,7 +246,7 @@ RUN env \
   && install --directory --mode 2775 --owner 1001 --group root /mnt/mqm/tmp \
   # Create the directory for MQ configuration files
   && install --directory --mode 2775 --owner 1001 --group root /etc/mqm \
-  # Create the directory for scratch volume 
+  # Create the directory for scratch volume
   && install --directory --mode 2775 --owner 1001 --group root /run/scratch \
   # Create the directory for runmqserver files
   && install --directory --mode 2775 --owner 1001 --group root /run/scratch/runmqserver \
@@ -255,8 +263,12 @@ RUN env \
   # Update server.xml to include mqwebcontainer.xml & mqwebexternal.xml
   && sed -i 's|<include location="mqwebuser.xml"/>|<include location="mqwebcontainer.xml"/>\n    <include location="mqwebexternal.xml"/>\n    <include location="mqwebuser.xml"/>|' /opt/mqm/samp/web/server.xml \
   && /opt/mqm/bin/security/amqpamcf
-COPY --chown=1001:root --from=builder $GO_WORKDIR/mq-container/runmqserver /usr/local/bin/
-COPY --chown=1001:root --from=builder $GO_WORKDIR/mq-container/chkmq* /usr/local/bin/
+COPY --chown=1001:root --from=builder \
+  $GO_WORKDIR/mq-container/runmqserver \
+  $GO_WORKDIR/mq-container/runmetadataserver \
+  $GO_WORKDIR/mq-container/chkmq* \
+  $GO_WORKDIR/mq-container/chkmetadata* \
+  /usr/local/bin/
 COPY --chown=1001:root ha/*.ini.tpl /etc/mqm/
 # Copy web XML files
 COPY --chown=1001:root web /etc/mqm/web
