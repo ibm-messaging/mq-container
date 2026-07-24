@@ -105,6 +105,7 @@ func queueManagerStarted(ctx context.Context) (bool, error) {
 // isInSyncWithReplicas returns the in-sync status for a Native-HA queue manager instance
 func isInSyncWithReplicas(ctx context.Context, name string, readyStrings []string) (bool, bool, error) {
 
+	// #nosec G204
 	cmd := exec.CommandContext(ctx, "dspmq", "-n", "-o", "nativeha", "-m", name)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
