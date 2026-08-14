@@ -20,11 +20,11 @@ ARG PACKAGES_TO_INSTALL
 
 # Base image to use when BASE_VARIANT=ubi
 ARG UBI_BASE_IMAGE=registry.access.redhat.com/ubi10/ubi-micro
-ARG UBI_BASE_TAG=10.2-1784668653
+ARG UBI_BASE_TAG=10.2-1786324819
 # Image for the Go and C builds, as well as the MQ and UBI packaging build stages to use
 # Image needs `go`, `gcc` and `dnf`
 ARG UBI_BUILDER_IMAGE=registry.access.redhat.com/ubi10/go-toolset
-ARG UBI_BUILDER_TAG=1.26.5-1784668091
+ARG UBI_BUILDER_TAG=1.26.5-1786496329
 
 ARG GO_WORKDIR=/opt/app-root/src/go
 # Directory in base image builder to copy
