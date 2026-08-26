@@ -21,14 +21,12 @@ import "github.com/ibm-messaging/mq-container/internal/ready"
 // qmStatusLabel maps a QMStatus to the value for the mq.ibm.com/status label.
 func qmStatusLabel(status ready.QMStatus) string {
 	switch status {
-	case ready.StatusActiveQM:
+	case ready.StatusActiveQM, ready.StatusRecoveryLeaderQM:
 		return "active"
 	case ready.StatusStandbyQM:
 		return "standby"
 	case ready.StatusReplicaQM:
 		return "replica"
-	case ready.StatusRecoveryLeaderQM:
-		return "recovery-leader"
 	case ready.StatusStarting:
 		return "starting"
 	default:

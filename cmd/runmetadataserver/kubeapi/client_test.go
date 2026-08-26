@@ -447,9 +447,9 @@ func TestPatchPodMetadataIfNeeded(t *testing.T) {
 			wantAnnotations: map[string]string{"productChargedContainers": "None", "productID": "1234"},
 		},
 		{
-			name:            "StatusRecoveryLeaderQM - patch sent with label 'recovery-leader'",
+			name:            "StatusRecoveryLeaderQM - patch sent with label 'active'",
 			status:          ready.StatusRecoveryLeaderQM,
-			wantLabel:       "recovery-leader",
+			wantLabel:       "active",
 			wantAnnotations: map[string]string{"productChargedContainers": "All", "productID": "1234"},
 		},
 		{
