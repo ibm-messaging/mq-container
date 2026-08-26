@@ -138,7 +138,7 @@ func Status(ctx context.Context, name string) (QMStatus, error) {
 		return StatusReplicaQM, nil
 	}
 	if strings.Contains(string(out), "(RECOVERY GROUP LEADER)") {
-		return StatusRecoveryQM, nil
+		return StatusRecoveryLeaderQM, nil
 	}
 	return StatusUnknown, nil
 }
@@ -150,7 +150,7 @@ const (
 	StatusActiveQM
 	StatusStandbyQM
 	StatusReplicaQM
-	StatusRecoveryQM
+	StatusRecoveryLeaderQM
 	StatusStarting
 
 	StatusMaxValue // Always last entry - all valid status values are less than this
@@ -166,4 +166,4 @@ func (s QMStatus) StandbyQM() bool { return s == StatusStandbyQM }
 func (s QMStatus) ReplicaQM() bool { return s == StatusReplicaQM }
 
 // ReplicaQM returns true if the queue manager is running in recovery mode
-func (s QMStatus) RecoveryQM() bool { return s == StatusRecoveryQM }
+func (s QMStatus) RecoveryQM() bool { return s == StatusRecoveryLeaderQM }

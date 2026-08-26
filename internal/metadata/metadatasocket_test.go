@@ -73,7 +73,7 @@ func TestSendQMStatus(t *testing.T) {
 		},
 		{
 			name:                         "recovery-202",
-			queueManagerStatus:           ready.StatusRecoveryQM,
+			queueManagerStatus:           ready.StatusRecoveryLeaderQM,
 			qmStatusEndpointGoodResponse: http.StatusAccepted,
 			wantErr:                      false,
 		},
@@ -97,7 +97,7 @@ func TestSendQMStatus(t *testing.T) {
 		},
 		{
 			name:                         "recovery-500",
-			queueManagerStatus:           ready.StatusRecoveryQM,
+			queueManagerStatus:           ready.StatusRecoveryLeaderQM,
 			qmStatusEndpointGoodResponse: http.StatusInternalServerError,
 			wantErr:                      true,
 		},

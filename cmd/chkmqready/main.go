@@ -74,7 +74,7 @@ func doMain() int {
 		_ = sendQMStatusIfRequired(ctx, status)
 
 		return rcQMReady
-	case ready.StatusRecoveryQM:
+	case ready.StatusRecoveryLeaderQM:
 		fmt.Printf("Detected queue manager running as recovery leader")
 
 		// If the metadata sidecar cannot be reached do not fail the probe.

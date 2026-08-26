@@ -83,7 +83,7 @@ func (m *podMetaReader) resolveLicenseAnnotations(status ready.QMStatus) (map[st
 
 	var metaKey string
 	switch status {
-	case ready.StatusActiveQM, ready.StatusRecoveryQM:
+	case ready.StatusActiveQM, ready.StatusRecoveryLeaderQM:
 		metaKey = annotationWhenActive
 	case ready.StatusStandbyQM:
 		metaKey = annotationWhenStandby

@@ -83,8 +83,8 @@ func TestResolveLicenseAnnotations(t *testing.T) {
 		},
 		{
 			// Recovery and active share annotations
-			name:   "StatusRecoveryQM - resolves annotationWhenActive",
-			status: ready.StatusRecoveryQM,
+			name:   "StatusRecoveryLeaderQM - resolves annotationWhenActive",
+			status: ready.StatusRecoveryLeaderQM,
 			annotations: downwardAPILines(map[string]string{
 				annotationWhenActive: activeAnnotations,
 			}),

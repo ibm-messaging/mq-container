@@ -377,7 +377,7 @@ func TestPatchPodMetadataIfNeeded(t *testing.T) {
 
 	annotationsForStatus := func(status ready.QMStatus) []byte {
 		switch status {
-		case ready.StatusActiveQM, ready.StatusRecoveryQM:
+		case ready.StatusActiveQM, ready.StatusRecoveryLeaderQM:
 			return downwardAPILines(map[string]string{
 				annotationWhenActive: `{"productChargedContainers":"All","productID":"1234"}`,
 			})
@@ -447,8 +447,8 @@ func TestPatchPodMetadataIfNeeded(t *testing.T) {
 			wantAnnotations: map[string]string{"productChargedContainers": "None", "productID": "1234"},
 		},
 		{
-			name:            "StatusRecoveryQM - patch sent with label 'recovery-leader'",
-			status:          ready.StatusRecoveryQM,
+			name:            "StatusRecoveryLeaderQM - patch sent with label 'recovery-leader'",
+			status:          ready.StatusRecoveryLeaderQM,
 			wantLabel:       "recovery-leader",
 			wantAnnotations: map[string]string{"productChargedContainers": "All", "productID": "1234"},
 		},

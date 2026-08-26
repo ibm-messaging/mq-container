@@ -27,7 +27,7 @@ func qmStatusLabel(status ready.QMStatus) string {
 		return "standby"
 	case ready.StatusReplicaQM:
 		return "replica"
-	case ready.StatusRecoveryQM:
+	case ready.StatusRecoveryLeaderQM:
 		return "recovery-leader"
 	case ready.StatusStarting:
 		return "starting"
