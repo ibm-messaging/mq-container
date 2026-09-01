@@ -42,7 +42,7 @@ if [ "$FILE_FOUND" -eq 200 ]; then
 elif [ "$FILE_FOUND" -eq 404 ]; then
     printf "${REDCROSS} Folder ${MQ_SNAPSHOT_NAME} was not found\n"
     mkdir -p tmp
-    git_clone_with_retry git@github.ibm.com:mq-cloudpak/pipeline-scripts.git
+    git clone git@github.ibm.com:mq-cloudpak/pipeline-scripts.git
     cd pipeline-scripts/store-base-ifix-driver
     chmod +x store-base-ifix-driver.sh
     ./store-base-ifix-driver.sh
