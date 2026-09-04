@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/ibm-messaging/mq-container/internal/metadata"
@@ -35,9 +36,8 @@ func main() {
 
 	go monitorSigterm(ctx, cancelFn)
 
-	name, _ := name.GetQueueManagerName()
 	var err error
-	log, err = logger.NewLogger(os.Stdout, getDebug(), true, name)
+	log, err = configureLogger()
 	if err != nil {
 		fmt.Printf("failed to create logger: %s\n", err.Error())
 		os.Exit(1)
@@ -79,6 +79,39 @@ func getDebug() bool {
 		return true
 	}
 	return false
+}
+
+func getLogFormat() string {
+	logFormat := strings.ToLower(strings.TrimSpace(os.Getenv("MQ_LOGGING_CONSOLE_FORMAT")))
+	if logFormat == "" {
+		logFormat = strings.ToLower(strings.TrimSpace(os.Getenv("LOG_FORMAT")))
+	}
+
+	switch logFormat {
+	case "basic", "json":
+		return logFormat
+	default:
+		return "basic"
+	}
+}
+
+func configureLogger() (*logger.Logger, error) {
+	format := getLogFormat()
+	debug := getDebug()
+	qmgrName, err := name.GetQueueManagerName()
+	if err != nil {
+		return nil, err
+	}
+
+	switch format {
+	case "json":
+		return logger.NewLogger(os.Stdout, debug, true, qmgrName)
+	case "basic":
+		return logger.NewLogger(os.Stdout, debug, false, qmgrName)
+	default:
+		log, _ := logger.NewLogger(os.Stderr, debug, false, qmgrName)
+		return log, fmt.Errorf("invalid value for LOG_FORMAT: %v", format)
+	}
 }
 
 var errSigtermReceived = errors.New("sigterm received")
