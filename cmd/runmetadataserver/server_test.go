@@ -57,12 +57,15 @@ func (f *fakeKubeClient) ValidateStatusAnnotations() error {
 	return f.annotationsErr
 }
 
-func (f *fakeKubeClient) PatchPodMetadataIfNeeded(_ context.Context, s ready.QMStatus) error {
+func (f *fakeKubeClient) PatchPodMetadataIfNeeded(_ context.Context, s ready.QMStatus) (bool, string, error) {
 	f.patched = append(f.patched, s)
 	if f.patchFn != nil {
 		f.patchFn()
 	}
-	return f.patchErr
+	if f.patchErr != nil {
+		return false, "", f.patchErr
+	}
+	return true, "fake patch reason", nil
 }
 
 // newTestServer creates a server with a fakeKubeClient already injected.

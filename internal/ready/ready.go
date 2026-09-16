@@ -156,6 +156,23 @@ const (
 	StatusMaxValue // Always last entry - all valid status values are less than this
 )
 
+func (s QMStatus) String() string {
+	switch s {
+	case StatusActiveQM:
+		return "active"
+	case StatusStandbyQM:
+		return "standby"
+	case StatusReplicaQM:
+		return "replica"
+	case StatusRecoveryLeaderQM:
+		return "recovery leader"
+	case StatusStarting:
+		return "starting"
+	default:
+		return "unknown"
+	}
+}
+
 // ActiveQM returns true if the queue manager is running in active mode
 func (s QMStatus) ActiveQM() bool { return s == StatusActiveQM }
 

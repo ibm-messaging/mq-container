@@ -228,7 +228,7 @@ func TestResolveLicenseAnnotations(t *testing.T) {
 	}
 }
 
-func TestMatchesDesired(t *testing.T) {
+func TestChangesRequired(t *testing.T) {
 	const (
 		wantLabel  = "Active"
 		otherLabel = "Standby"
@@ -264,55 +264,69 @@ func TestMatchesDesired(t *testing.T) {
 	)
 
 	tests := []struct {
-		name            string
-		wantAnnotations map[string]string
-		annotationsData []byte
-		labelsData      []byte
-		wantMatch       bool
+		name                string
+		wantAnnotations     map[string]string
+		annotationsData     []byte
+		labelsData          []byte
+		wantNeeded          bool
+		wantReasonContains  []string
 	}{
 		{
 			name:            "label and annotations match",
 			wantAnnotations: activeAnnotations,
 			labelsData:      matchingLabelsFile,
 			annotationsData: matchingAnnotationsFile,
-			wantMatch:       true,
+			wantNeeded:      false,
 		},
 		{
-			name:            "label matches, annotations mismatch",
-			wantAnnotations: activeAnnotations,
-			labelsData:      matchingLabelsFile,
-			annotationsData: mismatchedAnnotationsFile,
-			wantMatch:       false,
+			name:               "label matches, annotations mismatch",
+			wantAnnotations:    activeAnnotations,
+			labelsData:         matchingLabelsFile,
+			annotationsData:    mismatchedAnnotationsFile,
+			wantNeeded:         true,
+			wantReasonContains: []string{"productChargedContainers"},
 		},
 		{
-			name:            "label mismatch",
-			wantAnnotations: activeAnnotations,
-			labelsData:      mismatchedLabelsFile,
-			annotationsData: nil,
-			wantMatch:       false,
+			name:               "label mismatch",
+			wantAnnotations:    activeAnnotations,
+			labelsData:         mismatchedLabelsFile,
+			annotationsData:    nil,
+			wantNeeded:         true,
+			wantReasonContains: []string{"'Standby' to 'Active'"},
 		},
 		{
 			name:            "annotations are nil",
 			wantAnnotations: nil,
 			labelsData:      matchingLabelsFile,
 			annotationsData: nil,
-			wantMatch:       true,
+			wantNeeded:      false,
 		},
 		{
-			// The labels file cannot be read — state is unknown - PATCH required.
-			name:            "labels file unreadable",
-			wantAnnotations: activeAnnotations,
-			labelsData:      nil, // nil causes metaReaderWith to return a read error
-			annotationsData: matchingAnnotationsFile,
-			wantMatch:       false,
+			// The labels file cannot be read — state is unknown, PATCH required.
+			name:               "labels file unreadable",
+			wantAnnotations:    activeAnnotations,
+			labelsData:         nil, // nil causes metaReaderWith to return a read error
+			annotationsData:    matchingAnnotationsFile,
+			wantNeeded:         true,
+			wantReasonContains: []string{"failed to read existing label"},
 		},
 		{
 			// The label matches but the annotations file cannot be read — PATCH required.
-			name:            "annotations file unreadable - returns false",
-			wantAnnotations: activeAnnotations,
-			labelsData:      matchingLabelsFile,
-			annotationsData: nil, // nil causes metaReaderWith to return a read error
-			wantMatch:       false,
+			name:               "annotations file unreadable",
+			wantAnnotations:    activeAnnotations,
+			labelsData:         matchingLabelsFile,
+			annotationsData:    nil, // nil causes metaReaderWith to return a read error
+			wantNeeded:         true,
+			wantReasonContains: []string{"failed to read current annotations"},
+		},
+		{
+			// Both label and annotation stale — reason must mention both.
+			name:               "label and annotations both stale",
+			wantAnnotations:    activeAnnotations,
+			labelsData:         mismatchedLabelsFile,
+			annotationsData:    mismatchedAnnotationsFile,
+			wantNeeded:         true,
+			wantReasonContains: []string{"'Standby' to 'Active'", "productChargedContainers"},
 		},
 	}
 
@@ -320,10 +334,21 @@ func TestMatchesDesired(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := metaReaderWith(tt.annotationsData, tt.labelsData)
 
-			got := m.currentMatchesDesired(wantLabel, tt.wantAnnotations)
+			needed, reason := m.changesRequired(wantLabel, tt.wantAnnotations)
 
-			if got != tt.wantMatch {
-				t.Errorf("matchesDesired() = %v, want %v", got, tt.wantMatch)
+			if needed != tt.wantNeeded {
+				t.Errorf("changesRequired() needed = %v, want %v (reason: %q)", needed, tt.wantNeeded, reason)
+			}
+			if tt.wantNeeded && reason == "" {
+				t.Errorf("changesRequired() reason is empty, want non-empty")
+			}
+			if !tt.wantNeeded && reason != "" {
+				t.Errorf("changesRequired() reason = %q, want empty", reason)
+			}
+			for _, fragment := range tt.wantReasonContains {
+				if !strings.Contains(reason, fragment) {
+					t.Errorf("changesRequired() reason = %q, want it to contain %q", reason, fragment)
+				}
 			}
 		})
 	}

@@ -564,7 +564,7 @@ func TestPatchPodMetadataIfNeeded(t *testing.T) {
 				meta: meta,
 			}
 
-			err := client.PatchPodMetadataIfNeeded(t.Context(), tt.status)
+			patched, reason, err := client.PatchPodMetadataIfNeeded(t.Context(), tt.status)
 
 			if tt.wantErr {
 				if err == nil {
@@ -582,11 +582,25 @@ func TestPatchPodMetadataIfNeeded(t *testing.T) {
 				t.Errorf("PatchPodMetadataIfNeeded() unexpected error: %v", err)
 			}
 
-			if tt.wantNoPatch && *requestCount != 0 {
-				t.Errorf("PatchPodMetadataIfNeeded() made %d request(s), want none", *requestCount)
+			if tt.wantNoPatch {
+				if *requestCount != 0 {
+					t.Errorf("PatchPodMetadataIfNeeded() made %d request(s), want none", *requestCount)
+				}
+				if patched {
+					t.Errorf("PatchPodMetadataIfNeeded() returned patched=true, want false")
+				}
+				if reason != "" {
+					t.Errorf("PatchPodMetadataIfNeeded() returned reason=%q, want empty", reason)
+				}
 			}
 			if !tt.wantNoPatch && *requestCount != 1 {
 				t.Errorf("PatchPodMetadataIfNeeded() made %d request(s), want exactly 1", *requestCount)
+			}
+			if !tt.wantNoPatch && !patched {
+				t.Errorf("PatchPodMetadataIfNeeded() returned patched=false, want true")
+			}
+			if !tt.wantNoPatch && reason == "" {
+				t.Errorf("PatchPodMetadataIfNeeded() returned empty reason, want non-empty")
 			}
 			if !tt.wantNoPatch && lastPatch != nil {
 				if got := lastPatch.Metadata.Labels[labelMQStatus]; got != tt.wantLabel {

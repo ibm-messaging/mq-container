@@ -133,21 +133,24 @@ func checkJsonKeysMatch(a, b string) error {
 
 // PatchPodMetadataIfNeeded issues a strategic-merge-patch updating the
 // mq.ibm.com/status label and the license annotations on this pod.
-// It is a no-op when the downward API files show the pod metadata already
-// matches the desired state.
-func (k *Client) PatchPodMetadataIfNeeded(ctx context.Context, status ready.QMStatus) error {
+// patched=true and a non-empty reason are returned when a PATCH was sent.
+// patched=false with a nil error means the current metadata already matches
+// the desired state (no-op). An error is returned when the PATCH could not be
+// sent or the desired state cannot be determined.
+func (k *Client) PatchPodMetadataIfNeeded(ctx context.Context, status ready.QMStatus) (patched bool, reason string, err error) {
 	labelValue := qmStatusLabel(status)
 	if labelValue == "" {
-		return fmt.Errorf("no label value for status %v", status)
+		return false, "", fmt.Errorf("no label value for status %v", status)
 	}
 
 	licenseAnnotations, err := k.meta.resolveLicenseAnnotations(status)
 	if err != nil {
-		return fmt.Errorf("resolving license annotations: %w", err)
+		return false, "", fmt.Errorf("resolving license annotations: %w", err)
 	}
 
-	if k.meta.currentMatchesDesired(labelValue, licenseAnnotations) {
-		return nil
+	needed, reason := k.meta.changesRequired(labelValue, licenseAnnotations)
+	if !needed {
+		return false, "", nil
 	}
 
 	p := podPatch{
@@ -158,10 +161,10 @@ func (k *Client) PatchPodMetadataIfNeeded(ctx context.Context, status ready.QMSt
 	}
 	body, err := json.Marshal(p)
 	if err != nil {
-		return fmt.Errorf("marshaling patch body: %w", err)
+		return false, "", fmt.Errorf("marshaling patch body: %w", err)
 	}
 
-	return k.patch(ctx, body)
+	return true, reason, k.patch(ctx, body)
 }
 
 // patch sends a strategic-merge-patch with the given body to the pod resource.

@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -110,33 +111,55 @@ func (m *podMetaReader) resolveLicenseAnnotations(status ready.QMStatus) (map[st
 	return annotations, nil
 }
 
-// currentMatchesDesired returns true when the current pod metadata already reflects
-// the desired label and annotations, meaning no PATCH is needed. Any read or parse
-// error is treated as "unknown state" and returns false so that the caller
+// changesRequired reports whether the pod metadata needs updating and, if so,
+// describes what is stale: which label values changed and which annotation keys
+// differ (without values). Any read or parse error is treated as "unknown
+// state": needed=true with the underlying error in reason so the caller
 // proceeds with the PATCH.
-func (m *podMetaReader) currentMatchesDesired(wantLabel string, wantAnnotations map[string]string) bool {
+func (m *podMetaReader) changesRequired(wantLabel string, wantAnnotations map[string]string) (needed bool, reason string) {
 	currentLabels, err := m.labels()
 	if err != nil {
-		return false
+		return true, fmt.Sprintf("want label %s but failed to read existing label: %v", wantLabel, err)
 	}
-	if currentLabels[labelMQStatus] != wantLabel {
-		return false
+	currentLabel := currentLabels[labelMQStatus]
+
+	var parts []string
+
+	if currentLabel != wantLabel {
+		parts = append(parts, fmt.Sprintf("status label changed from '%s' to '%s'", currentLabel, wantLabel))
 	}
 
-	if len(wantAnnotations) == 0 {
-		return true
-	}
-
-	currentAnnotations, err := m.annotations()
-	if err != nil {
-		return false
-	}
-	for k, v := range wantAnnotations {
-		if currentAnnotations[k] != v {
-			return false
+	if len(wantAnnotations) > 0 {
+		currentAnnotations, err := m.annotations()
+		if err != nil {
+			parts = append(parts, fmt.Sprintf("failed to read current annotations: %v", err))
+		} else {
+			var staleKeys []string
+			for _, k := range sortedKeys(wantAnnotations) {
+				if currentAnnotations[k] != wantAnnotations[k] {
+					staleKeys = append(staleKeys, k)
+				}
+			}
+			if len(staleKeys) > 0 {
+				parts = append(parts, fmt.Sprintf("annotations changed [%s]", strings.Join(staleKeys, ", ")))
+			}
 		}
 	}
-	return true
+
+	if len(parts) == 0 {
+		return false, ""
+	}
+	return true, strings.Join(parts, "; ")
+}
+
+// sortedKeys returns the keys of m in sorted order, for deterministic output.
+func sortedKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // fileReader returns a zero-argument read function for a fixed path. It is used

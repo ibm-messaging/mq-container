@@ -53,7 +53,7 @@ type server struct {
 }
 
 type kubeClient interface {
-	PatchPodMetadataIfNeeded(ctx context.Context, status ready.QMStatus) error
+	PatchPodMetadataIfNeeded(ctx context.Context, status ready.QMStatus) (patched bool, reason string, err error)
 	VerifyPermissions(ctx context.Context) error
 	ValidateStatusAnnotations() error
 }
@@ -180,12 +180,15 @@ func (s *server) runStatusWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case status := <-s.statusCh:
-			if err := s.kubeClient.PatchPodMetadataIfNeeded(ctx, status); err != nil {
-				s.log.Printf("Failed to patch pod: %v", err)
+			patched, reason, err := s.kubeClient.PatchPodMetadataIfNeeded(ctx, status)
+			if err != nil {
+				s.log.Printf("Failed to set pod metadata (MQ status '%s'): %v", status, err)
 				s.recordPatchResult(false)
-			} else {
+			} else if patched {
+				s.log.Printf("Set pod metadata (MQ status '%s'): %s", status, reason)
 				s.recordPatchResult(true)
 			}
+			// No log when no change was needed (status already matches).
 		}
 	}
 }
