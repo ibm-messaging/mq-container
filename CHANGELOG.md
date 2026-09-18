@@ -3,6 +3,8 @@
 ## 10.0.1.0 (2026-10)
 
 * Updated to MQ version 10.0.1.0
+* Removed previous fix for upgrade issue [DT472893](https://www.ibm.com/mysupport/s/defect/aCIgJ000000EjDN/dt472893) that refreshed the WebSphere Liberty 'ltpa.keys' file. This issue is now resolved through changes made to `strmqweb` behaviour. To prevent your existing 'ltpa.keys' file being deleted (on upgrade to this MQ version) you **must** now set environment variable `MQWEB_SKIP_DEFAULT_SECURITY=true`.
+  * **Note**: setting `AMQ_ENABLE_DT472893_REGENERATE_LTPA_KEYS=false` will no longer prevent your existing 'ltpa.keys' file being deleted.
 
 ## 10.0.0.0 (2026-06)
 
