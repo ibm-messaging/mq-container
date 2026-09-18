@@ -86,6 +86,15 @@ FEATURE_BUILD_OVERRIDE ?= false
 IMAGE_REGISTRY_DELIVERY_NAMESPACE_OVERRIDE ?=
 IMAGE_REGISTRY_DELIVERY_REPO_PREFIX_OVERRIDE ?=
 
+# Below are the common retry options applied to every curl call
+CURL_RETRY_OPTIONS := --connect-timeout 10 --retry 5 --retry-delay 10 --retry-all-errors
+
+# PODMAN_PULL_RETRY_FLAGS uses podman's native --retry/--retry-delay options
+# docker does not support these additional options
+ifeq (podman,$(COMMAND))
+PODMAN_PULL_RETRY_FLAGS = --retry=5 --retry-delay=15s
+endif
+
 ###############################################################################
 # Other variables
 ###############################################################################
@@ -196,7 +205,7 @@ ifneq "$(BUILD_RSYNC_SERVER)" "$(EMPTY)"
 	rsync -rv -e "ssh -o BatchMode=yes -q -o StrictHostKeyChecking=no" --include="*/" --include="*.tar.gz" --exclude="*" $(BUILD_RSYNC_USER)@$(BUILD_RSYNC_SERVER):"$(BUILD_RSYNC_PATH)" downloads/$(MQ_ARCHIVE_DEV)
 else
 ifneq "$(MQ_ARCHIVE_REPOSITORY_DEV)" "$(EMPTY)"
-	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" --output downloads/$(MQ_ARCHIVE_DEV)
+	curl $(CURL_RETRY_OPTIONS) --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" --output downloads/$(MQ_ARCHIVE_DEV)
 else
 	./download-basemq.sh -r $(MQ_ARCHIVE_DEV) -v $(MQ_VERSION_VRM)
 endif
@@ -209,7 +218,7 @@ ifneq "$(BUILD_RSYNC_SERVER)" "$(EMPTY)"
 	rsync -rv -e "ssh -o BatchMode=yes -q -o StrictHostKeyChecking=no" --include="*/" --include="*.tar.gz" --exclude="*" $(BUILD_RSYNC_USER)@$(BUILD_RSYNC_SERVER):"$(BUILD_RSYNC_PATH)" downloads/$(MQ_ARCHIVE)
 else
 ifneq "$(MQ_ARCHIVE_REPOSITORY)" "$(EMPTY)"
-	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY)" --output downloads/$(MQ_ARCHIVE)
+	curl $(CURL_RETRY_OPTIONS) --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY)" --output downloads/$(MQ_ARCHIVE)
 endif
 endif
 
@@ -217,7 +226,7 @@ downloads/$(MQ_ARCHIVE_INSTANA):
 	$(info $(SPACER)$(shell printf $(TITLE)"Downloading IBM MQ tracing user exit "$(INSTANA_VERSION)$(END)))
 	mkdir -p downloads
 ifneq "$(MQ_ARCHIVE_REPOSITORY_INSTANA)" "$(EMPTY)"
-	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_INSTANA)" --output downloads/$(MQ_ARCHIVE_INSTANA)
+	curl $(CURL_RETRY_OPTIONS) --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_INSTANA)" --output downloads/$(MQ_ARCHIVE_INSTANA)
 endif
 
 .PHONY: downloads
@@ -253,7 +262,7 @@ build-devjmstest: log-build-env downloads/$(MQ_ARCHIVE_DEV)
 	$(info $(SPACER)$(shell printf $(TITLE)"Build JMS tests for developer config"$(END)))
 	tar -C ./downloads --strip-components=2 -zxvf ./downloads/$(MQ_ARCHIVE_DEV) java/lib/jms.jar java/lib/com.ibm.mq.allclient.jar java/lib/org.json.jar
 	rm -f .dockerignore && echo ".git\ndownloads\n!downloads/*.jar" > .dockerignore
-	$(COMMAND) build $(NETWORK) --file test/messaging/Dockerfile --tag $(DEV_JMS_IMAGE) .
+	$(COMMAND) build $(NETWORK) $(PODMAN_PULL_RETRY_FLAGS) --file test/messaging/Dockerfile --tag $(DEV_JMS_IMAGE) .
 	rm -f .dockerignore
 
 .PHONY: test-devserver
@@ -298,7 +307,7 @@ test-advancedserver-cover: coverage
 # Args: imageName, imageTag, dockerfile, mqArchive, dockerfileTarget
 define build-mq
 	rm -f .dockerignore && echo ".git\ndownloads\n!downloads/$4" > .dockerignore
-	$(COMMAND) build $(NETWORK) \
+	$(COMMAND) build $(NETWORK) $(PODMAN_PULL_RETRY_FLAGS) \
 	  --tag $1:$2 \
 	  --file $3 \
 	  --build-arg BASE_VARIANT="$(BASE_VARIANT)" \
@@ -397,15 +406,15 @@ include Makefile.formatting.mk
 ###############################################################################
 .PHONY: pull-mq-archive
 pull-mq-archive:
-	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY)" --output downloads/$(MQ_ARCHIVE)
+	curl $(CURL_RETRY_OPTIONS) --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY)" --output downloads/$(MQ_ARCHIVE)
 
 .PHONY: pull-mq-archive-dev
 pull-mq-archive-dev:
-	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" --output downloads/$(MQ_ARCHIVE_DEV)
+	curl $(CURL_RETRY_OPTIONS) --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_DEV)" --output downloads/$(MQ_ARCHIVE_DEV)
 
 .PHONY: pull-mq-archive-instana
 pull-mq-archive-instana:
-	curl --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_INSTANA)" --output downloads/$(MQ_ARCHIVE_INSTANA)
+	curl $(CURL_RETRY_OPTIONS) --fail --user $(ARTIFACT_REPOSITORY_BUILD_USER):$(ARTIFACT_REPOSITORY_BUILD_CREDENTIAL) --request GET "$(MQ_ARCHIVE_REPOSITORY_INSTANA)" --output downloads/$(MQ_ARCHIVE_INSTANA)
 
 .PHONY: push-advancedserver
 push-advancedserver:
