@@ -1,5 +1,5 @@
 /*
-© Copyright IBM Corporation 2018, 2025
+© Copyright IBM Corporation 2018, 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ func testDescribe(t *testing.T, isDelta bool) {
 
 	select {
 	case prometheusDesc := <-ch:
-		expected := "Desc{fqName: \"ibmmq_qmgr_" + testElement1Name + "\", help: \"" + testElement1Description + "\", constLabels: {}, variableLabels: [qmgr]}"
+		expected := "Desc{fqName: \"ibmmq_qmgr_" + testElement1Name + "\", help: \"" + testElement1Description + "\", constLabels: {}, variableLabels: {qmgr}}"
 		actual := prometheusDesc.String()
 		if actual != expected {
 			t.Errorf("Expected value=%s; actual %s", expected, actual)
@@ -148,7 +148,7 @@ func TestCreateCounterVec(t *testing.T) {
 	}()
 	description := <-ch
 
-	expected := "Desc{fqName: \"ibmmq_qmgr_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [qmgr]}"
+	expected := "Desc{fqName: \"ibmmq_qmgr_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: {qmgr}}"
 	actual := description.String()
 	if actual != expected {
 		t.Errorf("Expected value=%s; actual %s", expected, actual)
@@ -164,7 +164,7 @@ func TestCreateCounterVec_ObjectLabel(t *testing.T) {
 	}()
 	description := <-ch
 
-	expected := "Desc{fqName: \"ibmmq_object_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [object qmgr]}"
+	expected := "Desc{fqName: \"ibmmq_object_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: {object,qmgr}}"
 	actual := description.String()
 	if actual != expected {
 		t.Errorf("Expected value=%s; actual %s", expected, actual)
@@ -180,7 +180,7 @@ func TestCreateCounterVec_NHALabel(t *testing.T) {
 	}()
 	description := <-ch
 
-	expected := "Desc{fqName: \"ibmmq_nha_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [instance qmgr]}"
+	expected := "Desc{fqName: \"ibmmq_nha_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: {instance,qmgr}}"
 	actual := description.String()
 	if actual != expected {
 		t.Errorf("Expected value=%s; actual %s", expected, actual)
@@ -196,7 +196,7 @@ func TestCreateGaugeVec(t *testing.T) {
 	}()
 	description := <-ch
 
-	expected := "Desc{fqName: \"ibmmq_qmgr_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [qmgr]}"
+	expected := "Desc{fqName: \"ibmmq_qmgr_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: {qmgr}}"
 	actual := description.String()
 	if actual != expected {
 		t.Errorf("Expected value=%s; actual %s", expected, actual)
@@ -212,7 +212,7 @@ func TestCreateGaugeVec_ObjectLabel(t *testing.T) {
 	}()
 	description := <-ch
 
-	expected := "Desc{fqName: \"ibmmq_object_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [object qmgr]}"
+	expected := "Desc{fqName: \"ibmmq_object_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: {object,qmgr}}"
 	actual := description.String()
 	if actual != expected {
 		t.Errorf("Expected value=%s; actual %s", expected, actual)
@@ -228,7 +228,7 @@ func TestCreateGaugeVec_NHALabel(t *testing.T) {
 	}()
 	description := <-ch
 
-	expected := "Desc{fqName: \"ibmmq_nha_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: [instance qmgr]}"
+	expected := "Desc{fqName: \"ibmmq_nha_MetricName\", help: \"MetricDescription\", constLabels: {}, variableLabels: {instance,qmgr}}"
 	actual := description.String()
 	if actual != expected {
 		t.Errorf("Expected value=%s; actual %s", expected, actual)
