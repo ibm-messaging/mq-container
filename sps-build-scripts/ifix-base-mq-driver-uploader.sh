@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2024
+# © Copyright IBM Corporation 2026
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,10 +30,12 @@ CROSS="\xE2\x9C\x97"
 GREENTICK=${GREEN}${TICK}${END}
 REDCROSS=${RED}${CROSS}${END}
 
+CURL_RETRY_OPTIONS="--connect-timeout 10 --retry 5 --retry-delay 10 --retry-all-errors"
+
 printf "${GREENRIGHTARROW} Checking to see if mq build folder ${MQ_SNAPSHOT_NAME} exists in repository ${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}\n"
 
 REMOTE_PATH="${IFIX_BASE_MQ_DRIVER_ARCHIVE_REPOSITORY}/${MQ_SNAPSHOT_NAME}"
-FILE_FOUND=$(curl -u "${REPOSITORY_USER}:${REPOSITORY_CREDENTIAL}" -L -X GET "${REMOTE_PATH}" -o /dev/null -w "%{http_code}" -s)
+FILE_FOUND=$(curl $CURL_RETRY_OPTIONS -u "${REPOSITORY_USER}:${REPOSITORY_CREDENTIAL}" -L -X GET "${REMOTE_PATH}" -o /dev/null -w "%{http_code}" -s)
 
 if [ "$FILE_FOUND" -eq 200 ]; then
     printf "${GREENTICK} Build Folder ${MQ_SNAPSHOT_NAME} was found in path ${REMOTE_PATH} \n"

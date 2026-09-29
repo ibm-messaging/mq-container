@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# © Copyright IBM Corporation 2020
+# © Copyright IBM Corporation 2026
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ REDCROSS=${RED}${CROSS}${END}
 
 
 SPACER="\n\n"
+
+CURL_RETRY_OPTIONS="--connect-timeout 10 --retry 5 --retry-delay 10 --retry-all-errors"
 
 USER=
 CREDENTIAL=
@@ -133,7 +135,7 @@ REMOTE_PATH="https://${CACHE_PATH}/${PIPELINE_RUN_ID}"
 
 if [ "$CHECK" == "true" ]; then
     printf "${GREENRIGHTARROW} Checking to see if file ${FILE_NAME} exists in repository ${REMOTE_PATH}\n"
-    FILE_FOUND=`curl -u ${USER}:${CREDENTIAL} -X GET  "${REMOTE_PATH}/${FILE_NAME}" -o /dev/null -w "%{http_code}" -s`
+    FILE_FOUND=`curl $CURL_RETRY_OPTIONS -u ${USER}:${CREDENTIAL} -X GET  "${REMOTE_PATH}/${FILE_NAME}" -o /dev/null -w "%{http_code}" -s`
     if [ "$FILE_FOUND" != "200" ]; then
         printf "${REDCROSS} File ${FILE_NAME} was not found\n"
         exit 1
@@ -156,7 +158,7 @@ if [ "$UPLOAD" == "true" ]; then
         printf "${ERROR}$usage${END}\n"
         exit 1
     fi
-    curl -u ${USER}:${CREDENTIAL} -X PUT "$REMOTE_PATH/${FILE_NAME}" -T ${FILE_LOCATION}
+    curl $CURL_RETRY_OPTIONS -u ${USER}:${CREDENTIAL} -X PUT "$REMOTE_PATH/${FILE_NAME}" -T ${FILE_LOCATION}
 fi
 
 if [ "$GET" == "true" ]; then
@@ -167,7 +169,7 @@ if [ "$GET" == "true" ]; then
         printf "${ERROR}$usage${END}\n"
         exit 1
     fi
-    curl -u ${USER}:${CREDENTIAL} "$REMOTE_PATH/${FILE_NAME}" -o ${FILE_LOCATION} -s
+    curl $CURL_RETRY_OPTIONS -u ${USER}:${CREDENTIAL} "$REMOTE_PATH/${FILE_NAME}" -o ${FILE_LOCATION} -s
     if [ $? != 0 ]; then
         printf "${REDCROSS} Failed download\n"
     else
@@ -192,7 +194,7 @@ if [ "$GET_PROPERTY" == "true" ]; then
 
     query_url="${FILE_NAME}"
     query_url="${query_url/\/artifactory\//\/artifactory\/api\/storage\//}?properties=${PROPERTY_NAME}"
-    request_result="$(curl -s -u ${USER}:${CREDENTIAL} "${query_url}")"
+    request_result="$(curl $CURL_RETRY_OPTIONS -s -u ${USER}:${CREDENTIAL} "${query_url}")"
     if [ $? != 0 ]; then
         printf "Unable to retrieve properties from ${query_url}"
         exit 1
@@ -213,14 +215,14 @@ fi
 
 if [ "$DELETE" == "true" ]; then
     printf "${GREENRIGHTARROW} Checking to see if file ${FILE_NAME} exists in repository ${REMOTE_PATH} before delete\n"
-    FILE_FOUND=`curl -u ${USER}:${CREDENTIAL} -X GET  "${REMOTE_PATH}/${FILE_NAME}" -o /dev/null -w "%{http_code}" -s`
+    FILE_FOUND=`curl $CURL_RETRY_OPTIONS -u ${USER}:${CREDENTIAL} -X GET  "${REMOTE_PATH}/${FILE_NAME}" -o /dev/null -w "%{http_code}" -s`
     if [ "$FILE_FOUND" != "200" ]; then
         printf "${REDCROSS} File ${FILE_NAME} was not found to delete\n"
         exit 1
     else
         printf "${GREENTICK} File ${FILE_NAME} was found\n"
         printf "${GREENRIGHTARROW} Attempting the delete of ${REMOTE_PATH}/${FILE_NAME}"
-        curl -u ${USER}:${CREDENTIAL} -X DELETE  "${REMOTE_PATH}/${FILE_NAME}" -s
+        curl $CURL_RETRY_OPTIONS -u ${USER}:${CREDENTIAL} -X DELETE  "${REMOTE_PATH}/${FILE_NAME}" -s
         if [ $? != 0 ]; then
             printf "${REDCROSS} Failed delete\n"
         else
@@ -231,14 +233,14 @@ fi
 
 if [ "$DELETE_NAMESPACE" == "true" ]; then
     printf "${GREENRIGHTARROW} Checking to see if repository ${REMOTE_PATH} exists before delete\n"
-    DIR_FOUND=`curl -u ${USER}:${CREDENTIAL} -X GET  "${REMOTE_PATH}" -o /dev/null -w "%{http_code}" -s`
+    DIR_FOUND=`curl $CURL_RETRY_OPTIONS -u ${USER}:${CREDENTIAL} -X GET  "${REMOTE_PATH}" -o /dev/null -w "%{http_code}" -s`
     if [ "$DIR_FOUND" != "200" ]; then
         printf "${REDCROSS} Namespace ${REMOTE_PATH} was not found to delete\n"
         exit 1
     else
         printf "${GREENTICK} Namespace ${REMOTE_PATH} was found\n"
         printf "${GREENRIGHTARROW} Attempting the delete of ${REMOTE_PATH}"
-        curl -u ${USER}:${CREDENTIAL} -X DELETE  "${REMOTE_PATH}" -s
+        curl $CURL_RETRY_OPTIONS -u ${USER}:${CREDENTIAL} -X DELETE  "${REMOTE_PATH}" -s
         if [ $? != 0 ]; then
             printf "${REDCROSS} Failed delete\n"
         else
