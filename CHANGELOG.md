@@ -1,4 +1,9 @@
 # Change log
+
+## 10.0.0.6 (2026-10)
+
+* Updated to MQ version 10.0.0.6
+
 ## 10.0.0.5 (2026-09)
 
 * Updated to MQ version 10.0.0.5
