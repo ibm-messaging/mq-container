@@ -1,0 +1,34 @@
+# image-inventory-mapping.yaml
+#
+# Defines which images the generate-inventory step processes and how each
+# image maps to the SPS promotion registry coordinates.
+#
+# Fields per image entry:
+#   name             — image name in the CI/build delivery registry (required)
+#   archs            — space-separated architectures to inspect    (required)
+#   namespace_group  — key into inventory.yaml stages.<stage>.<group>  (required)
+#   registry_name    — image name used in staging/production registry paths
+#                      when it differs from `name` (optional, defaults to `name`)
+#   enabled          — set to false to skip this image without removing the entry
+#                      (optional, defaults to true)
+#
+# To add a new image: add a new entry below.
+# To disable an image temporarily: set enabled: false.
+
+images:
+  - name: ibm-mqadvanced-server
+    archs: amd64 s390x ppc64le
+    namespace_group: cp
+    enabled: true
+    promotion_stages:
+      - staging
+      - production
+
+  - name: ibm-mqadvanced-server-dev
+    archs: amd64 s390x ppc64le
+    namespace_group: mq-dev
+    registry_name: mq
+    enabled: true
+    promotion_stages:
+      - staging
+      - production

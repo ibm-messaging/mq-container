@@ -544,3 +544,8 @@ commit-build-manifest:
 	git pull --rebase origin $(PIPELINE_BRANCH)
 	echo "Pushing changes to remote..."
 	git push origin HEAD:$(PIPELINE_BRANCH)
+
+.PHONY: generate-inventory
+generate-inventory: build-skopeo-container
+	$(info $(SPACER)$(shell printf $(TITLE)"Generating SPS inventory"$(END)))
+	$(BUILD_SCRIPTS_PATH)/generate-inventory/run.sh
