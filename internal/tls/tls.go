@@ -278,6 +278,8 @@ func processKeys(tlsStore *TLSStore, keystoreDir string, keyDir string, log *log
 
 			// If private key does not exist - skip this set of keys
 			if privateKey == nil {
+				keySetDir := path.Join(keyDir, keySet.Name())
+				log.Printf("No private key (*.key) found in '%s'; skipping directory", keySetDir)
 				continue
 			}
 
@@ -447,6 +449,11 @@ func processPrivateKey(keyDir string, keySetName string, keys []os.DirEntry, key
 				filename:   key.Name(),
 			}
 		}
+	}
+
+	// No *.key file found in this directory — let the caller skip it.
+	if privateKey == nil {
+		return nil, "", "", "", nil
 	}
 
 	for k, previous := range keystore.keyLabelLookup {
